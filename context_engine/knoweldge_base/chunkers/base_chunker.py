@@ -11,14 +11,11 @@ class Chunker(ABC):
     """
 
     @abstractmethod
-    def chunk_documents(self,
-                        documents: List[Document]
+    def chunk_documents(self, documents: List[Document]
                         ) -> List[KBDocChunk]:
         pass
 
-
     @abstractmethod
-    async def achunk_documents(self,
-                               documents: List[Document]
+    async def achunk_documents(self, documents: List[Document]
                                ) -> List[KBDocChunk]:
         pass

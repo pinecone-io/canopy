@@ -14,5 +14,4 @@ class Tokenizer(ABC):
 
     @abstractmethod
     def num_tokens(self, text: str) -> int:
-      pass
-
+        pass

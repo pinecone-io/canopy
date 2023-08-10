@@ -18,7 +18,6 @@ class Document(BaseModel):
     metadata: Metadata
 
 
-
 class Context(BaseModel):
     result: Union[str, BaseModel, Iterable[BaseModel]]
     num_tokens: int = Field(exclude=True)
@@ -27,6 +26,5 @@ class Context(BaseModel):
     def json(self, *args, **kwargs):
         # TODO: consider formatting as pure text, without JSON syntax
         return super().json(*args, **kwargs)
-
 
 # TODO: add ChatEngine main models - `Messages`, `Answer`

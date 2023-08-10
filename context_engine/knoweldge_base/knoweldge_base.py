@@ -10,50 +10,38 @@ class KnowledgeBase(ABC):
     """
     KnowledgeBase is an abstract class that defines the interface for a knowledge base.
     """
+
     @abstractmethod
-    def query(self,
-              queries: List[Query],
-              global_metadata_filter: Optional[dict] = None,
-    ) -> List[QueryResult]:
+    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None, ) -> List[
+        QueryResult]:
         pass
 
     @abstractmethod
-    def upsert(self,
-               documents: List[Union[Dict[str, Union[str, dict]], Document]],
-               namespace: str = "",
+    def upsert(self, documents: List[Union[Dict[str, Union[str, dict]], Document]], namespace: str = "",
 
-    ) -> None:
+               ) -> None:
         pass
 
     # TODO: Do we want delete by metadata?
     @abstractmethod
-    def delete(self,
-               document_ids: List[str],
-               namespace: str = "",
-    ) -> None:
+    def delete(self, document_ids: List[str], namespace: str = "", ) -> None:
         pass
 
     @abstractmethod
-    async def aquery(self,
-                     queries: List[Query],
-                     global_metadata_filter: Optional[dict] = None,
-    ) -> List[QueryResult]:
+    async def aquery(self, queries: List[Query], global_metadata_filter: Optional[dict] = None, ) -> List[
+        QueryResult]:
         pass
-
 
     @abstractmethod
     async def aupsert(self,
                       documents: List[Union[Dict[str, Union[str, dict]], Document]],
                       namespace: str = "",
 
-    ) -> None:
+                      ) -> None:
         pass
 
     @abstractmethod
-    async def adelete(self,
-               document_ids: List[str],
-               namespace: str = "",
-    ) -> None:
+    async def adelete(self, document_ids: List[str], namespace: str = "", ) -> None:
         pass
 
     @property
