@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from context_engine.knoweldge_base.knoweldge_base import KnowledgeBase
 from context_engine.models.data_models import Context, Query
 
 
@@ -23,13 +24,12 @@ class BaseContextEngine(ABC):
 
 def __init__(self,
              *,
-             index_name: str,
-             knowledge_base: str = "Pinecone",
-             knowledge_base_params: dict = None,
+             knowledge_base: KnowledgeBase,
              context_builder: str = "stuffing",
              context_builder_params: dict = None,
              ):
     pass
+
 
 class ContextEngine(BaseContextEngine):
 
