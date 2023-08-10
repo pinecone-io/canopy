@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from context_engine.models.data_models import QueryResult, Context
+from context_engine.knoweldge_base.models import KBQueryResult
+from context_engine.models.data_models import Context
 
 
 class BaseContextBuilder(ABC):
@@ -12,7 +13,7 @@ class BaseContextBuilder(ABC):
     @abstractmethod
     def build_context(
         self,
-        query_results: List[QueryResult],
+        query_results: List[KBQueryResult],
         max_context_tokens: int,
     ) -> Context:
         pass

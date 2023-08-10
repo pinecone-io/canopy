@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Union, Dict
 
+from context_engine.knoweldge_base.models import KBQueryResult
 from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
-from context_engine.models.data_models import Query, QueryResult, Document
+from context_engine.models.data_models import Query, Document
 
 
 class KnowledgeBase(ABC):
@@ -13,7 +14,7 @@ class KnowledgeBase(ABC):
     def query(self,
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None,
-    ) -> List[QueryResult]:
+    ) -> List[KBQueryResult]:
         pass
 
     @abstractmethod
@@ -74,4 +75,6 @@ class PineconeKnowledgeBase:
                  **kwargs
                  ):
         pass
+
+
 
