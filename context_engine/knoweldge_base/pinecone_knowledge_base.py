@@ -2,7 +2,8 @@ from typing import List, Optional
 
 from context_engine.knoweldge_base.chunkers.base_chunker import Chunker
 from context_engine.knoweldge_base.encoders.base_encoder import BaseEncoder
-from context_engine.knoweldge_base.kb_types import type_from_str, TOKENIZER_TYPES, CHUNKER_TYPES, RERANKER_TYPES
+from context_engine.knoweldge_base.kb_types import TOKENIZER_TYPES, CHUNKER_TYPES, RERANKER_TYPES
+from context_engine.utils import type_from_str
 from context_engine.knoweldge_base.rerankers.reranker import Reranker
 from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
 

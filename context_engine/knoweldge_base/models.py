@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from pinecone_text.sparse import SparseVector
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from context_engine.models.data_models import Document, Query
 
@@ -37,3 +37,4 @@ class DocumentWithScore(Document):
 class QueryResult(BaseModel):
     query: str
     documents: List[DocumentWithScore]
+    debug_info: dict = Field(default_factory=dict, exclude=True)
