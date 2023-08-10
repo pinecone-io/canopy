@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, Union, Iterable
 
 from pydantic import BaseModel, Field
 
@@ -10,21 +10,34 @@ class Query(BaseModel):
     top_k: int
 
 
-class ContextDocument(BaseModel):
+class Document(BaseModel):
+    id: str
+    text: str
+    metadata: dict
+
+
+class QueryResult(BaseModel):
+    query: str
+    documents: List[Document]
+
+
+class ContextSnippet(BaseModel):
     reference: str
     text: str
 
 
 class ContextQueryResult(BaseModel):
     query: str
-    documents: List[ContextDocument]
+    snippets: List[ContextSnippet]
 
 
 class Context(BaseModel):
-    results: List[ContextQueryResult]
+    result: Union[str, BaseModel, Iterable[BaseModel]]
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
     def json(self, *args, **kwargs):
         # TODO: consider formatting as pure text, without JSON syntax
         return super().json(*args, **kwargs)
+
+
