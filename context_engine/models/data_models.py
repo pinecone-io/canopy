@@ -1,7 +1,9 @@
-from typing import Optional, List, Union, Iterable
+from typing import Optional, List, Union, Iterable, Dict
 
 from pydantic import BaseModel, Field
 
+
+Metadata = Dict[str, Union[str, int, float, List[str]]]
 
 class Query(BaseModel):
     text: str
@@ -13,7 +15,19 @@ class Query(BaseModel):
 class Document(BaseModel):
     id: str
     text: str
-    metadata: dict
+    metadata: Metadata
+
+
+class DocumentChunk(BaseModel):
+    id: Optional[str] = None
+    text: str
+    metadata: Metadata
+    values: Optional[List[float]] = None
+    sparse_values: Optional[Dict[str, Union[int, float]]] = None
+
+
+class DocumentChunkWithScore(DocumentChunk):
+    score: float
 
 
 class QueryResult(BaseModel):

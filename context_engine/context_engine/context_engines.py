@@ -6,7 +6,6 @@ from context_engine.models.data_models import Context, Query
 
 class BaseContextEngine(ABC):
 
-
     @abstractmethod
     def query(self,
               queries: List[Query],
@@ -25,8 +24,6 @@ class BaseContextEngine(ABC):
 def __init__(self,
              *,
              index_name: str,
-             embedding: str = "OpenAI/ada-002",
-             tokenization: str = "OpenAI/gpt-3.5-turbo-0613",
              knowledge_base: str = "Pinecone",
              knowledge_base_params: dict = None,
              context_builder: str = "stuffing",
