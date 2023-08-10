@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Union, Dict
 
+from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
 from context_engine.models.data_models import Query, QueryResult, Document
 
 
@@ -52,6 +53,11 @@ class KnowledgeBase(ABC):
                document_ids: List[str],
                namespace: str = "",
     ) -> None:
+        pass
+
+    @property
+    @abstractmethod
+    def tokenizer(self) -> Tokenizer:
         pass
 
 

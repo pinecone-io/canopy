@@ -30,6 +30,7 @@ def __init__(self,
              context_builder_params: dict = None,
              ):
     pass
+
 class ContextEngine(BaseContextEngine):
 
     def query(self,
