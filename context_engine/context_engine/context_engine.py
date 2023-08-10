@@ -35,7 +35,7 @@ class ContextEngine(BaseContextEngine):
         context_builder_type = type_from_str(context_builder, CONTEXT_BUILDER_TYPES, "context builder")
         self.context_builder: BaseContextBuilder = context_builder_type(
             tokenizer=self.knowledge_base.tokenizer,
-                                                                        **context_builder_params)
+            **context_builder_params)
 
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
         query_results = self.knowledge_base.query(queries, global_metadata_filter=self.global_metadata_filter)

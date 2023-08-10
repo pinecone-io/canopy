@@ -45,8 +45,8 @@ class PineconeKnowledgeBase:
         # Instantiate reranker
         self._reranker: Reranker = type_from_str(reranking, RERANKER_TYPES, "Reranking")(**kwargs)
 
-    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None, ) -> List[
-        QueryResult]:
+    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+              ) -> List[QueryResult]:
 
         # Convert to KBQuery, which also includes dense and sparse vectors
         queries: List[KBQuery] = [KBQuery(**q.dict()) for q in queries]

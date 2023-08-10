@@ -12,8 +12,8 @@ class KnowledgeBase(ABC):
     """
 
     @abstractmethod
-    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None, ) -> List[
-        QueryResult]:
+    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+              ) -> List[QueryResult]:
         pass
 
     @abstractmethod
@@ -28,8 +28,8 @@ class KnowledgeBase(ABC):
         pass
 
     @abstractmethod
-    async def aquery(self, queries: List[Query], global_metadata_filter: Optional[dict] = None, ) -> List[
-        QueryResult]:
+    async def aquery(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+                     ) -> List[QueryResult]:
         pass
 
     @abstractmethod
