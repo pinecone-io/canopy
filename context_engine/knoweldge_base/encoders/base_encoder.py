@@ -19,3 +19,15 @@ class BaseEncoder(ABC):
                        queries: List[KBQuery]
                        ):
         pass
+
+    @abstractmethod
+    async def aencode_documents(self,
+                                documents: List[KBDocChunk]
+                                ):
+        pass
+
+    @abstractmethod
+    async def aencode_queries(self,
+                              queries: List[KBQuery]
+                              ):
+        pass

@@ -15,3 +15,10 @@ class Chunker(ABC):
                         documents: List[Document]
                         ) -> List[KBDocChunk]:
         pass
+
+
+    @abstractmethod
+    async def achunk_documents(self,
+                               documents: List[Document]
+                               ) -> List[KBDocChunk]:
+        pass
