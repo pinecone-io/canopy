@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from context_engine.context_engine.context_builders.base_context_builder import BaseContextBuilder
 from context_engine.context_engine.context_builders.cb_types import CONTEXT_BUILDER_TYPES
@@ -25,24 +25,23 @@ class BaseContextEngine(ABC):
         pass
 
 
-def __init__(self,
-             *,
-             knowledge_base: KnowledgeBase,
-             context_builder: str = "stuffing",
-             context_builder_params: dict = None,
-             global_metadata_filter: dict = None,
-             ):
-    self.knowledge_base = knowledge_base
-    self.global_metadata_filter = global_metadata_filter
-
-    if context_builder_params is None:
-        context_builder_params = {}
-    context_builder_type = type_from_str(context_builder, CONTEXT_BUILDER_TYPES, "context builder")
-    self.context_builder: BaseContextBuilder = context_builder_type(tokenizer=self.knowledge_base.tokenizer,
-                                                                    **context_builder_params)
-
-
 class ContextEngine(BaseContextEngine):
+
+    def __init__(self,
+                 *,
+                 knowledge_base: KnowledgeBase,
+                 context_builder: str = "stuffing",
+                 context_builder_params: Optional[dict] = None,
+                 global_metadata_filter: Optional[dict] = None,
+                 ):
+        self.knowledge_base = knowledge_base
+        self.global_metadata_filter = global_metadata_filter
+
+        if context_builder_params is None:
+            context_builder_params = {}
+        context_builder_type = type_from_str(context_builder, CONTEXT_BUILDER_TYPES, "context builder")
+        self.context_builder: BaseContextBuilder = context_builder_type(tokenizer=self.knowledge_base.tokenizer,
+                                                                        **context_builder_params)
 
     def query(self,
               queries: List[Query],

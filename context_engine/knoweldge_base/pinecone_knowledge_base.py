@@ -31,11 +31,11 @@ class PineconeKnowledgeBase:
 
         # Instantiate tokenizer
         try:
-            tokenizer_type, tokenizer_model_name = tokenization.split("/")
+            tokenizer_type_name, tokenizer_model_name = tokenization.split("/")
         except ValueError as e:
             raise ValueError("tokenization must be in the format <tokenizer_type>/<tokenizer_model_name>") from e
 
-        tokenizer_type = type_from_str(tokenizer_type, TOKENIZER_TYPES, "tokenization")
+        tokenizer_type = type_from_str(tokenizer_type_name, TOKENIZER_TYPES, "tokenization")
         self._tokenizer: Tokenizer = tokenizer_type(tokenizer_model_name, **kwargs)
 
         # Instantiate chunker
@@ -50,7 +50,7 @@ class PineconeKnowledgeBase:
     ) -> List[QueryResult]:
 
         # Convert to KBQuery, which also includes dense and sparse vectors
-        queries = [KBQuery(**q.dict()) for q in queries]
+        queries: List[KBQuery] = [KBQuery(**q.dict()) for q in queries]
 
         # Encode queries
         queries = self._encoder.encode_queries(queries)
@@ -62,7 +62,7 @@ class PineconeKnowledgeBase:
         results = self._reranker.rerank_results(results)
 
         # Convert to QueryResult
-        results = [QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results]
+        results: List[QueryResult] = [QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results]
 
         return results
 

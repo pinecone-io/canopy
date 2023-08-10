@@ -28,3 +28,8 @@ flake8 = "^6.1.0"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[[tool.mypy.overrides]]
+module = "context_engine.*"
+disable_error_code = "no-redef"
