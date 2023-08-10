@@ -17,3 +17,11 @@ class BaseContextBuilder(ABC):
         max_context_tokens: int,
     ) -> Context:
         pass
+
+
+    @abstractmethod
+    async def abuild_context(self,
+                             query_results: List[KBQueryResult],
+                             max_context_tokens: int,
+    ) -> Context:
+        pass
