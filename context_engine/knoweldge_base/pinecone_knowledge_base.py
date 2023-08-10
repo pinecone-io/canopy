@@ -1,11 +1,14 @@
 from typing import List, Optional
 
+from context_engine.knoweldge_base.chunkers.base_chunker import Chunker
 from context_engine.knoweldge_base.encoders.base_encoder import BaseEncoder
 from context_engine.knoweldge_base.kb_types import type_from_str, TOKENIZER_TYPES, CHUNKER_TYPES, RERANKER_TYPES
+from context_engine.knoweldge_base.rerankers.reranker import Reranker
 from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
 
 from context_engine.models.data_models import Query, Document
-from context_engine.knoweldge_base.models import KBQueryResult
+from context_engine.knoweldge_base.models import KBQueryResult, KBQuery, KBDocChunkWithScore, QueryResult
+
 
 class PineconeKnowledgeBase:
     def __init__(self,
@@ -15,7 +18,7 @@ class PineconeKnowledgeBase:
                  sparse_encoding: str = "None",
                  tokenization: str = "OpenAI/gpt-3.5-turbo-0613",
                  chunking: str = "markdown",
-                 reranking: str = "None",
+                 reranking: str = "no_reranking",
                  **kwargs
                  ):
 
@@ -35,13 +38,39 @@ class PineconeKnowledgeBase:
         self._tokenizer: Tokenizer = tokenizer_type(tokenizer_model_name, **kwargs)
 
         # Instantiate chunker
-        self._chunker = type_from_str(chunking, CHUNKER_TYPES, "chunking")(**kwargs)
+        self._chunker: Chunker = type_from_str(chunking, CHUNKER_TYPES, "chunking")(**kwargs)
 
         # Instantiate reranker
-        self._reranker = type_from_str(reranking, RERANKER_TYPES, "Reranking")(**kwargs)
+        self._reranker: Reranker = type_from_str(reranking, RERANKER_TYPES, "Reranking")(**kwargs)
+
+    def query(self,
+              queries: List[Query],
+              global_metadata_filter: Optional[dict] = None,
+    ) -> List[QueryResult]:
+
+        # Convert to KBQuery, which also includes dense and sparse vectors
+        queries = [KBQuery(**q.dict()) for q in queries]
+
+        # Encode queries
+        queries = self._encoder.encode_queries(queries)
+
+        # TODO: perform the actual index querying
+        results: List[KBQueryResult]
+
+        # Rerank results
+        results = self._reranker.rerank_results(results)
+
+        # Convert to QueryResult
+        results = [QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results]
+
+        return results
 
 
 # TODO: remove, for testing only
 if __name__ == "__main__":
+    query = Query(text="test query", namespace="test_namespace", metadata_filter={"test": "test"}, top_k=10)
+    kbquery = KBQuery(**query.dict())
+    print(id(kbquery.text) == id(query.text))
+
     pc = PineconeKnowledgeBase(index_name="test")
     print(pc)

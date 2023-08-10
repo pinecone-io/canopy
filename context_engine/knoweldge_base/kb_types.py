@@ -1,5 +1,6 @@
 from enum import Enum
 
+from context_engine.knoweldge_base.rerankers.reranker import TransparentReranker
 from context_engine.knoweldge_base.tokenizers.openai_tokenizer import OpenAITokenizer
 
 TOKENIZER_TYPES = {
@@ -14,7 +15,7 @@ CHUNKER_TYPES = {
 }
 
 RERANKER_TYPES = {
-    "None": None,
+    "no_reranking": TransparentReranker,
 }
 
 

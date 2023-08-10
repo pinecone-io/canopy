@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Union, Dict
 
-from context_engine.knoweldge_base.models import KBQueryResult
+from context_engine.knoweldge_base.models import QueryResult
 from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
 from context_engine.models.data_models import Query, Document
 
@@ -14,7 +14,7 @@ class KnowledgeBase(ABC):
     def query(self,
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None,
-    ) -> List[KBQueryResult]:
+    ) -> List[QueryResult]:
         pass
 
     @abstractmethod
@@ -37,7 +37,7 @@ class KnowledgeBase(ABC):
     async def aquery(self,
                      queries: List[Query],
                      global_metadata_filter: Optional[dict] = None,
-    ) -> List[KBQueryResult]:
+    ) -> List[QueryResult]:
         pass
 
 

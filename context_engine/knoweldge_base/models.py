@@ -25,10 +25,15 @@ class KBQuery(Query):
     sparse_values: Optional[SparseVector] = None
 
 
+class KBQueryResult(BaseModel):
+    query: str
+    documents: List[KBDocChunkWithScore]
+
+
 class DocumentWithScore(Document):
     score: float
 
 
-class KBQueryResult(BaseModel):
+class QueryResult(BaseModel):
     query: str
     documents: List[DocumentWithScore]
