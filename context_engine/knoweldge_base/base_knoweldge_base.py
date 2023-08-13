@@ -6,7 +6,7 @@ from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
 from context_engine.models.data_models import Query, Document
 
 
-class KnowledgeBase(ABC):
+class BaseKnowledgeBase(ABC):
     """
     KnowledgeBase is an abstract class that defines the interface for a knowledge base.
     """
