@@ -1,6 +1,6 @@
 from typing import List
 
-from context_engine.context_engine.context_builders.base_context_builder import BaseContextBuilder
+from context_engine.context_engine.context_builder.base import BaseContextBuilder
 from context_engine.context_engine.models import ContextQueryResult
 from context_engine.knoweldge_base.models import QueryResult
 from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
