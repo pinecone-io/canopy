@@ -11,9 +11,9 @@ class BaseContextBuilder(ABC):
     """
 
     @abstractmethod
-    def build_context(self, query_results: List[QueryResult], max_context_tokens: int, ) -> Context:
+    def build(self, query_results: List[QueryResult], max_context_tokens: int, ) -> Context:
         pass
 
     @abstractmethod
-    async def abuild_context(self, query_results: List[QueryResult], max_context_tokens: int, ) -> Context:
+    async def abuild(self, query_results: List[QueryResult], max_context_tokens: int, ) -> Context:
         pass
