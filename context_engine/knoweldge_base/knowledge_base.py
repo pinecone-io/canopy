@@ -31,11 +31,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
 
-        # Convert to KBQuery, which also includes dense and sparse vectors
-        queries: List[KBQuery] = [KBQuery(**q.dict()) for q in queries]
-
         # Encode queries
-        queries = self._encoder.encode_queries(queries)
+        queries: List[KBQuery] = self._encoder.encode_queries(queries)
 
         # TODO: perform the actual index querying
         results: List[KBQueryResult]
@@ -44,11 +41,9 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = self._reranker.rerank(results)
 
         # Convert to QueryResult
-        results: List[QueryResult] = [
+        return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
         ]
-
-        return results
 
 
 # TODO: remove, for testing only

@@ -12,12 +12,16 @@ VectorValues = List[float]
 
 
 class KBDocChunk(Document):
-    values: Optional[VectorValues] = None
-    sparse_values: Optional[SparseVector] = None
+    document_id: str
 
 
 class KBDocChunkWithScore(KBDocChunk):
     score: float
+
+
+class KBEncodedDocChunk(KBDocChunk):
+    values: Optional[VectorValues] = None
+    sparse_values: Optional[SparseVector] = None
 
 
 class KBQuery(Query):
