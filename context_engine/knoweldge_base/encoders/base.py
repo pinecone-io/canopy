@@ -4,7 +4,7 @@ from typing import List
 from context_engine.knoweldge_base.models import KBDocChunk, KBQuery
 
 
-class BaseEncoder(ABC):
+class Encoder(ABC):
 
     # TODO: decided whether we want to return a new list, or edit the KBDocChunks in place
     # (for now, assuming we edit in place)

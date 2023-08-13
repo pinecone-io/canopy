@@ -2,7 +2,7 @@ from typing import List
 
 import tiktoken
 
-from .base_tokenizer import Tokenizer
+from .base import Tokenizer
 
 
 class OpenAITokenizer(Tokenizer):

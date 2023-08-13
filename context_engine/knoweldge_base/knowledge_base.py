@@ -1,11 +1,11 @@
 from typing import List, Optional
 
 from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
-from context_engine.knoweldge_base.chunkers.base_chunker import Chunker
-from context_engine.knoweldge_base.encoders.base_encoder import BaseEncoder
+from context_engine.knoweldge_base.chunker.base import Chunker
+from context_engine.knoweldge_base.encoders.base import Encoder
 from context_engine.knoweldge_base.models import KBQueryResult, KBQuery, QueryResult
-from context_engine.knoweldge_base.rerankers.reranker import Reranker, TransparentReranker
-from context_engine.knoweldge_base.tokenizers.base_tokenizer import Tokenizer
+from context_engine.knoweldge_base.reranker.reranker import Reranker, TransparentReranker
+from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query
 
 
@@ -13,7 +13,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: BaseEncoder,
+                 encoder: Encoder,
                  tokenizer: Tokenizer,
                  chunker: Chunker,
                  reranker: Optional[Reranker] = None,
