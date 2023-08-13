@@ -41,7 +41,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         results: List[KBQueryResult]
 
         # Rerank results
-        results = self._reranker.rerank_results(results)
+        results = self._reranker.rerank(results)
 
         # Convert to QueryResult
         results: List[QueryResult] = [

@@ -19,7 +19,7 @@ class Document(BaseModel):
 
 
 class Context(BaseModel):
-    result: Union[str, BaseModel, Iterable[BaseModel]]
+    content: Union[str, BaseModel, Iterable[BaseModel]]
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
