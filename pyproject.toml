@@ -16,8 +16,6 @@ pinecone-datasets = "^0.6.0"
 pydantic = "^1.10.7"
 pinecone-text = "^0.5.2"
 
-[tool.poetry.extras]
-openai = ["openai", "tiktoken"]
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
