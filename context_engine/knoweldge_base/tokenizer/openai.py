@@ -15,5 +15,5 @@ class OpenAITokenizer(Tokenizer):
     def decode(self, tokens: List[int]) -> str:
         return self._encoder.decode(tokens)
 
-    def num_tokens(self, text: str) -> int:
+    def token_count(self, text: str) -> int:
         return len(self.encode(text))

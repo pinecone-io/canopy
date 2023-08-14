@@ -5,13 +5,10 @@ from typing import List
 class Tokenizer(ABC):
 
     @abstractmethod
-    def encode(self, text: str) -> List[int]:
+    def tokenize(self, text: str) -> List[str]:
         pass
 
-    @abstractmethod
-    def decode(self, tokens: List[int]) -> str:
-        pass
 
     @abstractmethod
-    def num_tokens(self, text: str) -> int:
+    def token_count(self, text: str) -> int:
         pass
