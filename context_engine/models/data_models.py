@@ -4,6 +4,9 @@ from pydantic import BaseModel, Field
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
+Filter = Dict[str, Dict[str, Union[str, int, float, List[str]]]]
+
+
 
 class Query(BaseModel):
     text: str
@@ -18,6 +21,17 @@ class Document(BaseModel):
     text: str
     metadata: Metadata
 
+class PineconeQueryRecord(BaseModel):
+    vector: Optional[List[float]] = None
+    sparse_vector: Optional[List[int]] = None
+    filter: Filter
+    top_k: Optional[int] = 1
+
+class PineconeDocumentRecord(BaseModel):
+    id: str
+    values: Optional[List[float]] = None
+    sparse_values: Optional[List[int]] = None
+    metadata: Metadata
 
 class Context(BaseModel):
     content: Union[str, BaseModel, Iterable[BaseModel]]

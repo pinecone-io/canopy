@@ -3,11 +3,11 @@ from typing import List
 from pinecone_text.hybrid import hybrid_convex_scale
 from pinecone_text.sparse.base_sparse_encoder import BaseSparseEncoder
 
-from context_engine.knoweldge_base.encoder.steps.base import EncodingStep
+from context_engine.knoweldge_base.encoder.steps.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery
 
 
-class HybridEncodingStep(EncodingStep):
+class HybridEncodingStep(Encoder):
 
     def __init__(self, sparse_encoder: BaseSparseEncoder, default_alpha: float = 0.5):
         self.sparse_encoder = sparse_encoder
