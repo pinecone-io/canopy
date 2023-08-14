@@ -9,12 +9,29 @@ from context_engine.knoweldge_base.models import KBQuery
 
 
 class HybridEncoder(Encoder):
+    """
+    A hybrid encoder that combines dense embeddings and a sparse representation (e.g. keyword counts) using a
+    linear combination
+    """
 
     def __init__(self,
                  dense_encoder: BaseDenseEncoder,
                  sparse_encoder: BaseSparseEncoder,
                  default_alpha: float = 0.5,
                  **kwargs):
+        """
+
+        Args:
+            dense_encoder: A DenseEncoder from pinecone_text that will be used to generate dense embeddings
+            sparse_encoder: A SparseEncoder from pinecone_text that will be used to generate sparse
+                            representations
+            default_alpha: The default alpha value to use for scaling dense and sparse vectors. Defaults to 0.5.
+                           Each query may include its own alpha value in the query_params dict, which will
+                           override this value.
+
+        Keyword Args:
+            batch_size: The number of documents or queries to encode at once. Defaults to 1.
+        """
         super().__init__(**kwargs)
         self.dense_encoder = dense_encoder
         self.sparse_encoder = sparse_encoder
