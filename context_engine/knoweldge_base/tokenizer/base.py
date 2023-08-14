@@ -8,7 +8,6 @@ class Tokenizer(ABC):
     def tokenize(self, text: str) -> List[str]:
         pass
 
-
     @abstractmethod
     def token_count(self, text: str) -> int:
         pass

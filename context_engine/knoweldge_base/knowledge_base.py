@@ -16,9 +16,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                  encoder: Encoder,
                  tokenizer: Tokenizer,
                  chunker: Chunker,
-                 reranker: Optional[Reranker] = None,
-                 ):
-
+                 reranker: Optional[Reranker] = None):
         self.index_name = index_name
 
         # TODO: decide how we are instantiating the encoder - as a single encoder that does both dense and
@@ -28,9 +26,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
-    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
-              ) -> List[QueryResult]:
-
+    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None) -> List[QueryResult]:
         # Encode queries
         queries: List[KBQuery] = self._encoder.encode_queries(queries)
 
@@ -41,6 +37,4 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = self._reranker.rerank(results)
 
         # Convert to QueryResult
-        return [
-            QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
-        ]
+        return [QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results]

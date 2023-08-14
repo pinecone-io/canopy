@@ -10,21 +10,17 @@ class Encoder(ABC):
     # TODO: decided whether we want to return a new list, or edit the KBDocChunks in place
     # (for now, assuming we edit in place)
     @abstractmethod
-    def encode_documents(self, documents: List[KBDocChunk]
-                         ) -> List[KBEncodedDocChunk]:
+    def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         pass
 
     @abstractmethod
-    def encode_queries(self, queries: List[Query]
-                       ) -> List[KBQuery]:
+    def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
         pass
 
     @abstractmethod
-    async def aencode_documents(self, documents: List[KBDocChunk]
-                                ) -> List[KBEncodedDocChunk]:
+    async def aencode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         pass
 
     @abstractmethod
-    async def aencode_queries(self, queries: List[Query]
-                              ) -> List[KBQuery]:
+    async def aencode_queries(self, queries: List[Query]) -> List[KBQuery]:
         pass
