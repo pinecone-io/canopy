@@ -1,2 +1,1 @@
-from .encoder import Encoder
-from .steps import *
+from .pipeline_encoder import PipelineEncoder

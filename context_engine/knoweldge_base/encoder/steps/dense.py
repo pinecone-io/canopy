@@ -2,11 +2,11 @@ from typing import List
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
-from context_engine.knoweldge_base.encoder.steps.base import EncodingStep
+from context_engine.knoweldge_base.encoder.steps.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
 
 
-class DenseEncodingStep(EncodingStep):
+class DenseEncodingStep(Encoder):
 
     def __init__(self, dense_encoder: BaseDenseEncoder):
         self.dense_encoder = dense_encoder

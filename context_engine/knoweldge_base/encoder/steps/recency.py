@@ -2,11 +2,11 @@ from typing import List
 
 from pinecone_text.sparse.base_sparse_encoder import BaseSparseEncoder
 
-from context_engine.knoweldge_base.encoder.steps.base import EncodingStep
+from context_engine.knoweldge_base.encoder.steps.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery
 
 
-class RecencyEncodingStep(EncodingStep):
+class RecencyEncodingStep(Encoder):
     def __init__(self,
                  recency_encoder: BaseSparseEncoder, default_beta: float = 0.5):
         self.recency_encoder = recency_encoder

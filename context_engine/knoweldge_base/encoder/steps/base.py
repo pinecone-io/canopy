@@ -1,23 +1,56 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from context_engine.knoweldge_base.models import KBEncodedDocChunk, KBQuery
+from context_engine.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
+from context_engine.models.data_models import Query
 
 
-class EncodingStep(ABC):
+class Encoder(ABC):
 
+    def __init__(self, batch_size: int = 1):
+        self.batch_size = batch_size
+
+    # Alters the documents in place
     @abstractmethod
-    def encode_documents(self, documents: List[KBEncodedDocChunk]):
+    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):
+        pass
+
+    # Alters the queries in place
+    @abstractmethod
+    def _encode_queries_batch(self, queries: List[KBQuery]):
         pass
 
     @abstractmethod
-    def encode_queries(self, queries: List[KBQuery]):
+    async def _aencode_documents_batch(self, documents: List[KBEncodedDocChunk]):
         pass
 
+    # Alters the queries in place
     @abstractmethod
+    async def _aencode_queries_batch(self, queries: List[KBQuery]):
+        pass
+
+    @staticmethod
+    def _batch_iterator(data: list, batch_size):
+        return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
+
+    def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
+        encoded_chunks = [KBEncodedDocChunk(**doc.dict()) for doc in documents]
+        for batch in self._batch_iterator(encoded_chunks, self.batch_size):
+            self._encode_documents_batch(batch)
+
+    def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
+        kb_queries = [KBQuery(**query.dict()) for query in queries]
+        for batch in self._batch_iterator(kb_queries, self.batch_size):
+            self._encode_queries_batch(batch)
+
     async def aencode_documents(self, documents: List[KBEncodedDocChunk]):
-        pass
+        encoded_chunks = [KBEncodedDocChunk(**doc.dict()) for doc in documents]
+        for batch in self._batch_iterator(encoded_chunks, self.batch_size):
+            await self._aencode_documents_batch(batch)
 
-    @abstractmethod
+
     async def aencode_queries(self, queries: List[KBQuery]):
-        pass
+        kb_queries = [KBQuery(**query.dict()) for query in queries]
+        for batch in self._batch_iterator(kb_queries, self.batch_size):
+            await self._aencode_queries_batch(batch)
+
