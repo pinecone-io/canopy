@@ -6,7 +6,7 @@ from context_engine.knoweldge_base.encoder.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
 
 
-class DenseEncodingStep(Encoder):
+class DenseEmbeddingsEncoder(Encoder):
 
     def __init__(self, dense_encoder: BaseDenseEncoder):
         self.dense_encoder = dense_encoder

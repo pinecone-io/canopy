@@ -8,7 +8,7 @@ from context_engine.knoweldge_base.encoder.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery
 
 
-class HybridEncodingStep(Encoder):
+class HybridEncoder(Encoder):
 
     def __init__(self,
                  dense_encoder: BaseDenseEncoder,
