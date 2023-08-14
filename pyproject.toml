@@ -15,6 +15,7 @@ tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.0"
 pydantic = "^1.10.7"
 pinecone-text = "^0.5.2"
+flake8-pyproject = "^1.2.3"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -31,3 +32,9 @@ build-backend = "poetry.core.masonry.api"
 [[tool.mypy.overrides]]
 module = "context_engine.*"
 disable_error_code = "no-redef"
+
+[tool.flake8]
+per-file-ignores = [
+    '*/__init__.py:F401',
+]
+max-line-length = 88

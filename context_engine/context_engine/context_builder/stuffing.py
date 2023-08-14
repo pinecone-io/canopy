@@ -13,10 +13,14 @@ class StuffingContextBuilder(BaseContextBuilder):
         self._tokenizer = tokenizer
         self._reference_metadata_field = reference_metadata_field
 
-    def build(self, query_results: List[QueryResult], max_context_tokens: int, ) -> Context:
+    def build(self,
+              query_results: List[QueryResult],
+              max_context_tokens: int, ) -> Context:
         # TODO - implement this method
 
         context_query_results: List[ContextQueryResult]
         actual_num_tokens: int
         debug_info: dict
-        return Context(content=context_query_results, num_tokens=actual_num_tokens, debug_info=debug_info)
+        return Context(content=context_query_results,
+                       num_tokens=actual_num_tokens,
+                       debug_info=debug_info)

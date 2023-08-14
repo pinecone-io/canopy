@@ -7,7 +7,8 @@ from context_engine.models.data_models import Query
 
 class Encoder(ABC):
 
-    # TODO: decided whether we want to return a new list, or edit the KBDocChunks in place
+    # TODO: decided whether we want to return a new list, or edit the KBDocChunks in
+    #  place
     # (for now, assuming we edit in place)
     @abstractmethod
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
@@ -18,7 +19,9 @@ class Encoder(ABC):
         pass
 
     @abstractmethod
-    async def aencode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
+    async def aencode_documents(self,
+                                documents: List[KBDocChunk]
+                                ) -> List[KBEncodedDocChunk]:
         pass
 
     @abstractmethod

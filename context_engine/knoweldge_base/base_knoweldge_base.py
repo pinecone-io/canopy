@@ -12,11 +12,14 @@ class BaseKnowledgeBase(ABC):
     """
 
     @abstractmethod
-    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None) -> List[QueryResult]:
+    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+              ) -> List[QueryResult]:
         pass
 
     @abstractmethod
-    def upsert(self, documents: List[Union[Dict[str, Union[str, dict]], Document]], namespace: str = "",
+    def upsert(self,
+               documents: List[Union[Dict[str, Union[str, dict]], Document]],
+               namespace: str = "",
 
                ) -> None:
         pass
