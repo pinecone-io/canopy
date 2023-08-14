@@ -1,0 +1,52 @@
+from typing import List
+
+from context_engine.knoweldge_base.encoder.steps.base import EncodingStep
+from context_engine.knoweldge_base.models import KBDocChunk, KBQuery, KBEncodedDocChunk
+from context_engine.models.data_models import Query
+
+
+class Encoder:
+
+    def __init__(self, enconding_steps: List[EncodingStep], batch_size: int = 1):
+        if len(enconding_steps) == 0:
+            raise ValueError("Must provide at least one encoding step")
+
+        if enconding_steps[0].__class__.__name__ != "DenseEncodingStep":
+            raise ValueError("First encoding step must be a DenseEncodingStep")
+
+        self.encoding_steps = enconding_steps
+        self.batch_size = batch_size
+
+    @staticmethod
+    def _batch_iterator(data: list, batch_size):
+        return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
+
+    def encode_documents(self, documents: List[KBDocChunk]
+                         ) -> List[KBEncodedDocChunk]:
+        encoded_chunks = [KBEncodedDocChunk(**doc.dict()) for doc in documents]
+        for batch in self._batch_iterator(encoded_chunks, self.batch_size):
+            for step in self.encoding_steps:
+                # Each step is editing the encoded_chunks in place
+                step.encode_documents(batch)
+
+        return encoded_chunks
+
+    def encode_queries(self, queries: List[Query]
+                       ) -> List[KBQuery]:
+        kb_queries = [KBQuery(**query.dict()) for query in queries]
+        for batch in self._batch_iterator(kb_queries, self.batch_size):
+            for step in self.encoding_steps:
+                # Each step is editing the kb_queries in place
+                step.encode_queries(batch)
+
+        return kb_queries
+
+    async def aencode_documents(self, documents: List[KBDocChunk]
+                                ) -> List[KBEncodedDocChunk]:
+        pass
+
+    async def aencode_queries(self, queries: List[Query]
+                              ) -> List[KBQuery]:
+        pass
+
+

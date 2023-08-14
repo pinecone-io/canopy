@@ -2,7 +2,7 @@ from typing import List, Optional
 
 from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
 from context_engine.knoweldge_base.chunker.base import Chunker
-from context_engine.knoweldge_base.encoders.base import EncodingStep
+from context_engine.knoweldge_base.encoder.steps.base import EncodingStep
 from context_engine.knoweldge_base.models import KBQueryResult, KBQuery, QueryResult
 from context_engine.knoweldge_base.reranker.reranker import Reranker, TransparentReranker
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
