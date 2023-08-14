@@ -9,7 +9,8 @@ class Query(BaseModel):
     text: str
     namespace: str = ""
     metadata_filter: Optional[dict]
-    top_k: int
+    top_k: Optional[int]
+    query_params: Optional[dict]
 
 
 class Document(BaseModel):
