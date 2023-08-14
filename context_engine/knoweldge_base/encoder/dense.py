@@ -8,7 +8,8 @@ from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
 
 class DenseEmbeddingsEncoder(Encoder):
 
-    def __init__(self, dense_encoder: BaseDenseEncoder):
+    def __init__(self, dense_encoder: BaseDenseEncoder, **kwargs):
+        super().__init__(**kwargs)
         self.dense_encoder = dense_encoder
         
     def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):

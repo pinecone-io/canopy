@@ -13,7 +13,9 @@ class HybridEncoder(Encoder):
     def __init__(self,
                  dense_encoder: BaseDenseEncoder,
                  sparse_encoder: BaseSparseEncoder,
-                 default_alpha: float = 0.5):
+                 default_alpha: float = 0.5,
+                 **kwargs):
+        super().__init__(**kwargs)
         self.dense_encoder = dense_encoder
         self.sparse_encoder = sparse_encoder
         self.default_alpha = default_alpha

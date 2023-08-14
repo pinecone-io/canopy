@@ -11,9 +11,6 @@ class PipelineEncoder(Encoder):
         if len(encoding_steps) == 0:
             raise ValueError("Must provide at least one encoding step")
 
-        if encoding_steps[0].__class__.__name__ != "DenseEncodingStep":
-            raise ValueError("First encoding step must be a DenseEncodingStep")
-
         self.encoding_steps = encoding_steps
 
     def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):
