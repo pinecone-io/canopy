@@ -44,13 +44,3 @@ class KnowledgeBase(BaseKnowledgeBase):
         return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
         ]
-
-
-# TODO: remove, for testing only
-if __name__ == "__main__":
-    query = Query(text="test query", namespace="test_namespace", metadata_filter={"test": "test"}, top_k=10)
-    kbquery = KBQuery(**query.dict())
-    print(id(kbquery.text) == id(query.text))
-
-    pc = KnowledgeBase(index_name="test")
-    print(pc)
