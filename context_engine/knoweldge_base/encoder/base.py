@@ -45,19 +45,27 @@ class Encoder(ABC):
         for batch in self._batch_iterator(encoded_chunks, self.batch_size):
             self._encode_documents_batch(batch)
 
+        return encoded_chunks
+
     def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
         kb_queries = [KBQuery(**query.dict()) for query in queries]
         for batch in self._batch_iterator(kb_queries, self.batch_size):
             self._encode_queries_batch(batch)
+
+        return kb_queries
 
     async def aencode_documents(self, documents: List[KBEncodedDocChunk]):
         encoded_chunks = [KBEncodedDocChunk(**doc.dict()) for doc in documents]
         for batch in self._batch_iterator(encoded_chunks, self.batch_size):
             await self._aencode_documents_batch(batch)
 
+        return encoded_chunks
+
 
     async def aencode_queries(self, queries: List[KBQuery]):
         kb_queries = [KBQuery(**query.dict()) for query in queries]
         for batch in self._batch_iterator(kb_queries, self.batch_size):
             await self._aencode_queries_batch(batch)
+
+        return kb_queries
 
