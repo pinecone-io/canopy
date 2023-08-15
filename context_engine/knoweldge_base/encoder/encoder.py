@@ -21,21 +21,21 @@ class EncodingPipeline:
     def _batch_iterator(data: list, batch_size):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
-    def encode_documents(self, documents: List[PineconeDocumentRecord]
+    def encode_documents(self, records: List[PineconeDocumentRecord]
                          ) -> List[PineconeDocumentRecord]:
-        for batch in self._batch_iterator(documents, self.batch_size):
+        for batch in self._batch_iterator(records, self.batch_size):
             for step in self.encoding_steps:
                 # Each step is editing the encoded_chunks in place
                 step.encode_documents(batch)
-        return encoded_chunks
+        return records
 
-    def encode_queries(self, queries: List[PineconeQueryRecord]
+    def encode_queries(self, records: List[PineconeQueryRecord]
                        ) -> List[PineconeQueryRecord]:
-        for batch in self._batch_iterator(queries, self.batch_size):
+        for batch in self._batch_iterator(records, self.batch_size):
             for step in self.encoding_steps:
                 # Each step is editing the kb_queries in place
                 step.encode_queries(batch)
-        return kb_queries
+        return records
 
     async def aencode_documents(self, documents: List[KBDocChunk]
                                 ) -> List[KBEncodedDocChunk]:

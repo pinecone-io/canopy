@@ -7,17 +7,17 @@ from context_engine.models.data_models import PineconeDocumentRecord, PineconeQu
 class Encoder(ABC):
 
     @abstractmethod
-    def encode_documents(self, documents: List[PineconeDocumentRecord]) -> List[PineconeDocumentRecord]:
+    def encode_documents(self, records: List[PineconeDocumentRecord]) -> List[PineconeDocumentRecord]:
         pass
 
     @abstractmethod
-    def encode_queries(self, queries: List[PineconeQueryRecord]) -> List[PineconeQueryRecord]:
+    def encode_queries(self, records: List[PineconeQueryRecord]) -> List[PineconeQueryRecord]:
         pass
 
     @abstractmethod
-    async def aencode_documents(self, documents: List[KBEncodedDocChunk]):
+    async def aencode_documents(self, records: List[KBEncodedDocChunk]):
         pass
 
     @abstractmethod
-    async def aencode_queries(self, queries: List[KBQuery]):
+    async def aencode_queries(self, records: List[KBQuery]):
         pass
