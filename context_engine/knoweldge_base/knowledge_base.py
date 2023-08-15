@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List, Optional, Union, Dict
 
 import pandas as pd
@@ -11,7 +12,7 @@ from context_engine.knoweldge_base.reranker.reranker import Reranker, Transparen
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 import pinecone
-from pinecone_datasets import Dataset
+from pinecone_datasets import Dataset, DatasetMetadata
 
 INDEX_NAME_PREFIX = "context_engine_"
 
@@ -40,10 +41,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         # Try to connect to the index
         pinecone.init()
         self._index = pinecone.Index(name=self._index_name) if self._index_name in pinecone.list_indexes() else None
-
-    @property
-    def index_name(self) -> str:
-        return self._index_name.lstrip(INDEX_NAME_PREFIX)
 
     def create_index(self,
                      dimension: Optional[int],
@@ -140,6 +137,16 @@ class KnowledgeBase(BaseKnowledgeBase):
         chunks: List[KBEncodedDocChunk] = self._encoder.encode_documents(chunks)
 
         # Upsert to Pinecone index
-        dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.dict() for c in chunks]))
+
+        # TODO: the metadata is completely redundant in this case, since we know the index
+        #  was already created with the same parameters. Either we make it optional in
+        #  pinecone-datastes or we just don't use Dataset at all
+        dataset_metadata = DatasetMetadata(name=self._index_name,
+                                           created_at=str(datetime.now()),
+                                           documents=len(chunks),
+                                           queries=0),
+
+        dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.dict() for c in chunks]),
+                                      metadata=dataset_metadata)
         dataset.to_pinecone_index(self._index_name, namespace=namespace, should_create_index=False)
         self._index = pinecone.Index(name=self._index_name)
