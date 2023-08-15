@@ -5,8 +5,10 @@ from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 from pinecone_text.sparse.base_sparse_encoder import BaseSparseEncoder
 
 from context_engine.knoweldge_base.encoder.base import Encoder
-from context_engine.knoweldge_base.models import KBQuery
+from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
 
+
+# TODO: decide if we want to remove before release
 
 class HybridEncoder(Encoder):
     """
@@ -45,3 +47,13 @@ class HybridEncoder(Encoder):
         for query, val, sparse_val in zip(queries, values, sparse_values):
             alpha = query.query_params.get("alpha", self.default_alpha)
             query.values, query.sparse_values = hybrid_convex_scale(val, sparse_val, alpha)
+
+    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):
+        pass
+
+    async def _aencode_documents_batch(self, documents: List[KBEncodedDocChunk]):
+        pass
+
+    # Alters the queries in place
+    async def _aencode_queries_batch(self, queries: List[KBQuery]):
+        pass
