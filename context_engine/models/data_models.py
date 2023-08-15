@@ -24,8 +24,4 @@ class Context(BaseModel):
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
-    def json(self, *args, **kwargs):
-        # TODO: consider formatting as pure text, without JSON syntax
-        return super().json(*args, **kwargs)
-
 # TODO: add ChatEngine main models - `Messages`, `Answer`

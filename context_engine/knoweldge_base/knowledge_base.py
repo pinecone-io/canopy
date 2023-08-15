@@ -18,6 +18,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                  chunker: Chunker,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 10,
+                 indexed_fields: List[str] = ['document_id'],
                  ):
 
         self.index_name = index_name
@@ -29,7 +30,18 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
-    def query(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+        if default_top_k < 1:
+            raise ValueError("default_top_k must be greater than 0")
+
+        if len(indexed_fields) == 0:
+            raise ValueError("Indexed_fields must contain at least one field")
+
+        if 'text' in indexed_fields:
+            raise ValueError("The 'text' field cannot be used for metadata filtering. "
+                             "Please remove it from indexed_fields")
+
+    def query(self, queries: List[Query],
+              global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
 
         # Encode queries
@@ -45,13 +57,3 @@ class KnowledgeBase(BaseKnowledgeBase):
         return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
         ]
-
-
-# TODO: remove, for testing only
-if __name__ == "__main__":
-    query = Query(text="test query", namespace="test_namespace", metadata_filter={"test": "test"}, top_k=10)
-    kbquery = KBQuery(**query.dict())
-    print(id(kbquery.text) == id(query.text))
-
-    pc = KnowledgeBase(index_name="test")
-    print(pc)

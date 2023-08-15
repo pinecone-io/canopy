@@ -22,4 +22,4 @@ class StuffingContextBuilder(BaseContextBuilder):
         context_query_results: List[ContextQueryResult]
         actual_num_tokens: int
         debug_info: dict
-        return Context(result=context_query_results, num_tokens=actual_num_tokens, debug_info=debug_info)
+        return Context(content=context_query_results, num_tokens=actual_num_tokens, debug_info=debug_info)
