@@ -29,12 +29,12 @@ class Encoder(ABC):
 
     @abstractmethod
     async def _aencode_documents_batch(self, documents: List[KBEncodedDocChunk]):
-        pass
+        raise NotImplementedError
 
     # Alters the queries in place
     @abstractmethod
     async def _aencode_queries_batch(self, queries: List[KBQuery]):
-        pass
+        raise NotImplementedError
 
     @staticmethod
     def _batch_iterator(data: list, batch_size):
