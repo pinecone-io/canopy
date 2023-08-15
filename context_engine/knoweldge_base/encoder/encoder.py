@@ -25,6 +25,7 @@ class EncodingPipeline:
                          ) -> List[PineconeDocumentRecord]:
         for batch in self._batch_iterator(records, self.batch_size):
             for step in self.encoding_steps:
+                # TODO: understand if this is the best way to do this, or should it return a new list
                 # Each step is editing the encoded_chunks in place
                 step.encode_documents(batch)
         return records
