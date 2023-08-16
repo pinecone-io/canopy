@@ -1,1 +1,1 @@
-from .openai import OpenAITokenizer
+from .openai_tokenizer import OpenAITokenizer
