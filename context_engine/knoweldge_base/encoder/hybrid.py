@@ -5,15 +5,17 @@ from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 from pinecone_text.sparse.base_sparse_encoder import BaseSparseEncoder
 
 from context_engine.knoweldge_base.encoder.base import Encoder
-from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
+from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
+from context_engine.models.data_models import Query
 
 
 # TODO: decide if we want to remove before release
 
 class HybridEncoder(Encoder):
     """
-    A hybrid encoder that combines dense embeddings and a sparse representation (e.g. keyword counts) using a
-    linear combination
+    A hybrid encoder that combines dense embeddings and a sparse representation
+    (e.g. keyword counts) using a linear  combination of the two.
+    The alpha value for the convex combination can be specified in the query_params
     """
 
     def __init__(self,
@@ -39,21 +41,21 @@ class HybridEncoder(Encoder):
         self.sparse_encoder = sparse_encoder
         self.default_alpha = default_alpha
 
-    def _encode_queries_batch(self, queries: List[KBQuery]):
-        # NOTE: assumes that a DenseEncodingStep was run first
+    def _encode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
         values = self.dense_encoder.encode_query([q.text for q in queries])
         sparse_values = self.sparse_encoder.encode_query([q.text for q in queries])
 
+        encoded_queries = []
         for query, val, sparse_val in zip(queries, values, sparse_values):
             alpha = query.query_params.get("alpha", self.default_alpha)
-            query.values, query.sparse_values = hybrid_convex_scale(val, sparse_val, alpha)
+            values, sparse_values = hybrid_convex_scale(val, sparse_val, alpha)
+            encoded_queries.append(KBQuery(**q.dict(), values=values, sparse_values=sparse_values) for q in queries)
 
-    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):
+    def _encode_documents_batch(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         pass
 
-    async def _aencode_documents_batch(self, documents: List[KBEncodedDocChunk]):
-        pass
+    async def _aencode_documents_batch(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
+        raise NotImplementedError
 
-    # Alters the queries in place
-    async def _aencode_queries_batch(self, queries: List[KBQuery]):
-        pass
+    async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
+        raise NotImplementedError
