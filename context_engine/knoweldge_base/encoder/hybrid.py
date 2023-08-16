@@ -53,16 +53,20 @@ class HybridEncoder(Encoder):
 
         encoded_queries = []
         for query, val, sparse_val in zip(queries, values, sparse_values):
-            alpha = query.query_params.get("alpha", self.default_alpha)
+            if query.query_params and "alpha" in query.query_params:
+                alpha = query.query_params["alpha"]
+            else:
+                alpha = self.default_alpha
             values, sparse_values = hybrid_convex_scale(val, sparse_val, alpha)
             encoded_queries.append(
-                KBQuery(**q.dict(), values=values, sparse_values=sparse_values) for q in
-                queries)
+                KBQuery(**query.dict(), values=values, sparse_values=sparse_values)
+            )
+        return encoded_queries
 
     def _encode_documents_batch(self,
                                 documents: List[KBDocChunk]
                                 ) -> List[KBEncodedDocChunk]:
-        pass
+        raise NotImplementedError
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]

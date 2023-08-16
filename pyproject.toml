@@ -16,6 +16,7 @@ pinecone-datasets = "^0.6.0"
 pydantic = "^1.10.7"
 pinecone-text = "^0.5.2"
 flake8-pyproject = "^1.2.3"
+pandas-stubs = "^2.0.3.230814"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -29,9 +30,17 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
+[tool.mypy]
+allow_redefinition = true
+
 [[tool.mypy.overrides]]
-module = "context_engine.*"
-disable_error_code = "no-redef"
+module = [
+    'pinecone_text.*',
+    'pinecone_datasets',
+    'pinecone'
+]
+ignore_missing_imports = true
+
 
 [tool.flake8]
 per-file-ignores = [

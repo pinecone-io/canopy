@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Union, Dict
+from typing import List, Optional
 
 from context_engine.knoweldge_base.models import QueryResult
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
@@ -18,7 +18,7 @@ class BaseKnowledgeBase(ABC):
 
     @abstractmethod
     def upsert(self,
-               documents: List[Union[Dict[str, Union[str, dict]], Document]],
+               documents: List[Document],
                namespace: str = "", ) -> None:
         pass
 
@@ -36,7 +36,7 @@ class BaseKnowledgeBase(ABC):
 
     @abstractmethod
     async def aupsert(self,
-                      documents: List[Union[Dict[str, Union[str, dict]], Document]],
+                      documents: List[Document],
                       namespace: str = "",
 
                       ) -> None:

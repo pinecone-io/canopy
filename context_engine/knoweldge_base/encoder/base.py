@@ -44,7 +44,7 @@ class Encoder(ABC):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
     @property
-    def dense_dimension(self) -> Optional:
+    def dense_dimension(self) -> Optional[int]:
         """
         Returns:
             The dimension of the dense vectors produced by the encoder, if applicable.
@@ -54,14 +54,14 @@ class Encoder(ABC):
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
-            encoded_docs.append(self._encode_documents_batch(batch))
+            encoded_docs.extend(self._encode_documents_batch(batch))
 
         return encoded_docs
 
     def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
-            kb_queries.append(self._encode_queries_batch(batch))
+            kb_queries.extend(self._encode_queries_batch(batch))
 
         return kb_queries
 
@@ -70,13 +70,13 @@ class Encoder(ABC):
                                 ) -> List[KBEncodedDocChunk]:
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
-            encoded_docs.append(await self._aencode_documents_batch(batch))
+            encoded_docs.extend(await self._aencode_documents_batch(batch))
 
         return encoded_docs
 
     async def aencode_queries(self, queries: List[Query]) -> List[KBQuery]:
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
-            kb_queries.append(await self._aencode_queries_batch(batch))
+            kb_queries.extend(await self._aencode_queries_batch(batch))
 
         return kb_queries

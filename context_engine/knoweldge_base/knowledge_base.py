@@ -180,9 +180,10 @@ class KnowledgeBase(BaseKnowledgeBase):
                                                documents=len(chunks),
                                                queries=0),
 
-            dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.to_db_record()
-                                                                     for c in chunks]),
-                                          metadata=dataset_metadata)
+            dataset = Dataset.from_pandas(
+                pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
+                metadata=dataset_metadata
+            )
 
         # Upsert to Pinecone index
         dataset.to_pinecone_index(self._index_name,
