@@ -51,7 +51,7 @@ class Encoder(ABC):
 
         return kb_queries
 
-    async def aencode_documents(self, documents: List[KBEncodedDocChunk]):
+    async def aencode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
             encoded_docs.append(await self._aencode_documents_batch(batch))
@@ -59,7 +59,7 @@ class Encoder(ABC):
         return encoded_docs
 
 
-    async def aencode_queries(self, queries: List[KBQuery]):
+    async def aencode_queries(self, queries: List[Query]) -> List[KBQuery]:
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
             kb_queries.append(await self._aencode_queries_batch(batch))
