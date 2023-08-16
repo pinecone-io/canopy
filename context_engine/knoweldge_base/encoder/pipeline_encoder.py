@@ -1,15 +1,38 @@
-from typing import List
+from abc import ABC, abstractmethod
+from typing import List, Union
 
-from context_engine.knoweldge_base.encoder.steps.base import Encoder
+from context_engine.knoweldge_base.encoder.base import Encoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
+
+class ReEncode(ABC):
+    @abstractmethod
+    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]) -> List[KBEncodedDocChunk]:
+        pass
+
+    @abstractmethod
+    def _encode_queries_batch(self, queries: List[KBQuery]) -> List[KBQuery]:
+        pass
+
+
+class RecencyEncoding(ReEncode):
+    raise NotImplementedError
+
+class BoostEncoding(ReEncode):
+    raise NotImplementedError
+
+class DimensionalityReduction(ReEncode):
+    raise NotImplementedError
 
 
 class PipelineEncoder(Encoder):
 
-    def __init__(self, encoding_steps: List[Encoder], **kwargs):
+    def __init__(self, encoding_steps: List[Union[Encoder, ReEncode]], **kwargs):
         super().__init__(**kwargs)
         if len(encoding_steps) == 0:
             raise ValueError("Must provide at least one encoding step")
+
+        if not isinstance(encoding_steps[0], Encoder):
+            raise ValueError("First step must be an Encoder")
 
         self.encoding_steps = encoding_steps
 
@@ -22,5 +45,6 @@ class PipelineEncoder(Encoder):
         for step in self.encoding_steps:
             # Each step is editing the kb_queries in place
             step.encode_queries(queries)
+
 
 
