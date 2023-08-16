@@ -8,7 +8,8 @@ class OpenAITokenizer(Tokenizer):
         self._encoder = tiktoken.encoding_for_model(model_name)
 
     def tokenize(self, text: str) -> List[str]:
-        return [self._encoder.decode([encoded_token]) for encoded_token in self._encoder.encode(text)]
+        return [self._encoder.decode([encoded_token])
+                for encoded_token in self._encoder.encode(text)]
 
     def detokenize(self, tokens: List[str]) -> str:
         return "".join(tokens)
