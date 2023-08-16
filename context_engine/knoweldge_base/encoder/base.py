@@ -38,11 +38,11 @@ class Encoder(ABC):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
-        encoded_chunks = []
+        encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
-            encoded_chunks.append(self._encode_documents_batch(batch))
+            encoded_docs.append(self._encode_documents_batch(batch))
 
-        return encoded_chunks
+        return encoded_docs
 
     def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
         kb_queries = []
@@ -52,11 +52,11 @@ class Encoder(ABC):
         return kb_queries
 
     async def aencode_documents(self, documents: List[KBEncodedDocChunk]):
-        encoded_chunks = []
+        encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
-            encoded_chunks.append(await self._aencode_documents_batch(batch))
+            encoded_docs.append(await self._aencode_documents_batch(batch))
 
-        return encoded_chunks
+        return encoded_docs
 
 
     async def aencode_queries(self, queries: List[KBQuery]):
