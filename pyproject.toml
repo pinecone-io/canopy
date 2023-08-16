@@ -24,6 +24,7 @@ jupyter = "^1.0.0"
 pytest = "^7.3.2"
 mypy = "^1.4.1"
 flake8 = "^6.1.0"
+pytest-html = "^3.2.0"
 
 [build-system]
 requires = ["poetry-core"]
