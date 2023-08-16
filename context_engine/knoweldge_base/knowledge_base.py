@@ -40,7 +40,15 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # Try to connect to the index
         pinecone.init()
-        self._index = pinecone.Index(name=self._index_name) if self._index_name in pinecone.list_indexes() else None
+        try:
+            self._index = pinecone.Index(name=self._index_name)
+            self._index.describe_index_stats()
+        except Exception as e:
+            if self._index_name in pinecone.list_indexes():
+                raise RuntimeError("Failed to connect to the index. "
+                                   "Please check your credentials and index name") from e
+            else:
+                self._index = None
 
     def create_index(self,
                      dimension: Optional[int],
@@ -56,6 +64,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             indexed_fields (List[str]): The fields that will be indexed and can be used
                                         for metadata filtering. Defaults to ['document_id'].
                                         The 'text' field cannot be used for filtering.
+            **kwargs: Any additional arguments will be passed to the `pinecone.create_index()` function.
 
         Keyword Args:
             Any additional arguments will be passed to the pinecone.create_index function.
@@ -103,6 +112,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                   'indexed' : indexed_fields
                                 },
                               **kwargs)
+        self._index = pinecone.Index(name=self._index_name)
 
 
     def query(self, queries: List[Query],
@@ -127,26 +137,46 @@ class KnowledgeBase(BaseKnowledgeBase):
         ]
 
     def upsert(self,
-               documents: List[Union[Dict[str, Union[str, dict]], Document]],
+               documents: List[Document],
                namespace: str = ""):
+        if self._index is None:
+            raise RuntimeError("Index does not exist. Please call `create_index()` first")
 
-        # Chunk documents
-        chunks = self._chunker.chunk_documents(documents)
+        dataset = self._load_cached_chunks_dataset(documents)
+        if dataset is None:
+            # Chunk documents
+            chunks = self._chunker.chunk_documents(documents)
 
-        # Encode documents
-        chunks: List[KBEncodedDocChunk] = self._encoder.encode_documents(chunks)
+            # Encode documents
+            chunks: List[KBEncodedDocChunk] = self._encoder.encode_documents(chunks)
+
+            # Create chunks dataset for batch upsert
+
+            # TODO: the metadata is completely redundant in this case, since we know the index
+            #  was already created with the same parameters. Either we make it optional in
+            #  pinecone-datastes or we just don't use Dataset at all
+            dataset_metadata = DatasetMetadata(name=self._index_name,
+                                               created_at=str(datetime.now()),
+                                               documents=len(chunks),
+                                               queries=0),
+
+            dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
+                                          metadata=dataset_metadata)
 
         # Upsert to Pinecone index
-
-        # TODO: the metadata is completely redundant in this case, since we know the index
-        #  was already created with the same parameters. Either we make it optional in
-        #  pinecone-datastes or we just don't use Dataset at all
-        dataset_metadata = DatasetMetadata(name=self._index_name,
-                                           created_at=str(datetime.now()),
-                                           documents=len(chunks),
-                                           queries=0),
-
-        dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.dict() for c in chunks]),
-                                      metadata=dataset_metadata)
         dataset.to_pinecone_index(self._index_name, namespace=namespace, should_create_index=False)
-        self._index = pinecone.Index(name=self._index_name)
+
+    def _load_cached_chunks_dataset(self, documents: List[Document]) -> Optional[Dataset]:
+        """
+        Load the dataset of chunks from cache on disk, if it exists
+
+        Args:
+            documents (List[Document]): The set of documents. If a cached dataset of
+                                        chunks exists, it must have been created from
+                                        the same set of documents.
+
+        Returns:
+            Optional[Dataset]: The dataset of chunks, if it exists. Otherwise, None.
+        """
+        # TODO: implement
+        return None
