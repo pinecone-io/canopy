@@ -17,11 +17,7 @@ class BaseKnowledgeBase(ABC):
         pass
 
     @abstractmethod
-    def upsert(self,
-               documents: List[Union[Dict[str, Union[str, dict]], Document]],
-               namespace: str = "",
-
-               ) -> None:
+    def upsert(self, documents: List[Union[Dict[str, Union[str, dict]], Document]], namespace: str = "",) -> None:
         pass
 
     # TODO: Do we want delete by metadata?
@@ -30,9 +26,7 @@ class BaseKnowledgeBase(ABC):
         pass
 
     @abstractmethod
-    async def aquery(self,
-                     queries: List[Query],
-                     global_metadata_filter: Optional[dict] = None
+    async def aquery(self, queries: List[Query], global_metadata_filter: Optional[dict] = None
                      ) -> List[QueryResult]:
         pass
 

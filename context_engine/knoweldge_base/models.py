@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import List, Optional
 
 from pinecone_text.sparse import SparseVector
@@ -20,8 +21,19 @@ class KBDocChunkWithScore(KBDocChunk):
 
 
 class KBEncodedDocChunk(KBDocChunk):
-    values: Optional[VectorValues] = None
+    values: VectorValues
     sparse_values: Optional[SparseVector] = None
+
+    def to_db_record(self):
+        metadata = deepcopy(self.metadata)
+        metadata["text"] = self.text
+
+        return {
+            "id": self.document_id,
+            "values": self.values,
+            "metadata": metadata,
+            "sparse_values": self.sparse_values,
+        }
 
 
 class KBQuery(Query):

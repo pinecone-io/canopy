@@ -9,7 +9,8 @@ class Query(BaseModel):
     text: str
     namespace: str = ""
     metadata_filter: Optional[dict]
-    top_k: int
+    top_k: Optional[int]
+    query_params: Optional[dict] = Field(default_factory=dict)
 
 
 class Document(BaseModel):
@@ -22,9 +23,5 @@ class Context(BaseModel):
     content: Union[str, BaseModel, Iterable[BaseModel]]
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
-
-    def json(self, *args, **kwargs):
-        # TODO: consider formatting as pure text, without JSON syntax
-        return super().json(*args, **kwargs)
 
 # TODO: add ChatEngine main models - `Messages`, `Answer`
