@@ -6,11 +6,13 @@ from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk
 
 class ReEncode(ABC):
     @abstractmethod
-    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]) -> List[KBEncodedDocChunk]:
+    # Each step is editing the encoded_chunks in place
+    def _encode_documents_batch(self, documents: List[KBEncodedDocChunk]):
         pass
 
     @abstractmethod
-    def _encode_queries_batch(self, queries: List[KBQuery]) -> List[KBQuery]:
+    # Each step is editing the kb_queries in place
+    def _encode_queries_batch(self, queries: List[KBQuery]):
         pass
 
 
