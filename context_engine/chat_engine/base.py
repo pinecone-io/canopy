@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
-from ctypes import Union
-from typing import Iterable
+from typing import Iterable, Union
 
 from context_engine.context_engine import ContextEngine
 from context_engine.llm.base import LLM
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
-from context_engine.models.data_models import Context
+from context_engine.models.data_models import Context, Messages
 
 
 class ChatEngine(ABC):
@@ -23,7 +22,7 @@ class ChatEngine(ABC):
 
     @abstractmethod
     def chat(self,
-             messages: History,
+             messages: Messages,
              *,
              stream: bool = False,
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
@@ -31,7 +30,7 @@ class ChatEngine(ABC):
 
     @abstractmethod
     def get_context(self,
-                    messages: History,
+                    messages: Messages,
                     *,
                     stream: bool = False,
                     ) -> Context:
