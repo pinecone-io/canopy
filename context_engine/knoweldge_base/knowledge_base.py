@@ -1,20 +1,22 @@
 from datetime import datetime
-from typing import List, Optional, Union, Dict
+from typing import List, Optional
 
 import pandas as pd
+import pinecone
+from pinecone_datasets import Dataset, DatasetMetadata
 
 from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
 from context_engine.knoweldge_base.chunker.base import Chunker
 from context_engine.knoweldge_base.encoder.base import Encoder
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                                  KBDocChunk, KBEncodedDocChunk, )
-from context_engine.knoweldge_base.reranker.reranker import Reranker, TransparentReranker
+                                                  KBEncodedDocChunk, )
+from context_engine.knoweldge_base.reranker.reranker import (Reranker,
+                                                             TransparentReranker, )
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
-import pinecone
-from pinecone_datasets import Dataset, DatasetMetadata
 
 INDEX_NAME_PREFIX = "context_engine_"
+
 
 class KnowledgeBase(BaseKnowledgeBase):
     def __init__(self,
@@ -60,7 +62,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         except Exception as e:
             if self._index_name in pinecone.list_indexes():
                 raise RuntimeError("Failed to connect to the index. "
-                                   "Please check your credentials and index name") from e
+                                   "Please check your credentials and index name") \
+                    from e
             else:
                 self._index = None
 
@@ -76,28 +79,38 @@ class KnowledgeBase(BaseKnowledgeBase):
                                        The knowledge base will try to infer it from the
                                        encoder if not provided.
             indexed_fields (List[str]): The fields that will be indexed and can be used
-                                        for metadata filtering. Defaults to ['document_id'].
+                                        for metadata filtering.
+                                        Defaults to ['document_id'].
                                         The 'text' field cannot be used for filtering.
-            **kwargs: Any additional arguments will be passed to the `pinecone.create_index()` function.
+            **kwargs: Any additional arguments will be passed to the
+                      `pinecone.create_index()` function.
 
         Keyword Args:
-            Any additional arguments will be passed to the pinecone.create_index function.
-            index_type: type of index, one of {"approximated", "exact"}, defaults to "approximated".
-            metric (str, optional): type of metric used in the vector index, one of {"cosine", "dotproduct", "euclidean"}, defaults to "cosine".
-                                    - Use "cosine" for cosine similarity,
-                                    - "dotproduct" for dot-product,
-                                    - and "euclidean" for euclidean distance.
+            index_type: type of index, one of {"approximated", "exact"}, defaults to
+                        "approximated".
+            metric (str, optional): type of metric used in the vector index, one of
+                {"cosine", "dotproduct", "euclidean"}, defaults to "cosine".
+                - Use "cosine" for cosine similarity,
+                - "dotproduct" for dot-product,
+                - and "euclidean" for euclidean distance.
             replicas (int, optional): the number of replicas, defaults to 1.
-                - Use at least 2 replicas if you need high availability (99.99% uptime) for querying.
-                - For additional throughput (QPS) your index needs to support, provision additional replicas.
+                - Use at least 2 replicas if you need high availability (99.99%
+                uptime) for querying.
+                - For additional throughput (QPS) your index needs to support,
+                provision additional replicas.
             shards (int, optional): the number of shards per index, defaults to 1.
                 - Use 1 shard per 1GB of vectors.
-            pods (int, optional): Total number of pods to be used by the index. pods = shard*replicas.
-            pod_type (str, optional): the pod type to be used for the index. can be one of p1 or s1.
+            pods (int, optional): Total number of pods to be used by the index.
+                pods = shard*replicas.
+            pod_type (str, optional): the pod type to be used for the index.
+                can be one of p1 or s1.
             index_config: Advanced configuration options for the index.
-            metadata_config (dict, optional): Configuration related to the metadata index.
+            metadata_config (dict, optional): Configuration related to the metadata
+                index.
             source_collection (str, optional): Collection name to create the index from.
-            timeout (int, optional): Timeout for wait until index gets ready. If None, wait indefinitely; if >=0, time out after this many seconds; if -1, return immediately and do not wait. Default: None.
+            timeout (int, optional): Timeout for wait until index gets ready.
+                If None, wait indefinitely; if >=0, time out after this many seconds;
+                if -1, return immediately and do not wait. Default: None.
 
         Returns:
             None
@@ -122,19 +135,19 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         pinecone.create_index(name=self._index_name,
                               dimension=dimension,
-                              metadata_config = {
-                                  'indexed' : indexed_fields
-                                },
+                              metadata_config={
+                                  'indexed': indexed_fields
+                              },
                               **kwargs)
         self._index = pinecone.Index(name=self._index_name)
-
 
     def query(self, queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
 
         if self._index is None:
-            raise RuntimeError("Index does not exist. Please call `create_index()` first")
+            raise RuntimeError(
+                "Index does not exist. Please call `create_index()` first")
 
         # Encode queries
         queries: List[KBQuery] = self._encoder.encode_queries(queries)
@@ -143,7 +156,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         results: List[KBQueryResult]
 
         # Rerank results
-        results = self._reranker.rerank(results)
+        results = self._reranker.rerank(results) # noqa
 
         # Convert to QueryResult
         return [
@@ -152,9 +165,11 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def upsert(self,
                documents: List[Document],
-               namespace: str = ""):
+               namespace: str = ""
+               ):
         if self._index is None:
-            raise RuntimeError("Index does not exist. Please call `create_index()` first")
+            raise RuntimeError(
+                "Index does not exist. Please call `create_index()` first")
 
         dataset = self._load_cached_chunks_dataset(documents)
         if dataset is None:
@@ -166,16 +181,21 @@ class KnowledgeBase(BaseKnowledgeBase):
 
             # Create chunks dataset for batch upsert
 
-            # TODO: the metadata is completely redundant in this case, since we know the index
-            #  was already created with the same parameters. Either we make it optional in
+            # TODO: the metadata is completely redundant in this case, since we know
+            #  the index
+            #  was already created with the same parameters. Either we make it
+            #  optional in
             #  pinecone-datastes or we just don't use Dataset at all
             dataset_metadata = DatasetMetadata(name=self._index_name,
                                                created_at=str(datetime.now()),
                                                documents=len(chunks),
                                                queries=0),
 
-            dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
-                                          metadata=dataset_metadata)
+            dataset = Dataset.from_pandas(
+                pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
+                metadata=dataset_metadata
+            )
+            self._save_chunks_dataset(dataset, documents)
 
         # TODO: implement delete
         # The upsert operation may update documents which may already exist in the
@@ -185,9 +205,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         self.delete([doc.id for doc in documents], namespace=namespace)
 
         # Upsert to Pinecone index
-        dataset.to_pinecone_index(self._index_name, namespace=namespace, should_create_index=False)
+        dataset.to_pinecone_index(self._index_name,
+                                  namespace=namespace,
+                                  should_create_index=False)
 
-    def _load_cached_chunks_dataset(self, documents: List[Document]) -> Optional[Dataset]:
+    def _load_cached_chunks_dataset(self,
+                                    documents: List[Document]
+                                    ) -> Optional[Dataset]:
         """
         Load the dataset of chunks from cache on disk, if it exists
 
@@ -202,7 +226,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # TODO: implement
         return None
 
-    def _cache_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
+    def _save_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
         """
         For a given set of documents, save the dataset of generated chunks to cache on
         the local disk or in the cloud.
