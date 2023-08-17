@@ -10,10 +10,7 @@ from context_engine.models.data_models import Context
 
 class StuffingContextBuilder(BaseContextBuilder):
 
-    def __init__(self,
-                 tokenizer: Tokenizer,
-                 source_metadata_field: str,
-                 include_queries: bool = True,):
+    def __init__(self, tokenizer: Tokenizer, reference_metadata_field: str):
         self._tokenizer = tokenizer
         self._source_metadata_field = source_metadata_field
         self._include_queries = include_queries
