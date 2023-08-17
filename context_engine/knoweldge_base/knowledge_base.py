@@ -177,6 +177,13 @@ class KnowledgeBase(BaseKnowledgeBase):
             dataset = Dataset.from_pandas(pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
                                           metadata=dataset_metadata)
 
+        # TODO: implement delete
+        # The upsert operation may update documents which may already exist in the
+        # index, as many invidual chunks. As the process of chunking might have changed
+        # the number of chunks per document, we need to delete all existing chunks
+        # belonging to the same documents before upserting the new ones.
+        self.delete([doc.id for doc in documents], namespace=namespace)
+
         # Upsert to Pinecone index
         dataset.to_pinecone_index(self._index_name, namespace=namespace, should_create_index=False)
 
