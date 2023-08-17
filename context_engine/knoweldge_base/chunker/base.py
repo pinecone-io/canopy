@@ -28,5 +28,4 @@ class Chunker(ABC):
 
     @abstractmethod
     async def achunk_single_document(self, document: Document) -> List[KBDocChunk]:
-
-
+        raise NotImplementedError()
