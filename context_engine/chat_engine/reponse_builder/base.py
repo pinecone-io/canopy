@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Union, Iterable
 
-from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
 from context_engine.models.data_models import Context, Messages
 
@@ -12,7 +11,7 @@ class ChatResponseBuilder(ABC):
               context: Context,
               messages: Messages,
               max_prompt_tokens: int,
-              history_pruning: HistoryPruningMethod
+              stream: bool = False,
               ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
 
@@ -20,6 +19,6 @@ class ChatResponseBuilder(ABC):
                      context: Context,
                      messages: Messages,
                      max_prompt_tokens: int,
-                     history_pruning: HistoryPruningMethod
+                     stream: bool = False,
                      ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         raise NotImplementedError
