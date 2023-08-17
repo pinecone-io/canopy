@@ -201,3 +201,17 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         # TODO: implement
         return None
+
+    def _cache_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
+        """
+        For a given set of documents, save the dataset of generated chunks to cache on
+        the local disk or in the cloud.
+
+        Args:
+            chunks_dataset (Dataset): The dataset of chunks generated for the given
+                                      documents set.
+            documents (List[Document]): The set of documents. A hashing function will
+                                        be used to generate a unique id for the
+                                        cached dataset.
+        """
+        pass
