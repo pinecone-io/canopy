@@ -12,15 +12,15 @@ class StuffingContextBuilder(BaseContextBuilder):
 
     def __init__(self, tokenizer: Tokenizer, reference_metadata_field: str):
         self._tokenizer = tokenizer
-        self._reference_metadata_field= reference_metadata_field
+        self._reference_metadata_field = reference_metadata_field
 
     def build(self, query_results: List[QueryResult], max_context_tokens: int) -> Context:
 
         sorted_docs_with_origin = self._round_robin_sort(query_results)
 
         # Stuff as many documents as possible into the context
-        context_query_results: List[ContextQueryResult] = [ContextQueryResult(query=qr.query, snippets=[])
-                                                           for qr in query_results]
+        context_query_results = [ContextQueryResult(query=qr.query, snippets=[])
+                                 for qr in query_results]
         debug_info = {"num_docs": len(sorted_docs_with_origin)}
         context = Context(content=context_query_results, num_tokens=0, debug_info=debug_info)
 
@@ -30,7 +30,8 @@ class StuffingContextBuilder(BaseContextBuilder):
         seen_doc_ids = set()
         for doc, origin_query_idx in sorted_docs_with_origin:
             if doc.id not in seen_doc_ids:
-                snippet = ContextSnippet(text=doc.text, source=doc.metadata.get(self._reference_metadata_field, None))
+                snippet = ContextSnippet(text=doc.text,
+                                         source=doc.metadata.get(self._reference_metadata_field, None))
 
                 # try inserting the snippet into the context
                 context_query_results[origin_query_idx].snippets.append(snippet)
