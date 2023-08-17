@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
-from context_engine.llm.models import AssistantMessage
-from context_engine.models.data_models import MessageBase, LLMResponse
+from context_engine.models.data_models import MessageBase
 
 
 class _Choice(BaseModel):
@@ -22,10 +21,11 @@ class _StreamChoice(BaseModel):
 class TokenCounts(BaseModel):
     prompt_tokens: int
     completion_tokens: int
+    total_tokens: Optional[int] = None
 
-    @property
-    def total_tokens(self):
-        return self.prompt_tokens + self.completion_tokens
+    @validator("total_tokens", always=True)
+    def calc_total_tokens(cls, v, values, **kwargs):
+        return values["prompt_tokens"] + values["completion_tokens"]
 
 
 class ChatResponse(BaseModel):
@@ -35,24 +35,7 @@ class ChatResponse(BaseModel):
     model: str
     choices: Sequence[_Choice]
     usage: TokenCounts
-
-    @classmethod
-    def from_llm_response(cls,
-                          llm_response: LLMResponse,
-                          model: str,
-                          prompt_tokens: Optional[int] = None,
-                          ):
-        return cls(id=llm_response.id,
-                   model=model,
-                   choices=[
-                       _Choice(message=AssistantMessage(content=msg), index=i)
-                       for i, msg in enumerate(llm_response.choices)
-                   ],
-                   usage=TokenCounts(
-                       prompt_tokens=llm_response.prompt_tokens or prompt_tokens or -1,
-                       completion_tokens=llm_response.generated_tokens or -1
-                   ),
-                   )
+    debug_info: dict = Field(default_factory=dict, exclude=True)
 
 
 class StreamingChatResponse(BaseModel):

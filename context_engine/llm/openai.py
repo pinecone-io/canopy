@@ -4,6 +4,7 @@ import openai
 
 from context_engine.llm.base import LLM
 from context_engine.llm.models import Function, ModelParams
+from context_engine.models.api_models import ChatResponse, StreamingChatResponse
 from context_engine.models.data_models import History, LLMResponse
 
 
@@ -15,7 +16,7 @@ class OpenAILLM(LLM):
                         stream: bool = False,
                         max_generated_tokens: Optional[int] = None,
                         model_params: Optional[ModelParams] = None,
-                        ) -> Union[LLMResponse, Iterable[LLMResponse]]:
+                        ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
 
         model_params_dict: Dict[str, Any] = {}
         if model_params:
@@ -33,40 +34,9 @@ class OpenAILLM(LLM):
 
         def streaming_iterator(response):
             for chunk in response:
-                content = [c.delta.get("content", "") for c in chunk.choices]
-                yield LLMResponse(id=chunk.id, choices=content)
+                yield StreamingChatResponse(**chunk)
 
         if stream:
             return streaming_iterator(response)
-        else:
-            content = [c.message.get("content", "") for c in response.choices]
-            return LLMResponse(id=response.id,
-                               choices=content,
-                               generated_tokens=response.usage.completion_tokens,
-                               prompt_tokens=response.usage.prompt_tokens)
 
-    def enforced_function_call(self,
-                               messages: History,
-                               function: Function,
-                               max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None,
-                               ) -> dict:
-        raise NotImplementedError
-
-    async def achat_completion(self,
-                               messages: History,
-                               *,
-                               stream: bool = False,
-                               max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None,
-                               ) -> Union[LLMResponse, Iterable[LLMResponse]]:
-        raise NotImplementedError
-
-    async def aenforced_function_call(self,
-                                      messages: History,
-                                      function: Function,
-                                      *,
-                                      max_generated_tokens: Optional[int] = None,
-                                      model_params: Optional[ModelParams] = None,
-                                      ) -> dict:
-        raise NotImplementedError
+        return ChatResponse(**response)

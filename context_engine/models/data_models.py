@@ -50,11 +50,11 @@ class MessageBase(BaseModel):
         return d
 
 
-History = Sequence[MessageBase]
+History = List[MessageBase]
 
 
 class LLMResponse(BaseModel):
     id: str
     choices: Sequence[str]
-    generated_tokens: Optional[int] = None
-    prompt_tokens: Optional[int] = None
+    generated_tokens: Optional[int] = Field(default=None, exclude=True)
+    prompt_tokens: Optional[int] = Field(default=None, exclude=True)
