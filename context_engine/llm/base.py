@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Optional, Sequence, cast
+from typing import Union, Iterable, Optional, cast
 
 from context_engine.llm.models import Function, ModelParams, UserMessage
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
