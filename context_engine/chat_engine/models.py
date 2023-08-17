@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class HistoryPrunningMethod(Enum):
+class HistoryPruningMethod(Enum):
     RAISE = "raise",
     TRUNCATE = "truncate",
     SEARCH = "search"

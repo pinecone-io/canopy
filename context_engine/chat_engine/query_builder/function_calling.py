@@ -2,7 +2,7 @@ from context_engine.chat_engine.query_builder.base import QueryBuilder
 
 from typing import List, Optional
 
-from context_engine.chat_engine.models import HistoryPrunningMethod
+from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.llm.base import LLM
 from context_engine.models.data_models import Messages, Query
 
@@ -21,7 +21,7 @@ class FunctionCallingQueryBuilder(QueryBuilder):
         self.llm = llm
 
         if prompt is not None and prompt_template is not None:
-            raise ValueError("`prompt` and `prompt_template` cannot be both set")
+            raise ValueError("`prompt` and `prompt_template` cannot be set together")
         if prompt:
             self.prompt = prompt
         elif prompt_template:
@@ -34,6 +34,6 @@ class FunctionCallingQueryBuilder(QueryBuilder):
     def build(self,
               messages: Messages,
               max_prompt_tokens: int,
-              history_pruning: HistoryPrunningMethod
+              history_pruning: HistoryPruningMethod
               ) -> List[Query]:
         raise NotImplementedError

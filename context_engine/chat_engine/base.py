@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Union
 
+from context_engine.chat_engine.query_builder.base import QueryBuilder
 from context_engine.context_engine import ContextEngine
 from context_engine.llm.base import LLM
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
@@ -47,11 +48,13 @@ class ChatEngine(BaseChatEngine):
                  *,
                  llm: LLM,
                  context_engine: ContextEngine,
+                 query_builder: QueryBuilder,
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
                  ):
         self.llm = llm
         self.context_engine = context_engine
+        self.query_builder = query_builder
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
 
