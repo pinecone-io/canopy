@@ -5,6 +5,7 @@ from pydantic import BaseModel, Field
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
+
 # ----------------- Context Engine models -----------------
 
 
@@ -26,6 +27,7 @@ class Context(BaseModel):
     content: Union[str, BaseModel, Iterable[BaseModel]]
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
+
 
 # TODO: add ChatEngine main models - `Messages`, `Answer`
 
@@ -56,7 +58,3 @@ class LLMResponse(BaseModel):
     choices: Sequence[str]
     generated_tokens: Optional[int] = None
     prompt_tokens: Optional[int] = None
-
-
-
-

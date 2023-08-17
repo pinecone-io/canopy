@@ -1,10 +1,11 @@
+from typing import Union, Iterable, Optional, Any, Dict
+
 import openai
 
 from context_engine.llm.base import LLM
-from typing import Union, Iterable, Optional, Any, Dict
-
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.data_models import History, LLMResponse
+
 
 class OpenAILLM(LLM):
 
@@ -28,8 +29,7 @@ class OpenAILLM(LLM):
                                                 messages=messages,
                                                 stream=stream,
                                                 max_tokens=max_generated_tokens,
-                                                **model_params_dict
-        )
+                                                **model_params_dict)
 
         def streaming_iterator(response):
             for chunk in response:
@@ -53,7 +53,6 @@ class OpenAILLM(LLM):
                                ) -> dict:
         raise NotImplementedError
 
-
     async def achat_completion(self,
                                messages: History,
                                *,
@@ -71,4 +70,3 @@ class OpenAILLM(LLM):
                                       model_params: Optional[ModelParams] = None,
                                       ) -> dict:
         raise NotImplementedError
-

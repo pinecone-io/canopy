@@ -4,6 +4,7 @@ from typing import Union, Iterable, Optional
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.data_models import History, LLMResponse
 
+
 class LLM(ABC):
     def __init__(self,
                  model_name: str,
@@ -34,7 +35,6 @@ class LLM(ABC):
                                ) -> dict:
         pass
 
-
     @abstractmethod
     async def achat_completion(self,
                                messages: History,
@@ -54,4 +54,3 @@ class LLM(ABC):
                                       model_params: Optional[ModelParams] = None,
                                       ) -> dict:
         pass
-

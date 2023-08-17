@@ -32,4 +32,3 @@ class ModelParams(BaseModel):
     temperature: float = 0.7
     num_choices: int = 1
     max_p: float = 1.0
-
