@@ -29,12 +29,13 @@ class LLM(ABC):
 
     def call(self,
              prompt: str,
-             history: History,
              *,
+             history: Optional[History],
              max_generated_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None,
              ) -> LLMResponse:
-
+        if not history:
+            history = []
         messages: History = history + [UserMessage(content=prompt)]
         response = self.chat_completion(
             messages,
@@ -54,9 +55,9 @@ class LLM(ABC):
     @abstractmethod
     def enforced_function_call(self,
                                prompt: str,
-                               messages: History,
                                function: Function,
                                *,
+                               history: Optional[History],
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> dict:

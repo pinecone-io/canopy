@@ -43,9 +43,9 @@ class OpenAILLM(LLM):
 
     def enforced_function_call(self,
                                prompt: str,
-                               messages: History,
                                function: Function,
                                *,
+                               history: Optional[History],
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> dict:
