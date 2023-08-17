@@ -50,7 +50,7 @@ class MessageBase(BaseModel):
         return d
 
 
-History = List[MessageBase]
+Messages = List[MessageBase]
 
 
 class LLMResponse(BaseModel):

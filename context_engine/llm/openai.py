@@ -5,13 +5,13 @@ import openai
 from context_engine.llm.base import LLM
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
-from context_engine.models.data_models import History
+from context_engine.models.data_models import Messages
 
 
 class OpenAILLM(LLM):
 
     def chat_completion(self,
-                        messages: History,
+                        messages: Messages,
                         *,
                         stream: bool = False,
                         max_generated_tokens: Optional[int] = None,
@@ -45,7 +45,7 @@ class OpenAILLM(LLM):
                                prompt: str,
                                function: Function,
                                *,
-                               history: Optional[History],
+                               history: Optional[Messages],
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> dict:

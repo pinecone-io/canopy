@@ -3,7 +3,7 @@ from typing import Union, Iterable, Optional, cast
 
 from context_engine.llm.models import Function, ModelParams, UserMessage
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
-from context_engine.models.data_models import History, LLMResponse
+from context_engine.models.data_models import Messages, LLMResponse
 
 
 class LLM(ABC):
@@ -19,7 +19,7 @@ class LLM(ABC):
 
     @abstractmethod
     def chat_completion(self,
-                        messages: History,
+                        messages: Messages,
                         *,
                         stream: bool = False,
                         max_generated_tokens: Optional[int] = None,
@@ -30,13 +30,13 @@ class LLM(ABC):
     def call(self,
              prompt: str,
              *,
-             history: Optional[History],
+             history: Optional[Messages],
              max_generated_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None,
              ) -> LLMResponse:
         if not history:
             history = []
-        messages: History = history + [UserMessage(content=prompt)]
+        messages: Messages = history + [UserMessage(content=prompt)]
         response = self.chat_completion(
             messages,
             stream=False,
@@ -57,7 +57,7 @@ class LLM(ABC):
                                prompt: str,
                                function: Function,
                                *,
-                               history: Optional[History],
+                               history: Optional[Messages],
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> dict:
@@ -65,7 +65,7 @@ class LLM(ABC):
 
     @abstractmethod
     async def achat_completion(self,
-                               messages: History,
+                               messages: Messages,
                                *,
                                stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
@@ -75,7 +75,7 @@ class LLM(ABC):
 
     @abstractmethod
     async def aenforced_function_call(self,
-                                      messages: History,
+                                      messages: Messages,
                                       function: Function,
                                       *,
                                       max_generated_tokens: Optional[int] = None,
