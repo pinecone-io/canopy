@@ -195,6 +195,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                 pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
                 metadata=dataset_metadata
             )
+            self._save_chunks_dataset(dataset, documents)
 
         # TODO: implement delete
         # The upsert operation may update documents which may already exist in the
@@ -225,7 +226,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # TODO: implement
         return None
 
-    def _cache_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
+    def _save_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
         """
         For a given set of documents, save the dataset of generated chunks to cache on
         the local disk or in the cloud.
