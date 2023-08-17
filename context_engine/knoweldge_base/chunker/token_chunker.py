@@ -8,8 +8,6 @@ from ...models.data_models import Document
 
 class TokenChunker(Chunker):
 
-    """TODO: this is a naive chunker to unblock dev, we need to implement a more sophisticated chunker"""
-
     def __init__(self,
                  tokenizer: Tokenizer,
                  max_chunk_size: int = 200,
@@ -20,8 +18,15 @@ class TokenChunker(Chunker):
 
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
         tokens = self._tokenizer.tokenize(document.text)
-        token_chunks = [tokens[i:i + self._chunk_size] for i in range(0, len(tokens), self._chunk_size - self._overlap)]
-        text_chunks = [self._tokenizer.detokenize(chunk).strip() for chunk in token_chunks]
+        token_chunks = [tokens[i:i + self._chunk_size]
+                        for i in range(0, len(tokens), self._chunk_size - self._overlap)]
+
+        # remove last chunk if it is smaller than overlap
+        if len(token_chunks[-1]) <= self._overlap and len(token_chunks) > 1:
+            token_chunks = token_chunks[:-1]
+
+        text_chunks = [self._tokenizer.detokenize(chunk).strip()
+                       for chunk in token_chunks]
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
                            text=text_chunk,
