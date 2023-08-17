@@ -1,7 +1,7 @@
 import openai
 
 from context_engine.llm.base import LLM
-from typing import Union, Iterable, Optional
+from typing import Union, Iterable, Optional, Any, Dict
 
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.data_models import History, LLMResponse
@@ -16,7 +16,7 @@ class OpenAILLM(LLM):
                         model_params: Optional[ModelParams] = None,
                         ) -> Union[LLMResponse, Iterable[LLMResponse]]:
 
-        model_params_dict = {}
+        model_params_dict: Dict[str, Any] = {}
         if model_params:
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
         model_params_dict.update(**self.default_model_params.dict())
@@ -28,7 +28,7 @@ class OpenAILLM(LLM):
                                                 messages=messages,
                                                 stream=stream,
                                                 max_tokens=max_generated_tokens,
-                                                **model_params.dict()
+                                                **model_params_dict
         )
 
         def streaming_iterator(response):
@@ -51,7 +51,7 @@ class OpenAILLM(LLM):
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> dict:
-        pass
+        raise NotImplementedError
 
 
     async def achat_completion(self,

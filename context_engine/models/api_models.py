@@ -31,7 +31,7 @@ class TokenCounts(BaseModel):
 class ChatResponse(BaseModel):
     id: str
     object: str = "chat.completion"
-    created: Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
+    created: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
     model: str
     choices: Sequence[_Choice]
     usage: TokenCounts
@@ -45,12 +45,12 @@ class ChatResponse(BaseModel):
         return cls(id=llm_response.id,
                    model=model,
                    choices=[
-                       _Choice(message=AssistantMessage(content=msg, index=i)
-                               for i, msg in enumerate(llm_response.choices))
+                       _Choice(message=AssistantMessage(content=msg), index=i)
+                       for i, msg in enumerate(llm_response.choices)
                    ],
                    usage=TokenCounts(
-                       prompt_tokens=llm_response.prompt_tokens or prompt_tokens,
-                       completion_tokens=llm_response.generated_tokens
+                       prompt_tokens=llm_response.prompt_tokens or prompt_tokens or -1,
+                       completion_tokens=llm_response.generated_tokens or -1
                    ),
                    )
 
@@ -58,5 +58,5 @@ class ChatResponse(BaseModel):
 class StreamingChatResponse(BaseModel):
     id: str
     object: str = "chat.chunk"
-    created: Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
+    created: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
     model: str
