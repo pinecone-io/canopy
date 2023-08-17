@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from context_engine.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
 from context_engine.models.data_models import Query
@@ -36,6 +36,14 @@ class Encoder(ABC):
     @staticmethod
     def _batch_iterator(data: list, batch_size):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
+
+    @property
+    def dense_dimension(self) -> Optional:
+        """
+        Returns:
+            The dimension of the dense vectors produced by the encoder, if applicable.
+        """
+        return None
 
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         encoded_docs = []
