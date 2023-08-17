@@ -66,22 +66,20 @@ class KnowledgeBase(BaseKnowledgeBase):
                                        The knowledge base will try to infer it from the
                                        encoder if not provided.
             indexed_fields (List[str]): The fields that will be indexed and can be used
-                                        for metadata filtering. Defaults to [
-                                        'document_id'].
+                                        for metadata filtering.
+                                        Defaults to ['document_id'].
                                         The 'text' field cannot be used for filtering.
             **kwargs: Any additional arguments will be passed to the
-            `pinecone.create_index()` function.
+                      `pinecone.create_index()` function.
 
         Keyword Args:
-            Any additional arguments will be passed to the pinecone.create_index
-            function.
             index_type: type of index, one of {"approximated", "exact"}, defaults to
-            "approximated".
-            metric (str, optional): type of metric used in the vector index, one of {
-            "cosine", "dotproduct", "euclidean"}, defaults to "cosine".
-                                    - Use "cosine" for cosine similarity,
-                                    - "dotproduct" for dot-product,
-                                    - and "euclidean" for euclidean distance.
+                        "approximated".
+            metric (str, optional): type of metric used in the vector index, one of
+                {"cosine", "dotproduct", "euclidean"}, defaults to "cosine".
+                - Use "cosine" for cosine similarity,
+                - "dotproduct" for dot-product,
+                - and "euclidean" for euclidean distance.
             replicas (int, optional): the number of replicas, defaults to 1.
                 - Use at least 2 replicas if you need high availability (99.99%
                 uptime) for querying.
@@ -89,17 +87,17 @@ class KnowledgeBase(BaseKnowledgeBase):
                 provision additional replicas.
             shards (int, optional): the number of shards per index, defaults to 1.
                 - Use 1 shard per 1GB of vectors.
-            pods (int, optional): Total number of pods to be used by the index. pods
-            = shard*replicas.
-            pod_type (str, optional): the pod type to be used for the index. can be
-            one of p1 or s1.
+            pods (int, optional): Total number of pods to be used by the index.
+                pods = shard*replicas.
+            pod_type (str, optional): the pod type to be used for the index.
+                can be one of p1 or s1.
             index_config: Advanced configuration options for the index.
             metadata_config (dict, optional): Configuration related to the metadata
-            index.
+                index.
             source_collection (str, optional): Collection name to create the index from.
-            timeout (int, optional): Timeout for wait until index gets ready. If
-            None, wait indefinitely; if >=0, time out after this many seconds; if -1,
-            return immediately and do not wait. Default: None.
+            timeout (int, optional): Timeout for wait until index gets ready.
+                If None, wait indefinitely; if >=0, time out after this many seconds;
+                if -1, return immediately and do not wait. Default: None.
 
         Returns:
             None
