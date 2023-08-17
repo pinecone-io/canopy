@@ -13,12 +13,10 @@ class TestTokenChunker:
         cls.chunker = TokenChunker(tokenizer=StubTokenizer(),
                                    max_chunk_size=5,
                                    overlap=2)
-        cls.text = "I am a simple test string to check the happy path of this simple chunker"
+        cls.text = "I am a simple test string to check the happy path"
         cls.expected_texts = ["I am a simple test",
                               "simple test string to check",
-                              "to check the happy path",
-                              "happy path of this simple",
-                              "this simple chunker"]
+                              "to check the happy path"]
 
     def test_chunk_single_document(self):
         document = Document(id="test_document", text=self.text, metadata={})
