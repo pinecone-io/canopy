@@ -26,3 +26,10 @@ class Function(BaseModel):
     # TODO: decide if  we want the full FunctionParameters implementation from
     #  context-engine-exploration
     parameters: dict
+
+
+class ModelParams(BaseModel):
+    temperature: float = 0.7
+    num_choices: int = 1
+    max_p: float = 1.0
+

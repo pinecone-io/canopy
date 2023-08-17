@@ -40,15 +40,18 @@ class ChatResponse(BaseModel):
     def from_llm_response(cls,
                           llm_response: LLMResponse,
                           model: str,
+                          prompt_tokens: Optional[int] = None,
                           ):
         return cls(id=llm_response.id,
                    model=model,
                    choices=[
                        _Choice(message=AssistantMessage(content=msg, index=i)
-                       for i, msg in enumerate(llm_response.choices))
+                               for i, msg in enumerate(llm_response.choices))
                    ],
-                   usage=TokenCounts(prompt_tokens=llm_response.prompt_tokens,
-                                      completion_tokens=llm_response.completion_tokens),
+                   usage=TokenCounts(
+                       prompt_tokens=llm_response.prompt_tokens or prompt_tokens,
+                       completion_tokens=llm_response.generated_tokens
+                   ),
                    )
 
 
