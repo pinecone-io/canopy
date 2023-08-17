@@ -1,4 +1,5 @@
-from typing import Optional, List, Union, Iterable, Dict
+from abc import ABC, abstractmethod
+from typing import Optional, List, Union, Dict, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -19,8 +20,17 @@ class Document(BaseModel):
     metadata: Metadata
 
 
+class ContextContent(BaseModel, ABC):
+
+    # Any context should be able to be represented as well formatted text.
+    # In the most minimal case, that could simply be a call to `.json()`.
+    @abstractmethod
+    def to_text(self) -> str:
+        pass
+
+
 class Context(BaseModel):
-    content: Union[str, BaseModel, Iterable[BaseModel]]
+    content: Union[ContextContent, Sequence[ContextContent]]
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
