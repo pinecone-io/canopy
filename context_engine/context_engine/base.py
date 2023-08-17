@@ -19,12 +19,7 @@ class BaseContextEngine(ABC):
 
 class ContextEngine(BaseContextEngine):
 
-    def __init__(self,
-                 knowledge_base: BaseKnowledgeBase,
-                 context_builder: BaseContextBuilder,
-                 *,
-                 global_metadata_filter: Optional[dict] = None
-                 ):
+    def __init__(self, knowledge_base: BaseKnowledgeBase, context_builder: BaseContextBuilder, *, global_metadata_filter: Optional[dict] = None):
         self.knowledge_base = knowledge_base
         self.context_builder = context_builder
         self.global_metadata_filter = global_metadata_filter
