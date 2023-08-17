@@ -29,10 +29,24 @@ class KnowledgeBase(BaseKnowledgeBase):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
-        self._index_name = INDEX_NAME_PREFIX + index_name
+        # TODO: decide how we are handling index name prefix:
+        #  Option 1 - we add the prefix to the index name if it is not already there
+        #  and the index doesn't already exist
+        # if not (index_name in pinecone.list_indexes()
+        #     or index_name.startswith(INDEX_NAME_PREFIX)):
+        #     index_name = INDEX_NAME_PREFIX + index_name
+        #     print(f"Index name must start with {INDEX_NAME_PREFIX}. "
+        #           f"Renaming to {index_name}")
 
-        # TODO: decide how we are instantiating the encoder - as a single encoder that does both dense and
-        #       sparse or as two separate encoders
+        #  Option 2 - we require the index name to start with the prefix, and error out
+        #  if it doesn't
+        # if not index_name.startswith(INDEX_NAME_PREFIX):
+        #     raise ValueError(f"Index name must start with {INDEX_NAME_PREFIX}")
+        #
+        #  Option 3 - we leave it as a guideline \ default, but don't enforce it
+        #  (this is the current implementation)
+        self._index_name = index_name
+
         self._encoder = encoder
         self._tokenizer = tokenizer
         self._chunker = chunker
