@@ -1,0 +1,39 @@
+from context_engine.chat_engine.query_builder.base import QueryBuilder
+
+from typing import List, Optional
+
+from context_engine.chat_engine.models import HistoryPrunningMethod
+from context_engine.llm.base import LLM
+from context_engine.models.data_models import Messages, Query
+
+DEFAULT_TEMPLATE = """When you receive a user question regarding {topic} {topic_description}, your task is to formulate one or more search queries to retrieve relevant information from a search engine. 
+You should break down complex questions into sub-queries if needed."""  # noqa
+
+
+class FunctionCallingQueryBuilder(QueryBuilder):
+    def __init__(self,
+                 llm: LLM,
+                 *,
+                 topic: str,
+                 topic_description: str,
+                 prompt: Optional[str] = None,
+                 prompt_template: Optional[str] = None,):
+        self.llm = llm
+
+        if prompt is not None and prompt_template is not None:
+            raise ValueError("`prompt` and `prompt_template` cannot be both set")
+        if prompt:
+            self.prompt = prompt
+        elif prompt_template:
+            self.prompt = prompt_template.format(topic=topic,
+                                                 topic_description=topic_description)
+        else:
+            self.prompt = DEFAULT_TEMPLATE.format(topic=topic,
+                                                  topic_description=topic_description)
+
+    def build(self,
+              messages: Messages,
+              max_prompt_tokens: int,
+              history_pruning: HistoryPrunningMethod
+              ) -> List[Query]:
+        raise NotImplementedError
