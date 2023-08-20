@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic import BaseModel
 
@@ -6,7 +6,7 @@ from context_engine.models.data_models import ContextContent
 
 
 class ContextSnippet(BaseModel):
-    reference: str
+    reference: Optional[str]
     text: str
 
 
