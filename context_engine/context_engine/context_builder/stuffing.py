@@ -36,8 +36,8 @@ class StuffingContextBuilder(BaseContextBuilder):
         for doc, origin_query_idx in sorted_docs_with_origin:
             if doc.id not in seen_doc_ids and doc.text.strip() != "":
                 snippet = ContextSnippet(text=doc.text,
-                                         reference=doc.metadata.get(
-                                             self._reference_metadata_field, None))
+                                         reference=str(doc.metadata.get(
+                                             self._reference_metadata_field, "")))
 
                 # try inserting the snippet into the context
                 context_query_results[origin_query_idx].snippets.append(

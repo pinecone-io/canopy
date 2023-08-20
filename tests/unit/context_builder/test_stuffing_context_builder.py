@@ -154,7 +154,7 @@ class TestStuffingContextBuilder:
         context = self.builder.build(
             missing_metadata_query_results, max_context_tokens=100)
         self.assert_num_tokens(context, 100)
-        assert context.content[0].snippets[0].reference is None
+        assert context.content[0].snippets[0].reference == ""
 
     def test_empty_documents(self):
         empty_query_results = [
