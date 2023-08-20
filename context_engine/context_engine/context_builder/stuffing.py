@@ -36,9 +36,15 @@ class StuffingContextBuilder(BaseContextBuilder):
                 # try inserting the snippet into the context
                 context_query_results[origin_query_idx].snippets.append(snippet)
                 seen_doc_ids.add(doc.id)
-                # if the context is too long, remove the snippet
-                if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
-                    context_query_results[origin_query_idx].snippets.pop()
+
+                context_size = self._tokenizer.token_count(context.to_text())
+                # if the context is too long, shorten it to the appropriate length
+                if context_size > max_context_tokens:
+                    num_tokens_to_trim = context_size - max_context_tokens
+                    trimmed_snippet = self._tokenizer.detokenize(
+                        self._tokenizer.tokenize(snippet.text)[:-num_tokens_to_trim])
+                    context_query_results[origin_query_idx].snippets[-1].text = trimmed_snippet
+                    break
 
         context.num_tokens = self._tokenizer.token_count(context.to_text())
         return context
