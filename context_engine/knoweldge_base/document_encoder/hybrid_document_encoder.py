@@ -4,14 +4,15 @@ from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 from pinecone_text.hybrid import hybrid_convex_scale
 from pinecone_text.sparse.base_sparse_encoder import BaseSparseEncoder
 
-from context_engine.knoweldge_base.encoder.base import Encoder
+from context_engine.knoweldge_base.document_encoder.base_document_encoder import\
+    BaseDocumentEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from context_engine.models.data_models import Query
 
 
 # TODO: decide if we want to remove before release
 
-class HybridEncoder(Encoder):
+class HybridDocumentEncoder(BaseDocumentEncoder):
     """
     A hybrid encoder that combines dense embeddings and a sparse representation
     (e.g. keyword counts) using a linear  combination of the two.
