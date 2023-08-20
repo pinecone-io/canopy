@@ -40,14 +40,16 @@ class StuffingContextBuilder(BaseContextBuilder):
                                              self._reference_metadata_field, None))
 
                 # try inserting the snippet into the context
-                context_query_results[origin_query_idx].snippets.append(snippet)
+                context_query_results[origin_query_idx].snippets.append(
+                    snippet)
                 seen_doc_ids.add(doc.id)
                 # if the context is too long, remove the snippet
                 if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
                     context_query_results[origin_query_idx].snippets.pop()
 
         # remove queries with no snippets
-        context.content = [qr for qr in context_query_results if len(qr.snippets) > 0]
+        context.content = [qr for qr in context_query_results
+                           if len(qr.snippets) > 0]
 
         context.num_tokens = self._tokenizer.token_count(context.to_text())
         return context
