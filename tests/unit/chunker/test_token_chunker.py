@@ -5,7 +5,10 @@ from context_engine.models.data_models import Document
 
 class TestTokenChunker:
 
-    """Note: tests are minimal since we want to remove this chunker before first release"""
+    """
+    Note: tests are minimal since we want
+    to remove this chunker before first release
+    """
 
     @classmethod
     def setup_class(cls):

@@ -8,12 +8,16 @@ class TestBaseChunker:
     def setup_class(cls):
         cls.chunker = StubChunker()
         cls.documents = [
-            Document(id="test_document_1",
-                     text="I am a simple test string to check the happy path of this simple chunker",
-                     metadata={"test": 1}),
-            Document(id="test_document_2",
-                     text="I am a simple test string to check the happy path of this simple chunker",
-                     metadata={"test": 2})]
+            Document(
+                id="test_document_1",
+                text="I am a simple test string"
+                     "to check the happy path of this simple chunker",
+                metadata={"test": 1}),
+            Document(
+                id="test_document_2",
+                text="I am a simple test string"
+                     "to check the happy path of this simple chunker",
+                metadata={"test": 2})]
 
     def test_chunker_chunk_documents_happy_path(self):
         chunks = self.chunker.chunk_documents(self.documents)
