@@ -19,7 +19,8 @@ class TokenChunker(Chunker):
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
         tokens = self._tokenizer.tokenize(document.text)
         token_chunks = [tokens[i:i + self._chunk_size]
-                        for i in range(0, len(tokens), self._chunk_size - self._overlap)]
+                        for i in range(0, len(tokens),
+                                       self._chunk_size - self._overlap)]
 
         # remove last chunk if it is smaller than overlap
         if len(token_chunks[-1]) <= self._overlap and len(token_chunks) > 1:
