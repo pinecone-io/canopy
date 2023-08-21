@@ -7,7 +7,7 @@ from ..stubs.stub_tokenizer import StubTokenizer
 class TestStubTokenizer(BaseTestTokenizer):
 
     @staticmethod
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     def tokenizer():
         return StubTokenizer()
 

@@ -5,7 +5,7 @@ import pytest
 class BaseTestTokenizer(ABC):
 
     @staticmethod
-    @pytest.fixture
+    @pytest.fixture(scope="class")
     @abstractmethod
     def tokenizer():
         pass
@@ -22,6 +22,8 @@ class BaseTestTokenizer(ABC):
     def expected_tokens(text):
         pass
 
+    # region: test tokenize
+
     @staticmethod
     def test_tokenize(tokenizer, text, expected_tokens):
         tokens = tokenizer.tokenize(text)
@@ -30,6 +32,18 @@ class BaseTestTokenizer(ABC):
     @staticmethod
     def test_tokenize_empty_string(tokenizer):
         assert tokenizer.tokenize("") == []
+
+    @staticmethod
+    def test_tokenize_invalid_input_type_raise_exception(tokenizer):
+        with pytest.raises(Exception):
+            tokenizer.tokenize(1)
+
+        with pytest.raises(Exception):
+            tokenizer.tokenize(["asd"])
+
+    # endregion
+
+    # region: test detokenize
 
     @staticmethod
     def test_detokenize(tokenizer, text, expected_tokens):
@@ -41,6 +55,18 @@ class BaseTestTokenizer(ABC):
         assert tokenizer.detokenize([]) == ""
 
     @staticmethod
+    def test_detokenize_invalid_input_type_raise_exception(tokenizer):
+        with pytest.raises(Exception):
+            tokenizer.detokenize(1)
+
+        with pytest.raises(Exception):
+            tokenizer.detokenize("asd")
+
+    # endregion
+
+    # region test token_count
+
+    @staticmethod
     def test_token_count(tokenizer, text, expected_tokens):
         token_count = tokenizer.token_count(text)
         assert token_count == len(expected_tokens)
@@ -49,25 +75,11 @@ class BaseTestTokenizer(ABC):
     def test_token_count_empty_string(tokenizer):
         assert tokenizer.token_count("") == 0
 
+    # endregion
+
     @staticmethod
     def test_tokenize_detokenize_compatibility(tokenizer, text, expected_tokens):
         assert tokenizer.detokenize(tokenizer.tokenize(text)) \
                == text
         assert tokenizer.tokenize(tokenizer.detokenize(expected_tokens))\
                == expected_tokens
-
-    @staticmethod
-    def test_tokenize_invalid_input_type_raise_exception(tokenizer):
-        with pytest.raises(Exception):
-            tokenizer.tokenize(1)
-
-        with pytest.raises(Exception):
-            tokenizer.tokenize(["asd"])
-
-    @staticmethod
-    def test_detokenize_invalid_input_type_raise_exception(tokenizer):
-        with pytest.raises(Exception):
-            tokenizer.detokenize(1)
-
-        with pytest.raises(Exception):
-            tokenizer.detokenize("asd")
