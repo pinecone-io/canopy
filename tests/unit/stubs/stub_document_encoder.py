@@ -1,5 +1,7 @@
 from typing import List
 
+from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
+
 from context_engine.knoweldge_base.document_encoder.base_document_encoder \
     import BaseDocumentEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
@@ -9,10 +11,11 @@ from .stub_dense_encoder import StubDenseEncoder
 
 class StubDocumentEncoder(BaseDocumentEncoder):
 
-    def __init__(self, batch_size: int = 1, dimension: int = 3):
+    def __init__(self,
+                 stub_dense_encoder: StubDenseEncoder,
+                 batch_size: int = 1):
         super().__init__(batch_size)
-        self.dimension = dimension
-        self.stub_encoder = StubDenseEncoder(dimension=dimension)
+        self._dense_encoder = stub_dense_encoder
 
     def _encode_documents_batch(self,
                                 documents: List[KBDocChunk]
@@ -21,7 +24,7 @@ class StubDocumentEncoder(BaseDocumentEncoder):
         for doc in documents:
             result.append(
                 KBEncodedDocChunk(**doc.dict(),
-                                  values=self.stub_encoder.encode_documents(doc.text)))
+                                  values=self._dense_encoder.encode_documents(doc.text)))
         return result
 
     def _encode_queries_batch(self,
@@ -31,7 +34,7 @@ class StubDocumentEncoder(BaseDocumentEncoder):
         for query in queries:
             result.append(
                 KBQuery(**query.dict(),
-                        values=self.stub_encoder.encode_queries(query.text)))
+                        values=self._dense_encoder.encode_queries(query.text)))
         return result
 
     async def _aencode_documents_batch(self,
@@ -44,4 +47,4 @@ class StubDocumentEncoder(BaseDocumentEncoder):
 
     @property
     def dense_dimension(self) -> int:
-        return self.dimension
+        return self._dense_encoder.dimension

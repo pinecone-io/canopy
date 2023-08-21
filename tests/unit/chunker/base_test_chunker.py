@@ -31,13 +31,6 @@ class BaseTestChunker(ABC):
     def expected_chunks(documents):
         pass
 
-    @staticmethod
-    def assert_documents_equal(actual, expected):
-        assert actual.id == expected.id
-        assert actual.text == expected.text
-        assert actual.document_id == expected.document_id
-        assert actual.metadata == expected.metadata
-
     # region: test chunk_single_document
 
     @staticmethod
@@ -49,7 +42,7 @@ class BaseTestChunker(ABC):
             assert len(actual_chunks) == len(expected_chunks_for_doc)
             for actual_chunk, expected_chunk in zip(actual_chunks,
                                                     expected_chunks_for_doc):
-                BaseTestChunker.assert_documents_equal(actual_chunk, expected_chunk)
+                assert actual_chunk == expected_chunk
 
     @staticmethod
     def test_chunk_single_document_empty_content(chunker, documents):
@@ -79,7 +72,7 @@ class BaseTestChunker(ABC):
         chunks = chunker.chunk_documents(documents)
         assert len(chunks) == len(expected_chunks)
         for chunk, expected_chunk in zip(chunks, expected_chunks):
-            BaseTestChunker.assert_documents_equal(chunk, expected_chunk)
+            assert chunk == expected_chunk
 
     @staticmethod
     def test_chunk_documents_empty_list(chunker):
