@@ -22,11 +22,14 @@ class TokenChunker(Chunker):
                         for i in range(0, len(tokens),
                                        self._chunk_size - self._overlap)]
 
+        if len(token_chunks) == 0:
+            return []
+
         # remove last chunk if it is smaller than overlap
         if len(token_chunks[-1]) <= self._overlap and len(token_chunks) > 1:
             token_chunks = token_chunks[:-1]
 
-        text_chunks = [self._tokenizer.detokenize(chunk).strip()
+        text_chunks = [self._tokenizer.detokenize(chunk)
                        for chunk in token_chunks]
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
