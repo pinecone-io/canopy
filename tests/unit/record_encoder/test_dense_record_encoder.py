@@ -3,7 +3,6 @@ import pytest
 from context_engine.knoweldge_base.record_encoder import DenseRecordEncoder
 from .base_test_record_encoder import BaseTestRecordEncoder
 from ..stubs.stub_dense_encoder import StubDenseEncoder
-from ..stubs.stub_record_encoder import StubRecordEncoder
 
 
 class TestStubRecordEncoder(BaseTestRecordEncoder):

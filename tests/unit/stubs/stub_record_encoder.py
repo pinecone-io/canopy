@@ -21,8 +21,9 @@ class StubRecordEncoder(BaseRecordEncoder):
         result: List[KBEncodedDocChunk] = []
         for doc in documents:
             result.append(
-                KBEncodedDocChunk(**doc.dict(),
-                                  values=self._dense_encoder.encode_documents(doc.text)))
+                KBEncodedDocChunk(
+                    **doc.dict(),
+                    values=self._dense_encoder.encode_documents(doc.text)))
         return result
 
     def _encode_queries_batch(self,

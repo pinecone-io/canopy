@@ -112,7 +112,8 @@ class BaseTestRecordEncoder(ABC):
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_aencode_documents_not_implemented(record_encoder, documents):
+    async def test_aencode_documents_not_implemented(record_encoder,
+                                                     documents):
         with pytest.raises(NotImplementedError):
             await record_encoder.aencode_documents(documents)
 
@@ -121,7 +122,10 @@ class BaseTestRecordEncoder(ABC):
     # region: test encode_queries
 
     @staticmethod
-    def test_encode_queries_one_by_one(record_encoder, queries, expected_encoded_queries, mocker):
+    def test_encode_queries_one_by_one(record_encoder,
+                                       queries,
+                                       expected_encoded_queries,
+                                       mocker):
         record_encoder.batch_size = 1
         mock_encode = mocker.patch.object(record_encoder, '_encode_queries_batch',
                                           wraps=record_encoder._encode_queries_batch)
@@ -131,7 +135,9 @@ class BaseTestRecordEncoder(ABC):
         assert actual == expected_encoded_queries
 
     @staticmethod
-    def test_encode_queries_batches(queries, expected_encoded_queries, record_encoder, mocker):
+    def test_encode_queries_batches(queries,
+                                    expected_encoded_queries,
+                                    record_encoder, mocker):
         record_encoder.batch_size = 2
         mock_encode = mocker.patch.object(record_encoder, '_encode_queries_batch',
                                           wraps=record_encoder._encode_queries_batch)
@@ -146,7 +152,8 @@ class BaseTestRecordEncoder(ABC):
             if idx < expected_call_count - 1:
                 assert len(batch) == record_encoder.batch_size
             else:
-                assert len(batch) == len(queries) % record_encoder.batch_size or record_encoder.batch_size
+                assert len(batch) == len(queries) % record_encoder.batch_size \
+                       or record_encoder.batch_size
 
         assert actual == expected_encoded_queries
 
