@@ -1,2 +1,0 @@
-from .dense_document_encoder import DenseDocumentEncoder
-from .hybrid_document_encoder import HybridDocumentEncoder

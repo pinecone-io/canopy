@@ -2,15 +2,14 @@ from typing import List
 from functools import cached_property
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
-from typing_extensions import assert_type
 
-from context_engine.knoweldge_base.document_encoder.base_document_encoder import\
-    BaseDocumentEncoder
+from context_engine.knoweldge_base.record_encoder.base_record_encoder import\
+    BaseRecordEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from context_engine.models.data_models import Query
 
 
-class DenseDocumentEncoder(BaseDocumentEncoder):
+class DenseRecordEncoder(BaseRecordEncoder):
 
     def __init__(self, dense_encoder: BaseDenseEncoder, **kwargs):
         super().__init__(**kwargs)

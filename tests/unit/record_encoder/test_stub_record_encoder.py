@@ -1,10 +1,10 @@
 import pytest
-from .base_test_document_encoder import BaseTestDocumentEncoder
+from .base_test_record_encoder import BaseTestRecordEncoder
 from ..stubs.stub_dense_encoder import StubDenseEncoder
-from ..stubs.stub_document_encoder import StubDocumentEncoder
+from ..stubs.stub_record_encoder import StubRecordEncoder
 
 
-class TestStubDocumentEncoder(BaseTestDocumentEncoder):
+class TestStubRecordEncoder(BaseTestRecordEncoder):
 
     @staticmethod
     @pytest.fixture
@@ -18,6 +18,6 @@ class TestStubDocumentEncoder(BaseTestDocumentEncoder):
 
     @staticmethod
     @pytest.fixture
-    def document_encoder(inner_encoder):
-        return StubDocumentEncoder(inner_encoder,
-                                   batch_size=2)
+    def record_encoder(inner_encoder):
+        return StubRecordEncoder(inner_encoder,
+                                 batch_size=2)

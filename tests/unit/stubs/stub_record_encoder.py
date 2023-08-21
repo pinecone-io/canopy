@@ -1,15 +1,13 @@
 from typing import List
 
-from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
-
-from context_engine.knoweldge_base.document_encoder.base_document_encoder \
-    import BaseDocumentEncoder
+from context_engine.knoweldge_base.record_encoder.base_record_encoder \
+    import BaseRecordEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
 from context_engine.models.data_models import Query
 from .stub_dense_encoder import StubDenseEncoder
 
 
-class StubDocumentEncoder(BaseDocumentEncoder):
+class StubRecordEncoder(BaseRecordEncoder):
 
     def __init__(self,
                  stub_dense_encoder: StubDenseEncoder,

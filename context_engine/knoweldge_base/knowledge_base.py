@@ -7,8 +7,8 @@ from pinecone_datasets import Dataset, DatasetMetadata
 
 from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
 from context_engine.knoweldge_base.chunker.base import Chunker
-from context_engine.knoweldge_base.document_encoder.base_document_encoder \
-    import BaseDocumentEncoder
+from context_engine.knoweldge_base.record_encoder.base_record_encoder \
+    import BaseRecordEncoder
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                                   KBEncodedDocChunk, )
 from context_engine.knoweldge_base.reranker.reranker import (Reranker,
@@ -23,7 +23,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: BaseDocumentEncoder,
+                 encoder: BaseRecordEncoder,
                  tokenizer: Tokenizer,
                  chunker: Chunker,
                  reranker: Optional[Reranker] = None,

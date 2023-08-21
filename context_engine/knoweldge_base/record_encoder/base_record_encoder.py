@@ -5,7 +5,7 @@ from context_engine.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBD
 from context_engine.models.data_models import Query
 
 
-class BaseDocumentEncoder(ABC):
+class BaseRecordEncoder(ABC):
     """
     Base class for all encoders. Encoders are used to encode documents' and queries'
     text into vectors.

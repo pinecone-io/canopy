@@ -6,7 +6,7 @@ from context_engine.knoweldge_base.models import KBDocChunk, KBEncodedDocChunk, 
 from context_engine.models.data_models import Query
 
 
-class BaseTestDocumentEncoder(ABC):
+class BaseTestRecordEncoder(ABC):
 
     @staticmethod
     @pytest.fixture
@@ -23,7 +23,7 @@ class BaseTestDocumentEncoder(ABC):
     @staticmethod
     @pytest.fixture
     @abstractmethod
-    def document_encoder(inner_encoder):
+    def record_encoder(inner_encoder):
         pass
 
     @staticmethod
@@ -56,23 +56,23 @@ class BaseTestDocumentEncoder(ABC):
         return [KBQuery(**q.dict(), values=v) for q, v in zip(queries, values)]
 
     @staticmethod
-    def test_dense_dimension(document_encoder, expected_dimension):
-        assert document_encoder.dense_dimension == expected_dimension
+    def test_dense_dimension(record_encoder, expected_dimension):
+        assert record_encoder.dense_dimension == expected_dimension
 
     # region: test encode_documents
 
     @staticmethod
-    def test_encode_documents_one_by_one(document_encoder,
+    def test_encode_documents_one_by_one(record_encoder,
                                          documents,
                                          expected_encoded_documents,
                                          expected_dimension,
                                          mocker):
-        document_encoder.batch_size = 1
+        record_encoder.batch_size = 1
         mock_encode = mocker.patch.object(
-            document_encoder, '_encode_documents_batch',
-            wraps=document_encoder._encode_documents_batch)
+            record_encoder, '_encode_documents_batch',
+            wraps=record_encoder._encode_documents_batch)
 
-        actual = document_encoder.encode_documents(documents)
+        actual = record_encoder.encode_documents(documents)
 
         assert mock_encode.call_count == len(expected_encoded_documents)
         assert actual == expected_encoded_documents
@@ -80,31 +80,31 @@ class BaseTestDocumentEncoder(ABC):
     @staticmethod
     def test_encode_documents_batches(documents,
                                       expected_encoded_documents,
-                                      document_encoder,
+                                      record_encoder,
                                       mocker):
-        document_encoder.batch_size = 2
+        record_encoder.batch_size = 2
         mock_encode = mocker.patch.object(
-            document_encoder, '_encode_documents_batch',
-            wraps=document_encoder._encode_documents_batch)
-        actual = document_encoder.encode_documents(documents)
+            record_encoder, '_encode_documents_batch',
+            wraps=record_encoder._encode_documents_batch)
+        actual = record_encoder.encode_documents(documents)
 
-        expected_call_count = math.ceil(len(documents) / document_encoder.batch_size)
+        expected_call_count = math.ceil(len(documents) / record_encoder.batch_size)
         assert mock_encode.call_count == expected_call_count
 
         for idx, call in enumerate(mock_encode.call_args_list):
             args, _ = call
             batch = args[0]
             if idx < expected_call_count - 1:
-                assert len(batch) == document_encoder.batch_size
+                assert len(batch) == record_encoder.batch_size
             else:
                 assert len(batch) == len(
-                    documents) % document_encoder.batch_size or document_encoder.batch_size
+                    documents) % record_encoder.batch_size or record_encoder.batch_size
 
         assert actual == expected_encoded_documents
 
     @staticmethod
-    def test_encode_empty_documents_list(document_encoder):
-        assert document_encoder.encode_documents([]) == []
+    def test_encode_empty_documents_list(record_encoder):
+        assert record_encoder.encode_documents([]) == []
 
     # endregion
 
@@ -112,47 +112,47 @@ class BaseTestDocumentEncoder(ABC):
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_aencode_documents_not_implemented(document_encoder, documents):
+    async def test_aencode_documents_not_implemented(record_encoder, documents):
         with pytest.raises(NotImplementedError):
-            await document_encoder.aencode_documents(documents)
+            await record_encoder.aencode_documents(documents)
 
     # endregion
 
     # region: test encode_queries
 
     @staticmethod
-    def test_encode_queries_one_by_one(document_encoder, queries, expected_encoded_queries, mocker):
-        document_encoder.batch_size = 1
-        mock_encode = mocker.patch.object(document_encoder, '_encode_queries_batch',
-                                          wraps=document_encoder._encode_queries_batch)
-        actual = document_encoder.encode_queries(queries)
+    def test_encode_queries_one_by_one(record_encoder, queries, expected_encoded_queries, mocker):
+        record_encoder.batch_size = 1
+        mock_encode = mocker.patch.object(record_encoder, '_encode_queries_batch',
+                                          wraps=record_encoder._encode_queries_batch)
+        actual = record_encoder.encode_queries(queries)
 
         assert mock_encode.call_count == len(expected_encoded_queries)
         assert actual == expected_encoded_queries
 
     @staticmethod
-    def test_encode_queries_batches(queries, expected_encoded_queries, document_encoder, mocker):
-        document_encoder.batch_size = 2
-        mock_encode = mocker.patch.object(document_encoder, '_encode_queries_batch',
-                                          wraps=document_encoder._encode_queries_batch)
-        actual = document_encoder.encode_queries(queries)
+    def test_encode_queries_batches(queries, expected_encoded_queries, record_encoder, mocker):
+        record_encoder.batch_size = 2
+        mock_encode = mocker.patch.object(record_encoder, '_encode_queries_batch',
+                                          wraps=record_encoder._encode_queries_batch)
+        actual = record_encoder.encode_queries(queries)
 
-        expected_call_count = math.ceil(len(queries) / document_encoder.batch_size)
+        expected_call_count = math.ceil(len(queries) / record_encoder.batch_size)
         assert mock_encode.call_count == expected_call_count
 
         for idx, call in enumerate(mock_encode.call_args_list):
             args, _ = call
             batch = args[0]
             if idx < expected_call_count - 1:
-                assert len(batch) == document_encoder.batch_size
+                assert len(batch) == record_encoder.batch_size
             else:
-                assert len(batch) == len(queries) % document_encoder.batch_size or document_encoder.batch_size
+                assert len(batch) == len(queries) % record_encoder.batch_size or record_encoder.batch_size
 
         assert actual == expected_encoded_queries
 
     @staticmethod
-    def test_encode_empty_queries_list(document_encoder):
-        assert document_encoder.encode_queries([]) == []
+    def test_encode_empty_queries_list(record_encoder):
+        assert record_encoder.encode_queries([]) == []
 
     # endregion
 
@@ -160,8 +160,8 @@ class BaseTestDocumentEncoder(ABC):
 
     @staticmethod
     @pytest.mark.asyncio
-    async def test_aencode_queries_not_implemented(document_encoder, queries):
+    async def test_aencode_queries_not_implemented(record_encoder, queries):
         with pytest.raises(NotImplementedError):
-            await document_encoder.aencode_queries(queries)
+            await record_encoder.aencode_queries(queries)
 
     # endregion
