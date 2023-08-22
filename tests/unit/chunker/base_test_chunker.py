@@ -23,7 +23,14 @@ class BaseTestChunker(ABC):
             Document(
                 id="test_document_2",
                 text="another simple test string",
-                metadata={"test": 2})]
+                metadata={"test": 2},
+            ),
+            Document(
+                id="test_document_3",
+                text="short",
+                metadata={"test": 2},
+            )
+        ]
 
     @staticmethod
     @pytest.fixture
