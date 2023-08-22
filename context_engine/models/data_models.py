@@ -34,10 +34,4 @@ class Context(BaseModel):
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
-    def to_text(self) -> str:
-        if isinstance(self.content, ContextContent):
-            return self.content.to_text()
-        else:
-            return "\n".join([c.to_text() for c in self.content])
-
 # TODO: add ChatEngine main models - `Messages`, `Answer`
