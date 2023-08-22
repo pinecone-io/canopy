@@ -5,7 +5,7 @@ from context_engine.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBD
 from context_engine.models.data_models import Query
 
 
-class Encoder(ABC):
+class BaseRecordEncoder(ABC):
     """
     Base class for all encoders. Encoders are used to encode documents' and queries'
     text into vectors.
@@ -44,7 +44,7 @@ class Encoder(ABC):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
     @property
-    def dense_dimension(self) -> Optional[int]:
+    def dimension(self) -> Optional[int]:
         """
         Returns:
             The dimension of the dense vectors produced by the encoder, if applicable.

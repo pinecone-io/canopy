@@ -1,13 +1,15 @@
 from typing import List
+from functools import cached_property
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
-from context_engine.knoweldge_base.encoder.base import Encoder
+from context_engine.knoweldge_base.record_encoder.base_record_encoder import\
+    BaseRecordEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from context_engine.models.data_models import Query
 
 
-class DenseEmbeddingsEncoder(Encoder):
+class DenseRecordEncoder(BaseRecordEncoder):
 
     def __init__(self, dense_encoder: BaseDenseEncoder, **kwargs):
         super().__init__(**kwargs)
@@ -23,6 +25,10 @@ class DenseEmbeddingsEncoder(Encoder):
     def _encode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
         dense_values = self._dense_encoder.encode_queries([q.text for q in queries])
         return [KBQuery(**q.dict(), values=v) for q, v in zip(queries, dense_values)]
+
+    @cached_property
+    def dimension(self) -> int:
+        return len(self._dense_encoder.encode_documents(["hello"])[0])
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]
