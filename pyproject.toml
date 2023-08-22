@@ -26,6 +26,9 @@ mypy = "^1.4.1"
 flake8 = "^6.1.0"
 pytest-html = "^3.2.0"
 flake8-pyproject = "^1.2.3"
+asyncio = "^3.4.3"
+pytest-asyncio = "^0.14.0"
+pytest-mock = "^3.6.1"
 
 [build-system]
 requires = ["poetry-core"]
