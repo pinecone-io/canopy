@@ -12,6 +12,8 @@ class OpenAITokenizer(Tokenizer):
                 for encoded_token in self._encoder.encode(text)]
 
     def detokenize(self, tokens: List[str]) -> str:
+        if not isinstance(tokens, List):
+            raise TypeError(f"detokenize expect List[str], got f{type(tokens)}")
         return "".join(tokens)
 
     def token_count(self, text: str) -> int:
