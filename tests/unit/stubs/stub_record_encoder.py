@@ -20,10 +20,11 @@ class StubRecordEncoder(BaseRecordEncoder):
                                 ) -> List[KBEncodedDocChunk]:
         result: List[KBEncodedDocChunk] = []
         for doc in documents:
+            values = self._dense_encoder.encode_documents(doc.text)
             result.append(
                 KBEncodedDocChunk(
                     **doc.dict(),
-                    values=self._dense_encoder.encode_documents(doc.text)))
+                    values=values))  # type: ignore
         return result
 
     def _encode_queries_batch(self,
@@ -31,9 +32,10 @@ class StubRecordEncoder(BaseRecordEncoder):
                               ) -> List[KBQuery]:
         result: List[KBQuery] = []
         for query in queries:
+            values = self._dense_encoder.encode_queries(query.text)
             result.append(
                 KBQuery(**query.dict(),
-                        values=self._dense_encoder.encode_queries(query.text)))
+                        values=values)) # type: ignore
         return result
 
     async def _aencode_documents_batch(self,
