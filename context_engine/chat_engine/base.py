@@ -4,7 +4,7 @@ from typing import Iterable, Union, List
 from context_engine.chat_engine.query_builder.base import QueryBuilder
 from context_engine.chat_engine.reponse_builder.base import ChatResponseBuilder
 from context_engine.context_engine import ContextEngine
-from context_engine.llm.base import LLM
+from context_engine.llm.base import BaseLLM
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages, Query
 
@@ -39,7 +39,7 @@ class ChatEngine(BaseChatEngine):
 
     def __init__(self,
                  *,
-                 llm: LLM,
+                 llm: BaseLLM,
                  context_engine: ContextEngine,
                  query_builder: QueryBuilder,
                  response_builder: ChatResponseBuilder,

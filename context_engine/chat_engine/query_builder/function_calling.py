@@ -3,7 +3,7 @@ from context_engine.chat_engine.query_builder.base import QueryBuilder
 from typing import Optional
 
 from context_engine.chat_engine.models import HistoryPruningMethod
-from context_engine.llm.base import LLM
+from context_engine.llm.base import BaseLLM
 
 DEFAULT_TEMPLATE = """When you receive a user question regarding {topic} {topic_description}, your task is to formulate one or more search queries to retrieve relevant information from a search engine. 
 You should break down complex questions into sub-queries if needed."""  # noqa
@@ -11,7 +11,7 @@ You should break down complex questions into sub-queries if needed."""  # noqa
 
 class FunctionCallingQueryBuilder(QueryBuilder):
     def __init__(self,
-                 llm: LLM,
+                 llm: BaseLLM,
                  *,
                  topic: str,
                  topic_description: str,
