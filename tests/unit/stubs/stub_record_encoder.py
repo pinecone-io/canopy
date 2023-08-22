@@ -47,5 +47,5 @@ class StubRecordEncoder(BaseRecordEncoder):
         raise NotImplementedError()
 
     @property
-    def dense_dimension(self) -> int:
+    def dimension(self) -> int:
         return self._dense_encoder.dimension

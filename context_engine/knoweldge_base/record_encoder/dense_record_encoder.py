@@ -27,7 +27,7 @@ class DenseRecordEncoder(BaseRecordEncoder):
         return [KBQuery(**q.dict(), values=v) for q, v in zip(queries, dense_values)]
 
     @cached_property
-    def dense_dimension(self) -> int:
+    def dimension(self) -> int:
         return len(self._dense_encoder.encode_documents(["hello"])[0])
 
     async def _aencode_documents_batch(self,

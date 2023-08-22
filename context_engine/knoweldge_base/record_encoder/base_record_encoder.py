@@ -44,7 +44,7 @@ class BaseRecordEncoder(ABC):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
     @property
-    def dense_dimension(self) -> Optional[int]:
+    def dimension(self) -> Optional[int]:
         """
         Returns:
             The dimension of the dense vectors produced by the encoder, if applicable.

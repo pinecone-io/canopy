@@ -56,8 +56,8 @@ class BaseTestRecordEncoder(ABC):
         return [KBQuery(**q.dict(), values=v) for q, v in zip(queries, values)]
 
     @staticmethod
-    def test_dense_dimension(record_encoder, expected_dimension):
-        assert record_encoder.dense_dimension == expected_dimension
+    def test_dimension(record_encoder, expected_dimension):
+        assert record_encoder.dimension == expected_dimension
 
     # region: test encode_documents
 

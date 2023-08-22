@@ -128,8 +128,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError("Index already exists")
 
         if dimension is None:
-            if self._encoder.dense_dimension is not None:
-                dimension = self._encoder.dense_dimension
+            if self._encoder.dimension is not None:
+                dimension = self._encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
