@@ -6,15 +6,16 @@ from context_engine.models.api_models import ChatResponse, StreamingChatResponse
 from context_engine.models.data_models import Messages, LLMResponse
 
 
-class LLM(ABC):
+class BaseLLM(ABC):
     def __init__(self,
                  model_name: str,
-                 max_generated_tokens: int,
+                 default_max_generated_tokens: int,
                  *,
                  model_params: Optional[ModelParams] = None,
                  ):
         self.model_name = model_name
-        self.default_max_generated_tokens = max_generated_tokens
+        # TODO: consider removing altogether
+        self.default_max_generated_tokens = default_max_generated_tokens
         self.default_model_params = model_params or ModelParams()
 
     @abstractmethod
