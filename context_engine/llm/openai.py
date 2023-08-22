@@ -2,13 +2,21 @@ from typing import Union, Iterable, Optional, Any, Dict
 
 import openai
 
-from context_engine.llm.base import LLM
+from context_engine.llm.base import BaseLLM
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
 from context_engine.models.data_models import Messages
 
 
-class OpenAILLM(LLM):
+class OpenAILLM(BaseLLM):
+
+    def __init__(self, model_name: str, default_max_generated_tokens: int, *,
+                 model_params: Optional[ModelParams] = None, ):
+        super().__init__(model_name, default_max_generated_tokens)
+        self.available_models = [k["id"] for k in openai.Model.list().data]
+        if model_name not in self.available_models:
+            raise ValueError(f"Model {model_name} not found. Available models: {self.available_models}")
+
 
     def chat_completion(self,
                         messages: Messages,
