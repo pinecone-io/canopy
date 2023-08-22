@@ -35,7 +35,7 @@ class StubRecordEncoder(BaseRecordEncoder):
             values = self._dense_encoder.encode_queries(query.text)
             result.append(
                 KBQuery(**query.dict(),
-                        values=values)) # type: ignore
+                        values=values))  # type: ignore
         return result
 
     async def _aencode_documents_batch(self,
