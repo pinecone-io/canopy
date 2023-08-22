@@ -12,6 +12,18 @@ class TokenChunker(Chunker):
                  tokenizer: Tokenizer,
                  max_chunk_size: int = 200,
                  overlap: int = 0, ):
+        if overlap < 0:
+            cls_name = self.__class__.__name__
+            raise ValueError(
+                f"overlap for {cls_name} can't be negative, got: {overlap}"
+            )
+
+        if max_chunk_size <= 0:
+            cls_name = self.__class__.__name__
+            raise ValueError(
+                f"max_chunk_size for {cls_name} must be positive, got: {max_chunk_size}"
+            )
+
         self._tokenizer = tokenizer
         self._chunk_size = max_chunk_size
         self._overlap = overlap
