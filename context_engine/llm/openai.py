@@ -15,8 +15,10 @@ class OpenAILLM(BaseLLM):
         super().__init__(model_name, default_max_generated_tokens)
         self.available_models = [k["id"] for k in openai.Model.list().data]
         if model_name not in self.available_models:
-            raise ValueError(f"Model {model_name} not found. Available models: {self.available_models}")
-
+            raise ValueError(
+                f"Model {model_name} not found. " +
+                " Available models: {self.available_models}"
+            )
 
     def chat_completion(self,
                         messages: Messages,
