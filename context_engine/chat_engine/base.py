@@ -40,14 +40,12 @@ class ChatEngine(BaseChatEngine):
     def __init__(self,
                  *,
                  llm: BaseLLM,
-                 context_engine: ContextEngine,
                  query_builder: QueryBuilder,
                  response_builder: ChatResponseBuilder,
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
                  ):
         self.llm = llm
-        self.context_engine = context_engine
         self.query_builder = query_builder
         self.response_builder = response_builder
         self.max_prompt_tokens = max_prompt_tokens
@@ -67,9 +65,9 @@ class ChatEngine(BaseChatEngine):
         )
         return chat_response
 
-    def get_context(self,
-                    messages: Messages,
-                    ) -> Context:
+    def get_query_results(self,
+                          messages: Messages,
+                          ) -> Context:
         queries = self.query_builder.build(messages,
                                            max_prompt_tokens=self.max_prompt_tokens)
         max_context_tokens = self._calculate_max_context_tokens(self.max_prompt_tokens,

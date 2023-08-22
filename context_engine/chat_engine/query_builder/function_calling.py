@@ -1,11 +1,14 @@
+from context_engine.chat_engine.history_builder.base_history_builder\
+    import BaseHistoryBuilder
 from context_engine.chat_engine.query_builder.base import QueryBuilder
 
 from typing import Optional
 
-from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.llm.base import BaseLLM
 
-DEFAULT_TEMPLATE = """When you receive a user question regarding {topic} {topic_description}, your task is to formulate one or more search queries to retrieve relevant information from a search engine. 
+DEFAULT_TEMPLATE = """When you receive a user question regarding {topic}
+{topic_description}, your task is to formulate one or more search queries
+to retrieve relevant information from a search engine. 
 You should break down complex questions into sub-queries if needed."""  # noqa
 
 
@@ -17,7 +20,7 @@ class FunctionCallingQueryBuilder(QueryBuilder):
                  topic_description: str,
                  prompt: Optional[str] = None,
                  prompt_template: Optional[str] = None,
-                 history_pruning: HistoryPruningMethod = HistoryPruningMethod.RAISE):
+                 history_builder: BaseHistoryBuilder):
         self.llm = llm
 
         if prompt is not None and prompt_template is not None:
@@ -30,4 +33,4 @@ class FunctionCallingQueryBuilder(QueryBuilder):
         else:
             self.prompt = DEFAULT_TEMPLATE.format(topic=topic,
                                                   topic_description=topic_description)
-        self.history_pruning = history_pruning
+        self.history_builder = history_builder
