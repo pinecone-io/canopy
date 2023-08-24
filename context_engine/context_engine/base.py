@@ -37,4 +37,4 @@ class ContextEngine(BaseContextEngine):
         return context
 
     async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:
-        raise NotImplementedError
+        raise NotImplementedError()
