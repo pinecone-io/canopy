@@ -33,8 +33,8 @@ class BaseLLM(ABC):
                                messages: Messages,
                                function: Function,
                                *,
-                               max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None,
+                               max_tokens: Optional[int] = None,
+                               model_params: Optional[ModelParams] = None
                                ) -> dict:
         pass
 

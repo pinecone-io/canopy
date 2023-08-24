@@ -21,9 +21,9 @@ class AssistantMessage(MessageBase):
 
 
 class ModelParams(BaseModel):
-    temperature: Optional[float]
-    n: Optional[int]  # number of completions to generate
-    top_p: Optional[float]
+    temperature: Optional[float] = None
+    n: Optional[int] = None  # number of completions to generate
+    top_p: Optional[float] = None
 
 
 class FunctionPrimitiveProperty(BaseModel):
