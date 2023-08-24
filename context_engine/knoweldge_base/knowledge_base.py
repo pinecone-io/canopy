@@ -1,27 +1,29 @@
 from datetime import datetime
 from typing import List, Optional
-
+from copy import deepcopy
 import pandas as pd
 import pinecone
-from pinecone_datasets import Dataset, DatasetMetadata
+from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
 from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
 from context_engine.knoweldge_base.chunker.base import Chunker
 from context_engine.knoweldge_base.record_encoder.base_record_encoder \
     import BaseRecordEncoder
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                                  KBEncodedDocChunk, )
+                                                  KBDocChunkWithScore, )
 from context_engine.knoweldge_base.reranker.reranker import (Reranker,
                                                              TransparentReranker, )
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 
-INDEX_NAME_PREFIX = "context_engine_"
+
+INDEX_NAME_PREFIX = "context-engine-"
 
 
 class KnowledgeBase(BaseKnowledgeBase):
+
     def __init__(self,
-                 index_name: str,
+                 index_name_suffix: str,
                  *,
                  encoder: BaseRecordEncoder,
                  tokenizer: Tokenizer,
@@ -32,44 +34,41 @@ class KnowledgeBase(BaseKnowledgeBase):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
-        # TODO: decide how we are handling index name prefix:
-        #  Option 1 - we add the prefix to the index name if it is not already there
-        #  and the index doesn't already exist
-        # if not (index_name in pinecone.list_indexes()
-        #     or index_name.startswith(INDEX_NAME_PREFIX)):
-        #     index_name = INDEX_NAME_PREFIX + index_name
-        #     print(f"Index name must start with {INDEX_NAME_PREFIX}. "
-        #           f"Renaming to {index_name}")
+        if index_name_suffix.startswith(INDEX_NAME_PREFIX):
+            index_name = index_name_suffix
+        else:
+            index_name = INDEX_NAME_PREFIX + index_name_suffix
 
-        #  Option 2 - we require the index name to start with the prefix, and error out
-        #  if it doesn't
-        # if not index_name.startswith(INDEX_NAME_PREFIX):
-        #     raise ValueError(f"Index name must start with {INDEX_NAME_PREFIX}")
-        #
-        #  Option 3 - we leave it as a guideline \ default, but don't enforce it
-        #  (this is the current implementation)
         self._index_name = index_name
-
+        self._default_top_k = default_top_k
         self._encoder = encoder
         self._tokenizer = tokenizer
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
-        # Try to connect to the index
-        pinecone.init()
-        try:
-            self._index = pinecone.Index(name=self._index_name)
-            self._index.describe_index_stats()
-        except Exception as e:
-            if self._index_name in pinecone.list_indexes():
-                raise RuntimeError("Failed to connect to the index. "
-                                   "Please check your credentials and index name") \
-                    from e
-            else:
-                self._index = None
+        self._index = None
+
+    def connect(self, force: bool = False):
+        if self._index is None or force:
+
+            try:
+                pinecone.init()
+                pinecone.whoami()
+            except Exception as e:
+                raise RuntimeError("Failed to connect to Pinecone. "
+                                   "Please check your credentials") from e
+
+            try:
+                self._index = pinecone.Index(index_name=self._index_name)
+                self._index.describe_index_stats()  # type: ignore
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to connect to the index {self._index_name}. "
+                    "Please check your credentials and index name"
+                ) from e
 
     def create_index(self,
-                     dimension: Optional[int],
+                     dimension: Optional[int] = None,
                      indexed_fields: List[str] = ['document_id'],
                      **kwargs
                      ):
@@ -134,109 +133,150 @@ class KnowledgeBase(BaseKnowledgeBase):
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
+        pinecone.init()
         pinecone.create_index(name=self._index_name,
                               dimension=dimension,
                               metadata_config={
                                   'indexed': indexed_fields
                               },
                               **kwargs)
-        self._index = pinecone.Index(name=self._index_name)
+        self.connect()
 
-    def query(self, queries: List[Query],
+    def delete_index(self):
+        if self._index_name not in pinecone.list_indexes():
+            raise RuntimeError(
+                "Index does not exist.")
+        pinecone.delete_index(self._index_name)
+        self._index = None
+
+    def query(self,
+              queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
 
         if self._index is None:
             raise RuntimeError(
-                "Index does not exist. Please call `create_index()` first")
+                "Index does not exist. Please call `connect()` first")
 
-        # Encode queries
         queries: List[KBQuery] = self._encoder.encode_queries(queries)
 
-        # TODO: perform the actual index querying
-        results: List[KBQueryResult]
+        results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
+                                        for q in queries]
 
-        # Rerank results
         results = self._reranker.rerank(results) # noqa
 
-        # Convert to QueryResult
         return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
         ]
 
+    def _query_index(self,
+                     query: KBQuery,
+                     global_metadata_filter: Optional[dict]) -> KBQueryResult:
+        metadata_filter = deepcopy(query.metadata_filter)
+        if global_metadata_filter is not None:
+            metadata_filter.update(global_metadata_filter)  # type: ignore
+        top_k = query.top_k if query.top_k else self._default_top_k
+        result = self._index.query(vector=query.values,  # type: ignore
+                                   sparse_vector=query.sparse_values,
+                                   top_k=top_k,
+                                   namespace=query.namespace,
+                                   metadata_filter=metadata_filter,
+                                   include_metadata=True,
+                                   **query.query_params)
+        documents: List[KBDocChunkWithScore] = []
+        for match in result['matches']:
+            metadata = match['metadata']
+            text = metadata.pop('text')
+            document_id = metadata.pop('document_id')
+            documents.append(
+                KBDocChunkWithScore(id=match['id'],
+                                    text=text,
+                                    document_id=document_id,
+                                    score=match['score'],
+                                    metadata=metadata)
+            )
+        return KBQueryResult(query=query.text, documents=documents)
+
     def upsert(self,
                documents: List[Document],
-               namespace: str = ""
-               ):
+               namespace: str = "",
+               batch_size: int = 100):
         if self._index is None:
             raise RuntimeError(
-                "Index does not exist. Please call `create_index()` first")
+                "Index does not exist. Please call `connect()` first")
+        chunks = self._chunker.chunk_documents(documents)
+        encoded_chunks = self._encoder.encode_documents(chunks)
 
-        dataset = self._load_cached_chunks_dataset(documents)
-        if dataset is None:
-            # Chunk documents
-            chunks = self._chunker.chunk_documents(documents)
+        encoder_name = self._encoder.__class__.__name__
 
-            # Encode documents
-            chunks: List[KBEncodedDocChunk] = self._encoder.encode_documents(chunks)
+        dataset_metadata = DatasetMetadata(name=self._index_name,
+                                           created_at=str(datetime.now()),
+                                           documents=len(chunks),
+                                           dense_model=DenseModelMetadata(
+                                               name=encoder_name,
+                                               dimension=self._encoder.dimension),
+                                           queries=0)
 
-            # Create chunks dataset for batch upsert
+        dataset = Dataset.from_pandas(
+            pd.DataFrame.from_records([c.to_db_record() for c in encoded_chunks]),
+            metadata=dataset_metadata
+        )
 
-            # TODO: the metadata is completely redundant in this case, since we know
-            #  the index
-            #  was already created with the same parameters. Either we make it
-            #  optional in
-            #  pinecone-datastes or we just don't use Dataset at all
-            dataset_metadata = DatasetMetadata(name=self._index_name,
-                                               created_at=str(datetime.now()),
-                                               documents=len(chunks),
-                                               queries=0),
-
-            dataset = Dataset.from_pandas(
-                pd.DataFrame.from_records([c.to_db_record() for c in chunks]),
-                metadata=dataset_metadata
-            )
-            self._save_chunks_dataset(dataset, documents)
-
-        # TODO: implement delete
-        # The upsert operation may update documents which may already exist in the
-        # index, as many invidual chunks. As the process of chunking might have changed
-        # the number of chunks per document, we need to delete all existing chunks
+        # The upsert operation may update documents which may already exist
+        # int the index, as many individual chunks.
+        # As the process of chunking might have changed
+        # the number of chunks per document,
+        # we need to delete all existing chunks
         # belonging to the same documents before upserting the new ones.
-        self.delete([doc.id for doc in documents], namespace=namespace)
+        self.delete(document_ids=[doc.id for doc in documents],
+                    namespace=namespace)
 
         # Upsert to Pinecone index
         dataset.to_pinecone_index(self._index_name,
                                   namespace=namespace,
                                   should_create_index=False)
 
-    def _load_cached_chunks_dataset(self,
-                                    documents: List[Document]
-                                    ) -> Optional[Dataset]:
-        """
-        Load the dataset of chunks from cache on disk, if it exists
+    def upsert_dataframe(self,
+                         df: pd.DataFrame,
+                         namespace: str = "",
+                         batch_size: int = 100):
+        if self._index is None:
+            raise RuntimeError(
+                "Index does not exist. Please call `connect()` first")
+        expected_columns = ["id", "text", "metadata"]
+        if not all([c in df.columns for c in expected_columns]):
+            raise ValueError(
+                f"Dataframe must contain the following columns: {expected_columns}"
+                f"Got: {df.columns}"
+            )
+        documents = [Document(id=row.id, text=row.text, metadata=row.metadata)
+                     for row in df.itertuples()]
+        self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
-        Args:
-            documents (List[Document]): The set of documents. If a cached dataset of
-                                        chunks exists, it must have been created from
-                                        the same set of documents.
+    def delete(self,
+               document_ids: List[str],
+               namespace: str = "") -> None:
+        self._index.delete(  # type: ignore
+            filter={"document_id": {"$in": document_ids}},
+            namespace=namespace
+        )
 
-        Returns:
-            Optional[Dataset]: The dataset of chunks, if it exists. Otherwise, None.
-        """
-        # TODO: implement
-        return None
+    async def aquery(self,
+                     queries: List[Query],
+                     global_metadata_filter: Optional[dict] = None
+                     ) -> List[QueryResult]:
+        raise NotImplementedError()
 
-    def _save_chunks_dataset(self, chunks_dataset: Dataset, documents: List[Document]):
-        """
-        For a given set of documents, save the dataset of generated chunks to cache on
-        the local disk or in the cloud.
+    async def aupsert(self,
+                      documents: List[Document],
+                      namespace: str = "") -> None:
+        raise NotImplementedError()
 
-        Args:
-            chunks_dataset (Dataset): The dataset of chunks generated for the given
-                                      documents set.
-            documents (List[Document]): The set of documents. A hashing function will
-                                        be used to generate a unique id for the
-                                        cached dataset.
-        """
-        pass
+    async def adelete(self,
+                      document_ids: List[str],
+                      namespace: str = "") -> None:
+        raise NotImplementedError()
+
+    @property
+    def tokenizer(self) -> Tokenizer:
+        return self._tokenizer
