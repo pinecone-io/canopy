@@ -44,10 +44,9 @@ class Context(BaseModel):
         else:
             return "\n".join([c.to_text() for c in self.content])
 
-# TODO: add ChatEngine main models - `Messages`, `Answer`
- 
 
 # --------------------- LLM models ------------------------
+
 
 class Role(Enum):
     USER = "user"

@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Union, List
+from typing import Iterable, Union, Optional
 
-from context_engine.chat_engine.query_builder.base import QueryBuilder
-from context_engine.chat_engine.reponse_builder.base import ChatResponseBuilder
-from context_engine.context_engine import ContextEngine
+from context_engine.chat_engine.prompt_builder.base import BasePromptBuilder
+from context_engine.chat_engine.query_generator.base import QueryGenerator
+from context_engine.knoweldge_base import KnowledgeBase
 from context_engine.llm.base import BaseLLM
+from context_engine.llm.models import ModelParams
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
-from context_engine.models.data_models import Context, Messages, Query
+from context_engine.models.data_models import Context, Messages
 
 
 class BaseChatEngine(ABC):
@@ -15,9 +16,11 @@ class BaseChatEngine(ABC):
              messages: Messages,
              *,
              stream: bool = False,
+             model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
 
+    # TODO: Decide if we want it for first release in the API
     @abstractmethod
     def get_context(self, messages: Messages) -> Context:
         pass
@@ -27,6 +30,7 @@ class BaseChatEngine(ABC):
                     messages: Messages,
                     *,
                     stream: bool = False,
+                    model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
 
@@ -40,16 +44,16 @@ class ChatEngine(BaseChatEngine):
     def __init__(self,
                  *,
                  llm: BaseLLM,
-                 context_engine: ContextEngine,
-                 query_builder: QueryBuilder,
-                 response_builder: ChatResponseBuilder,
+                 query_builder: QueryGenerator,
+                 knowledge_base: KnowledgeBase,
+                 prompt_builder: BasePromptBuilder,
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
                  ):
         self.llm = llm
-        self.context_engine = context_engine
         self.query_builder = query_builder
-        self.response_builder = response_builder
+        self.knowledge_base = knowledge_base
+        self.prompt_builder = prompt_builder
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
 
@@ -57,45 +61,32 @@ class ChatEngine(BaseChatEngine):
              messages: Messages,
              *,
              stream: bool = False,
+             model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
-        context = self.get_context(messages)
-        chat_response = self.response_builder.build(
-            context,
-            messages,
-            max_prompt_tokens=self.max_prompt_tokens,
-            stream=stream,
-        )
-        return chat_response
+        queries = self.query_builder.generate(messages,
+                                              max_prompt_tokens=self.max_prompt_tokens)
+        query_results = self.knowledge_base.query(queries)
+        prompt_messages = self.prompt_builder.build(messages,
+                                                    query_results,
+                                                    max_tokens=self.max_prompt_tokens)
+        return self.llm.chat_completion(prompt_messages,
+                                        max_tokens=self.max_generated_tokens,
+                                        stream=stream,
+                                        model_params=model_params)
 
     def get_context(self,
                     messages: Messages,
                     ) -> Context:
-        queries = self.query_builder.build(messages,
-                                           max_prompt_tokens=self.max_prompt_tokens)
-        max_context_tokens = self._calculate_max_context_tokens(self.max_prompt_tokens,
-                                                                queries)
-        context = self.context_engine.query(queries, max_context_tokens)
-        return context
-
-    # TODO: Decide if we want to do this calculation before calling the query builder
-    #  based on `messages`, after calling the query builder based on `queries`, or
-    #  inside the query builder itself (using pruning_method).
-    def _calculate_max_context_tokens(self,
-                                      max_prompt_tokens: int,
-                                      queries: List[Query]
-                                      ) -> int:
         raise NotImplementedError
 
     async def achat(self,
                     messages: Messages,
                     *,
                     stream: bool = False,
+                    model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         raise NotImplementedError
 
-    async def aget_context(self,
-                           messages: Messages,
-                           *,
-                           stream: bool = False,
-                           ) -> Context:
+    @abstractmethod
+    async def aget_context(self, messages: Messages) -> Context:
         raise NotImplementedError
