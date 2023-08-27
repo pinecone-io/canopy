@@ -66,10 +66,3 @@ class MessageBase(BaseModel):
 
 
 Messages = List[MessageBase]
-
-
-class LLMResponse(BaseModel):
-    id: str
-    choices: Sequence[str]
-    generated_tokens: Optional[int] = Field(default=None, exclude=True)
-    prompt_tokens: Optional[int] = Field(default=None, exclude=True)

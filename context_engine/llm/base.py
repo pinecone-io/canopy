@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Optional, cast
+from typing import Union, Iterable, Optional, List
 
-from context_engine.llm.models import Function, ModelParams, UserMessage
+from context_engine.llm.models import Function, ModelParams
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
-from context_engine.models.data_models import Messages, LLMResponse
+from context_engine.models.data_models import Messages, Query
 
 
 class BaseLLM(ABC):
@@ -23,44 +23,18 @@ class BaseLLM(ABC):
                         messages: Messages,
                         *,
                         stream: bool = False,
-                        max_generated_tokens: Optional[int] = None,
+                        max_tokens: Optional[int] = None,
                         model_params: Optional[ModelParams] = None,
                         ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
 
-    def call(self,
-             prompt: str,
-             *,
-             history: Optional[Messages],
-             max_generated_tokens: Optional[int] = None,
-             model_params: Optional[ModelParams] = None,
-             ) -> LLMResponse:
-        if not history:
-            history = []
-        messages: Messages = history + [UserMessage(content=prompt)]
-        response = self.chat_completion(
-            messages,
-            stream=False,
-            max_generated_tokens=max_generated_tokens,
-            model_params=model_params
-        )
-        response = cast(ChatResponse, response)
-
-        return LLMResponse(id=response.id,
-                           choices=[
-                               c.message.content for c in response.choices
-                           ],
-                           generated_tokens=response.usage.completion_tokens,
-                           prompt_tokens=response.usage.prompt_tokens)
-
     @abstractmethod
     def enforced_function_call(self,
-                               prompt: str,
+                               messages: Messages,
                                function: Function,
                                *,
-                               history: Optional[Messages],
-                               max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None,
+                               max_tokens: Optional[int] = None,
+                               model_params: Optional[ModelParams] = None
                                ) -> dict:
         pass
 
@@ -71,15 +45,15 @@ class BaseLLM(ABC):
                                stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
-                               ) -> Union[LLMResponse, Iterable[LLMResponse]]:
+                               ) -> Union[ChatResponse,
+                                          Iterable[StreamingChatResponse]]:
         pass
 
     @abstractmethod
-    async def aenforced_function_call(self,
-                                      messages: Messages,
-                                      function: Function,
-                                      *,
-                                      max_generated_tokens: Optional[int] = None,
-                                      model_params: Optional[ModelParams] = None,
-                                      ) -> dict:
+    async def agenerate_queries(self,
+                                messages: Messages,
+                                *,
+                                max_generated_tokens: Optional[int] = None,
+                                model_params: Optional[ModelParams] = None,
+                                ) -> List[Query]:
         pass
