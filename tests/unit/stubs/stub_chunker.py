@@ -5,13 +5,21 @@ from context_engine.models.data_models import Document
 
 
 class StubChunker(Chunker):
+
+    def __init__(self, num_chunks_per_doc: int = 1):
+        super().__init__()
+        self.num_chunks_per_doc = num_chunks_per_doc
+
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
         if document.text == "":
             return []
-        return [KBDocChunk(id=f"{document.id}_0",
+
+        # simply duplicate docs as chunks
+        return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
-                           text=document.text,
-                           metadata=document.metadata)]
+                           text=document.text + (f" dup_{i}" if i > 0 else ""),
+                           metadata=document.metadata)
+                for i in range(self.num_chunks_per_doc)]
 
     async def achunk_single_document(self, document: Document) -> List[KBDocChunk]:
         raise NotImplementedError()

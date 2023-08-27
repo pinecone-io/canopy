@@ -27,9 +27,10 @@ class KBEncodedDocChunk(KBDocChunk):
     def to_db_record(self):
         metadata = deepcopy(self.metadata)
         metadata["text"] = self.text
+        metadata["document_id"] = self.document_id
 
         return {
-            "id": self.document_id,
+            "id": self.id,
             "values": self.values,
             "metadata": metadata,
             "sparse_values": self.sparse_values,

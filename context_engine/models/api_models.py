@@ -1,4 +1,3 @@
-from datetime import datetime
 from typing import Optional, Sequence
 
 from pydantic import BaseModel, Field, validator
@@ -7,14 +6,14 @@ from context_engine.models.data_models import MessageBase
 
 
 class _Choice(BaseModel):
-    index: int = 0
+    index: int
     message: MessageBase
-    finish_reason: str = "stop"
+    finish_reason: Optional[str] = None
 
 
 class _StreamChoice(BaseModel):
-    index: int = 0
-    delta: MessageBase
+    index: int
+    delta: dict
     finish_reason: Optional[str] = None
 
 
@@ -30,8 +29,8 @@ class TokenCounts(BaseModel):
 
 class ChatResponse(BaseModel):
     id: str
-    object: str = "chat.completion"
-    created: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
+    object: str
+    created: int
     model: str
     choices: Sequence[_Choice]
     usage: TokenCounts
@@ -40,6 +39,7 @@ class ChatResponse(BaseModel):
 
 class StreamingChatResponse(BaseModel):
     id: str
-    object: str = "chat.chunk"
-    created: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
+    object: str
+    created: int
     model: str
+    choices: Sequence[_StreamChoice]
