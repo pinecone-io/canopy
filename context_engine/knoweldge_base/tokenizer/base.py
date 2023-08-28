@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
+from context_engine.models.data_models import Messages
+
 
 class Tokenizer(ABC):
 
@@ -14,3 +16,7 @@ class Tokenizer(ABC):
 
     def token_count(self, text: str) -> int:
         return len(self.tokenize(text))
+
+    @abstractmethod
+    def messages_token_count(self, messages: Messages) -> int:
+        pass
