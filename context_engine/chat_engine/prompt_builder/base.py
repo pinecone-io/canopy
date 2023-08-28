@@ -57,16 +57,16 @@ class PromptBuilder(BasePromptBuilder):
               max_tokens: int) -> Messages:
         prompt_massages = [MessageBase(role=Role.SYSTEM,
                                        content=system_message)]
-        system_tokens = self._count_tokens(prompt_massages)
-        if system_tokens > max_tokens:
+        prompt_tokens = self._tokenizer.messages_token_count(prompt_massages)
+        if prompt_tokens > max_tokens:
             raise InvalidRequestError(
-                f'System message tokens {system_tokens} exceed max tokens {max_tokens}'
+                f'System message tokens {prompt_tokens} exceed max tokens {max_tokens}'
             )
 
         if query_results is None or len(query_results) == 0:
-            max_history_tokens = max_tokens - system_tokens
+            max_history_tokens = max_tokens - prompt_tokens
         else:
-            max_history_tokens = int((max_tokens - system_tokens)
+            max_history_tokens = int((max_tokens - prompt_tokens)
                                      * (1.0 - self._context_ratio))
 
         history, num_tokens = self.history_builder.build(history,
@@ -74,7 +74,11 @@ class PromptBuilder(BasePromptBuilder):
         prompt_massages.extend(history)
 
         if query_results is not None and len(query_results) > 0:
-            context_tokens = max_tokens - self._count_tokens(prompt_massages)
+            empty_message_tokens = self._tokenizer.messages_token_count(
+                [MessageBase(role=Role.SYSTEM, content="")]
+            )
+            prompt_tokens = self._tokenizer.messages_token_count(prompt_massages)
+            context_tokens = max_tokens - prompt_tokens - empty_message_tokens
             context = self.context_builder.build(query_results, context_tokens)
             prompt_massages.append(MessageBase(role=Role.SYSTEM,
                                                content=context.to_text()))
