@@ -43,6 +43,7 @@ class ChatEngine(BaseChatEngine):
 
     def __init__(self,
                  *,
+                 system_message: str,
                  llm: BaseLLM,
                  query_builder: QueryGenerator,
                  knowledge_base: KnowledgeBase,
@@ -50,6 +51,7 @@ class ChatEngine(BaseChatEngine):
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
                  ):
+        self.system_message = system_message
         self.llm = llm
         self.query_builder = query_builder
         self.knowledge_base = knowledge_base
@@ -66,7 +68,8 @@ class ChatEngine(BaseChatEngine):
         queries = self.query_builder.generate(messages,
                                               max_prompt_tokens=self.max_prompt_tokens)
         query_results = self.knowledge_base.query(queries)
-        prompt_messages = self.prompt_builder.build(messages,
+        prompt_messages = self.prompt_builder.build(self.system_message,
+                                                    messages,
                                                     query_results,
                                                     max_tokens=self.max_prompt_tokens)
         return self.llm.chat_completion(prompt_messages,
