@@ -52,8 +52,8 @@ class TestPromptBuilder:
 
     @staticmethod
     def test_build_with_none_query_results(prompt_builder,
-                                         mock_history_builder,
-                                         mock_context_builder):
+                                           mock_history_builder,
+                                           mock_context_builder):
         system_message = "Starting message"
         history = [MessageBase(role=Role.USER, content="Hello")]
         max_tokens = 25

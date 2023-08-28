@@ -74,11 +74,11 @@ class PromptBuilder(BasePromptBuilder):
         prompt_massages.extend(history)
 
         if query_results is not None and len(query_results) > 0:
-            empty_messages_tokens = self._tokenizer.messages_token_count(
+            empty_message_tokens = self._tokenizer.messages_token_count(
                 [MessageBase(role=Role.SYSTEM, content="")]
             )
             prompt_tokens = self._tokenizer.messages_token_count(prompt_massages)
-            context_tokens = max_tokens - prompt_tokens - empty_messages_tokens
+            context_tokens = max_tokens - prompt_tokens - empty_message_tokens
             context = self.context_builder.build(query_results, context_tokens)
             prompt_massages.append(MessageBase(role=Role.SYSTEM,
                                                content=context.to_text()))
