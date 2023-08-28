@@ -22,7 +22,7 @@ class BasePromptBuilder(ABC):
     @abstractmethod
     def build(self,
               system_message: str,
-              messages: Messages,
+              history: Messages,
               query_results: Optional[List[QueryResult]],
               max_tokens: int) -> Messages:
         pass
@@ -52,7 +52,7 @@ class PromptBuilder(BasePromptBuilder):
 
     def build(self,
               system_message: str,
-              messages: Messages,
+              history: Messages,
               query_results: Optional[List[QueryResult]],
               max_tokens: int) -> Messages:
         prompt_massages = [MessageBase(role=Role.SYSTEM,
@@ -69,7 +69,7 @@ class PromptBuilder(BasePromptBuilder):
             max_history_tokens = int((max_tokens - system_tokens)
                                      * (1.0 - self._context_ratio))
 
-        history, num_tokens = self.history_builder.build(messages,
+        history, num_tokens = self.history_builder.build(history,
                                                          max_history_tokens)
         prompt_massages.extend(history)
 
