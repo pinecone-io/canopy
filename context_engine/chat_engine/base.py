@@ -16,6 +16,7 @@ class BaseChatEngine(ABC):
              messages: Messages,
              *,
              stream: bool = False,
+             max_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
@@ -30,6 +31,7 @@ class BaseChatEngine(ABC):
                     messages: Messages,
                     *,
                     stream: bool = False,
+                    max_tokens: Optional[int] = None,
                     model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
@@ -49,7 +51,7 @@ class ChatEngine(BaseChatEngine):
                  knowledge_base: KnowledgeBase,
                  prompt_builder: BasePromptBuilder,
                  max_prompt_tokens: int,
-                 max_generated_tokens: int,
+                 max_generated_tokens: Optional[int] = None,
                  ):
         self.system_message = system_message
         self.llm = llm
@@ -63,6 +65,7 @@ class ChatEngine(BaseChatEngine):
              messages: Messages,
              *,
              stream: bool = False,
+             max_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         queries = self.query_builder.generate(messages,
@@ -72,8 +75,9 @@ class ChatEngine(BaseChatEngine):
                                                     messages,
                                                     query_results,
                                                     max_tokens=self.max_prompt_tokens)
+        max_tokens = max_tokens or self.max_generated_tokens
         return self.llm.chat_completion(prompt_messages,
-                                        max_tokens=self.max_generated_tokens,
+                                        max_tokens=max_tokens,
                                         stream=stream,
                                         model_params=model_params)
 
@@ -86,10 +90,10 @@ class ChatEngine(BaseChatEngine):
                     messages: Messages,
                     *,
                     stream: bool = False,
+                    max_tokens: Optional[int] = None,
                     model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         raise NotImplementedError
 
-    @abstractmethod
     async def aget_context(self, messages: Messages) -> Context:
         raise NotImplementedError
