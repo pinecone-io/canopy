@@ -14,10 +14,12 @@ openai = "^0.27.5"
 tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.0"
 pydantic = "^1.10.7"
-pinecone-text = "^0.5.2"
+pinecone-text = { version = "^0.5.2", extras = ["dense"] }
 flake8-pyproject = "^1.2.3"
 pandas-stubs = "^2.0.3.230814"
-
+fastapi = "^0.92.0"
+uvicorn = "^0.20.0"
+tenacity = "^8.2.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
