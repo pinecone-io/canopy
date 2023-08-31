@@ -20,7 +20,8 @@ from typing import Tuple, Iterable
 from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse
-from context_engine.service.models import ChatRequest, ContextQueryRequest, ContextUpsertRequest
+from context_engine.service.models import \
+    ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
 load_dotenv()
 
