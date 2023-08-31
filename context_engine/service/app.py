@@ -1,3 +1,4 @@
+from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
 from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer
 from context_engine.knoweldge_base.record_encoder import DenseRecordEncoder
@@ -19,7 +20,7 @@ from typing import Tuple, Iterable
 from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse
-from context_engine.service.models import ChatRequest, ContextQueryRequest
+from context_engine.service.models import ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ app = FastAPI()
 
 context_engine: ContextEngine
 chat_engine: ChatEngine
+kb: BaseKnowledgeBase
 
 
 @app.post(
@@ -84,6 +86,28 @@ async def query(
 
 
 @app.get(
+    "/context/upsert",
+)
+async def upsert(
+    request: ContextUpsertRequest = Body(...),
+):
+    try:
+
+        upsert_results = await run_in_threadpool(
+            kb.upsert,
+            documents=request.documents,
+            namespace=request.namespace,
+            batch_size=request.batch_size)  # type: ignore
+
+        return upsert_results
+
+    except Exception as e:
+        print("Error:", e)
+        raise HTTPException(
+            status_code=500, detail=f"Internal Service Error: {str(e)}")
+
+
+@app.get(
     "/ping",
 )
 async def ping():
@@ -92,11 +116,11 @@ async def ping():
 
 @app.on_event("startup")
 async def startup():
-    global context_engine, chat_engine
-    context_engine, chat_engine = _init_engines()
+    global kb, context_engine, chat_engine
+    kb, context_engine, chat_engine = _init_engines()
 
 
-def _init_engines() -> Tuple[ContextEngine, ChatEngine]:
+def _init_engines() -> Tuple[BaseKnowledgeBase, ContextEngine, ChatEngine]:
     tokenizer = OpenAITokenizer("gpt-3.5-turbo")
     llm = OpenAILLM("gpt-3.5-turbo",
                     default_max_generated_tokens=256)
@@ -138,7 +162,7 @@ the documents you have used in the format source: <url>"""
                              prompt_builder=prompt_builder,
                              max_prompt_tokens=4096 - 256)
 
-    return context_engine, chat_engine
+    return kb, context_engine, chat_engine
 
 
 def start():

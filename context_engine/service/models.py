@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from context_engine.models.data_models import Messages, Query
+from context_engine.models.data_models import Messages, Query, Document
 
 
 class ChatRequest(BaseModel):
@@ -15,3 +15,9 @@ class ChatRequest(BaseModel):
 class ContextQueryRequest(BaseModel):
     queries: List[Query]
     max_tokens: Optional[int] = None
+
+
+class ContextUpsertRequest(BaseModel):
+    documents: List[Document]
+    namespace: str = ""
+    batch_size: int = 100
