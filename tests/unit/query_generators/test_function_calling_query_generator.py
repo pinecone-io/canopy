@@ -58,7 +58,7 @@ class TestFunctionCallingQueryGenerator:
                                           max_prompt_tokens=100)
 
         mock_prompt_builder.build.assert_called_once_with(
-            system_message=DEFAULT_SYSTEM_PROMPT,
+            system_prompt=DEFAULT_SYSTEM_PROMPT,
             history=sample_messages,
             query_results=None,
             max_tokens=100
@@ -99,7 +99,7 @@ class TestFunctionCallingQueryGenerator:
             mock_llm,
             mock_prompt_builder,
             top_k=5,
-            system_prompt=custom_system_prompt,
+            prompt=custom_system_prompt,
             function_description=custom_function_description
         )
 
@@ -113,7 +113,7 @@ class TestFunctionCallingQueryGenerator:
         assert result == expected_result
 
         mock_prompt_builder.build.assert_called_once_with(
-            system_message=custom_system_prompt,
+            system_prompt=custom_system_prompt,
             history=sample_messages,
             query_results=None,
             max_tokens=100
@@ -161,7 +161,7 @@ class TestFunctionCallingQueryGenerator:
                                           max_prompt_tokens=100)
 
         mock_prompt_builder.build.assert_called_once_with(
-            system_message=DEFAULT_SYSTEM_PROMPT,
+            system_prompt=DEFAULT_SYSTEM_PROMPT,
             history=[],
             query_results=None,
             max_tokens=100

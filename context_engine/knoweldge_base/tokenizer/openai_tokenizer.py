@@ -21,8 +21,11 @@ class OpenAITokenizer(Tokenizer):
             raise TypeError(f"detokenize expect List[str], got f{type(tokens)}")
         return "".join(tokens)
 
-    def token_count(self, text: str) -> int:
-        return len(self._encoder.encode(text))
+    def token_count(self, text: str, as_message: bool = False) -> int:
+        count = len(self._encoder.encode(text))
+        if as_message:
+            count += self.MESSAGE_TOKENS_OVERHEAD
+        return count
 
     def messages_token_count(self, messages: Messages) -> int:
         # Adapted from: https://github.com/openai/openai-cookbook/.../How_to_format_inputs_to_ChatGPT_models.ipynb # noqa

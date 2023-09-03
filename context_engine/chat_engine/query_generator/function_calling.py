@@ -1,7 +1,9 @@
 from typing import List, Optional
 
-from context_engine.chat_engine.prompt_builder.base import BasePromptBuilder
+from context_engine.chat_engine.prompt_builder.base import PromptBuilder
+from context_engine.chat_engine.history_builder.raising import RaisingHistoryBuilder
 from context_engine.chat_engine.query_generator.base import QueryGenerator
+from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm.base import BaseLLM
 from context_engine.llm.models import \
     ModelParams, Function, FunctionParameters, FunctionArrayProperty
@@ -18,29 +20,28 @@ class FunctionCallingQueryGenerator(QueryGenerator):
 
     def __init__(self,
                  llm: BaseLLM,
-                 prompt_builder: BasePromptBuilder,
                  top_k: int,
-                 system_prompt: Optional[str] = None,
-                 function_description: Optional[str] = None,
-                 model_params: Optional[ModelParams] = None,):
+                 tokenizer: Tokenizer,  # TODO: need to remove this dependency
+                 prompt: Optional[str] = None,
+                 function_description: Optional[str] = None):
         self._llm = llm
-        self._prompt_builder = prompt_builder
         self._top_k = top_k
-        self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self._system_prompt = prompt or DEFAULT_SYSTEM_PROMPT
         self._function_description = \
             function_description or DEFAULT_FUNCTION_DESCRIPTION
-        self._model_params = model_params
+
+        # TODO: hardcoded for now, need to make it configurable
+        history_prunner = RaisingHistoryBuilder(tokenizer)
+        self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
 
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int) -> List[Query]:
-        messages = self._prompt_builder.build(system_message=self._system_prompt,
+        messages = self._prompt_builder.build(system_prompt=self._system_prompt,
                                               history=messages,
-                                              query_results=None,
                                               max_tokens=max_prompt_tokens)
         arguments = self._llm.enforced_function_call(messages,
-                                                     function=self._function,
-                                                     model_params=self._model_params)
+                                                     function=self._function)
 
         return [Query(text=q,
                       top_k=self._top_k,

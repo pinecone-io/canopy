@@ -14,7 +14,7 @@ class Tokenizer(ABC):
     def detokenize(self, tokens: List[str]) -> str:
         pass
 
-    def token_count(self, text: str) -> int:
+    def token_count(self, text: str, as_message: bool = False) -> int:
         return len(self.tokenize(text))
 
     @abstractmethod
