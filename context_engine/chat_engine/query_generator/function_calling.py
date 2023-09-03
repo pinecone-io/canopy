@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from context_engine.chat_engine.prompt_builder.base import PromptBuilder
-from context_engine.chat_engine.history_builder.raising import RaisingHistoryBuilder
+from context_engine.chat_engine.history_builder import RaisingHistoryBuilder
 from context_engine.chat_engine.query_generator.base import QueryGenerator
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm.base import BaseLLM
@@ -37,9 +37,9 @@ class FunctionCallingQueryGenerator(QueryGenerator):
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int) -> List[Query]:
-        messages = self._prompt_builder.build(system_prompt=self._system_prompt,
-                                              history=messages,
-                                              max_tokens=max_prompt_tokens)
+        messages, _ = self._prompt_builder.build(system_prompt=self._system_prompt,
+                                                 history=messages,
+                                                 max_tokens=max_prompt_tokens)
         arguments = self._llm.enforced_function_call(messages,
                                                      function=self._function)
 

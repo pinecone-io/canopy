@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Tuple
 
 from context_engine.chat_engine.exceptions import InvalidRequestError
 from context_engine.chat_engine.history_builder.base import BaseHistoryBuilder
@@ -20,14 +21,14 @@ class BasePromptBuilder(ABC):
               system_prompt: str,
               history: Messages,
               max_tokens: int
-              ) -> Messages:
+              ) -> Tuple[Messages, int]:
         pass
 
     @abstractmethod
     async def abuild(self,
                      messages: Messages,
                      max_tokens: int
-                     ) -> Messages:
+                     ) -> Tuple[Messages, int]:
         pass
 
     def _count_tokens(self, messages: Messages) -> int:
@@ -41,10 +42,10 @@ class PromptBuilder(BasePromptBuilder):
               system_prompt: str,
               history: Messages,
               max_tokens: int
-              ) -> Messages:
-        prompt_massages = [MessageBase(role=Role.SYSTEM,
-                                       content=system_prompt)]
-        prompt_tokens = self._tokenizer.messages_token_count(prompt_massages)
+              ) -> Tuple[Messages, int]:
+        system_massage = [MessageBase(role=Role.SYSTEM,
+                                      content=system_prompt)]
+        prompt_tokens = self._tokenizer.messages_token_count(system_massage)
         if prompt_tokens > max_tokens:
             raise InvalidRequestError(
                 f'System message tokens {prompt_tokens} exceed max tokens {max_tokens}'
@@ -53,10 +54,12 @@ class PromptBuilder(BasePromptBuilder):
         max_history_tokens = max_tokens - prompt_tokens
         pruned_history, num_tokens = self._history_pruner.build(history,
                                                                 max_history_tokens)
-        return prompt_massages + pruned_history
+
+        full_prompt = system_massage + pruned_history
+        return full_prompt, self._tokenizer.messages_token_count(full_prompt)
 
     async def abuild(self,
                      messages: Messages,
                      max_tokens: int
-                     ) -> Messages:
+                     ) -> Tuple[Messages, int]:
         raise NotImplementedError()

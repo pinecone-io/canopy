@@ -39,7 +39,7 @@ class TestChatEngine:
                     mock_knowledge_base,
                     mock_prompt_builder):
         return ChatEngine(
-            system_message="system_message",
+            system_prompt="system_message",
             llm=mock_llm,
             query_builder=mock_query_builder,
             knowledge_base=mock_knowledge_base,
