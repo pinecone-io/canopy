@@ -10,8 +10,8 @@ from context_engine.llm.base import BaseLLM
 from context_engine.llm.models import ModelParams, UserMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
-from context_engine.chat_engine.history_builder import (RecentHistoryBuilder,
-                                                        RaisingHistoryBuilder, )
+from context_engine.chat_engine.history_builder import RecentHistoryBuilder
+
 
 DEFAULT_SYSTEM_PROMPT = ""  #TODO
 
@@ -67,7 +67,7 @@ class ChatEngine(BaseChatEngine):
         self._context_to_history_ratio = context_to_history_ratio
 
         # TODO: hardcoded for now, need to make it configurable
-        history_prunner = RaisingHistoryBuilder(tokenizer)
+        history_prunner = RecentHistoryBuilder(tokenizer)
         self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
 
     def chat(self,
