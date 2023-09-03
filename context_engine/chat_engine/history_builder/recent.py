@@ -16,10 +16,9 @@ class RecentHistoryBuilder(BaseHistoryBuilder):
         truncated_history = history[-self._min_history_messages:]
         token_count = self._tokenizer.messages_token_count(truncated_history)
         if token_count > max_tokens:
-            raise ValueError(f"The last {self._min_history_messages} messages in "
-                             f"history require {token_count} tokens, "
-                             f"which exceeds the calculated limit for history "
-                             f"of {max_tokens} tokens.")
+            raise ValueError(f"The {self._min_history_messages} most recent messages in"
+                             f" history require {token_count} tokens, which exceeds the"
+                             f" calculated limit for history of {max_tokens} tokens.")
 
         for message in reversed(history):
             token_count = self._tokenizer.messages_token_count(
