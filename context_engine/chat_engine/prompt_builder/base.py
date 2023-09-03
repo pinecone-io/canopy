@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 from context_engine.chat_engine.exceptions import InvalidRequestError
 from context_engine.chat_engine.history_builder.base import BaseHistoryBuilder

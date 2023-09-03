@@ -5,8 +5,8 @@ from context_engine.chat_engine.history_builder import RaisingHistoryBuilder
 from context_engine.chat_engine.query_generator.base import QueryGenerator
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm.base import BaseLLM
-from context_engine.llm.models import \
-    ModelParams, Function, FunctionParameters, FunctionArrayProperty
+from context_engine.llm.models import (Function, FunctionParameters,
+                                       FunctionArrayProperty)
 from context_engine.models.data_models import Messages, Query
 
 DEFAULT_SYSTEM_PROMPT = """Your task is to formulate search queries for a search engine,
