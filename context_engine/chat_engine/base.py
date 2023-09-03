@@ -59,7 +59,7 @@ class ChatEngine(BaseChatEngine):
                  max_generated_tokens: int,
                  tokenizer: Tokenizer,  # TODO: Remove this dependency
                  system_prompt: Optional[str] = None,
-                 context_to_history_ratio: int = 0.8
+                 context_to_history_ratio: float = 0.8
                  ):
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.llm = llm
@@ -87,7 +87,7 @@ class ChatEngine(BaseChatEngine):
         context = self.context_engine.query(queries, max_context_tokens)
 
         system_prompt = self.system_prompt_template.format(context=context.to_text())
-        llm_messages, _ = self._prompt_builder.build(
+        llm_messages = self._prompt_builder.build(
             system_prompt,
             messages,
             max_tokens=self.max_prompt_tokens
@@ -98,12 +98,12 @@ class ChatEngine(BaseChatEngine):
                                         model_params=model_params)
 
     def _calculate_max_context_tokens(self, messages: Messages):
-        history_tokens = self._tokenizer.messages_token_count(messages),
+        history_tokens = self._tokenizer.messages_token_count(messages)
         max_context_tokens = max(
             self.max_prompt_tokens - history_tokens,
             int(self.max_prompt_tokens * self._context_to_history_ratio)
         )
-        max_context_tokens -= self._tokenizer.tokenize(self.system_prompt_template)
+        max_context_tokens -= self._tokenizer.token_count(self.system_prompt_template)
         return max_context_tokens
 
     def get_context(self,

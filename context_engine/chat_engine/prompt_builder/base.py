@@ -21,14 +21,13 @@ class BasePromptBuilder(ABC):
               system_prompt: str,
               history: Messages,
               max_tokens: int
-              ) -> Tuple[Messages, int]:
+              ) -> Messages:
         pass
 
     @abstractmethod
     async def abuild(self,
                      messages: Messages,
-                     max_tokens: int
-                     ) -> Tuple[Messages, int]:
+                     max_tokens: int) -> Messages:
         pass
 
     def _count_tokens(self, messages: Messages) -> int:
@@ -42,7 +41,7 @@ class PromptBuilder(BasePromptBuilder):
               system_prompt: str,
               history: Messages,
               max_tokens: int
-              ) -> Tuple[Messages, int]:
+              ) -> Messages:
         system_massage = [MessageBase(role=Role.SYSTEM,
                                       content=system_prompt)]
         prompt_tokens = self._tokenizer.messages_token_count(system_massage)
@@ -55,11 +54,10 @@ class PromptBuilder(BasePromptBuilder):
         pruned_history, num_tokens = self._history_pruner.build(history,
                                                                 max_history_tokens)
 
-        full_prompt = system_massage + pruned_history
-        return full_prompt, self._tokenizer.messages_token_count(full_prompt)
+        return system_massage + pruned_history
 
     async def abuild(self,
                      messages: Messages,
                      max_tokens: int
-                     ) -> Tuple[Messages, int]:
+                     ) -> Messages:
         raise NotImplementedError()

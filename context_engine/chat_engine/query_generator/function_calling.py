@@ -37,9 +37,9 @@ class FunctionCallingQueryGenerator(QueryGenerator):
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int) -> List[Query]:
-        messages, _ = self._prompt_builder.build(system_prompt=self._system_prompt,
-                                                 history=messages,
-                                                 max_tokens=max_prompt_tokens)
+        messages = self._prompt_builder.build(system_prompt=self._system_prompt,
+                                              history=messages,
+                                              max_tokens=max_prompt_tokens)
         arguments = self._llm.enforced_function_call(messages,
                                                      function=self._function)
 
