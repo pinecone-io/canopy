@@ -13,7 +13,10 @@ from context_engine.models.data_models import Context, Messages
 from context_engine.chat_engine.history_builder import RecentHistoryBuilder
 
 
-DEFAULT_SYSTEM_PROMPT = ""  #TODO
+DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the reference to the documents you used from their 'reference' field in the format 'Source: $REFERENCE_HERE'.
+If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context."
+Don't address the context directly, but use it to answer the user question like it's your own knowledge.
+Context: {context}"""  # noqa
 
 
 class BaseChatEngine(ABC):
@@ -58,13 +61,14 @@ class ChatEngine(BaseChatEngine):
                  system_prompt: Optional[str] = None,
                  context_to_history_ratio: int = 0.8
                  ):
-        self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.llm = llm
         self.context_engine = context_engine
         self.query_builder = query_builder
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
         self._context_to_history_ratio = context_to_history_ratio
+        self._tokenizer = tokenizer
 
         # TODO: hardcoded for now, need to make it configurable
         history_prunner = RecentHistoryBuilder(tokenizer)
@@ -79,24 +83,28 @@ class ChatEngine(BaseChatEngine):
         queries = self.query_builder.generate(messages,
                                               max_prompt_tokens=self.max_prompt_tokens)
 
-        # Before calling the ContextEngine, build the prompt for the LLM completion.
-        # This already applies the history trimming policy (if required) - guaranteeing
-        # that enough tokens are reserved for the Context.
-        llm_messages, history_tokens = self._prompt_builder.build(
-            self.system_prompt,
-            messages,
-            max_tokens=int(
-                self.max_prompt_tokens * (1 - self._context_to_history_ratio)
-            )
-        )
-        max_context_tokens = self.max_prompt_tokens - history_tokens
+        max_context_tokens = self._calculate_max_context_tokens(messages)
         context = self.context_engine.query(queries, max_context_tokens)
-        llm_messages.append(UserMessage(content=context.content.to_text()))
 
+        system_prompt = self.system_prompt_template.format(context=context.to_text())
+        llm_messages, _ = self._prompt_builder.build(
+            system_prompt,
+            messages,
+            max_tokens=self.max_prompt_tokens
+        )
         return self.llm.chat_completion(llm_messages,
                                         max_tokens=self.max_generated_tokens,
                                         stream=stream,
                                         model_params=model_params)
+
+    def _calculate_max_context_tokens(self, messages: Messages):
+        history_tokens = self._tokenizer.messages_token_count(messages),
+        max_context_tokens = max(
+            self.max_prompt_tokens - history_tokens,
+            int(self.max_prompt_tokens * self._context_to_history_ratio)
+        )
+        max_context_tokens -= self._tokenizer.tokenize(self.system_prompt_template)
+        return max_context_tokens
 
     def get_context(self,
                     messages: Messages,
