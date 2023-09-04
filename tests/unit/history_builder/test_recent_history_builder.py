@@ -1,5 +1,6 @@
 import pytest
 from context_engine.chat_engine.history_builder.recent import RecentHistoryBuilder
+from context_engine.llm.models import UserMessage, AssistantMessage
 from context_engine.models.data_models import MessageBase, Role
 from tests.unit.stubs.stub_tokenizer import StubTokenizer
 
@@ -15,9 +16,9 @@ class TestRecentHistoryBuilder:
     @pytest.fixture
     def sample_messages():
         return [
-            MessageBase(role=Role.USER, content="Hello there!"),
-            MessageBase(role=Role.ASSISTANT, content="Hi! How can I help you?"),
-            MessageBase(role=Role.USER, content="Tell me about the weather.")
+            UserMessage(content="Hello there!"),
+            AssistantMessage(content="Hi! How can I help you?"),
+            UserMessage(content="Tell me about the weather.")
         ]
 
     @staticmethod

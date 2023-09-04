@@ -20,7 +20,7 @@ class RecentHistoryBuilder(BaseHistoryBuilder):
                              f" history require {token_count} tokens, which exceeds the"
                              f" calculated limit for history of {max_tokens} tokens.")
 
-        for message in reversed(history):
+        for message in reversed(history[:-self._min_history_messages]):
             token_count = self._tokenizer.messages_token_count(
                 truncated_history + [message]
             )
