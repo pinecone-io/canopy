@@ -19,6 +19,7 @@ DEFAULT_FUNCTION_DESCRIPTION = """Query search engine for relevant information""
 class FunctionCallingQueryGenerator(QueryGenerator):
 
     def __init__(self,
+                 *,
                  llm: BaseLLM,
                  top_k: int,
                  tokenizer: Tokenizer,  # TODO: need to remove this dependency
