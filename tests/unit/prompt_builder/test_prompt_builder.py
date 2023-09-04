@@ -1,12 +1,11 @@
 from unittest.mock import create_autospec
 
 import pytest
+
 from context_engine.chat_engine.exceptions import InvalidRequestError
 from context_engine.chat_engine.history_builder.base import BaseHistoryBuilder
 from context_engine.chat_engine.prompt_builder.base import PromptBuilder
-from context_engine.context_engine.context_builder.base import BaseContextBuilder
-from context_engine.knoweldge_base.models import QueryResult, DocumentWithScore
-from context_engine.models.data_models import MessageBase, Role, Context
+from context_engine.models.data_models import MessageBase, Role
 from tests.unit.stubs.stub_tokenizer import StubTokenizer
 
 

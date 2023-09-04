@@ -37,12 +37,10 @@ class TestChatEngine:
     def mock_prompt_builder():
         return create_autospec(BasePromptBuilder)
 
-
     @staticmethod
     @pytest.fixture
     def stub_tokenizer():
         return StubTokenizer()
-
 
     @staticmethod
     @pytest.fixture
@@ -145,13 +143,13 @@ class TestChatEngine:
         expected_len = expected - len(MOCK_SYSTEM_PROMPT.split())
         assert context_len == expected_len
 
-
     @staticmethod
     def test_get_context(chat_engine,
                          mocker,
                          mock_query_builder,
                          mock_context_engine,
-                         mock_llm):
+                         mock_llm
+                         ):
         # TODO: remove code duplication
         messages = [MessageBase(role=Role.USER,
                                 content="How does photosynthesis work?")]

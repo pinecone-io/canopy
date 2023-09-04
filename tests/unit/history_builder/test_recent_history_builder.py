@@ -1,14 +1,14 @@
 import pytest
+
 from context_engine.chat_engine.history_builder.recent import RecentHistoryBuilder
 from context_engine.llm.models import UserMessage, AssistantMessage
-from context_engine.models.data_models import MessageBase, Role
 from tests.unit.stubs.stub_tokenizer import StubTokenizer
-
 
 
 @pytest.fixture
 def recent_history_builder():
     return RecentHistoryBuilder(StubTokenizer())
+
 
 @pytest.fixture
 def sample_messages():
@@ -20,12 +20,13 @@ def sample_messages():
         UserMessage(content="No that's enough"),
     ]
 
+
 @pytest.mark.parametrize(
     "token_limit, expected_tail, expected_token_count",
     [
         (50, 5, 33),  # All messages fit
         (18, 2, 11),  # Only last 2
-        (10, 1, 6),   # Only last one
+        (10, 1, 6),  # Only last one
 
     ],
     ids=[
@@ -38,7 +39,8 @@ def test_build(recent_history_builder,
                sample_messages,
                token_limit,
                expected_tail,
-               expected_token_count):
+               expected_token_count
+               ):
     messages, token_count = recent_history_builder.build(sample_messages, token_limit)
     assert messages == sample_messages[-expected_tail:]
     assert token_count == expected_token_count
@@ -57,12 +59,17 @@ def test_min_history_messages(sample_messages):
     token_limit = 10
     with pytest.raises(ValueError) as e:
         recent_history_builder.build(sample_messages, token_limit)
+        err_msg = e.value.args[0]
+        assert f"The {2} most recent" in err_msg
+        assert f"calculated history of {token_limit}" in err_msg
+        assert f"history require 11 tokens" in err_msg
 
 
 def test_build_with_empty_history(recent_history_builder):
     messages, token_count = recent_history_builder.build([], 15)
     assert messages == []
     assert token_count == 0
+
 
 @pytest.mark.asyncio
 async def test_abuild_not_implemented(recent_history_builder, sample_messages):
