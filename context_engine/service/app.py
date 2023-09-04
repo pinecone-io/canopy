@@ -86,7 +86,7 @@ async def query(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@app.post(
     "/context/upsert",
 )
 async def upsert(
@@ -146,7 +146,6 @@ def _init_engines() -> Tuple[BaseKnowledgeBase, ContextEngine, ChatEngine]:
                        encoder=encoder,
                        tokenizer=tokenizer,
                        chunker=chunker)
-
     kb.connect()
 
     context_engine = ContextEngine(knowledge_base=kb,
