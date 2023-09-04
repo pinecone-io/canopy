@@ -1,16 +1,16 @@
-import pytest
+from typing import List
 from unittest.mock import create_autospec
 
-from context_engine.chat_engine.query_generator.function_calling \
-    import FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION, \
-    DEFAULT_SYSTEM_PROMPT
-from context_engine.models.data_models import Query, MessageBase
-from context_engine.llm.models import ModelParams, Function, \
-    FunctionParameters, FunctionArrayProperty
-from context_engine.chat_engine.prompt_builder.base import PromptBuilder
-from context_engine.llm.base import BaseLLM
-from typing import List
+import pytest
 
+from context_engine.chat_engine.prompt_builder.base import PromptBuilder
+from context_engine.chat_engine.query_generator.function_calling \
+    import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
+            DEFAULT_SYSTEM_PROMPT, )
+from context_engine.llm.base import BaseLLM
+from context_engine.llm.models import (ModelParams, Function,
+                                       FunctionParameters, FunctionArrayProperty, )
+from context_engine.models.data_models import Query, MessageBase
 from stubs.stub_tokenizer import StubTokenizer
 
 
@@ -53,7 +53,8 @@ class TestFunctionCallingQueryGenerator:
     def test_generate_with_default_params(query_generator,
                                           mock_llm,
                                           mock_prompt_builder,
-                                          sample_messages):
+                                          sample_messages
+                                          ):
         mock_prompt_builder.build.return_value = sample_messages
         mock_llm.enforced_function_call.return_value = {"queries": ["query1", "query2"]}
 
@@ -93,7 +94,8 @@ class TestFunctionCallingQueryGenerator:
     def test_generate_with_non_defaults(query_generator,
                                         mock_llm,
                                         mock_prompt_builder,
-                                        sample_messages):
+                                        sample_messages
+                                        ):
         custom_system_prompt = "Custom system prompt"
         custom_function_description = "Custom function description"
 
@@ -143,7 +145,8 @@ class TestFunctionCallingQueryGenerator:
     def test_generate_invalid_return_from_llm(query_generator,
                                               mock_llm,
                                               mock_prompt_builder,
-                                              sample_messages):
+                                              sample_messages
+                                              ):
         mock_prompt_builder.build.return_value = sample_messages
         mock_llm.enforced_function_call.return_value = {}
 
@@ -156,7 +159,8 @@ class TestFunctionCallingQueryGenerator:
     async def test_agenerate_not_implemented(query_generator,
                                              mock_llm,
                                              mock_prompt_builder,
-                                             sample_messages):
+                                             sample_messages
+                                             ):
         with pytest.raises(NotImplementedError):
             await query_generator.agenerate(messages=sample_messages,
                                             max_prompt_tokens=100)
