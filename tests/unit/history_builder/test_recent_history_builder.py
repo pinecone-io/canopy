@@ -5,104 +5,66 @@ from context_engine.models.data_models import MessageBase, Role
 from tests.unit.stubs.stub_tokenizer import StubTokenizer
 
 
-class TestRecentHistoryBuilder:
 
-    @staticmethod
-    @pytest.fixture
-    def recent_history_builder():
-        return RecentHistoryBuilder(StubTokenizer())
+@pytest.fixture
+def recent_history_builder():
+    return RecentHistoryBuilder(StubTokenizer())
 
-    @staticmethod
-    @pytest.fixture
-    def sample_messages():
-        return [
-            UserMessage(content="Hello there!"),
-            AssistantMessage(content="Hi! How can I help you?"),
-            UserMessage(content="Tell me about the weather.")
-        ]
+@pytest.fixture
+def sample_messages():
+    return [
+        UserMessage(content="Hello there!"),
+        AssistantMessage(content="Hi! How can I help you?"),
+        UserMessage(content="Tell me about the weather."),
+        AssistantMessage(content="Anything else?"),
+        UserMessage(content="No that's enough"),
+    ]
 
-    @staticmethod
-    def test_build_with_full_history_fit(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build(sample_messages, 25)
+@pytest.mark.parametrize(
+    "token_limit, expected_tail, expected_token_count",
+    [
+        (50, 5, 33),  # All messages fit
+        (18, 2, 11),  # Only last 2
+        (10, 1, 6),   # Only last one
 
-        assert messages == sample_messages
+    ],
+    ids=[
+        "full_history_fit",
+        "truncated",
+        "multiple_message_truncation",
+    ]
+)
+def test_build(recent_history_builder,
+               sample_messages,
+               token_limit,
+               expected_tail,
+               expected_token_count):
+    messages, token_count = recent_history_builder.build(sample_messages, token_limit)
+    assert messages == sample_messages[-expected_tail:]
+    assert token_count == expected_token_count
 
-        # 13 tokens for content + 9 for overhead
-        assert token_count == 22
 
-    @staticmethod
-    def test_build_with_truncated_full_message(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build(sample_messages, 18)
+def test_min_history_messages(sample_messages):
+    recent_history_builder = RecentHistoryBuilder(
+        StubTokenizer(),
+        min_history_messages=2
+    )
+    token_limit = 18
+    messages, token_count = recent_history_builder.build(sample_messages, token_limit)
+    assert messages == sample_messages[-2:]
+    assert token_count == 11
 
-        expected_messages = [
-            MessageBase(role=Role.ASSISTANT, content="Hi! How can I help you?"),
-            MessageBase(role=Role.USER, content="Tell me about the weather.")
-        ]
+    token_limit = 10
+    with pytest.raises(ValueError) as e:
+        recent_history_builder.build(sample_messages, token_limit)
 
-        assert messages == expected_messages
 
-        # 11 tokens for content + 6 for overhead
-        assert token_count == 17
+def test_build_with_empty_history(recent_history_builder):
+    messages, token_count = recent_history_builder.build([], 15)
+    assert messages == []
+    assert token_count == 0
 
-    @staticmethod
-    def test_multiple_message_truncation(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build(sample_messages, 10)
-
-        expected_messages = [
-            MessageBase(role=Role.USER, content="Tell me about the weather.")
-        ]
-
-        assert messages == expected_messages
-
-        # 5 tokens for content + 3 for overhead
-        assert token_count == 8
-
-    @staticmethod
-    def test_build_with_truncated_message(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build(sample_messages, 10)
-
-        expected_messages = [
-            MessageBase(role=Role.USER, content="Tell me about the weather.")
-        ]
-
-        assert messages == expected_messages
-
-        # 5 tokens for content + 3 for overhead
-        assert token_count == 8
-
-    @staticmethod
-    def test_build_exact_token_fit(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build(sample_messages, 8)
-
-        expected_messages = [
-            MessageBase(role=Role.USER, content="Tell me about the weather.")
-        ]
-
-        assert messages == expected_messages
-
-        # 5 tokens for content + 3
-        assert token_count == 8
-
-    @staticmethod
-    def test_build_with_empty_history(recent_history_builder):
-        messages, token_count = recent_history_builder.build([], 15)
-
-        assert messages == []
-
-        # 11 tokens for content + 6 for overhead
-        assert token_count == 0
-
-    @staticmethod
-    def test_build_with_zero_tokens_fit(recent_history_builder, sample_messages):
-        messages, token_count = recent_history_builder.build([], 2)
-
-        assert messages == []
-
-        # 11 tokens for content + 6 for overhead
-        assert token_count == 0
-
-    @staticmethod
-    @pytest.mark.asyncio
-    async def test_abuild_not_implemented(recent_history_builder, sample_messages):
-        with pytest.raises(NotImplementedError):
-            await recent_history_builder.abuild(sample_messages, 25)
+@pytest.mark.asyncio
+async def test_abuild_not_implemented(recent_history_builder, sample_messages):
+    with pytest.raises(NotImplementedError):
+        await recent_history_builder.abuild(sample_messages, 25)
