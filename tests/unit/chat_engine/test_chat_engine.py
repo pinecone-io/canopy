@@ -121,7 +121,7 @@ class TestChatEngine:
 
     @staticmethod
     @pytest.mark.parametrize("input_len, context_ratio, expected", [
-        # History len of StubTokenizer is num_words + 3 (hardcoded)
+        # History length of StubTokenizer is num_words + 3 (hardcoded)
         [10, 0.8, MAX_PROMPT_TOKENS - (10 + 3)],
         [30, 0.8, 80],
         [15, 0.4, MAX_PROMPT_TOKENS - (15 + 3)],
