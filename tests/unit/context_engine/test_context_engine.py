@@ -23,7 +23,7 @@ class TestContextEngine:
     @staticmethod
     @pytest.fixture
     def context_engine(mock_knowledge_base, mock_context_builder):
-        return ContextEngine(mock_knowledge_base, mock_context_builder)
+        return ContextEngine(mock_knowledge_base, context_builder=mock_context_builder)
 
     @staticmethod
     @pytest.fixture
@@ -98,7 +98,7 @@ class TestContextEngine:
 
         context_engine_with_filter = ContextEngine(
             mock_knowledge_base,
-            mock_context_builder,
+            context_builder=mock_context_builder,
             global_metadata_filter=mock_global_metadata_filter
         )
 

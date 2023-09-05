@@ -10,7 +10,7 @@ from context_engine.models.data_models import Context
 
 class StuffingContextBuilder(BaseContextBuilder):
 
-    def __init__(self, reference_metadata_field: str):
+    def __init__(self, reference_metadata_field: str = 'url'):
         self._tokenizer = Tokenizer()
         self._reference_metadata_field = reference_metadata_field
 
