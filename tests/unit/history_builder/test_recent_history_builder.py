@@ -1,12 +1,12 @@
 import pytest
 
-from context_engine.chat_engine.history_builder import RecentHistoryBuilder
+from context_engine.chat_engine.history_pruner import RecentHistoryPruner
 from context_engine.llm.models import UserMessage, AssistantMessage
 
 
 @pytest.fixture
 def recent_history_builder():
-    return RecentHistoryBuilder()
+    return RecentHistoryPruner(min_history_messages=1)
 
 
 @pytest.fixture
@@ -46,7 +46,7 @@ def test_build(recent_history_builder,
 
 
 def test_min_history_messages(sample_messages):
-    recent_history_builder = RecentHistoryBuilder(
+    recent_history_builder = RecentHistoryPruner(
         min_history_messages=2
     )
     token_limit = 18
