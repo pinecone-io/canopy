@@ -1,10 +1,10 @@
 import tiktoken
 from typing import List
-from .base import Tokenizer
+from .base import BaseTokenizer
 from ...models.data_models import Messages, MessageBase, Role
 
 
-class OpenAITokenizer(Tokenizer):
+class OpenAITokenizer(BaseTokenizer):
 
     MESSAGE_TOKENS_OVERHEAD = 3
     FIXED_PREFIX_TOKENS = 3

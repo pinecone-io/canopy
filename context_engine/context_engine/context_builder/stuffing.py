@@ -10,8 +10,8 @@ from context_engine.models.data_models import Context
 
 class StuffingContextBuilder(BaseContextBuilder):
 
-    def __init__(self, tokenizer: Tokenizer, reference_metadata_field: str):
-        self._tokenizer = tokenizer
+    def __init__(self, reference_metadata_field: str):
+        self._tokenizer = Tokenizer()
         self._reference_metadata_field = reference_metadata_field
 
     def build(self,

@@ -9,7 +9,6 @@ from ...models.data_models import Document
 class TokenChunker(Chunker):
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  max_chunk_size: int = 200,
                  overlap: int = 0, ):
         if overlap < 0:
@@ -24,7 +23,7 @@ class TokenChunker(Chunker):
                 f"max_chunk_size for {cls_name} must be positive, got: {max_chunk_size}"
             )
 
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
         self._chunk_size = max_chunk_size
         self._overlap = overlap
 

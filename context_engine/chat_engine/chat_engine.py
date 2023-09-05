@@ -55,7 +55,6 @@ class ChatEngine(BaseChatEngine):
                  query_builder: QueryGenerator,
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
-                 tokenizer: Tokenizer,  # TODO: Remove this dependency
                  system_prompt: Optional[str] = None,
                  context_to_history_ratio: float = 0.8
                  ):
@@ -66,11 +65,11 @@ class ChatEngine(BaseChatEngine):
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
         self._context_to_history_ratio = context_to_history_ratio
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
 
         # TODO: hardcoded for now, need to make it configurable
-        history_prunner = RecentHistoryBuilder(tokenizer)
-        self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
+        history_prunner = RecentHistoryBuilder()
+        self._prompt_builder = PromptBuilder(history_prunner)
 
     def chat(self,
              messages: Messages,

@@ -9,10 +9,9 @@ from context_engine.models.data_models import Messages, Role, MessageBase
 class BasePromptBuilder(ABC):
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  history_pruner: HistoryBuilder,
                  ):
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
         self._history_pruner = history_pruner
 
     @abstractmethod
