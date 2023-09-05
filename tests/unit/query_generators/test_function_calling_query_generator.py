@@ -9,8 +9,9 @@ from context_engine.chat_engine.query_generator.function_calling \
             DEFAULT_SYSTEM_PROMPT, )
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import (ModelParams, Function,
-                                       FunctionParameters, FunctionArrayProperty, )
-from context_engine.models.data_models import Query, MessageBase
+                                       FunctionParameters, FunctionArrayProperty,
+                                       UserMessage, )
+from context_engine.models.data_models import Query
 
 
 class TestFunctionCallingQueryGenerator:
@@ -44,7 +45,7 @@ class TestFunctionCallingQueryGenerator:
     @pytest.fixture
     def sample_messages():
         return [
-            MessageBase(role="user", content="What is photosynthesis?")
+            UserMessage(content="What is photosynthesis?")
         ]
 
     @staticmethod
