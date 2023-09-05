@@ -2,7 +2,7 @@ from typing import Union, Iterable, Optional, Any, Dict, List
 
 import openai
 import json
-from context_engine.llm.base import BaseLLM
+from context_engine.llm import BaseLLM
 from context_engine.llm.models import Function, ModelParams
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse
 from context_engine.models.data_models import Messages, Query
@@ -16,9 +16,9 @@ class OpenAILLM(BaseLLM):
                  *,
                  model_params: Optional[ModelParams] = None,
                  ):
-        super(OpenAILLM, self).__init__(model_name,
-                                        default_max_generated_tokens,
-                                        model_params=model_params)
+        super().__init__(model_name,
+                         default_max_generated_tokens,
+                         model_params=model_params)
         self.available_models = [k["id"] for k in openai.Model.list().data]
         if model_name not in self.available_models:
             raise ValueError(

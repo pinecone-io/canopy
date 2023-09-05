@@ -4,8 +4,7 @@ from context_engine.models.data_models import Context
 from ..stubs.stub_tokenizer import StubTokenizer
 from context_engine.knoweldge_base.models import \
     QueryResult, DocumentWithScore
-from context_engine.context_engine.context_builder.stuffing import \
-    StuffingContextBuilder
+from context_engine.context_engine.context_builder import StuffingContextBuilder
 
 
 class TestStuffingContextBuilder:

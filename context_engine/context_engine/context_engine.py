@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from context_engine.context_engine.context_builder.base import BaseContextBuilder
-from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
+from context_engine.knoweldge_base.base import BaseKnowledgeBase
 from context_engine.models.data_models import Context, Query
 
 

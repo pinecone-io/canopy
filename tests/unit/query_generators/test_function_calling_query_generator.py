@@ -3,11 +3,11 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from context_engine.chat_engine.prompt_builder.base import PromptBuilder
+from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.chat_engine.query_generator.function_calling \
     import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
             DEFAULT_SYSTEM_PROMPT, )
-from context_engine.llm.base import BaseLLM
+from context_engine.llm import BaseLLM
 from context_engine.llm.models import (ModelParams, Function,
                                        FunctionParameters, FunctionArrayProperty, )
 from context_engine.models.data_models import Query, MessageBase

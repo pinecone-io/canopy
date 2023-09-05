@@ -3,13 +3,12 @@ from functools import cached_property
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
-from context_engine.knoweldge_base.record_encoder.base_record_encoder import\
-    BaseRecordEncoder
+from .base import RecordEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from context_engine.models.data_models import Query
 
 
-class DenseRecordEncoder(BaseRecordEncoder):
+class DenseRecordEncoder(RecordEncoder):
 
     def __init__(self, dense_encoder: BaseDenseEncoder, **kwargs):
         super().__init__(**kwargs)

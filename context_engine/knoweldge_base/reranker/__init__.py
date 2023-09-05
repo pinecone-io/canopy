@@ -1,1 +1,1 @@
-from .reranker import TransparentReranker
+from .reranker import TransparentReranker, Reranker

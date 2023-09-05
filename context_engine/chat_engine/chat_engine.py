@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional
 
-from context_engine.chat_engine.prompt_builder.base import PromptBuilder
+from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.context_engine import ContextEngine
-from context_engine.chat_engine.query_generator.base import QueryGenerator
+from context_engine.chat_engine.query_generator import QueryGenerator
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
-from context_engine.llm.base import BaseLLM
+from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
