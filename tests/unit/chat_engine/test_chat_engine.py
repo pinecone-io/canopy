@@ -128,24 +128,34 @@ class TestChatEngine:
         [80, 0.4, 40],
     ])
     def test__calculate_max_context_tokens(chat_engine,
-                                           stub_tokenizer,
+                                           # stub_tokenizer,
                                            input_len,
                                            context_ratio,
                                            expected,
                                            ):
-        # TODO: refactor code so we can pass `context_ratio` to constructor
+        # TODO: refactor test so we can pass `context_ratio` to constructor
         chat_engine._context_to_history_ratio = context_ratio
 
         messages = [
             UserMessage(content=" ".join(["word"] * input_len))
         ]
         context_len = chat_engine._calculate_max_context_tokens(messages)
-        expected_len = expected - len(MOCK_SYSTEM_PROMPT.split())
+
+        #  StubTokenizer adds 3 tokens to the system prompt (treating it as a message)
+        expected_len = expected - (len(MOCK_SYSTEM_PROMPT.split()) + 3)
         assert context_len == expected_len
 
     @staticmethod
+    def test__calculate_max_context_tokens_raises(chat_engine):
+        chat_engine.system_prompt_template = " ".join(["word"] * 91)
+        messages = [
+            UserMessage(content=" ".join(["word"] * 10))
+        ]
+        with pytest.raises(ValueError):
+            chat_engine._calculate_max_context_tokens(messages)
+
+    @staticmethod
     def test_get_context(chat_engine,
-                         mocker,
                          mock_query_builder,
                          mock_context_engine,
                          mock_llm

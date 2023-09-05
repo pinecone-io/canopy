@@ -62,7 +62,7 @@ def test_min_history_messages(sample_messages):
         err_msg = e.value.args[0]
         assert f"The {2} most recent" in err_msg
         assert f"calculated history of {token_limit}" in err_msg
-        assert f"history require 11 tokens" in err_msg
+        assert "history require 11 tokens" in err_msg
 
 
 def test_build_with_empty_history(recent_history_builder):

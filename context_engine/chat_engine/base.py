@@ -6,7 +6,7 @@ from context_engine.context_engine import ContextEngine
 from context_engine.chat_engine.query_generator.base import QueryGenerator
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm.base import BaseLLM
-from context_engine.llm.models import ModelParams
+from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
 from context_engine.chat_engine.history_builder import RecentHistoryBuilder
@@ -102,7 +102,18 @@ class ChatEngine(BaseChatEngine):
             self.max_prompt_tokens - history_tokens,
             int(self.max_prompt_tokens * self._context_to_history_ratio)
         )
-        max_context_tokens -= self._tokenizer.token_count(self.system_prompt_template)
+
+        system_prompt_tokens = self._tokenizer.messages_token_count(
+            [SystemMessage(content=self.system_prompt_template)]
+        )
+        max_context_tokens -= system_prompt_tokens
+        if max_context_tokens <= 0:
+            raise ValueError(f"Not enough token budget for generating context. The "
+                             f"prunned history is taking {history_tokens} tokens, "
+                             f"and the system prompt is taking {system_prompt_tokens} "
+                             f"tokens, which is more than the max prompt tokens "
+                             f"{self.max_prompt_tokens}")
+
         return max_context_tokens
 
     def get_context(self,
