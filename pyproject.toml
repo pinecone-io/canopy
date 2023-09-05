@@ -17,7 +17,7 @@ pydantic = "^1.10.7"
 pinecone-text = "^0.5.2"
 flake8-pyproject = "^1.2.3"
 pandas-stubs = "^2.0.3.230814"
-
+langchain = "^0.0.188"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
