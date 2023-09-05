@@ -12,8 +12,10 @@ class OpenAILLM(BaseLLM):
 
     def __init__(self,
                  model_name: str,
-                 default_max_generated_tokens: int,
                  *,
+                 # TODO: consider removing default_max_generated_tokens, and require
+                 #  `max_tokens` to be passed every time
+                 default_max_generated_tokens: int = 750,
                  model_params: Optional[ModelParams] = None,
                  ):
         super().__init__(model_name,
