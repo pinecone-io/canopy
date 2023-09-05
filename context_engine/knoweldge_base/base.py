@@ -45,8 +45,3 @@ class BaseKnowledgeBase(ABC):
     @abstractmethod
     async def adelete(self, document_ids: List[str], namespace: str = "", ) -> None:
         pass
-
-    @property
-    @abstractmethod
-    def tokenizer(self) -> Tokenizer:
-        pass

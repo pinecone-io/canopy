@@ -28,11 +28,12 @@ class TestFunctionCallingQueryGeneratorSystem:
     @staticmethod
     @pytest.fixture
     def query_generator(openai_llm, prompt_builder):
-        return FunctionCallingQueryGenerator(
+        query_gen =  FunctionCallingQueryGenerator(
             llm=openai_llm,
-            prompt_builder=prompt_builder,
             top_k=5,
         )
+        query_gen._prompt_builder = prompt_builder
+        return query_gen
 
     @staticmethod
     @pytest.fixture
