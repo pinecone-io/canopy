@@ -8,7 +8,6 @@ from context_engine.knoweldge_base.models import DocumentWithScore
 from context_engine.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
-from tests.unit.stubs.stub_tokenizer import StubTokenizer
 from tests.unit.stubs.stub_chunker import StubChunker
 
 load_dotenv()

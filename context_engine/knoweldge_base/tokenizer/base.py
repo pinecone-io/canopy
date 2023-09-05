@@ -45,7 +45,7 @@ class Tokenizer:
         cls._initialized = True
 
     def tokenize(self, text: str) -> List[str]:
-        return self._tokenizer_instance.tokenize(text)
+        return self._tokenizer_instance.tokenize(text)  # type: ignore[attr-defined]
 
     def detokenize(self, tokens: List[str]) -> str:
         return self._tokenizer_instance.detokenize(tokens)  # type: ignore[attr-defined]

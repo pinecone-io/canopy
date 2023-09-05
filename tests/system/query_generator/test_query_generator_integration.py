@@ -27,7 +27,7 @@ class TestFunctionCallingQueryGeneratorSystem:
     @staticmethod
     @pytest.fixture
     def query_generator(openai_llm, prompt_builder):
-        query_gen =  FunctionCallingQueryGenerator(
+        query_gen = FunctionCallingQueryGenerator(
             llm=openai_llm,
             top_k=5,
             tokenizer=StubTokenizer(),
