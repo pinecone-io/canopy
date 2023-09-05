@@ -8,8 +8,6 @@ from context_engine.chat_engine.query_generator import FunctionCallingQueryGener
 from context_engine.chat_engine.prompt_builder import PromptBuilder # noqa
 from typing import List # noqa
 
-from stubs.stub_tokenizer import StubTokenizer
-
 
 class TestFunctionCallingQueryGeneratorSystem:
 
