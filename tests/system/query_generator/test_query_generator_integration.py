@@ -1,15 +1,14 @@
 from unittest.mock import create_autospec
 
 import pytest
-from dotenv import load_dotenv
-
-load_dotenv()
 
 from context_engine.llm.openai import OpenAILLM # noqa
 from context_engine.models.data_models import MessageBase, Query # noqa
 from context_engine.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
 from context_engine.chat_engine.prompt_builder import PromptBuilder # noqa
 from typing import List # noqa
+
+from stubs.stub_tokenizer import StubTokenizer
 
 
 class TestFunctionCallingQueryGeneratorSystem:
@@ -30,8 +29,8 @@ class TestFunctionCallingQueryGeneratorSystem:
     def query_generator(openai_llm, prompt_builder):
         return FunctionCallingQueryGenerator(
             llm=openai_llm,
-            prompt_builder=prompt_builder,
             top_k=5,
+            tokenizer=StubTokenizer(),
         )
 
     @staticmethod

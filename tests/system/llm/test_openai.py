@@ -1,8 +1,6 @@
 from unittest.mock import patch
 import pytest
-from dotenv import load_dotenv
 
-load_dotenv()
 
 from context_engine.models.data_models import Role, MessageBase # noqa
 from context_engine.models.api_models import ChatResponse, StreamingChatResponse # noqa
