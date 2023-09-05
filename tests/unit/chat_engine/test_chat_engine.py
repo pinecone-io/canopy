@@ -10,7 +10,7 @@ from context_engine.context_engine.models import ContextQueryResult, ContextSnip
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
 from context_engine.models.data_models import MessageBase, Role, Query, Context
-from stubs.stub_tokenizer import StubTokenizer
+from ..stubs.stub_tokenizer import StubTokenizer
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt {context}"
 MAX_PROMPT_TOKENS = 100
