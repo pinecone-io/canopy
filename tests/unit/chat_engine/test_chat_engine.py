@@ -126,6 +126,11 @@ class TestChatEngine:
         [30, 0.8, 80],
         [15, 0.4, MAX_PROMPT_TOKENS - (15 + 3)],
         [80, 0.4, 40],
+    ], ids=[
+        "short_history",
+        "long_history",
+        "short_history_low_ratio",
+        "long_history_low_ratio"
     ])
     def test__calculate_max_context_tokens(chat_engine,
                                            # stub_tokenizer,
