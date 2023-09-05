@@ -13,7 +13,6 @@ class TestStuffingContextBuilder:
         self.tokenizer = StubTokenizer()
         self.reference_metadata_field = "source"
         self.builder = StuffingContextBuilder(
-            tokenizer=self.tokenizer,
             reference_metadata_field=self.reference_metadata_field)
 
         self.text1 = "I am a simple test string"

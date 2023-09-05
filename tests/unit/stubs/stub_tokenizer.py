@@ -1,9 +1,9 @@
 from typing import List
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.base import BaseTokenizer
 from context_engine.models.data_models import Messages
 
 
-class StubTokenizer(Tokenizer):
+class StubTokenizer(BaseTokenizer):
 
     def tokenize(self, text: str) -> List[str]:
         return text.split()
