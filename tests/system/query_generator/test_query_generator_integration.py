@@ -30,7 +30,6 @@ class TestFunctionCallingQueryGeneratorSystem:
         query_gen = FunctionCallingQueryGenerator(
             llm=openai_llm,
             top_k=5,
-            tokenizer=StubTokenizer(),
         )
         query_gen._prompt_builder = prompt_builder
         return query_gen
