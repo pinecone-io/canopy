@@ -14,8 +14,7 @@ from context_engine.chat_engine.history_builder import RecentHistoryBuilder
 
 DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the reference to the documents you used from their 'reference' field in the format 'Source: $REFERENCE_HERE'.
 If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context."
-Don't address the context directly, but use it to answer the user question like it's your own knowledge.
-Context: {context}"""  # noqa
+Don't address the context directly, but use it to answer the user question like it's your own knowledge."""  # noqa
 
 
 class BaseChatEngine(ABC):
@@ -85,7 +84,7 @@ class ChatEngine(BaseChatEngine):
         max_context_tokens = self._calculate_max_context_tokens(messages)
         context = self.context_engine.query(queries, max_context_tokens)
 
-        system_prompt = self.system_prompt_template.format(context=context.to_text())
+        system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
             system_prompt,
             messages,

@@ -106,7 +106,7 @@ class TestChatEngine:
         mock_context_engine.query.assert_called_once_with(mock_queries,
                                                           max_context_tokens=50)
         mock_prompt_builder.build.assert_called_once_with(
-            system_prompt=MOCK_SYSTEM_PROMPT.format(context=mock_context.to_text()),
+            system_prompt=MOCK_SYSTEM_PROMPT + f"\nContext: {mock_context.to_text()}",
             history=messages,
             max_tokens=MAX_PROMPT_TOKENS
         )
