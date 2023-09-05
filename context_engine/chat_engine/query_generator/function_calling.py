@@ -18,7 +18,7 @@ class FunctionCallingQueryGenerator(QueryGenerator):
     def __init__(self,
                  *,
                  llm: BaseLLM,
-                 top_k: int,
+                 top_k: int = 10,
                  prompt: Optional[str] = None,
                  function_description: Optional[str] = None):
         super().__init__(llm=llm)
