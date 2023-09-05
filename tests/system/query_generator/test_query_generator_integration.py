@@ -1,9 +1,6 @@
 from unittest.mock import create_autospec
 
 import pytest
-from dotenv import load_dotenv
-
-load_dotenv()
 
 from context_engine.llm.openai import OpenAILLM # noqa
 from context_engine.models.data_models import MessageBase, Query # noqa
