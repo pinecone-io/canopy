@@ -2,12 +2,12 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from context_engine.chat_engine.base import ChatEngine
-from context_engine.chat_engine.prompt_builder.base import BasePromptBuilder
-from context_engine.chat_engine.query_generator.base import QueryGenerator
+from context_engine.chat_engine import ChatEngine
+from context_engine.chat_engine.prompt_builder.prompt_builder import BasePromptBuilder
+from context_engine.chat_engine.query_generator import QueryGenerator
 from context_engine.context_engine import ContextEngine
 from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
-from context_engine.llm.base import BaseLLM
+from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
 from context_engine.models.data_models import MessageBase, Role, Query, Context
 from ..stubs.stub_tokenizer import StubTokenizer

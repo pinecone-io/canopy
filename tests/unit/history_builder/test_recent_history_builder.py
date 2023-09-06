@@ -1,6 +1,6 @@
 import pytest
 
-from context_engine.chat_engine.history_builder.recent import RecentHistoryBuilder
+from context_engine.chat_engine.history_builder import RecentHistoryBuilder
 from context_engine.llm.models import UserMessage, AssistantMessage
 from tests.unit.stubs.stub_tokenizer import StubTokenizer
 

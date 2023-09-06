@@ -1,10 +1,10 @@
 from typing import Tuple
 
-from context_engine.chat_engine.history_builder.base import BaseHistoryBuilder
+from context_engine.chat_engine.history_builder.base import HistoryBuilder
 from context_engine.models.data_models import Messages
 
 
-class RaisingHistoryBuilder(BaseHistoryBuilder):
+class RaisingHistoryBuilder(HistoryBuilder):
 
     def build(self,
               history: Messages,

@@ -5,7 +5,7 @@ from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Messages
 
 
-class BaseHistoryBuilder(ABC):
+class HistoryBuilder(ABC):
 
     def __init__(self,
                  tokenizer: Tokenizer,

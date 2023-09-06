@@ -5,14 +5,12 @@ import pandas as pd
 import pinecone
 from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
-from context_engine.knoweldge_base.base_knoweldge_base import BaseKnowledgeBase
-from context_engine.knoweldge_base.chunker.base import Chunker
-from context_engine.knoweldge_base.record_encoder.base_record_encoder \
-    import BaseRecordEncoder
+from context_engine.knoweldge_base.base import BaseKnowledgeBase
+from context_engine.knoweldge_base.chunker import Chunker
+from context_engine.knoweldge_base.record_encoder import RecordEncoder
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                                   KBDocChunkWithScore, )
-from context_engine.knoweldge_base.reranker.reranker import (Reranker,
-                                                             TransparentReranker, )
+from context_engine.knoweldge_base.reranker import Reranker, TransparentReranker
 from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 
@@ -25,7 +23,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def __init__(self,
                  index_name_suffix: str,
                  *,
-                 encoder: BaseRecordEncoder,
+                 encoder: RecordEncoder,
                  tokenizer: Tokenizer,
                  chunker: Chunker,
                  reranker: Optional[Reranker] = None,

@@ -1,13 +1,12 @@
 from typing import List
 
-from context_engine.knoweldge_base.record_encoder.base_record_encoder \
-    import BaseRecordEncoder
+from context_engine.knoweldge_base.record_encoder import RecordEncoder
 from context_engine.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
 from context_engine.models.data_models import Query
 from .stub_dense_encoder import StubDenseEncoder
 
 
-class StubRecordEncoder(BaseRecordEncoder):
+class StubRecordEncoder(RecordEncoder):
 
     def __init__(self,
                  stub_dense_encoder: StubDenseEncoder,
