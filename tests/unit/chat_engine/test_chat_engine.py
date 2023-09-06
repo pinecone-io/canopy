@@ -42,7 +42,6 @@ class TestChatEngine:
             llm=self.mock_llm,
             context_engine=self.mock_context_engine,
             query_builder=self.mock_query_builder,
-            tokenizer=StubTokenizer(),
             system_prompt=system_prompt,
             max_prompt_tokens=max_prompt_tokens,
             max_context_tokens=max_context_tokens,
