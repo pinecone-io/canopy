@@ -55,7 +55,10 @@ class TestChatEngine:
     def _generate_text(num_words: int):
         return " ".join(random.choices(random_words, k=num_words))
 
-    def _get_inputs_and_expected(self, history_length, snippet_length):
+    def _get_inputs_and_expected(self,
+                                 history_length,
+                                 snippet_length,
+                                 system_prompt):
         messages = [
             MessageBase(
                 role="assistant" if i % 2 == 0 else "user",
@@ -75,9 +78,10 @@ class TestChatEngine:
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )
         expected_prompt = [SystemMessage(
-            content=MOCK_SYSTEM_PROMPT + f"\nContext: {mock_context.to_text()}"
+            content=system_prompt + f"\nContext: {mock_context.to_text()}"
         )] + messages
         mock_chat_response = "Photosynthesis is a process used by plants..."
+
         # Set the return values of the mocked methods
         self.mock_query_builder.generate.return_value = mock_queries
         self.mock_context_engine.query.return_value = mock_context
@@ -87,15 +91,17 @@ class TestChatEngine:
             'queries': mock_queries,
             'prompt': expected_prompt,
             'response': mock_chat_response,
+            'context': mock_context,
         }
         return messages, expected
 
-    def test_chat_default_params(self, history_length=3, snippet_length=10):
+    def test_chat(self, history_length=5, snippet_length=10):
         chat_engine = self._init_chat_engine()
 
         # Mock input and expected output
         messages, expected = self._get_inputs_and_expected(history_length,
-                                                           snippet_length)
+                                                           snippet_length,
+                                                           MOCK_SYSTEM_PROMPT)
 
         # Call the method under test
         response = chat_engine.chat(messages)
@@ -118,77 +124,80 @@ class TestChatEngine:
 
         assert response == expected['response']
 
+    # TODO: parametrize and add more test cases
+    def test_chat_engine_params(self,
+                                system_prompt_length=10,
+                                max_prompt_tokens=80,
+                                max_context_tokens=60,
+                                max_generated_tokens=150,
+                                should_raise=False,
+                                snippet_length=15,
+                                history_length=3,
+                                ):
 
+        system_prompt = self._generate_text(system_prompt_length)
+        chat_engine = self._init_chat_engine(system_prompt=system_prompt,
+                                             max_prompt_tokens=max_prompt_tokens,
+                                             max_context_tokens=max_context_tokens,
+                                             max_generated_tokens=max_generated_tokens)
 
-    # @staticmethod
-    # @pytest.mark.parametrize("input_len, expected, chat_engine", [
-    #     # History length of StubTokenizer is num_words + 3 (hardcoded)
-    #     [10, MAX_PROMPT_TOKENS - (10 + 3), {'max_context_tokens': None}],
-    #     [30, 80, {'max_context_tokens': None}],
-    #     [15, MAX_PROMPT_TOKENS - (15 + 3), {'max_context_tokens': 40}],
-    #     [80, 40, {'max_context_tokens': 40}],
-    # ], ids=[
-    #     "short_history",
-    #     "long_history",
-    #     "short_history_low_context_budget",
-    #     "long_history_low_context_budget"
-    # ], indirect=["chat_engine"])
-    # def test__calculate_max_context_tokens(input_len,
-    #                                        expected,
-    #                                        chat_engine
-    #                                        ):
-    #
-    #     messages = [
-    #         UserMessage(content=" ".join(["word"] * input_len))
-    #     ]
-    #     context_len = chat_engine._calculate_max_context_tokens(messages)
-    #
-    #     #  StubTokenizer adds 3 tokens to the system prompt (treating it as a message)
-    #     expected_len = expected - (len(MOCK_SYSTEM_PROMPT.split()) + 3)
-    #     assert context_len == expected_len
-    #
-    # @staticmethod
-    # def test__calculate_max_context_tokens_raises(chat_engine):
-    #     chat_engine.system_prompt_template = " ".join(["word"] * 91)
-    #     messages = [
-    #         UserMessage(content=" ".join(["word"] * 10))
-    #     ]
-    #     with pytest.raises(ValueError):
-    #         chat_engine._calculate_max_context_tokens(messages)
+        # Mock input and expected output
+        messages, expected = self._get_inputs_and_expected(history_length,
+                                                           snippet_length,
+                                                           system_prompt)
 
-    # @staticmethod
-    # def test_get_context(chat_engine,
-    #                      mock_query_builder,
-    #                      mock_context_engine,
-    #                      mock_llm
-    #                      ):
-    #     # TODO: remove code duplication
-    #     messages = [MessageBase(role=Role.USER,
-    #                             content="How does photosynthesis work?")]
-    #     mock_queries = [Query(text="How does photosynthesis work?")]
-    #     mock_context = Context(
-    #         content=ContextQueryResult(
-    #             query="How does photosynthesis work?",
-    #             snippets=[ContextSnippet(reference="ref 1", text="cat cat"),
-    #                       ContextSnippet(reference="ref 2", text="dog dog")]
-    #         ),
-    #         num_tokens=20
-    #     )
-    #
-    #     mock_query_builder.generate.return_value = mock_queries
-    #     mock_context_engine.query.return_value = mock_context
-    #
-    #     context = chat_engine.get_context(messages)
-    #     mock_query_builder.generate.assert_called_once_with(
-    #         messages,
-    #         max_prompt_tokens=MAX_PROMPT_TOKENS
-    #     )
-    #     mock_context_engine.query.assert_called_once_with(
-    #         mock_queries,
-    #         max_context_tokens=MAX_PROMPT_TOKENS
-    #     )
-    #
-    #     assert context == mock_context
+        # Call the method under test
+        if should_raise:
+            with pytest.raises(ValueError):
+                chat_engine.chat(messages)
+            return
+
+        response = chat_engine.chat(messages)
+
+        # Assertions
+        self.mock_query_builder.generate.assert_called_once_with(
+            messages,
+            max_prompt_tokens=max_prompt_tokens
+        )
+        self.mock_context_engine.query.assert_called_once_with(
+            expected['queries'],
+            max_context_tokens=max_context_tokens
+        )
+        self.mock_llm.chat_completion.assert_called_once_with(
+            expected['prompt'],
+            max_tokens=max_generated_tokens,
+            stream=False,
+            model_params=None
+        )
+
+        assert response == expected['response']
+
+    def test_context_tokens_to_small(self):
+        system_prompt = self._generate_text(10)
+        with pytest.raises(ValueError):
+            self._init_chat_engine(system_prompt=system_prompt, max_context_tokens=10)
+
+    def test_prompt_tokens_to_small(self):
+        system_prompt = self._generate_text(10)
+        with pytest.raises(ValueError):
+            self._init_chat_engine(system_prompt=system_prompt, max_prompt_tokens=10)
+
+    def test_get_context(self):
+        chat_engine = self._init_chat_engine()
+        messages, expected = self._get_inputs_and_expected(5, 10, MOCK_SYSTEM_PROMPT)
+        context = chat_engine.get_context(messages)
+
+        self.mock_query_builder.generate.assert_called_once_with(
+            messages,
+            max_prompt_tokens=MAX_PROMPT_TOKENS
+        )
+        self.mock_context_engine.query.assert_called_once_with(
+            expected['queries'],
+            max_context_tokens=70
+        )
+
+        assert isinstance(context, Context)
+        assert context == expected['context']
 
     @pytest.mark.asyncio
     async def test_aget_context_raise(self):
