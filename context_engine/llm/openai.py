@@ -64,7 +64,6 @@ class OpenAILLM(BaseLLM):
         # this enforces the model to call the function
         function_call = {"name": function.name}
 
-        max_tokens = max_tokens or self.default_max_generated_tokens
         model_params_dict: Dict[str, Any] = {}
         model_params_dict.update(
             **self.default_model_params.dict(exclude_defaults=True)

@@ -6,7 +6,6 @@ from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.chat_engine.query_generator import (QueryGenerator,
                                                         FunctionCallingQueryGenerator, )
 from context_engine.context_engine import ContextEngine
-from context_engine.chat_engine.query_generator import QueryGenerator
 from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage

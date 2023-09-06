@@ -35,7 +35,6 @@ class Document(BaseModel):
         return v
 
 
-
 class ContextContent(BaseModel, ABC):
 
     # Any context should be able to be represented as well formatted text.
