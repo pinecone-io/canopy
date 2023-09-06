@@ -61,7 +61,7 @@ class ChatEngine(BaseChatEngine):
                  system_prompt: Optional[str] = None,
                  context_to_history_ratio: float = 0.8,
                  history_pruning: str = "recent",
-                 min_history_messages: int = 3
+                 min_history_messages: int = 1
                  ):
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.llm = llm
