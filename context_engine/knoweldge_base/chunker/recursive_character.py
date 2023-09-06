@@ -12,16 +12,16 @@ from context_engine.models.data_models import Document
 class RecursiveCharacterChunker(Chunker):
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  chunk_size: int = 256,
                  chunk_overlap: int = 0,
                  separators: Optional[List[str]] = None,
                  keep_separator: bool = True,
                  ):
+        self._tokenizer = Tokenizer()
         self._chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap,
-            length_function=tokenizer.token_count,
+            length_function=self._tokenizer.token_count,
             separators=separators,
             keep_separator=keep_separator)
 
