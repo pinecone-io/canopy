@@ -46,7 +46,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
-        self._index = None
+        self._index: Optional[pinecone.Index] = None
 
     def connect(self, force: bool = False):
         if self._index is None or force:
@@ -60,7 +60,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
             try:
                 self._index = pinecone.Index(index_name=self._index_name)
-                self._index.describe_index_stats()  # type: ignore
+                self._index.describe_index_stats()
             except Exception as e:
                 raise RuntimeError(
                     f"Failed to connect to the index {self._index_name}. "
@@ -163,7 +163,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
                                         for q in queries]
 
-        results = self._reranker.rerank(results) # noqa
+        results = self._reranker.rerank(results)
 
         return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
@@ -172,11 +172,17 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
+        if self._index is None:
+            raise RuntimeError(
+                "Index does not exist. Please call `connect()` first")
+
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
-            metadata_filter.update(global_metadata_filter)  # type: ignore
+            if metadata_filter is None:
+                metadata_filter = {}
+            metadata_filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
-        result = self._index.query(vector=query.values,  # type: ignore
+        result = self._index.query(vector=query.values,
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
@@ -256,7 +262,11 @@ class KnowledgeBase(BaseKnowledgeBase):
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
-        self._index.delete(  # type: ignore
+        if self._index is None:
+            raise RuntimeError(
+                "Index does not exist. Please call `connect()` first")
+
+        self._index.delete(
             filter={"document_id": {"$in": document_ids}},
             namespace=namespace
         )
