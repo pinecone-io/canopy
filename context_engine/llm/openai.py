@@ -13,13 +13,9 @@ class OpenAILLM(BaseLLM):
     def __init__(self,
                  model_name: str,
                  *,
-                 # TODO: consider removing default_max_generated_tokens, and require
-                 #  `max_tokens` to be passed every time
-                 default_max_generated_tokens: int = 750,
                  model_params: Optional[ModelParams] = None,
                  ):
         super().__init__(model_name,
-                         default_max_generated_tokens,
                          model_params=model_params)
         self.available_models = [k["id"] for k in openai.Model.list().data]
         if model_name not in self.available_models:
@@ -42,8 +38,6 @@ class OpenAILLM(BaseLLM):
         )
         if model_params:
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
-
-        max_tokens = max_tokens or self.default_max_generated_tokens
 
         messages = [m.dict() for m in messages]
         response = openai.ChatCompletion.create(model=self.model_name,
