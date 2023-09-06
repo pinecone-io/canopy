@@ -36,7 +36,7 @@ class TestContextEngine:
     @staticmethod
     @pytest.fixture
     def mock_global_metadata_filter():
-        return {"source": "Wikipedia"}
+        return {"sourcerer": "Wikipedia"}
 
     @staticmethod
     @pytest.fixture
@@ -48,7 +48,7 @@ class TestContextEngine:
                     DocumentWithScore(
                         id="1",
                         text=sample_context_text,
-                        metadata={"source": "Wikipedia"},
+                        metadata={"sourcerer": "Wikipedia"},
                         score=0.95
                     )
                 ]
@@ -135,7 +135,7 @@ class TestContextEngine:
                     DocumentWithScore(
                         id="2",
                         text=text,
-                        metadata={"source": "Wikipedia"},
+                        metadata={"sourcerer": "Wikipedia"},
                         score=0.93
                     )
                 ]

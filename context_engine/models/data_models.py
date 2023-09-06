@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional, List, Union, Dict, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
@@ -21,7 +21,19 @@ class Query(BaseModel):
 class Document(BaseModel):
     id: str
     text: str
+    source: str = ""
     metadata: Metadata
+
+    @validator('metadata')
+    def metadata_reseved_fields(cls, v):
+        if 'text' in v:
+            raise ValueError('Metadata cannot contain reserved field "text"')
+        if 'document_id' in v:
+            raise ValueError('Metadata cannot contain reserved field "document_id"')
+        if 'source' in v:
+            raise ValueError('Metadata cannot contain reserved field "source"')
+        return v
+
 
 
 class ContextContent(BaseModel, ABC):
