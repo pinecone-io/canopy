@@ -10,7 +10,6 @@ from context_engine.context_engine.models import ContextQueryResult, ContextSnip
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import SystemMessage
 from context_engine.models.data_models import MessageBase, Query, Context
-from ..stubs.stub_tokenizer import StubTokenizer
 from .. import random_words
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt"
@@ -19,15 +18,7 @@ MAX_PROMPT_TOKENS = 100
 
 class TestChatEngine:
 
-    # @classmethod
-    # def setup_class(cls):
-    #     # cls.mock_prompt_builder = create_autospec(BasePromptBuilder)
-    #     cls.mock_llm = create_autospec(BaseLLM)
-    #     cls.mock_query_builder = create_autospec(QueryGenerator)
-    #     cls.mock_context_engine = create_autospec(ContextEngine)
-
     def setup(self):
-        # self.mock_prompt_builder = create_autospec(BasePromptBuilder)
         self.mock_llm = create_autospec(BaseLLM)
         self.mock_query_builder = create_autospec(QueryGenerator)
         self.mock_context_engine = create_autospec(ContextEngine)
