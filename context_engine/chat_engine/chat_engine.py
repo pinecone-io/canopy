@@ -56,8 +56,8 @@ class ChatEngine(BaseChatEngine):
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
                  tokenizer: Tokenizer,  # TODO: Remove this dependency
+                 max_context_tokens: Optional[int] = None,
                  system_prompt: Optional[str] = None,
-                 context_to_history_ratio: float = 0.8
                  ):
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.llm = llm
@@ -65,10 +65,23 @@ class ChatEngine(BaseChatEngine):
         self.query_builder = query_builder
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
-        self._context_to_history_ratio = context_to_history_ratio
         self._tokenizer = tokenizer
 
-        # TODO: hardcoded for now, need to make it configurable
+        # Set max budget for context tokens, default to 70% of max_prompt_tokens, minus
+        # the system prompt tokens
+        max_context_tokens = max_context_tokens or int(max_prompt_tokens * 0.7)
+        system_prompt_tokens = self._tokenizer.messages_token_count(
+            [SystemMessage(content=self.system_prompt_template)]
+        )
+        if max_context_tokens - system_prompt_tokens < 0:
+            raise ValueError(
+                f"Not enough token budget for knowledge base context. The system prompt"
+                f" is taking {system_prompt_tokens} tokens, and together with the "
+                f"configured max context tokens {max_context_tokens} it exceeds "
+                f"max_prompt_tokens of {self.max_prompt_tokens}"
+            )
+        self.max_context_tokens = max_context_tokens
+
         history_prunner = RecentHistoryBuilder(tokenizer)
         self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
 
@@ -81,8 +94,7 @@ class ChatEngine(BaseChatEngine):
         queries = self.query_builder.generate(messages,
                                               max_prompt_tokens=self.max_prompt_tokens)
 
-        max_context_tokens = self._calculate_max_context_tokens(messages)
-        context = self.context_engine.query(queries, max_context_tokens)
+        context = self.context_engine.query(queries, self.max_context_tokens)
 
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
@@ -95,26 +107,6 @@ class ChatEngine(BaseChatEngine):
                                         stream=stream,
                                         model_params=model_params)
 
-    def _calculate_max_context_tokens(self, messages: Messages):
-        history_tokens = self._tokenizer.messages_token_count(messages)
-        max_context_tokens = max(
-            self.max_prompt_tokens - history_tokens,
-            int(self.max_prompt_tokens * self._context_to_history_ratio)
-        )
-
-        system_prompt_tokens = self._tokenizer.messages_token_count(
-            [SystemMessage(content=self.system_prompt_template)]
-        )
-        max_context_tokens -= system_prompt_tokens
-        if max_context_tokens <= 0:
-            raise ValueError(f"Not enough token budget for generating context. The "
-                             f"prunned history is taking {history_tokens} tokens, "
-                             f"and the system prompt is taking {system_prompt_tokens} "
-                             f"tokens, which is more than the max prompt tokens "
-                             f"{self.max_prompt_tokens}")
-
-        return max_context_tokens
-
     def get_context(self,
                     messages: Messages,
                     ) -> Context:
@@ -122,7 +114,7 @@ class ChatEngine(BaseChatEngine):
                                               max_prompt_tokens=self.max_prompt_tokens)
 
         context = self.context_engine.query(queries,
-                                            max_context_tokens=self.max_prompt_tokens)
+                                            max_context_tokens=self.max_context_tokens)
         return context
 
     async def achat(self,
