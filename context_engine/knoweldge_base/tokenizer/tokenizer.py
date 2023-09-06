@@ -46,6 +46,12 @@ class Tokenizer(BaseTokenizer):
         cls._tokenizer_instance = tokenizer_class(*args, **kwargs)
         cls._initialized = True
 
+    @classmethod
+    def clear(cls):
+        cls._instance = None
+        cls._tokenizer_instance = None
+        cls._initialized = False
+
     def tokenize(self, text: str) -> List[str]:
         return self._tokenizer_instance.tokenize(text)  # type: ignore[union-attr]
 
