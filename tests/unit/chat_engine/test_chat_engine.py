@@ -55,31 +55,47 @@ class TestChatEngine:
     def _generate_text(num_words: int):
         return " ".join(random.choices(random_words, k=num_words))
 
-    def test_chat_default_params(self):
-        chat_engine = self._init_chat_engine()
-
-        # Mock input and expected output
-        messages = [UserMessage(content="How does photosynthesis work?")]
+    def _get_inputs_and_expected(self, history_length, snippet_length):
+        messages = [
+            MessageBase(
+                role="assistant" if i % 2 == 0 else "user",
+                content=self._generate_text(5)
+            )
+            for i in range(history_length)
+        ]
         mock_queries = [Query(text="How does photosynthesis work?")]
         mock_context = Context(
             content=ContextQueryResult(
                 query="How does photosynthesis work?",
                 snippets=[ContextSnippet(reference="ref 1",
-                                         text=self._generate_text(10)),
+                                         text=self._generate_text(snippet_length)),
                           ContextSnippet(reference="ref 2",
                                          text=self._generate_text(12))]
             ),
-            num_tokens=22 + 6
+            num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )
         expected_prompt = [SystemMessage(
             content=MOCK_SYSTEM_PROMPT + f"\nContext: {mock_context.to_text()}"
         )] + messages
         mock_chat_response = "Photosynthesis is a process used by plants..."
-
         # Set the return values of the mocked methods
         self.mock_query_builder.generate.return_value = mock_queries
         self.mock_context_engine.query.return_value = mock_context
         self.mock_llm.chat_completion.return_value = mock_chat_response
+
+        expected = {
+            'queries': mock_queries,
+            'prompt': expected_prompt,
+            'response': mock_chat_response,
+        }
+        return messages, expected
+
+    def test_chat_default_params(self, history_length=3, snippet_length=10):
+        chat_engine = self._init_chat_engine()
+
+        # Mock input and expected output
+        messages, expected = self._get_inputs_and_expected(history_length,
+                                                           snippet_length)
 
         # Call the method under test
         response = chat_engine.chat(messages)
@@ -90,17 +106,19 @@ class TestChatEngine:
             max_prompt_tokens=MAX_PROMPT_TOKENS
         )
         self.mock_context_engine.query.assert_called_once_with(
-            mock_queries,
+            expected['queries'],
             max_context_tokens=70
         )
         self.mock_llm.chat_completion.assert_called_once_with(
-            expected_prompt,
+            expected['prompt'],
             max_tokens=200,
             stream=False,
             model_params=None
         )
 
-        assert response == mock_chat_response
+        assert response == expected['response']
+
+
 
     # @staticmethod
     # @pytest.mark.parametrize("input_len, expected, chat_engine", [
