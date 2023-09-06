@@ -75,8 +75,7 @@ class TestOpenAILLM:
     @staticmethod
     @pytest.fixture
     def openai_llm(model_name):
-        return OpenAILLM(model_name=model_name,
-                         default_max_generated_tokens=150)
+        return OpenAILLM(model_name=model_name)
 
     @staticmethod
     def test_chat_completion(openai_llm, messages):
