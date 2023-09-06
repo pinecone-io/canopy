@@ -5,7 +5,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from context_engine.knoweldge_base.chunker.base import Chunker
 from context_engine.knoweldge_base.models import KBDocChunk
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.models.data_models import Document
 
 

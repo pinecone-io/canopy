@@ -1,6 +1,6 @@
 import tiktoken
 from typing import List
-from .base import BaseTokenizer
+from .tokenizer import BaseTokenizer
 from ...models.data_models import Messages, MessageBase, Role
 
 

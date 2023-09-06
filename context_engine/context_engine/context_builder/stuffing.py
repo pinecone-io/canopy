@@ -4,7 +4,7 @@ from typing import List, Tuple
 from context_engine.context_engine.context_builder.base import BaseContextBuilder
 from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
 from context_engine.knoweldge_base.models import QueryResult, DocumentWithScore
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.models.data_models import Context
 
 

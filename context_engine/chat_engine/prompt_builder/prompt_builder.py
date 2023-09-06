@@ -5,7 +5,7 @@ from context_engine.chat_engine.history_pruner import (RaisingHistoryPruner,
                                                        RecentHistoryPruner, )
 from context_engine.chat_engine.history_pruner.base import HistoryPruner
 from context_engine.chat_engine.models import HistoryPruningMethod
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.models.data_models import Messages, Role, MessageBase
 
 
