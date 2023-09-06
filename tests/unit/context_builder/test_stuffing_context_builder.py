@@ -11,10 +11,7 @@ class TestStuffingContextBuilder:
 
     def setup_method(self):
         self.tokenizer = StubTokenizer()
-        self.reference_metadata_field = "source"
-        self.builder = StuffingContextBuilder(
-            tokenizer=self.tokenizer,
-            reference_metadata_field=self.reference_metadata_field)
+        self.builder = StuffingContextBuilder()
 
         self.text1 = "I am a simple test string"
         self.text2 = "to check the happy path"
@@ -26,26 +23,26 @@ class TestStuffingContextBuilder:
                         documents=[
                             DocumentWithScore(id="doc1",
                                               text=self.text1,
-                                              metadata={
-                                                  "source": "test_source1"},
+                                              source="test_source1",
+                                              metadata={"unused": 'bla bla'},
                                               score=1.0),
                             DocumentWithScore(id="doc2",
                                               text=self.text2,
-                                              metadata={
-                                                  "source": "test_source2"},
+                                              source="test_source2",
+                                              metadata={},
                                               score=1.0)
                         ]),
             QueryResult(query="test query 2",
                         documents=[
                             DocumentWithScore(id="doc3",
                                               text=self.text3,
-                                              metadata={
-                                                  "source": "test_source3"},
+                                              source="test_source3",
+                                              metadata={},
                                               score=1.0),
                             DocumentWithScore(id="doc4",
                                               text=self.text4,
-                                              metadata={
-                                                  "source": "test_source4"},
+                                              source="test_source4",
+                                              metadata={},
                                               score=1.0)
                         ])
         ]
@@ -161,7 +158,8 @@ class TestStuffingContextBuilder:
                         documents=[
                             DocumentWithScore(id="empty_doc",
                                               text="",
-                                              metadata={"source": "empty_source"},
+                                              source="empty_source",
+                                              metadata={},
                                               score=1.0)
                         ])
         ]

@@ -4,13 +4,12 @@ import pytest
 import random
 
 from context_engine.chat_engine import ChatEngine
-from context_engine.chat_engine.prompt_builder.prompt_builder import BasePromptBuilder
 from context_engine.chat_engine.query_generator import QueryGenerator
 from context_engine.context_engine import ContextEngine
 from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
 from context_engine.llm import BaseLLM
-from context_engine.llm.models import UserMessage, SystemMessage
-from context_engine.models.data_models import MessageBase, Role, Query, Context
+from context_engine.llm.models import SystemMessage
+from context_engine.models.data_models import MessageBase, Query, Context
 from ..stubs.stub_tokenizer import StubTokenizer
 from .. import random_words
 

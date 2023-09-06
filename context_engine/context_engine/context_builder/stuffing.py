@@ -4,15 +4,14 @@ from typing import List, Tuple
 from context_engine.context_engine.context_builder.base import BaseContextBuilder
 from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
 from context_engine.knoweldge_base.models import QueryResult, DocumentWithScore
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.models.data_models import Context
 
 
 class StuffingContextBuilder(BaseContextBuilder):
 
-    def __init__(self, tokenizer: Tokenizer, reference_metadata_field: str):
-        self._tokenizer = tokenizer
-        self._reference_metadata_field = reference_metadata_field
+    def __init__(self):
+        self._tokenizer = Tokenizer()
 
     def build(self,
               query_results: List[QueryResult],
@@ -35,9 +34,7 @@ class StuffingContextBuilder(BaseContextBuilder):
         seen_doc_ids = set()
         for doc, origin_query_idx in sorted_docs_with_origin:
             if doc.id not in seen_doc_ids and doc.text.strip() != "":
-                snippet = ContextSnippet(text=doc.text,
-                                         reference=str(doc.metadata.get(
-                                             self._reference_metadata_field, "")))
+                snippet = ContextSnippet(text=doc.text, reference=doc.source)
 
                 # try inserting the snippet into the context
                 context_query_results[origin_query_idx].snippets.append(

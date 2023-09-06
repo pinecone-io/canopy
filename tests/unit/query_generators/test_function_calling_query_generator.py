@@ -12,7 +12,6 @@ from context_engine.llm.models import (ModelParams, Function,
                                        FunctionParameters, FunctionArrayProperty,
                                        UserMessage, )
 from context_engine.models.data_models import Query
-from ..stubs.stub_tokenizer import StubTokenizer
 
 
 class TestFunctionCallingQueryGenerator:
@@ -38,7 +37,6 @@ class TestFunctionCallingQueryGenerator:
         query_gen = FunctionCallingQueryGenerator(
             llm=mock_llm,
             top_k=5,
-            tokenizer=StubTokenizer()
         )
         query_gen._prompt_builder = mock_prompt_builder
         return query_gen
@@ -105,7 +103,6 @@ class TestFunctionCallingQueryGenerator:
             top_k=5,
             prompt=custom_system_prompt,
             function_description=custom_function_description,
-            tokenizer=StubTokenizer()
         )
         gen_custom._prompt_builder = mock_prompt_builder
 
