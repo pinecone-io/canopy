@@ -1,13 +1,20 @@
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional
 
-from context_engine.chat_engine.prompt_builder.base import BasePromptBuilder
+from context_engine.chat_engine.prompt_builder.base import PromptBuilder
+from context_engine.context_engine import ContextEngine
 from context_engine.chat_engine.query_generator.base import QueryGenerator
-from context_engine.knoweldge_base import KnowledgeBase
+from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm.base import BaseLLM
-from context_engine.llm.models import ModelParams
+from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
+from context_engine.chat_engine.history_builder import RecentHistoryBuilder
+
+
+DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the reference to the documents you used from their 'reference' field in the format 'Source: $REFERENCE_HERE'.
+If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context."
+Don't address the context directly, but use it to answer the user question like it's your own knowledge."""  # noqa
 
 
 class BaseChatEngine(ABC):
@@ -16,7 +23,6 @@ class BaseChatEngine(ABC):
              messages: Messages,
              *,
              stream: bool = False,
-             max_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
@@ -31,7 +37,6 @@ class BaseChatEngine(ABC):
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    max_tokens: Optional[int] = None,
                     model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         pass
@@ -45,52 +50,85 @@ class ChatEngine(BaseChatEngine):
 
     def __init__(self,
                  *,
-                 system_message: str,
                  llm: BaseLLM,
+                 context_engine: ContextEngine,
                  query_builder: QueryGenerator,
-                 knowledge_base: KnowledgeBase,
-                 prompt_builder: BasePromptBuilder,
                  max_prompt_tokens: int,
-                 max_generated_tokens: Optional[int] = None,
+                 max_generated_tokens: int,
+                 tokenizer: Tokenizer,  # TODO: Remove this dependency
+                 system_prompt: Optional[str] = None,
+                 context_to_history_ratio: float = 0.8
                  ):
-        self.system_message = system_message
+        self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.llm = llm
+        self.context_engine = context_engine
         self.query_builder = query_builder
-        self.knowledge_base = knowledge_base
-        self.prompt_builder = prompt_builder
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
+        self._context_to_history_ratio = context_to_history_ratio
+        self._tokenizer = tokenizer
+
+        # TODO: hardcoded for now, need to make it configurable
+        history_prunner = RecentHistoryBuilder(tokenizer)
+        self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
 
     def chat(self,
              messages: Messages,
              *,
              stream: bool = False,
-             max_tokens: Optional[int] = None,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         queries = self.query_builder.generate(messages,
                                               max_prompt_tokens=self.max_prompt_tokens)
-        query_results = self.knowledge_base.query(queries)
-        prompt_messages = self.prompt_builder.build(self.system_message,
-                                                    messages,
-                                                    query_results,
-                                                    max_tokens=self.max_prompt_tokens)
-        max_tokens = max_tokens or self.max_generated_tokens
-        return self.llm.chat_completion(prompt_messages,
-                                        max_tokens=max_tokens,
+
+        max_context_tokens = self._calculate_max_context_tokens(messages)
+        context = self.context_engine.query(queries, max_context_tokens)
+
+        system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
+        llm_messages = self._prompt_builder.build(
+            system_prompt,
+            messages,
+            max_tokens=self.max_prompt_tokens
+        )
+        return self.llm.chat_completion(llm_messages,
+                                        max_tokens=self.max_generated_tokens,
                                         stream=stream,
                                         model_params=model_params)
+
+    def _calculate_max_context_tokens(self, messages: Messages):
+        history_tokens = self._tokenizer.messages_token_count(messages)
+        max_context_tokens = max(
+            self.max_prompt_tokens - history_tokens,
+            int(self.max_prompt_tokens * self._context_to_history_ratio)
+        )
+
+        system_prompt_tokens = self._tokenizer.messages_token_count(
+            [SystemMessage(content=self.system_prompt_template)]
+        )
+        max_context_tokens -= system_prompt_tokens
+        if max_context_tokens <= 0:
+            raise ValueError(f"Not enough token budget for generating context. The "
+                             f"prunned history is taking {history_tokens} tokens, "
+                             f"and the system prompt is taking {system_prompt_tokens} "
+                             f"tokens, which is more than the max prompt tokens "
+                             f"{self.max_prompt_tokens}")
+
+        return max_context_tokens
 
     def get_context(self,
                     messages: Messages,
                     ) -> Context:
-        raise NotImplementedError
+        queries = self.query_builder.generate(messages,
+                                              max_prompt_tokens=self.max_prompt_tokens)
+
+        context = self.context_engine.query(queries,
+                                            max_context_tokens=self.max_prompt_tokens)
+        return context
 
     async def achat(self,
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    max_tokens: Optional[int] = None,
                     model_params: Optional[ModelParams] = None
                     ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
         raise NotImplementedError
