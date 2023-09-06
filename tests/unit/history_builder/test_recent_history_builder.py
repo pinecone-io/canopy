@@ -2,12 +2,11 @@ import pytest
 
 from context_engine.chat_engine.history_builder import RecentHistoryBuilder
 from context_engine.llm.models import UserMessage, AssistantMessage
-from tests.unit.stubs.stub_tokenizer import StubTokenizer
 
 
 @pytest.fixture
 def recent_history_builder():
-    return RecentHistoryBuilder(StubTokenizer())
+    return RecentHistoryBuilder()
 
 
 @pytest.fixture
@@ -48,7 +47,6 @@ def test_build(recent_history_builder,
 
 def test_min_history_messages(sample_messages):
     recent_history_builder = RecentHistoryBuilder(
-        StubTokenizer(),
         min_history_messages=2
     )
     token_limit = 18

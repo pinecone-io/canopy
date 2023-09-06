@@ -4,7 +4,7 @@ from typing import Iterable, Union, Optional
 from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.context_engine import ContextEngine
 from context_engine.chat_engine.query_generator import QueryGenerator
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
@@ -55,7 +55,6 @@ class ChatEngine(BaseChatEngine):
                  query_builder: QueryGenerator,
                  max_prompt_tokens: int,
                  max_generated_tokens: int,
-                 tokenizer: Tokenizer,  # TODO: Remove this dependency
                  system_prompt: Optional[str] = None,
                  context_to_history_ratio: float = 0.8
                  ):
@@ -66,11 +65,11 @@ class ChatEngine(BaseChatEngine):
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
         self._context_to_history_ratio = context_to_history_ratio
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
 
         # TODO: hardcoded for now, need to make it configurable
-        history_prunner = RecentHistoryBuilder(tokenizer)
-        self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
+        history_prunner = RecentHistoryBuilder()
+        self._prompt_builder = PromptBuilder(history_prunner)
 
     def chat(self,
              messages: Messages,

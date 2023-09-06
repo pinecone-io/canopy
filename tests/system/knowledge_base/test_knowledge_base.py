@@ -8,7 +8,6 @@ from context_engine.knoweldge_base.models import DocumentWithScore
 from context_engine.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
-from tests.unit.stubs.stub_tokenizer import StubTokenizer
 from tests.unit.stubs.stub_chunker import StubChunker
 
 load_dotenv()
@@ -32,7 +31,6 @@ class TestKnowledgeBase:
     def knowledge_base(chunker, encoder):
         kb = KnowledgeBase(index_name_suffix="kb-integration-test",
                            encoder=encoder,
-                           tokenizer=StubTokenizer(),
                            chunker=chunker)
         pinecone.init()
         if kb._index_name in pinecone.list_indexes():
@@ -89,7 +87,6 @@ class TestKnowledgeBase:
         kb = KnowledgeBase(index_name_suffix="kb-integration-test",
                            encoder=StubRecordEncoder(
                                StubDenseEncoder(dimension=3)),
-                           tokenizer=StubTokenizer(),
                            chunker=StubChunker())
         kb.connect()
         assert kb._index.describe_index_stats()
@@ -99,7 +96,6 @@ class TestKnowledgeBase:
         kb = KnowledgeBase(index_name_suffix="not-exist",
                            encoder=StubRecordEncoder(
                                StubDenseEncoder(dimension=3)),
-                           tokenizer=StubTokenizer(),
                            chunker=StubChunker())
         with pytest.raises(RuntimeError):
             kb.connect()
@@ -182,7 +178,6 @@ class TestKnowledgeBase:
         chunker = StubChunker(num_chunks_per_doc=1)
         kb = KnowledgeBase(index_name_suffix="kb-integration-test",
                            encoder=encoder,
-                           tokenizer=StubTokenizer(),
                            chunker=chunker)
         kb.connect()
 

@@ -1,16 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.models.data_models import Messages
 
 
 class HistoryBuilder(ABC):
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  min_history_messages: int = 1):
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
         self._min_history_messages = min_history_messages
 
     @abstractmethod

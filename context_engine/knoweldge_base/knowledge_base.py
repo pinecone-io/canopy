@@ -11,7 +11,6 @@ from context_engine.knoweldge_base.record_encoder import RecordEncoder
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                                   KBDocChunkWithScore, )
 from context_engine.knoweldge_base.reranker import Reranker, TransparentReranker
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 
 
@@ -24,7 +23,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                  index_name_suffix: str,
                  *,
                  encoder: RecordEncoder,
-                 tokenizer: Tokenizer,
                  chunker: Chunker,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 10,
@@ -40,7 +38,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._index_name = index_name
         self._default_top_k = default_top_k
         self._encoder = encoder
-        self._tokenizer = tokenizer
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
@@ -284,7 +281,3 @@ class KnowledgeBase(BaseKnowledgeBase):
                       document_ids: List[str],
                       namespace: str = "") -> None:
         raise NotImplementedError()
-
-    @property
-    def tokenizer(self) -> Tokenizer:
-        return self._tokenizer

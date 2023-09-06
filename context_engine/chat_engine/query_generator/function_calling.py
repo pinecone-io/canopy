@@ -3,7 +3,6 @@ from typing import List, Optional
 from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.chat_engine.history_builder import RaisingHistoryBuilder
 from context_engine.chat_engine.query_generator import QueryGenerator
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import (Function, FunctionParameters,
                                        FunctionArrayProperty)
@@ -22,7 +21,6 @@ class FunctionCallingQueryGenerator(QueryGenerator):
                  *,
                  llm: BaseLLM,
                  top_k: int,
-                 tokenizer: Tokenizer,  # TODO: need to remove this dependency
                  prompt: Optional[str] = None,
                  function_description: Optional[str] = None):
         self._llm = llm
@@ -32,8 +30,8 @@ class FunctionCallingQueryGenerator(QueryGenerator):
             function_description or DEFAULT_FUNCTION_DESCRIPTION
 
         # TODO: hardcoded for now, need to make it configurable
-        history_prunner = RaisingHistoryBuilder(tokenizer)
-        self._prompt_builder = PromptBuilder(tokenizer, history_prunner)
+        history_prunner = RaisingHistoryBuilder()
+        self._prompt_builder = PromptBuilder(history_prunner)
 
     def generate(self,
                  messages: Messages,

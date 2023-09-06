@@ -3,7 +3,6 @@ import pytest
 from context_engine.knoweldge_base.models import KBDocChunk
 from context_engine.models.data_models import Document
 from .base_test_chunker import BaseTestChunker
-from ..stubs.stub_tokenizer import StubTokenizer
 from context_engine.knoweldge_base.chunker.token_chunker import TokenChunker
 
 
@@ -12,8 +11,7 @@ class TestTokenChunker(BaseTestChunker):
     @staticmethod
     @pytest.fixture(scope="class")
     def chunker():
-        return TokenChunker(tokenizer=StubTokenizer(),
-                            max_chunk_size=5,
+        return TokenChunker(max_chunk_size=5,
                             overlap=2)
 
     @staticmethod
@@ -72,13 +70,11 @@ class TestTokenChunker(BaseTestChunker):
     @staticmethod
     def test_chunker_init_raise_on_negative_overlap():
         with pytest.raises(ValueError):
-            TokenChunker(tokenizer=StubTokenizer(),
-                         max_chunk_size=5,
+            TokenChunker(max_chunk_size=5,
                          overlap=-1)
 
     @staticmethod
     def test_chunker_init_raise_on_non_positive_max_tokens():
         with pytest.raises(ValueError):
-            TokenChunker(tokenizer=StubTokenizer(),
-                         max_chunk_size=0,
+            TokenChunker(max_chunk_size=0,
                          overlap=5)

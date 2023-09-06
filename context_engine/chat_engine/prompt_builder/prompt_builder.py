@@ -2,17 +2,16 @@ from abc import ABC, abstractmethod
 
 from context_engine.chat_engine.exceptions import InvalidRequestError
 from context_engine.chat_engine.history_builder.base import HistoryBuilder
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
+from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
 from context_engine.models.data_models import Messages, Role, MessageBase
 
 
 class BasePromptBuilder(ABC):
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  history_pruner: HistoryBuilder,
                  ):
-        self._tokenizer = tokenizer
+        self._tokenizer = Tokenizer()
         self._history_pruner = history_pruner
 
     @abstractmethod
