@@ -14,8 +14,7 @@ class TestFunctionCallingQueryGeneratorSystem:
     @staticmethod
     @pytest.fixture
     def openai_llm():
-        return OpenAILLM(model_name="gpt-3.5-turbo",
-                         default_max_generated_tokens=256)
+        return OpenAILLM(model_name="gpt-3.5-turbo")
 
     @staticmethod
     @pytest.fixture
