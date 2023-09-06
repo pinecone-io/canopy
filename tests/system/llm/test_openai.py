@@ -156,8 +156,7 @@ class TestOpenAILLM:
     @staticmethod
     def test_invalid_model_name():
         with pytest.raises(ValueError, match="Model invalid_model_name not found."):
-            OpenAILLM(model_name="invalid_model_name",
-                      default_max_generated_tokens=150)
+            OpenAILLM(model_name="invalid_model_name")
 
     @staticmethod
     def test_missing_messages(openai_llm):
