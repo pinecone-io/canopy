@@ -1,4 +1,7 @@
+import os
 import logging
+
+from multiprocessing import Process
 
 from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
@@ -19,11 +22,14 @@ from context_engine.models.data_models import Context
 from context_engine.service.models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
-load_dotenv()
+dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 logging.basicConfig(level=logging.INFO)
 
 
 app = FastAPI()
+
+proc = None
 
 
 context_engine: ContextEngine
@@ -125,8 +131,7 @@ async def startup():
 
 def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
-
-    kb = KnowledgeBase(index_name_suffix='chat-openai-ilai')
+    kb = KnowledgeBase(index_name_suffix=os.getenv("INDEX_NAME_SUFFIX"))
     # kb.create_index(dimension=1536)
     kb.connect()
     context_engine = ContextEngine(knowledge_base=kb)
@@ -137,9 +142,19 @@ def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     return kb, context_engine, chat_engine
 
 
-def start():
+def start(host: str = "0.0.0.0", port: int = 8000, reload: bool = True):
+    # TODO: can this direction work?
+    # global proc
+    # proc = Process(target=uvicorn.run,
+    #                 args=(app,),
+    #                 kwargs={
+    #                     "host": "0.0.0.0",
+    #                     "port": 8000,
+    #                     "reload": True},
+    #                 daemon=True)
+    # proc.start()
     uvicorn.run("context_engine.service.app:app",
-                host="0.0.0.0", port=8000, reload=True)
+                host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":
