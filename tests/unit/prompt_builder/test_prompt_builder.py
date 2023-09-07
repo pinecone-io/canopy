@@ -3,19 +3,22 @@ from unittest.mock import create_autospec
 import pytest
 
 from context_engine.chat_engine.exceptions import InvalidRequestError
-from context_engine.chat_engine.history_builder.base import HistoryBuilder
+from context_engine.chat_engine.history_pruner.base import HistoryPruner
+from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.models.data_models import MessageBase, Role
 
 
 @pytest.fixture
 def mock_history_builder():
-    return create_autospec(HistoryBuilder)
+    return create_autospec(HistoryPruner)
 
 
 @pytest.fixture
 def prompt_builder(mock_history_builder):
-    return PromptBuilder(mock_history_builder)
+    pb = PromptBuilder(HistoryPruningMethod.RECENT, 1)
+    pb._history_pruner = mock_history_builder
+    return pb
 
 
 def test_build(prompt_builder, mock_history_builder):

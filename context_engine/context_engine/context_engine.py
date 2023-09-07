@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
+from context_engine.context_engine.context_builder import StuffingContextBuilder
 from context_engine.context_engine.context_builder.base import BaseContextBuilder
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
 from context_engine.models.data_models import Context, Query
@@ -19,14 +20,17 @@ class BaseContextEngine(ABC):
 
 class ContextEngine(BaseContextEngine):
 
+    DEFAULT_CONTEXT_BUILDER = StuffingContextBuilder
+
     def __init__(self,
                  knowledge_base: BaseKnowledgeBase,
-                 context_builder: BaseContextBuilder,
                  *,
+                 context_builder: Optional[BaseContextBuilder] = None,
                  global_metadata_filter: Optional[dict] = None
                  ):
         self.knowledge_base = knowledge_base
-        self.context_builder = context_builder
+        self.context_builder = context_builder if context_builder is not None else \
+            self.DEFAULT_CONTEXT_BUILDER()
         self.global_metadata_filter = global_metadata_filter
 
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:

@@ -1,18 +1,29 @@
 from abc import ABC, abstractmethod
 
 from context_engine.chat_engine.exceptions import InvalidRequestError
-from context_engine.chat_engine.history_builder.base import HistoryBuilder
-from context_engine.knoweldge_base.tokenizer.tokenizer import Tokenizer
+from context_engine.chat_engine.history_pruner import (RaisingHistoryPruner,
+                                                       RecentHistoryPruner, )
+from context_engine.chat_engine.history_pruner.base import HistoryPruner
+from context_engine.chat_engine.models import HistoryPruningMethod
+from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.models.data_models import Messages, Role, MessageBase
 
 
 class BasePromptBuilder(ABC):
 
     def __init__(self,
-                 history_pruner: HistoryBuilder,
+                 history_pruning: HistoryPruningMethod,
+                 min_history_messages: int
                  ):
         self._tokenizer = Tokenizer()
-        self._history_pruner = history_pruner
+        self._history_pruner: HistoryPruner
+        if history_pruning == HistoryPruningMethod.RAISE:
+            self._history_pruner = RaisingHistoryPruner(min_history_messages)
+        elif history_pruning == HistoryPruningMethod.RECENT:
+            self._history_pruner = RecentHistoryPruner(min_history_messages)
+        else:
+            raise ValueError(f"Unknown history pruning method "
+                             f"{history_pruning}.")
 
     @abstractmethod
     def build(self,
