@@ -132,10 +132,7 @@ def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
 
-    chat_engine = ChatEngine(llm=llm,
-                             context_engine=context_engine,
-                             max_prompt_tokens=4000,
-                             max_generated_tokens=None)
+    chat_engine = ChatEngine(llm=llm, context_engine=context_engine)
 
     return kb, context_engine, chat_engine
 
