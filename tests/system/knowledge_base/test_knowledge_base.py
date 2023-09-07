@@ -30,7 +30,7 @@ class TestKnowledgeBase:
     @staticmethod
     @pytest.fixture(scope="class", autouse=True)
     def knowledge_base(chunker, encoder):
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+        kb = KnowledgeBase(index_name="kb-integration-test",
                            encoder=encoder,
                            tokenizer=StubTokenizer(),
                            chunker=chunker)
@@ -86,7 +86,7 @@ class TestKnowledgeBase:
 
     @staticmethod
     def test_connect_unconnected_kb_index_exist():
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+        kb = KnowledgeBase(index_name="kb-integration-test",
                            encoder=StubRecordEncoder(
                                StubDenseEncoder(dimension=3)),
                            tokenizer=StubTokenizer(),
@@ -96,7 +96,7 @@ class TestKnowledgeBase:
 
     @staticmethod
     def test_connect_unconnected_kb_index_not_exist_raise():
-        kb = KnowledgeBase(index_name_suffix="not-exist",
+        kb = KnowledgeBase(index_name="not-exist",
                            encoder=StubRecordEncoder(
                                StubDenseEncoder(dimension=3)),
                            tokenizer=StubTokenizer(),
@@ -180,7 +180,7 @@ class TestKnowledgeBase:
     def test_update_documents(encoder, documents, encoded_chunks):
         # chunker/kb that produces less chunks per doc
         chunker = StubChunker(num_chunks_per_doc=1)
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+        kb = KnowledgeBase(index_name="kb-integration-test",
                            encoder=encoder,
                            tokenizer=StubTokenizer(),
                            chunker=chunker)

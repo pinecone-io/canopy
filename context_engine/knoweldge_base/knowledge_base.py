@@ -2,7 +2,13 @@ from datetime import datetime
 from typing import List, Optional
 from copy import deepcopy
 import pandas as pd
-import pinecone
+from pinecone import list_indexes, delete_index, create_index, init as pinecone_init, whoami as pinecone_whoami
+
+try:
+    from pinecone import GRPCIndex as Index
+except ImportError:
+    from pinecone import Index
+
 from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
@@ -21,7 +27,7 @@ INDEX_NAME_PREFIX = "context-engine-"
 class KnowledgeBase(BaseKnowledgeBase):
 
     def __init__(self,
-                 index_name_suffix: str,
+                 index_name: str,
                  *,
                  encoder: RecordEncoder,
                  tokenizer: Tokenizer,
@@ -32,113 +38,94 @@ class KnowledgeBase(BaseKnowledgeBase):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
-        if index_name_suffix.startswith(INDEX_NAME_PREFIX):
-            index_name = index_name_suffix
-        else:
-            index_name = INDEX_NAME_PREFIX + index_name_suffix
-
-        self._index_name = index_name
+        self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
         self._encoder = encoder
         self._tokenizer = tokenizer
         self._chunker = chunker
         self._reranker = TransparentReranker() if reranker is None else reranker
 
-        self._index = None
+        self._index: Index = self._connect_index()
 
-    def connect(self, force: bool = False):
-        if self._index is None or force:
+    @staticmethod
+    def _connect_pinecone():
+        try:
+            pinecone_init()
+            pinecone_whoami()
+        except Exception as e:
+            raise RuntimeError("Failed to connect to Pinecone. "
+                               "Please check your credentials") from e
 
-            try:
-                pinecone.init()
-                pinecone.whoami()
-            except Exception as e:
-                raise RuntimeError("Failed to connect to Pinecone. "
-                                   "Please check your credentials") from e
+    def _connect_index(self) -> Index:
+        self._connect_pinecone()
 
-            try:
-                self._index = pinecone.Index(index_name=self._index_name)
-                self._index.describe_index_stats()  # type: ignore
-            except Exception as e:
-                raise RuntimeError(
-                    f"Failed to connect to the index {self._index_name}. "
-                    "Please check your credentials and index name"
-                ) from e
+        if self._index_name not in list_indexes():
+            raise RuntimeError(
+                f"Index {self._index_name} does not exist. "
+                "Please create it first using `create_index()`"
+                "or use the `ce create` command line"
+            )
 
-    def create_index(self,
-                     dimension: Optional[int] = None,
-                     indexed_fields: List[str] = ['document_id'],
-                     **kwargs
-                     ):
-        """
-        Create a new Pinecone index that will be used to store the documents
-        Args:
-            dimension (Optional[int]): The dimension of the vectors to be indexed.
-                                       The knowledge base will try to infer it from the
-                                       encoder if not provided.
-            indexed_fields (List[str]): The fields that will be indexed and can be used
-                                        for metadata filtering.
-                                        Defaults to ['document_id'].
-                                        The 'text' field cannot be used for filtering.
-            **kwargs: Any additional arguments will be passed to the
-                      `pinecone.create_index()` function.
+        try:
+            index = Index(index_name=self._index_name)
+            index.describe_index_stats()
+        except Exception as e:
+            raise RuntimeError(
+                f"Unexpected error while connecting to index {self._index_name}."
+                f"Please check your credentials and try again."
+            ) from e
+        return index
 
-        Keyword Args:
-            index_type: type of index, one of {"approximated", "exact"}, defaults to
-                        "approximated".
-            metric (str, optional): type of metric used in the vector index, one of
-                {"cosine", "dotproduct", "euclidean"}, defaults to "cosine".
-                - Use "cosine" for cosine similarity,
-                - "dotproduct" for dot-product,
-                - and "euclidean" for euclidean distance.
-            replicas (int, optional): the number of replicas, defaults to 1.
-                - Use at least 2 replicas if you need high availability (99.99%
-                uptime) for querying.
-                - For additional throughput (QPS) your index needs to support,
-                provision additional replicas.
-            shards (int, optional): the number of shards per index, defaults to 1.
-                - Use 1 shard per 1GB of vectors.
-            pods (int, optional): Total number of pods to be used by the index.
-                pods = shard*replicas.
-            pod_type (str, optional): the pod type to be used for the index.
-                can be one of p1 or s1.
-            index_config: Advanced configuration options for the index.
-            metadata_config (dict, optional): Configuration related to the metadata
-                index.
-            source_collection (str, optional): Collection name to create the index from.
-            timeout (int, optional): Timeout for wait until index gets ready.
-                If None, wait indefinitely; if >=0, time out after this many seconds;
-                if -1, return immediately and do not wait. Default: None.
+    @staticmethod
+    def create(index_name: str,
+               *,
+               encoder: RecordEncoder,
+               tokenizer: Tokenizer,
+               chunker: Chunker,
+               indexed_fields: Optional[List[str]] = None,
+               reranker: Optional[Reranker] = None,
+               default_top_k: int = 10,
+               dimension: Optional[int] = None,
+               **kwargs) -> 'KnowledgeBase':
 
-        Returns:
-            None
-        """
-
-        if len(indexed_fields) == 0:
-            raise ValueError("Indexed_fields must contain at least one field")
+        if indexed_fields is None:
+            indexed_fields = ['document_id']
+        elif "document_id" not in indexed_fields:
+            indexed_fields.append('document_id')
 
         if 'text' in indexed_fields:
             raise ValueError("The 'text' field cannot be used for metadata filtering. "
                              "Please remove it from indexed_fields")
 
-        if self._index is not None:
-            raise RuntimeError("Index already exists")
+        index_name = KnowledgeBase._get_full_index_name(index_name)
+
+        if index_name in list_indexes():
+            raise RuntimeError(
+                f"Index {index_name} already exists. "
+                "If you wish to delete it, use `delete_index()` or `ce delete` command line"
+            )
 
         if dimension is None:
-            if self._encoder.dimension is not None:
-                dimension = self._encoder.dimension
+            if encoder.dimension is not None:
+                dimension = encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
-        pinecone.init()
-        pinecone.create_index(name=self._index_name,
-                              dimension=dimension,
-                              metadata_config={
-                                  'indexed': indexed_fields
-                              },
-                              **kwargs)
-        self.connect()
+        KnowledgeBase._connect_pinecone()
+        create_index(name=self._index_name,
+                     dimension=dimension,
+                     metadata_config={
+                         'indexed': indexed_fields
+                     },
+                     **kwargs)
+
+    @staticmethod
+    def _get_full_index_name(index_name: str) -> str:
+        if index_name.startswith(INDEX_NAME_PREFIX):
+            return index_name
+        else:
+            return INDEX_NAME_PREFIX + index_name
 
     def delete_index(self):
         if self._index_name not in pinecone.list_indexes():
