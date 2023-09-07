@@ -18,6 +18,7 @@ pinecone-text = "^0.5.3"
 flake8-pyproject = "^1.2.3"
 pandas-stubs = "^2.0.3.230814"
 langchain = "^0.0.188"
+pytest-xdist = "^3.3.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
