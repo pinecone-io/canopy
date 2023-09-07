@@ -25,6 +25,8 @@ OPENAI_API_KEY="<OPENAI_API_KEY>"
 INDEX_NAME_SUFFIX="test-index-1"
 ```
 
+> NOTE -- the INDEX_NAME_SUFFIX and the index name you use in the CLI operaions should match (i.e. if you use `context-engine new test-index-1` in the CLI, then the INDEX_NAME_SUFFIX should be `test-index-1`). AGAIN THIS IS TEMPORARY AND WILL BECOME OBSOLETE SOON!
+
 3. install the dependencies
 ```bash
 pip install -e .
