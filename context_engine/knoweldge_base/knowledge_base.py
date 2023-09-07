@@ -1,6 +1,6 @@
+from copy import deepcopy
 from datetime import datetime
 from typing import List, Optional
-from copy import deepcopy
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
@@ -49,6 +49,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
         self._index: Optional[Index] = self._connect_index()
+
 
     @staticmethod
     def _connect_pinecone():
@@ -174,7 +175,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
                                         for q in queries]
 
-        results = self._reranker.rerank(results) # noqa
+        results = self._reranker.rerank(results)
 
         return [
             QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
@@ -184,9 +185,15 @@ class KnowledgeBase(BaseKnowledgeBase):
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
         self._validate_not_deleted()
+        if self._index is None:
+            raise RuntimeError(
+                "Index does not exist. Please call `connect()` first")
+
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
-            metadata_filter.update(global_metadata_filter)  # type: ignore
+            if metadata_filter is None:
+                metadata_filter = {}
+            metadata_filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
 
         result = self._index.query(vector=query.values,  # type: ignore
