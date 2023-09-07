@@ -76,13 +76,12 @@ class ChatEngine(BaseChatEngine):
             min_history_messages=min_history_messages
         )
 
-        # Set max budget for context tokens, default to 70% of max_prompt_tokens, minus
-        # the system prompt tokens
+        # Set max budget for context tokens, default to 70% of max_prompt_tokens
         max_context_tokens = max_context_tokens or int(max_prompt_tokens * 0.7)
         system_prompt_tokens = self._tokenizer.messages_token_count(
             [SystemMessage(content=self.system_prompt_template)]
         )
-        if max_context_tokens - system_prompt_tokens < 0:
+        if max_context_tokens + system_prompt_tokens > max_prompt_tokens:
             raise ValueError(
                 f"Not enough token budget for knowledge base context. The system prompt"
                 f" is taking {system_prompt_tokens} tokens, and together with the "
@@ -97,11 +96,7 @@ class ChatEngine(BaseChatEngine):
              stream: bool = False,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
-        queries = self._query_builder.generate(messages,
-                                               max_prompt_tokens=self.max_prompt_tokens)
-
-        context = self.context_engine.query(queries, self.max_context_tokens)
-
+        context = self.get_context(messages)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
             system_prompt,
@@ -116,11 +111,8 @@ class ChatEngine(BaseChatEngine):
     def get_context(self,
                     messages: Messages,
                     ) -> Context:
-        queries = self._query_builder.generate(messages,
-                                               max_prompt_tokens=self.max_prompt_tokens)
-
-        context = self.context_engine.query(queries,
-                                            max_context_tokens=self.max_context_tokens)
+        queries = self._query_builder.generate(messages, self.max_prompt_tokens)
+        context = self.context_engine.query(queries, self.max_context_tokens)
         return context
 
     async def achat(self,

@@ -161,15 +161,12 @@ class TestChatEngine:
 
         assert response == expected['response']
 
-    def test_context_tokens_to_small(self):
+    def test_context_tokens_too_small(self):
         system_prompt = self._generate_text(10)
         with pytest.raises(ValueError):
-            self._init_chat_engine(system_prompt=system_prompt, max_context_tokens=10)
-
-    def test_prompt_tokens_to_small(self):
-        system_prompt = self._generate_text(10)
-        with pytest.raises(ValueError):
-            self._init_chat_engine(system_prompt=system_prompt, max_prompt_tokens=10)
+            self._init_chat_engine(system_prompt=system_prompt,
+                                   max_prompt_tokens=15,
+                                   max_context_tokens=10)
 
     def test_get_context(self):
         chat_engine = self._init_chat_engine()
