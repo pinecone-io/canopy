@@ -14,7 +14,7 @@ class ChatRequest(BaseModel):
 
 class ContextQueryRequest(BaseModel):
     queries: List[Query]
-    max_tokens: Optional[int] = None
+    max_tokens: int
 
 
 class ContextUpsertRequest(BaseModel):

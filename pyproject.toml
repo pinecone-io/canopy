@@ -22,6 +22,7 @@ pytest-xdist = "^3.3.1"
 fastapi = "^0.92.0"
 uvicorn = "^0.20.0"
 tenacity = "^8.2.1"
+sse-starlette = "^1.6.5"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
