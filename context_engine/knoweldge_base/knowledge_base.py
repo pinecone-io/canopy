@@ -50,7 +50,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index: Optional[Index] = self._connect_index()
 
-
     @staticmethod
     def _connect_pinecone():
         try:
