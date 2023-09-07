@@ -11,9 +11,24 @@
 ```bash
    git checkout server
 ```
+
+3. add .env file with --> THIS STEP WILL BECOME OBSOLETE SOON AND WE WILL HAVE PROPER CONFIGURATION MANAGEMENT
+```bash
+vi context_engine/server/.env
+```
+add the following envs
+
+```bash
+PINECONE_API_KEY="<PINECONE_API_KEY>"
+PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
+OPENAI_API_KEY="<OPENAI_API_KEY>"
+INDEX_NAME_SUFFIX="test-index-1"
+```
+
 3. install the dependencies
 ```bash
 pip install -e .
 ```
+
 
 4. you are good to go! see the demo on how to run it
