@@ -54,7 +54,7 @@ def upsert(index_name_suffix, data_path, tokenizer_model):
     click.echo("")
     data = pd.read_parquet(data_path)
     click.echo(tabulate(data.head(), headers='keys', tablefmt='psql', showindex=False))
-    click.confirm(click.style('Doed this data looks right?', fg="red"), abort=True)
+    click.confirm(click.style('Does this data look right?', fg="red"), abort=True)
     kb.upsert_dataframe(data)
     click.echo(click.style("Success!", fg="green"))
 
