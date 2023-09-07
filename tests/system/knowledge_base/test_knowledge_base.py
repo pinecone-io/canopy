@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from context_engine.knoweldge_base import KnowledgeBase
+from context_engine.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from context_engine.knoweldge_base.models import DocumentWithScore
 from context_engine.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
@@ -13,6 +14,7 @@ from tests.unit.stubs.stub_chunker import StubChunker
 load_dotenv()
 
 
+@pytest.mark.xdist_group(name="group1")
 class TestKnowledgeBase:
 
     @staticmethod
@@ -28,8 +30,8 @@ class TestKnowledgeBase:
 
     @staticmethod
     @pytest.fixture(scope="class", autouse=True)
-    def knowledge_base(chunker, encoder):
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+    def knowledge_base(testrun_uid, chunker, encoder):
+        kb = KnowledgeBase(index_name_suffix=f"kb-integration-test-{testrun_uid[-6:]}",
                            encoder=encoder,
                            chunker=chunker)
         pinecone.init()
@@ -69,7 +71,6 @@ class TestKnowledgeBase:
     def test_create_index(knowledge_base):
         index_name = knowledge_base._index_name
         assert index_name in pinecone.list_indexes()
-        assert index_name == "context-engine-kb-integration-test"
         assert knowledge_base._index.describe_index_stats()
 
     @staticmethod
@@ -83,8 +84,16 @@ class TestKnowledgeBase:
         assert knowledge_base._index.describe_index_stats()
 
     @staticmethod
-    def test_connect_unconnected_kb_index_exist():
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+    def test_connect_unconnected_kb_index_exist(knowledge_base):
+        index_name = knowledge_base._index_name
+        kb = KnowledgeBase(index_name_suffix=index_name,
+                           encoder=StubRecordEncoder(
+                               StubDenseEncoder(dimension=3)),
+                           chunker=StubChunker())
+        kb.connect()
+        assert kb._index.describe_index_stats()
+        stripped_index_name = index_name.rstrip(INDEX_NAME_PREFIX)
+        kb = KnowledgeBase(index_name_suffix=stripped_index_name,
                            encoder=StubRecordEncoder(
                                StubDenseEncoder(dimension=3)),
                            chunker=StubChunker())
@@ -173,10 +182,12 @@ class TestKnowledgeBase:
         TestKnowledgeBase.assert_ids_not_in_index(knowledge_base, chunk_ids)
 
     @staticmethod
-    def test_update_documents(encoder, documents, encoded_chunks):
+    def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
+        index_name = knowledge_base._index_name
+
         # chunker/kb that produces less chunks per doc
         chunker = StubChunker(num_chunks_per_doc=1)
-        kb = KnowledgeBase(index_name_suffix="kb-integration-test",
+        kb = KnowledgeBase(index_name_suffix=index_name,
                            encoder=encoder,
                            chunker=chunker)
         kb.connect()
