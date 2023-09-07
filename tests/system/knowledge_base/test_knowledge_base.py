@@ -15,6 +15,9 @@ load_dotenv()
 
 class TestKnowledgeBase:
 
+    INDEX_NAME = "kb-integration-test"
+    FULL_INDEX_NAME = "context-engine-kb-integration-test"
+
     @staticmethod
     @pytest.fixture(scope="class")
     def chunker():
@@ -29,15 +32,17 @@ class TestKnowledgeBase:
     @staticmethod
     @pytest.fixture(scope="class", autouse=True)
     def knowledge_base(chunker, encoder):
-        kb = KnowledgeBase(index_name="kb-integration-test",
+        pinecone.init()
+        if TestKnowledgeBase.FULL_INDEX_NAME in pinecone.list_indexes():
+            pinecone.delete_index(TestKnowledgeBase.FULL_INDEX_NAME)
+
+        KnowledgeBase.create_with_new_index(index_name=TestKnowledgeBase.INDEX_NAME,
+                                            encoder=encoder,
+                                            chunker=chunker)
+
+        kb = KnowledgeBase(index_name=TestKnowledgeBase.INDEX_NAME,
                            encoder=encoder,
                            chunker=chunker)
-        pinecone.init()
-        if kb._index_name in pinecone.list_indexes():
-            pinecone.delete_index(kb._index_name)
-
-        kb.create_index()
-        kb.connect()
         return kb
 
     @staticmethod
@@ -69,36 +74,8 @@ class TestKnowledgeBase:
     def test_create_index(knowledge_base):
         index_name = knowledge_base._index_name
         assert index_name in pinecone.list_indexes()
-        assert index_name == "context-engine-kb-integration-test"
+        assert index_name == TestKnowledgeBase.FULL_INDEX_NAME
         assert knowledge_base._index.describe_index_stats()
-
-    @staticmethod
-    def test_connect_connected_kb(knowledge_base):
-        knowledge_base.connect()
-        assert knowledge_base._index.describe_index_stats()
-
-    @staticmethod
-    def test_connect_force_connected_kb(knowledge_base):
-        knowledge_base.connect(force=True)
-        assert knowledge_base._index.describe_index_stats()
-
-    @staticmethod
-    def test_connect_unconnected_kb_index_exist():
-        kb = KnowledgeBase(index_name="kb-integration-test",
-                           encoder=StubRecordEncoder(
-                               StubDenseEncoder(dimension=3)),
-                           chunker=StubChunker())
-        kb.connect()
-        assert kb._index.describe_index_stats()
-
-    @staticmethod
-    def test_connect_unconnected_kb_index_not_exist_raise():
-        kb = KnowledgeBase(index_name="not-exist",
-                           encoder=StubRecordEncoder(
-                               StubDenseEncoder(dimension=3)),
-                           chunker=StubChunker())
-        with pytest.raises(RuntimeError):
-            kb.connect()
 
     @staticmethod
     def test_upsert(knowledge_base, documents, encoded_chunks):
@@ -176,11 +153,9 @@ class TestKnowledgeBase:
     def test_update_documents(encoder, documents, encoded_chunks):
         # chunker/kb that produces less chunks per doc
         chunker = StubChunker(num_chunks_per_doc=1)
-        kb = KnowledgeBase(index_name="kb-integration-test",
+        kb = KnowledgeBase(index_name=TestKnowledgeBase.INDEX_NAME,
                            encoder=encoder,
                            chunker=chunker)
-        kb.connect()
-
         docs = documents[:2]
         doc_ids = [doc.id for doc in docs]
         chunk_ids = [chunk.id for chunk in encoded_chunks
@@ -205,8 +180,10 @@ class TestKnowledgeBase:
 
         assert knowledge_base._index_name not in pinecone.list_indexes()
         assert knowledge_base._index is None
-        with pytest.raises(RuntimeError):
-            knowledge_base.connect()
+        with pytest.raises(RuntimeError) as e:
+            knowledge_base.delete(["doc_0"])
+
+        assert "index was deleted." in str(e.value)
 
     @staticmethod
     def total_vectors_in_index(knowledge_base):

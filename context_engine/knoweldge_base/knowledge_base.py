@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 from copy import deepcopy
 import pandas as pd
-from pinecone import list_indexes, delete_index, create_index, init as pinecone_init, whoami as pinecone_whoami
+from pinecone import list_indexes, delete_index, create_index, init \
+    as pinecone_init, whoami as pinecone_whoami
 
 try:
     from pinecone import GRPCIndex as Index
@@ -47,7 +48,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
-        self._index: Index = self._connect_index()
+        self._index: Optional[Index] = self._connect_index()
 
     @staticmethod
     def _connect_pinecone():
@@ -64,7 +65,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self._index_name not in list_indexes():
             raise RuntimeError(
                 f"Index {self._index_name} does not exist. "
-                "Please create it first using `create_index()`"
+                "Please create it first using `create_with_new_index()`"
                 "or use the `ce create` command line"
             )
 
@@ -79,16 +80,15 @@ class KnowledgeBase(BaseKnowledgeBase):
         return index
 
     @staticmethod
-    def create(index_name: str,
-               *,
-               encoder: RecordEncoder,
-               tokenizer: Tokenizer,
-               chunker: Chunker,
-               indexed_fields: Optional[List[str]] = None,
-               reranker: Optional[Reranker] = None,
-               default_top_k: int = 10,
-               dimension: Optional[int] = None,
-               **kwargs) -> 'KnowledgeBase':
+    def create_with_new_index(index_name: str,
+                              *,
+                              encoder: RecordEncoder,
+                              chunker: Chunker,
+                              reranker: Optional[Reranker] = None,
+                              default_top_k: int = 10,
+                              indexed_fields: Optional[List[str]] = None,
+                              dimension: Optional[int] = None,
+                              **kwargs) -> 'KnowledgeBase':
 
         if indexed_fields is None:
             indexed_fields = ['document_id']
@@ -99,12 +99,16 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise ValueError("The 'text' field cannot be used for metadata filtering. "
                              "Please remove it from indexed_fields")
 
-        index_name = KnowledgeBase._get_full_index_name(index_name)
+        full_index_name = KnowledgeBase._get_full_index_name(index_name)
 
-        if index_name in list_indexes():
+        KnowledgeBase._connect_pinecone()
+
+        if full_index_name in list_indexes():
             raise RuntimeError(
-                f"Index {index_name} already exists. "
-                "If you wish to delete it, use `delete_index()` or `ce delete` command line"
+                f"Index {full_index_name} already exists. "
+                "If you wish to delete it, use `delete_index()`. "
+                "If you wish to connect to it,"
+                "directly initialize a `KnowledgeBase` instance"
             )
 
         if dimension is None:
@@ -113,14 +117,31 @@ class KnowledgeBase(BaseKnowledgeBase):
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
+        try:
+            create_index(name=full_index_name,
+                         dimension=dimension,
+                         metadata_config={
+                             'indexed': indexed_fields
+                         },
+                         **kwargs)
+        except Exception as e:
+            raise RuntimeError(
+                f"Unexpected error while creating index {full_index_name}."
+                f"Please try again."
+            ) from e
 
-        KnowledgeBase._connect_pinecone()
-        create_index(name=self._index_name,
-                     dimension=dimension,
-                     metadata_config={
-                         'indexed': indexed_fields
-                     },
-                     **kwargs)
+        if full_index_name not in list_indexes():
+            raise RuntimeError(
+                f"Index {full_index_name} is probably still provisioning."
+                f"Please try creating KnowledgeBase again in a few minutes."
+                f"Or simply run `context-engine create` command line."
+            )
+
+        return KnowledgeBase(index_name=index_name,
+                             encoder=encoder,
+                             chunker=chunker,
+                             reranker=reranker,
+                             default_top_k=default_top_k)
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:
@@ -130,21 +151,24 @@ class KnowledgeBase(BaseKnowledgeBase):
             return INDEX_NAME_PREFIX + index_name
 
     def delete_index(self):
-        if self._index_name not in pinecone.list_indexes():
+        if self._index_name not in list_indexes():
             raise RuntimeError(
                 "Index does not exist.")
-        pinecone.delete_index(self._index_name)
+        delete_index(self._index_name)
         self._index = None
+
+    def _validate_not_deleted(self):
+        if self._index is None:
+            raise RuntimeError(
+                "index was deleted. "
+                "Please create it first using `create_with_new_index()`"
+                "or use the `context-engine create` command line"
+            )
 
     def query(self,
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
-
-        if self._index is None:
-            raise RuntimeError(
-                "Index does not exist. Please call `connect()` first")
-
         queries: List[KBQuery] = self._encoder.encode_queries(queries)
 
         results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
@@ -159,10 +183,12 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
+        self._validate_not_deleted()
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
             metadata_filter.update(global_metadata_filter)  # type: ignore
         top_k = query.top_k if query.top_k else self._default_top_k
+
         result = self._index.query(vector=query.values,  # type: ignore
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
@@ -188,9 +214,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 100):
-        if self._index is None:
-            raise RuntimeError(
-                "Index does not exist. Please call `connect()` first")
+        self._validate_not_deleted()
+
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
 
@@ -227,9 +252,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                          df: pd.DataFrame,
                          namespace: str = "",
                          batch_size: int = 100):
-        if self._index is None:
-            raise RuntimeError(
-                "Index does not exist. Please call `connect()` first")
         expected_columns = ["id", "text", "metadata"]
         if not all([c in df.columns for c in expected_columns]):
             raise ValueError(
@@ -243,6 +265,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
+        self._validate_not_deleted()
         self._index.delete(  # type: ignore
             filter={"document_id": {"$in": document_ids}},
             namespace=namespace
