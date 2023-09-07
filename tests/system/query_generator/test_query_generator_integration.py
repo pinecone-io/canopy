@@ -8,16 +8,13 @@ from context_engine.chat_engine.query_generator import FunctionCallingQueryGener
 from context_engine.chat_engine.prompt_builder import PromptBuilder # noqa
 from typing import List # noqa
 
-from stubs.stub_tokenizer import StubTokenizer
-
 
 class TestFunctionCallingQueryGeneratorSystem:
 
     @staticmethod
     @pytest.fixture
     def openai_llm():
-        return OpenAILLM(model_name="gpt-3.5-turbo",
-                         default_max_generated_tokens=256)
+        return OpenAILLM(model_name="gpt-3.5-turbo")
 
     @staticmethod
     @pytest.fixture
@@ -27,11 +24,12 @@ class TestFunctionCallingQueryGeneratorSystem:
     @staticmethod
     @pytest.fixture
     def query_generator(openai_llm, prompt_builder):
-        return FunctionCallingQueryGenerator(
+        query_gen = FunctionCallingQueryGenerator(
             llm=openai_llm,
             top_k=5,
-            tokenizer=StubTokenizer(),
         )
+        query_gen._prompt_builder = prompt_builder
+        return query_gen
 
     @staticmethod
     @pytest.fixture

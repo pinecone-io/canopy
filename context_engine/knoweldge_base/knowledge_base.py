@@ -12,12 +12,12 @@ except ImportError:
 from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
-from context_engine.knoweldge_base.chunker import Chunker
-from context_engine.knoweldge_base.record_encoder import RecordEncoder
+from context_engine.knoweldge_base.chunker import Chunker, MarkdownChunker
+from context_engine.knoweldge_base.record_encoder import (RecordEncoder,
+                                                          DenseRecordEncoder)
 from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                                   KBDocChunkWithScore, )
 from context_engine.knoweldge_base.reranker import Reranker, TransparentReranker
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 
 
@@ -26,12 +26,15 @@ INDEX_NAME_PREFIX = "context-engine-"
 
 class KnowledgeBase(BaseKnowledgeBase):
 
+    DEFAULT_RECORD_ENCODER = DenseRecordEncoder
+    DEFAULT_CHUNKER = MarkdownChunker
+    DEFAULT_RERANKER = TransparentReranker
+
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: RecordEncoder,
-                 tokenizer: Tokenizer,
-                 chunker: Chunker,
+                 encoder: Optional[RecordEncoder] = None,
+                 chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 10,
                  ):
@@ -40,10 +43,9 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = encoder
-        self._tokenizer = tokenizer
-        self._chunker = chunker
-        self._reranker = TransparentReranker() if reranker is None else reranker
+        self._encoder = encoder if encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
+        self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
+        self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
         self._index: Index = self._connect_index()
 
@@ -261,7 +263,3 @@ class KnowledgeBase(BaseKnowledgeBase):
                       document_ids: List[str],
                       namespace: str = "") -> None:
         raise NotImplementedError()
-
-    @property
-    def tokenizer(self) -> Tokenizer:
-        return self._tokenizer

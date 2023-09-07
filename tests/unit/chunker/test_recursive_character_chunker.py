@@ -3,7 +3,6 @@ from context_engine.knoweldge_base.chunker.recursive_character \
     import RecursiveCharacterChunker
 from context_engine.knoweldge_base.models import KBDocChunk
 from tests.unit.chunker.base_test_chunker import BaseTestChunker
-from tests.unit.stubs.stub_tokenizer import StubTokenizer
 
 
 class TestRecursiveCharacterChunker(BaseTestChunker):
@@ -12,8 +11,7 @@ class TestRecursiveCharacterChunker(BaseTestChunker):
     @pytest.fixture(scope="class")
     def chunker():
         return RecursiveCharacterChunker(chunk_size=3,
-                                         chunk_overlap=1,
-                                         tokenizer=StubTokenizer())
+                                         chunk_overlap=1)
 
     @staticmethod
     @pytest.fixture

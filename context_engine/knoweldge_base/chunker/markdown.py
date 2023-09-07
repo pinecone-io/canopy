@@ -3,7 +3,6 @@ from typing import List
 from context_engine.knoweldge_base.chunker.recursive_character \
     import RecursiveCharacterChunker
 from context_engine.knoweldge_base.models import KBDocChunk
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Document
 
 
@@ -36,14 +35,12 @@ class MarkdownChunker(RecursiveCharacterChunker):
             ]
 
     def __init__(self,
-                 tokenizer: Tokenizer,
                  chunk_size: int = 256,
                  chunk_overlap: int = 0,
                  keep_separator: bool = True
                  ):
         super().__init__(chunk_size=chunk_size,
                          chunk_overlap=chunk_overlap,
-                         tokenizer=tokenizer,
                          separators=MarkdownChunker.MARKDOWN_SEPARATORS,
                          keep_separator=keep_separator)
 

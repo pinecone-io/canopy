@@ -10,7 +10,6 @@ from context_engine.context_engine.models import ContextQueryResult, ContextSnip
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
 from context_engine.models.data_models import MessageBase, Role, Query, Context
-from ..stubs.stub_tokenizer import StubTokenizer
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt {context}"
 MAX_PROMPT_TOKENS = 100
@@ -39,22 +38,15 @@ class TestChatEngine:
 
     @staticmethod
     @pytest.fixture
-    def stub_tokenizer():
-        return StubTokenizer()
-
-    @staticmethod
-    @pytest.fixture
     def chat_engine(mock_llm,
                     mock_query_builder,
                     mock_context_engine,
                     mock_prompt_builder,
-                    stub_tokenizer
                     ):
         chat_engine = ChatEngine(
             llm=mock_llm,
             context_engine=mock_context_engine,
             query_builder=mock_query_builder,
-            tokenizer=stub_tokenizer,
             system_prompt=MOCK_SYSTEM_PROMPT,
             max_prompt_tokens=MAX_PROMPT_TOKENS,
             max_generated_tokens=200
@@ -133,7 +125,6 @@ class TestChatEngine:
         "long_history_low_ratio"
     ])
     def test__calculate_max_context_tokens(chat_engine,
-                                           # stub_tokenizer,
                                            input_len,
                                            context_ratio,
                                            expected,

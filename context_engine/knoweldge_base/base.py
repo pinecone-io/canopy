@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from context_engine.knoweldge_base.models import QueryResult
-from context_engine.knoweldge_base.tokenizer.base import Tokenizer
 from context_engine.models.data_models import Query, Document
 
 
@@ -44,9 +43,4 @@ class BaseKnowledgeBase(ABC):
 
     @abstractmethod
     async def adelete(self, document_ids: List[str], namespace: str = "", ) -> None:
-        pass
-
-    @property
-    @abstractmethod
-    def tokenizer(self) -> Tokenizer:
         pass
