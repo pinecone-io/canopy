@@ -89,7 +89,7 @@ def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
 
     # some tests change the env vars, so we reload them here
-    #load_dotenv(override=True)
+    # load_dotenv(override=True)
 
     pinecone.init()
     if index_full_name in pinecone.list_indexes():
