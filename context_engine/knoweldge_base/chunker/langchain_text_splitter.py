@@ -1,4 +1,4 @@
-# Copyright 2022-10-17 Harrison Chase LangChain
+# Provided under standard MIT license by Harrison Chase LangChain 2022-10-17
 # https://github.com/hwchase17/langchain
 
 from __future__ import annotations
