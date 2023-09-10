@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse
 from context_engine.models.data_models import Context
-from context_engine.service.models import \
+from models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
 load_dotenv()
@@ -134,7 +134,7 @@ def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
 
 
 def start():
-    uvicorn.run("context_engine.service.app:app",
+    uvicorn.run("main.app:app",
                 host="0.0.0.0", port=8000, reload=True)
 
 
