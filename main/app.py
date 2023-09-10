@@ -1,4 +1,5 @@
 import logging
+import os
 
 from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
@@ -19,6 +20,11 @@ from models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
 load_dotenv()
+INDEX_NAME = os.getenv("INDEX_NAME")
+if not INDEX_NAME:
+    raise ValueError("INDEX_NAME environment variable must be set")
+
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -122,7 +128,7 @@ async def startup():
 def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
 
-    kb = KnowledgeBase(index_name_suffix='chat-openai-ilai')
+    kb = KnowledgeBase(index_name_suffix=INDEX_NAME)
     # kb.create_index(dimension=1536)
     kb.connect()
     context_engine = ContextEngine(knowledge_base=kb)
