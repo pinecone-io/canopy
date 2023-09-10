@@ -58,7 +58,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             pinecone_whoami()
         except Exception as e:
             raise RuntimeError("Failed to connect to Pinecone. "
-                               "Please check your credentials") from e
+                               "Please check your credentials and try again") from e
 
     def _connect_index(self) -> Index:
         self._connect_pinecone()
@@ -74,7 +74,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             index.describe_index_stats()
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while connecting to index {self._index_name}."
+                f"Unexpected error while connecting to index {self._index_name}. "
                 f"Please check your credentials and try again."
             ) from e
         return index
@@ -88,9 +88,10 @@ class KnowledgeBase(BaseKnowledgeBase):
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
                               dimension: Optional[int] = None,
-                              timeout: Optional[int] = 300,
-                              time_interval: Optional[int] = 5,
-                              create_index_params: Optional[dict] = None) -> 'KnowledgeBase':
+                              timeout: int = 300,
+                              time_interval: int = 5,
+                              create_index_params: Optional[dict] = None
+                              ) -> 'KnowledgeBase':
 
         if indexed_fields is None:
             indexed_fields = ['document_id']
@@ -140,7 +141,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             time_passed = time.time() - start_time
             if time_passed > timeout:
                 raise RuntimeError(
-                    f"Index {full_index_name} failed to provision for {time_passed} seconds."
+                    f"Index {full_index_name} failed to provision "
+                    f"for {time_passed} seconds."
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
             time.sleep(time_interval)
@@ -163,9 +165,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         return self._index_name
 
     def delete_index(self):
-        if self._index_name not in list_indexes():
-            raise RuntimeError(
-                "Index does not exist.")
+        self._validate_not_deleted()
         delete_index(self._index_name)
         self._index = None
 
@@ -266,6 +266,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                          df: pd.DataFrame,
                          namespace: str = "",
                          batch_size: int = 100):
+        self._validate_not_deleted()
+
         expected_columns = ["id", "text", "metadata"]
         if not all([c in df.columns for c in expected_columns]):
             raise ValueError(

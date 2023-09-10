@@ -1,3 +1,4 @@
+import os
 import pytest
 import pinecone
 import numpy as np
@@ -11,6 +12,7 @@ from context_engine.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker
+
 
 load_dotenv()
 
@@ -48,11 +50,9 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
                                         encoder=encoder,
                                         chunker=chunker)
 
-    kb = KnowledgeBase(index_name=index_name,
-                       encoder=encoder,
-                       chunker=chunker)
-
-    return kb
+    return KnowledgeBase(index_name=index_name,
+                         encoder=encoder,
+                         chunker=chunker)
 
 
 def total_vectors_in_index(knowledge_base):
@@ -82,14 +82,15 @@ def assert_ids_not_in_index(knowledge_base, ids):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def teardown_knowledge_base(knowledge_base):
+def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
 
-    index_name = knowledge_base._index_name
+    # some tests change the env vars, so we reload them here
+    load_dotenv(override=True)
 
     pinecone.init()
-    if index_name in pinecone.list_indexes():
-        pinecone.delete_index(index_name)
+    if index_full_name in pinecone.list_indexes():
+        pinecone.delete_index(index_full_name)
 
 
 @pytest.fixture
@@ -111,6 +112,13 @@ def test_create_index(index_full_name, knowledge_base):
     assert index_full_name in pinecone.list_indexes()
     assert index_full_name == index_full_name
     assert knowledge_base._index.describe_index_stats()
+
+
+def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
+    kb = KnowledgeBase(index_name=index_full_name,
+                       encoder=encoder,
+                       chunker=chunker)
+    assert kb.index_name == index_full_name
 
 
 def test_upsert(knowledge_base, documents, encoded_chunks):
@@ -139,6 +147,16 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
 
     assert vec_after - vec_before == len(encoded_chunks)
     assert_chunks_in_index(knowledge_base, encoded_chunks)
+
+
+def test_upsert_datafarme_with_wrong_schema(knowledge_base, documents):
+    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "md": doc.metadata}
+                       for doc in documents])
+
+    with pytest.raises(ValueError) as e:
+        knowledge_base.upsert_dataframe(df)
+
+    assert "Dataframe must contain the following columns" in str(e.value)
 
 
 def test_query(knowledge_base, encoded_chunks):
@@ -209,7 +227,26 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
     assert_ids_not_in_index(kb, unexpected_chunks)
 
 
-def test_delete_index(knowledge_base):
+def test_create_existing_index(index_full_name, index_name):
+    with pytest.raises(RuntimeError) as e:
+        KnowledgeBase.create_with_new_index(index_name=index_name,
+                                            encoder=StubRecordEncoder(
+                                                StubDenseEncoder(dimension=3)),
+                                            chunker=StubChunker(num_chunks_per_doc=2))
+
+    assert f"Index {index_full_name} already exists" in str(e.value)
+
+
+def test_init_kb_non_existing_index(index_name, chunker, encoder):
+    with pytest.raises(RuntimeError) as e:
+        KnowledgeBase(index_name="non-existing-index",
+                      encoder=encoder,
+                      chunker=chunker)
+    expected_msg = f"Index {INDEX_NAME_PREFIX}non-existing-index does not exist"
+    assert expected_msg in str(e.value)
+
+
+def test_delete_index_happy_path(knowledge_base):
     knowledge_base.delete_index()
 
     assert knowledge_base._index_name not in pinecone.list_indexes()
@@ -218,3 +255,30 @@ def test_delete_index(knowledge_base):
         knowledge_base.delete(["doc_0"])
 
     assert "index was deleted." in str(e.value)
+
+
+def test_delete_index_for_non_existing(knowledge_base):
+    with pytest.raises(RuntimeError) as e:
+        knowledge_base.delete_index()
+
+    assert "index was deleted." in str(e.value)
+
+
+def test_create_bad_credentials(index_name, chunker, encoder):
+    os.environ["PINECONE_API_KEY"] = "bad-key"
+    with pytest.raises(RuntimeError) as e:
+        KnowledgeBase.create_with_new_index(index_name=index_name,
+                                            encoder=encoder,
+                                            chunker=chunker)
+
+    assert "Please check your credentials" in str(e.value)
+
+
+def test_init_bad_credentials(index_name, chunker, encoder):
+    os.environ["PINECONE_API_KEY"] = "bad-key"
+    with pytest.raises(RuntimeError) as e:
+        KnowledgeBase(index_name=index_name,
+                      encoder=encoder,
+                      chunker=chunker)
+
+    assert "Please check your credentials and try again" in str(e.value)
