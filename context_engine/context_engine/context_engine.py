@@ -1,3 +1,4 @@
+import os
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -5,6 +6,8 @@ from context_engine.context_engine.context_builder import StuffingContextBuilder
 from context_engine.context_engine.context_builder.base import BaseContextBuilder
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
 from context_engine.models.data_models import Context, Query
+
+CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
 
 class BaseContextEngine(ABC):
@@ -38,6 +41,9 @@ class ContextEngine(BaseContextEngine):
             queries,
             global_metadata_filter=self.global_metadata_filter)
         context = self.context_builder.build(query_results, max_context_tokens)
+
+        if CE_DEBUG_INFO:
+            context.debug_info["query_results"] = [qr.dict() for qr in query_results]
         return context
 
     async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:

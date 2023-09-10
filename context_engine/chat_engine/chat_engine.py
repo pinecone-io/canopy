@@ -14,6 +14,8 @@ from context_engine.models.api_models import (StreamingChatChunk, ChatResponse,
                                               StreamingChatResponse, )
 from context_engine.models.data_models import Context, Messages
 
+CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
+
 
 DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the reference to the documents you used from their 'reference' field in the format 'Source: $REFERENCE_HERE'.
 If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context."
@@ -110,8 +112,9 @@ class ChatEngine(BaseChatEngine):
                                                 stream=stream,
                                                 model_params=model_params)
         debug_info = {}
-        if os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true":
-            debug_info['context'] = context.debug_info
+        if CE_DEBUG_INFO:
+            debug_info['context'] = context.dict()
+            debug_info['context'].update(context.debug_info)
 
         if stream:
             return StreamingChatResponse(
