@@ -21,29 +21,29 @@ order_mark = pytest.mark.run(order=-1)
 
 
 @pytest.mark.xdist_group(name="group1")
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def index_name(testrun_uid):
     today = datetime.today().strftime("%Y-%m-%d")
     return f"test-kb-{testrun_uid[-6:]}-{today}"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def index_full_name(index_name):
     return INDEX_NAME_PREFIX + index_name
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def chunker():
     return StubChunker(num_chunks_per_doc=2)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def encoder():
     return StubRecordEncoder(
         StubDenseEncoder(dimension=3))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_full_name, index_name, chunker, encoder):
     pinecone.init()
     if index_full_name in pinecone.list_indexes():
