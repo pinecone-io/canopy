@@ -17,6 +17,9 @@ from tests.unit.stubs.stub_chunker import StubChunker
 load_dotenv()
 
 
+order_mark = pytest.mark.run(order=-1)
+
+
 @pytest.mark.xdist_group(name="group1")
 @pytest.fixture(scope="session")
 def index_name(testrun_uid):
