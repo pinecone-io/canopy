@@ -1,5 +1,6 @@
 import logging
 import os
+import uuid
 
 from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
@@ -21,9 +22,6 @@ from models import \
 
 load_dotenv()
 INDEX_NAME = os.getenv("INDEX_NAME")
-if not INDEX_NAME:
-    raise ValueError("INDEX_NAME environment variable must be set")
-
 
 logging.basicConfig(level=logging.INFO)
 
@@ -44,6 +42,8 @@ async def chat(
 ):
     try:
 
+        session_id = request.user or "None"  # noqa: F841
+        question_id = str(uuid.uuid4())
         answer = await run_in_threadpool(chat_engine.chat,
                                          messages=request.messages,
                                          stream=request.stream)
@@ -52,6 +52,7 @@ async def chat(
 
             def stringify_content(responses: Iterable[StreamingChatResponse]):
                 for response in responses:
+                    response.id = question_id
                     data = response.json()
                     yield data
 
@@ -60,7 +61,9 @@ async def chat(
             return EventSourceResponse(content_stream, media_type='text/event-stream')
 
         else:
-            return cast(StreamingChatResponse, answer).json()
+            chat_response = cast(StreamingChatResponse, answer)
+            chat_response.id = question_id
+            return chat_response.json()
 
     except Exception as e:
         logging.exception(e)
@@ -127,6 +130,9 @@ async def startup():
 
 def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
+
+    if not INDEX_NAME:
+        raise ValueError("INDEX_NAME environment variable must be set")
 
     kb = KnowledgeBase(index_name_suffix=INDEX_NAME)
     # kb.create_index(dimension=1536)
