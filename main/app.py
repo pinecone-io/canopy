@@ -12,10 +12,10 @@ from sse_starlette.sse import EventSourceResponse
 
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-from typing import Tuple, Iterable, cast
+from typing import Tuple, cast
 from dotenv import load_dotenv
 
-from context_engine.models.api_models import StreamingChatResponse
+from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context
 from main.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
@@ -49,19 +49,17 @@ async def chat(
                                          stream=request.stream)
 
         if request.stream:
-
-            def stringify_content(responses: Iterable[StreamingChatResponse]):
-                for response in responses:
-                    response.id = question_id
-                    data = response.json()
+            def stringify_content(response: StreamingChatResponse):
+                for chunk in response.chunks:
+                    chunk.id = question_id
+                    data = chunk.json()
                     yield data
 
-            content_stream = stringify_content(cast(Iterable[StreamingChatResponse],
-                                                    answer))
+            content_stream = stringify_content(cast(StreamingChatResponse, answer))
             return EventSourceResponse(content_stream, media_type='text/event-stream')
 
         else:
-            chat_response = cast(StreamingChatResponse, answer)
+            chat_response = cast(ChatResponse, answer)
             chat_response.id = question_id
             return chat_response.json()
 

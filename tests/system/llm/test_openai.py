@@ -3,7 +3,7 @@ import pytest
 
 
 from context_engine.models.data_models import Role, MessageBase # noqa
-from context_engine.models.api_models import ChatResponse, StreamingChatResponse # noqa
+from context_engine.models.api_models import ChatResponse, StreamingChatChunk # noqa
 from context_engine.llm.openai import OpenAILLM # noqa
 from context_engine.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty, ModelParams # noqa
@@ -143,7 +143,7 @@ class TestOpenAILLM:
         messages_received = [message for message in response]
         assert len(messages_received) > 0
         for message in messages_received:
-            assert isinstance(message, StreamingChatResponse)
+            assert isinstance(message, StreamingChatChunk)
 
     @staticmethod
     def test_max_tokens(openai_llm, messages):

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Union, Iterable, Optional, List
 
 from context_engine.llm.models import Function, ModelParams
-from context_engine.models.api_models import ChatResponse, StreamingChatResponse
+from context_engine.models.api_models import ChatResponse, StreamingChatChunk
 from context_engine.models.data_models import Messages, Query
 
 
@@ -23,7 +23,7 @@ class BaseLLM(ABC):
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
                         model_params: Optional[ModelParams] = None,
-                        ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+                        ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         pass
 
     @abstractmethod
@@ -44,7 +44,7 @@ class BaseLLM(ABC):
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None,
                                ) -> Union[ChatResponse,
-                                          Iterable[StreamingChatResponse]]:
+                                          Iterable[StreamingChatChunk]]:
         pass
 
     @abstractmethod

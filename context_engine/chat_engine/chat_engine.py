@@ -1,5 +1,6 @@
+import os
 from abc import ABC, abstractmethod
-from typing import Iterable, Union, Optional
+from typing import Iterable, Union, Optional, cast
 
 from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.chat_engine.prompt_builder import PromptBuilder
@@ -9,7 +10,8 @@ from context_engine.context_engine import ContextEngine
 from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage
-from context_engine.models.api_models import StreamingChatResponse, ChatResponse
+from context_engine.models.api_models import (StreamingChatChunk, ChatResponse,
+                                              StreamingChatResponse, )
 from context_engine.models.data_models import Context, Messages
 
 
@@ -25,7 +27,7 @@ class BaseChatEngine(ABC):
              *,
              stream: bool = False,
              model_params: Optional[ModelParams] = None
-             ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+             ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
     # TODO: Decide if we want it for first release in the API
@@ -39,7 +41,7 @@ class BaseChatEngine(ABC):
                     *,
                     stream: bool = False,
                     model_params: Optional[ModelParams] = None
-                    ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+                    ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
     @abstractmethod
@@ -95,7 +97,7 @@ class ChatEngine(BaseChatEngine):
              *,
              stream: bool = False,
              model_params: Optional[ModelParams] = None
-             ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+             ) -> Union[ChatResponse, StreamingChatResponse]:
         context = self.get_context(messages)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
@@ -103,10 +105,23 @@ class ChatEngine(BaseChatEngine):
             messages,
             max_tokens=self.max_prompt_tokens
         )
-        return self.llm.chat_completion(llm_messages,
-                                        max_tokens=self.max_generated_tokens,
-                                        stream=stream,
-                                        model_params=model_params)
+        llm_response = self.llm.chat_completion(llm_messages,
+                                                max_tokens=self.max_generated_tokens,
+                                                stream=stream,
+                                                model_params=model_params)
+        debug_info = {}
+        if os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true":
+            debug_info['context'] = context.debug_info
+
+        if stream:
+            return StreamingChatResponse(
+                chunks=cast(Iterable[StreamingChatChunk], llm_response),
+                debug_info=debug_info
+            )
+        else:
+            resonse = cast(ChatResponse, llm_response)
+            resonse.debug_info = debug_info
+            return resonse
 
     def get_context(self,
                     messages: Messages,
@@ -120,7 +135,7 @@ class ChatEngine(BaseChatEngine):
                     *,
                     stream: bool = False,
                     model_params: Optional[ModelParams] = None
-                    ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+                    ) -> Union[ChatResponse, StreamingChatResponse]:
         raise NotImplementedError
 
     async def aget_context(self, messages: Messages) -> Context:
