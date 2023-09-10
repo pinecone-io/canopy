@@ -53,7 +53,7 @@ jobs:
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         PINECONE_ENVIRONMENT: eu-west1-gcp
-      run: poetry run pytest -n 3 --dist loadgroup --html=report_system.html --self-contained-html tests/system
+      run: poetry run pytest --dist loadgroup --html=report_system.html --self-contained-html tests/system
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
