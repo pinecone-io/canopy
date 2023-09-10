@@ -5,13 +5,12 @@ from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 from context_engine.knoweldge_base import KnowledgeBase
 from context_engine.context_engine import ContextEngine
 from context_engine.chat_engine import ChatEngine
-from fastapi.responses import StreamingResponse
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-from typing import Tuple, Iterable
+from typing import Tuple, Iterable, cast
 from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse
@@ -45,22 +44,20 @@ async def chat(
 
         if request.stream:
 
-            def generate_streaming_content(responses: Iterable[StreamingChatResponse]):
+            def stringify_content(responses: Iterable[StreamingChatResponse]):
                 for response in responses:
                     data = response.json()
                     yield data
-                    # data = response.json() + "\n"
-                    # yield data.encode("utf-8")
 
-            content_stream = generate_streaming_content(answer)  # type: ignore
+            content_stream = stringify_content(cast(Iterable[StreamingChatResponse],
+                                                    answer))
             return EventSourceResponse(content_stream, media_type='text/event-stream')
 
         else:
-            return answer
+            return cast(StreamingChatResponse, answer).json()
 
     except Exception as e:
         logging.exception(e)
-        # print("Error:", e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -76,13 +73,12 @@ async def query(
         context: Context = await run_in_threadpool(
             context_engine.query,
             queries=request.queries,
-            max_context_tokens=request.max_tokens)  # type: ignore
+            max_context_tokens=request.max_tokens)
 
         return context.content
 
     except Exception as e:
         logging.exception(e)
-        # print("Error:", e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -99,7 +95,7 @@ async def upsert(
             kb.upsert,
             documents=request.documents,
             namespace=request.namespace,
-            batch_size=request.batch_size)  # type: ignore
+            batch_size=request.batch_size)
 
         return upsert_results
 
