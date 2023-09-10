@@ -84,7 +84,7 @@ def assert_ids_not_in_index(knowledge_base, ids):
     assert len(fetch_result) == 0
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
 
