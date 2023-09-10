@@ -49,7 +49,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
-        self._index: Optional[Index] = self._connect_index()
+        self._index: Optional[Index] = self._connect_index(self._index_name)
 
     @staticmethod
     def _connect_pinecone():
@@ -60,27 +60,33 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError("Failed to connect to Pinecone. "
                                "Please check your credentials and try again") from e
 
-    def _connect_index(self) -> Index:
-        self._connect_pinecone()
+    @classmethod
+    def _connect_index(cls,
+                       full_index_name: str,
+                       connect_pinecone: bool = True
+                       ) -> Index:
+        if connect_pinecone:
+            cls._connect_pinecone()
 
-        if self._index_name not in list_indexes():
+        if full_index_name not in list_indexes():
             raise RuntimeError(
-                f"Index {self._index_name} does not exist. "
+                f"Index {full_index_name} does not exist. "
                 "Please create it first using `create_with_new_index()`"
             )
 
         try:
-            index = Index(index_name=self._index_name)
+            index = Index(index_name=full_index_name)
             index.describe_index_stats()
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while connecting to index {self._index_name}. "
+                f"Unexpected error while connecting to index {full_index_name}. "
                 f"Please check your credentials and try again."
             ) from e
         return index
 
-    @staticmethod
-    def create_with_new_index(index_name: str,
+    @classmethod
+    def create_with_new_index(cls,
+                              index_name: str,
                               *,
                               encoder: RecordEncoder,
                               chunker: Chunker,
@@ -93,6 +99,17 @@ class KnowledgeBase(BaseKnowledgeBase):
                               create_index_params: Optional[dict] = None
                               ) -> 'KnowledgeBase':
 
+        # validate inputs
+
+        if timeout < 0:
+            raise ValueError(
+                f"timeout must be a on-negative integer. Got {timeout}"
+            )
+        if time_interval < 0:
+            raise ValueError(
+                f"time_interval must be a on-negative integer. Got {time_interval}"
+            )
+
         if indexed_fields is None:
             indexed_fields = ['document_id']
         elif "document_id" not in indexed_fields:
@@ -102,9 +119,17 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise ValueError("The 'text' field cannot be used for metadata filtering. "
                              "Please remove it from indexed_fields")
 
-        full_index_name = KnowledgeBase._get_full_index_name(index_name)
+        if dimension is None:
+            if encoder.dimension is not None:
+                dimension = encoder.dimension
+            else:
+                raise ValueError("Could not infer dimension from encoder. "
+                                 "Please provide the vectors' dimension")
 
-        KnowledgeBase._connect_pinecone()
+        # connect to pinecone and create index
+        cls._connect_pinecone()
+
+        full_index_name = cls._get_full_index_name(index_name)
 
         if full_index_name in list_indexes():
             raise RuntimeError(
@@ -114,15 +139,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                 "directly initialize a `KnowledgeBase` instance"
             )
 
-        if dimension is None:
-            if encoder.dimension is not None:
-                dimension = encoder.dimension
-            else:
-                raise ValueError("Could not infer dimension from encoder. "
-                                 "Please provide the vectors' dimension")
-
+        # create index
         create_index_params = create_index_params or {}
-
         try:
             create_index(name=full_index_name,
                          dimension=dimension,
@@ -136,8 +154,32 @@ class KnowledgeBase(BaseKnowledgeBase):
                 f"Please try again."
             ) from e
 
+        # wait for index to be provisioned
+        cls._wait_for_index_provision(full_index_name=full_index_name,
+                                      timeout=timeout,
+                                      time_interval=time_interval)
+
+        # initialize KnowledgeBase
+        return cls(index_name=index_name,
+                   encoder=encoder,
+                   chunker=chunker,
+                   reranker=reranker,
+                   default_top_k=default_top_k)
+
+    @classmethod
+    def _wait_for_index_provision(cls,
+                                  full_index_name: str,
+                                  timeout: int,
+                                  time_interval: int):
         start_time = time.time()
-        while full_index_name not in list_indexes():
+        while True:
+            try:
+                cls._connect_index(full_index_name,
+                                   connect_pinecone=False)
+                break
+            except RuntimeError:
+                pass
+
             time_passed = time.time() - start_time
             if time_passed > timeout:
                 raise RuntimeError(
@@ -146,12 +188,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
             time.sleep(time_interval)
-
-        return KnowledgeBase(index_name=index_name,
-                             encoder=encoder,
-                             chunker=chunker,
-                             reranker=reranker,
-                             default_top_k=default_top_k)
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:

@@ -264,6 +264,41 @@ def test_delete_index_for_non_existing(knowledge_base):
     assert "index was deleted." in str(e.value)
 
 
+@pytest.mark.parametrize("timeout, time_interval, indexed_fields, error_msg", [
+    (-1, 1, ["id"], "timeout must be a on-negative integer"),
+    (1, -1, ["id"], "time_interval must be a on-negative integer"),
+    (1, 1, ["id", "text", "metadata"],
+     "The 'text' field cannot be used for metadata filtering"),
+])
+def test_create_with_new_index_invalid_params(index_name,
+                                              chunker,
+                                              encoder,
+                                              timeout,
+                                              time_interval,
+                                              indexed_fields,
+                                              error_msg):
+    with pytest.raises(ValueError) as e:
+        KnowledgeBase.create_with_new_index(index_name=index_name,
+                                            encoder=encoder,
+                                            chunker=chunker,
+                                            timeout=timeout,
+                                            time_interval=time_interval,
+                                            indexed_fields=indexed_fields)
+
+    assert error_msg in str(e.value)
+
+
+def test_create_with_new_index_ecoder_dimension_none(index_name, chunker):
+    encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
+    encoder._dense_encoder.dimension = None
+    with pytest.raises(ValueError) as e:
+        KnowledgeBase.create_with_new_index(index_name=index_name,
+                                            encoder=encoder,
+                                            chunker=chunker)
+
+    assert "Could not infer dimension from encoder" in str(e.value)
+
+
 def test_create_bad_credentials(index_name, chunker, encoder):
     os.environ["PINECONE_API_KEY"] = "bad-key"
     with pytest.raises(RuntimeError) as e:
