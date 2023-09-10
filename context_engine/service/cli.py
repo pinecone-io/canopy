@@ -26,7 +26,7 @@ def cli():
 
     
 @cli.command()
-@click.argument('index-name-suffix', nargs=1)
+@click.argument('index-name-suffix', nargs=1, envvar="INDEX_NAME_SUFFIX", type=str, required=True)
 @click.option('--tokenizer-model', default="gpt-3.5-turbo", help='Tokenizer model')
 def new(index_name_suffix, tokenizer_model):
     click.echo(f"Context Engine is going to create a new index: {INDEX_NAME_PREFIX}{index_name_suffix}")
