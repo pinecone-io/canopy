@@ -1,5 +1,6 @@
 from copy import deepcopy
 from datetime import datetime
+import time
 from typing import List, Optional
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
@@ -66,7 +67,6 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError(
                 f"Index {self._index_name} does not exist. "
                 "Please create it first using `create_with_new_index()`"
-                "or use the `ce create` command line"
             )
 
         try:
@@ -88,7 +88,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
                               dimension: Optional[int] = None,
-                              **kwargs) -> 'KnowledgeBase':
+                              timeout: Optional[int] = 300,
+                              time_interval: Optional[int] = 5,
+                              create_index_params: Optional[dict] = None) -> 'KnowledgeBase':
 
         if indexed_fields is None:
             indexed_fields = ['document_id']
@@ -117,25 +119,31 @@ class KnowledgeBase(BaseKnowledgeBase):
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
+
+        create_index_params = create_index_params or {}
+
         try:
             create_index(name=full_index_name,
                          dimension=dimension,
                          metadata_config={
                              'indexed': indexed_fields
                          },
-                         **kwargs)
+                         **create_index_params)
         except Exception as e:
             raise RuntimeError(
                 f"Unexpected error while creating index {full_index_name}."
                 f"Please try again."
             ) from e
 
-        if full_index_name not in list_indexes():
-            raise RuntimeError(
-                f"Index {full_index_name} is probably still provisioning."
-                f"Please try creating KnowledgeBase again in a few minutes."
-                f"Or simply run `context-engine create` command line."
-            )
+        start_time = time.time()
+        while full_index_name not in list_indexes():
+            time_passed = time.time() - start_time
+            if time_passed > timeout:
+                raise RuntimeError(
+                    f"Index {full_index_name} failed to provision for {time_passed} seconds."
+                    f"Please try creating KnowledgeBase again in a few minutes."
+                )
+            time.sleep(time_interval)
 
         return KnowledgeBase(index_name=index_name,
                              encoder=encoder,
@@ -150,6 +158,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             return INDEX_NAME_PREFIX + index_name
 
+    @property
+    def index_name(self) -> str:
+        return self._index_name
+
     def delete_index(self):
         if self._index_name not in list_indexes():
             raise RuntimeError(
@@ -162,7 +174,6 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError(
                 "index was deleted. "
                 "Please create it first using `create_with_new_index()`"
-                "or use the `context-engine create` command line"
             )
 
     def query(self,
@@ -184,9 +195,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
         self._validate_not_deleted()
-        if self._index is None:
-            raise RuntimeError(
-                "Index does not exist. Please call `connect()` first")
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
