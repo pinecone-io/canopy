@@ -23,8 +23,6 @@ from main.api_models import \
 load_dotenv()
 INDEX_NAME = os.getenv("INDEX_NAME")
 
-logging.basicConfig(level=logging.INFO)
-
 
 app = FastAPI()
 
@@ -41,7 +39,6 @@ async def chat(
     request: ChatRequest = Body(...),
 ):
     try:
-
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         answer = await run_in_threadpool(chat_engine.chat,
@@ -76,7 +73,6 @@ async def query(
     request: ContextQueryRequest = Body(...),
 ):
     try:
-
         context: Context = await run_in_threadpool(
             context_engine.query,
             queries=request.queries,
@@ -97,7 +93,7 @@ async def upsert(
     request: ContextUpsertRequest = Body(...),
 ):
     try:
-
+        logging.info(f"Upserting {len(request.documents)} documents")
         upsert_results = await run_in_threadpool(
             kb.upsert,
             documents=request.documents,
@@ -123,7 +119,16 @@ async def ping():
 @app.on_event("startup")
 async def startup():
     global kb, context_engine, chat_engine
+    _init_logging()
     kb, context_engine, chat_engine = _init_engines()
+
+
+def _init_logging():
+    logging.basicConfig(
+        format='pid %(processName)s: d%(asctime)s %(levelname)s: %(message)s',
+        level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
+        filename=os.getenv("CE_LOG_FILE", "context_engine.log"),
+    )
 
 
 def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
