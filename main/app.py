@@ -41,6 +41,7 @@ async def chat(
     try:
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
+        logger.debug(f"Received chat request: {request.messages[-1].content}")
         answer = await run_in_threadpool(chat_engine.chat,
                                          messages=request.messages,
                                          stream=request.stream)
@@ -61,7 +62,8 @@ async def chat(
             return chat_response.json()
 
     except Exception as e:
-        logging.exception(e)
+        print(f"reached error {e}")
+        logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -81,7 +83,7 @@ async def query(
         return context.content
 
     except Exception as e:
-        logging.exception(e)
+        logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -93,7 +95,7 @@ async def upsert(
     request: ContextUpsertRequest = Body(...),
 ):
     try:
-        logging.info(f"Upserting {len(request.documents)} documents")
+        logger.info(f"Upserting {len(request.documents)} documents")
         upsert_results = await run_in_threadpool(
             kb.upsert,
             documents=request.documents,
@@ -103,8 +105,7 @@ async def upsert(
         return upsert_results
 
     except Exception as e:
-        logging.exception(e)
-        # print("Error:", e)
+        logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -124,11 +125,14 @@ async def startup():
 
 
 def _init_logging():
+    global logger
     logging.basicConfig(
-        format='pid %(processName)s: d%(asctime)s %(levelname)s: %(message)s',
+        format='%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  '
+               '%(message)s',
         level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
         filename=os.getenv("CE_LOG_FILE", "context_engine.log"),
     )
+    logger = logging.getLogger(__name__)
 
 
 def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
