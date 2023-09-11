@@ -3,6 +3,7 @@ import pytest
 import pinecone
 import numpy as np
 import pandas as pd
+import uuid
 from dotenv import load_dotenv
 from datetime import datetime
 from context_engine.knoweldge_base import KnowledgeBase
@@ -17,12 +18,9 @@ from tests.unit.stubs.stub_chunker import StubChunker
 load_dotenv()
 
 
-order_mark = pytest.mark.run(order=-1)
-
-
-@pytest.mark.xdist_group(name="group1")
-@pytest.fixture(scope="module")
-def index_name(testrun_uid):
+@pytest.fixture(scope="module", autouse=True)
+def index_name():
+    testrun_uid = uuid.uuid4()
     today = datetime.today().strftime("%Y-%m-%d")
     return f"test-kb-{testrun_uid[-6:]}-{today}"
 
