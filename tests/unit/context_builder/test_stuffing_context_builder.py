@@ -50,16 +50,16 @@ class TestStuffingContextBuilder:
             ContextQueryResult(query="test query 1",
                                snippets=[
                                    ContextSnippet(
-                                       text=self.text1, reference="test_source1"),
+                                       text=self.text1, source="test_source1"),
                                    ContextSnippet(
-                                       text=self.text2, reference="test_source2")
+                                       text=self.text2, source="test_source2")
                                ]),
             ContextQueryResult(query="test query 2",
                                snippets=[
                                    ContextSnippet(
-                                       text=self.text3, reference="test_source3"),
+                                       text=self.text3, source="test_source3"),
                                    ContextSnippet(
-                                       text=self.text4, reference="test_source4")
+                                       text=self.text4, source="test_source4")
                                ])
         ], num_tokens=0)
         self.full_context.num_tokens = self.tokenizer.token_count(
@@ -78,12 +78,12 @@ class TestStuffingContextBuilder:
             ContextQueryResult(query="test query 1",
                                snippets=[
                                    ContextSnippet(
-                                       text=self.text1, reference="test_source1"),
+                                       text=self.text1, source="test_source1"),
                                ]),
             ContextQueryResult(query="test query 2",
                                snippets=[
                                    ContextSnippet(
-                                       text=self.text3, reference="test_source3"),
+                                       text=self.text3, source="test_source3"),
                                ])
         ], num_tokens=0)
         expected_context.num_tokens = self.tokenizer.token_count(
@@ -100,7 +100,7 @@ class TestStuffingContextBuilder:
             ContextQueryResult(query="test query 2",
                                snippets=[
                                    ContextSnippet(
-                                       text=self.text3, reference="test_source3"),
+                                       text=self.text3, source="test_source3"),
                                ])
         ], num_tokens=0)
         expected_context.num_tokens = self.tokenizer.token_count(
@@ -137,7 +137,7 @@ class TestStuffingContextBuilder:
         self.assert_num_tokens(context, 100)
         self.assert_contexts_equal(context, self.full_context)
 
-    def test_reference_metadata_missing(self):
+    def test_source_metadata_missing(self):
         missing_metadata_query_results = [
             QueryResult(query="test missing metadata",
                         documents=[
@@ -150,7 +150,7 @@ class TestStuffingContextBuilder:
         context = self.builder.build(
             missing_metadata_query_results, max_context_tokens=100)
         self.assert_num_tokens(context, 100)
-        assert context.content[0].snippets[0].reference == ""
+        assert context.content[0].snippets[0].source == ""
 
     def test_empty_documents(self):
         empty_query_results = [
@@ -183,4 +183,4 @@ class TestStuffingContextBuilder:
             for actual_snippet, expected_snippet in zip(actual_qr.snippets,
                                                         expected_qr.snippets):
                 assert actual_snippet.text == expected_snippet.text
-                assert actual_snippet.reference == expected_snippet.reference
+                assert actual_snippet.source == expected_snippet.source
