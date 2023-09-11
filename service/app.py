@@ -3,6 +3,8 @@ import os
 import sys
 import uuid
 
+from context_engine.llm import BaseLLM
+from context_engine.llm.models import UserMessage
 from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 from context_engine.knoweldge_base import KnowledgeBase
@@ -31,6 +33,7 @@ app = FastAPI()
 context_engine: ContextEngine
 chat_engine: ChatEngine
 kb: KnowledgeBase
+llm: BaseLLM
 logger: logging.Logger
 
 
@@ -64,7 +67,7 @@ async def chat(
             return chat_response.json()
 
     except Exception as e:
-        logger.exception(e)
+        logger.exception(f"Chat with question_id {question_id} failed")
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -111,11 +114,32 @@ async def upsert(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
+
+
 @app.get(
-    "/ping",
+    "/health",
 )
-async def ping():
-    return "pong"
+async def health_check():
+    try:
+        await run_in_threadpool(kb.connect, force=True)
+    except Exception as e:
+        err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
+        logger.exception(err_msg)
+        raise HTTPException(
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+
+    try:
+        msg = UserMessage(content="This is a health check. Are you alive? Be concise")
+        await run_in_threadpool(llm.chat_completion,
+                                messages=[msg],
+                                max_tokens=50)
+    except Exception as e:
+        err_msg = f"Failed to communicate with {llm.__class__.__name__}"
+        logger.exception(err_msg)
+        raise HTTPException(
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+
+    return "All clear!"
 
 
 @app.on_event("startup")
@@ -143,7 +167,7 @@ def _init_logging():
 
 
 def _init_engines():
-    global kb, context_engine, chat_engine
+    global kb, context_engine, chat_engine, llm
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
 
     if not INDEX_NAME:
