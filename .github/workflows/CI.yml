@@ -47,13 +47,13 @@ jobs:
     - name: install dependencies
       run: poetry install --with dev --all-extras
     - name: Run unit tests
-      run: poetry run pytest -n 3 --dist loadgroup -v --html=report.html tests/unit
+      run: poetry run pytest --html=report.html --self-contained-html tests/unit
     - name: Run system tests
       env:
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         PINECONE_ENVIRONMENT: eu-west1-gcp
-      run: poetry run pytest -v --html=report_system.html tests/system
+      run: poetry run pytest -n 3 --dist loadgroup --html=report_system.html --self-contained-html tests/system
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
