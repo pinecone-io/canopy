@@ -16,6 +16,8 @@ from tests.unit.stubs.stub_chunker import StubChunker
 
 load_dotenv()
 
+PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
+
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
@@ -83,9 +85,6 @@ def assert_ids_not_in_index(knowledge_base, ids):
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
-
-    # some tests change the env vars, so we reload them here
-    # load_dotenv(override=True)
 
     pinecone.init()
     if index_full_name in pinecone.list_indexes():
@@ -263,31 +262,19 @@ def test_delete_index_for_non_existing(knowledge_base):
     assert "index was deleted." in str(e.value)
 
 
-@pytest.mark.parametrize("timeout, time_interval, indexed_fields, error_msg", [
-    (-1, 1, ["id"], "timeout must be a on-negative integer"),
-    (1, -1, ["id"], "time_interval must be a on-negative integer"),
-    (1, 1, ["id", "text", "metadata"],
-     "The 'text' field cannot be used for metadata filtering"),
-])
-def test_create_with_new_index_invalid_params(index_name,
-                                              chunker,
-                                              encoder,
-                                              timeout,
-                                              time_interval,
-                                              indexed_fields,
-                                              error_msg):
+def test_create_with_text_in_indexed_field_raise(index_name,
+                                                 chunker,
+                                                 encoder):
     with pytest.raises(ValueError) as e:
         KnowledgeBase.create_with_new_index(index_name=index_name,
                                             encoder=encoder,
                                             chunker=chunker,
-                                            timeout=timeout,
-                                            time_interval=time_interval,
-                                            indexed_fields=indexed_fields)
+                                            indexed_fields=["id", "text", "metadata"])
 
-    assert error_msg in str(e.value)
+    assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
 
-def test_create_with_new_index_ecoder_dimension_none(index_name, chunker):
+def test_create_with_new_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
     with pytest.raises(ValueError) as e:
@@ -298,9 +285,19 @@ def test_create_with_new_index_ecoder_dimension_none(index_name, chunker):
     assert "Could not infer dimension from encoder" in str(e.value)
 
 
-@pytest.mark.skip(reason="This test is flaky")
-def test_create_bad_credentials(index_name, chunker, encoder):
-    os.environ["PINECONE_API_KEY"] = "bad-key"
+@pytest.fixture
+def set_bad_credentials():
+    original_api_key = os.environ.get(PINECONE_API_KEY_ENV_VAR)
+
+    os.environ[PINECONE_API_KEY_ENV_VAR] = "bad-key"
+
+    yield
+
+    # Restore the original API key after test execution
+    os.environ[PINECONE_API_KEY_ENV_VAR] = original_api_key
+
+
+def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
         KnowledgeBase.create_with_new_index(index_name=index_name,
                                             encoder=encoder,
@@ -309,9 +306,7 @@ def test_create_bad_credentials(index_name, chunker, encoder):
     assert "Please check your credentials" in str(e.value)
 
 
-@pytest.mark.skip(reason="This test is flaky")
-def test_init_bad_credentials(index_name, chunker, encoder):
-    os.environ["PINECONE_API_KEY"] = "bad-key"
+def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
         KnowledgeBase(index_name=index_name,
                       encoder=encoder,

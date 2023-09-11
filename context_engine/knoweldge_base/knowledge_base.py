@@ -24,6 +24,9 @@ from context_engine.models.data_models import Query, Document
 
 
 INDEX_NAME_PREFIX = "context-engine-"
+TIMEOUT_INDEX_CREATE = 300
+TIMEOUT_INDEX_PROVISION = 30
+INDEX_PROVISION_TIME_INTERVAL = 3
 
 
 class KnowledgeBase(BaseKnowledgeBase):
@@ -94,22 +97,10 @@ class KnowledgeBase(BaseKnowledgeBase):
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
                               dimension: Optional[int] = None,
-                              timeout: int = 300,
-                              time_interval: int = 5,
                               create_index_params: Optional[dict] = None
                               ) -> 'KnowledgeBase':
 
         # validate inputs
-
-        if timeout < 0:
-            raise ValueError(
-                f"timeout must be a on-negative integer. Got {timeout}"
-            )
-        if time_interval < 0:
-            raise ValueError(
-                f"time_interval must be a on-negative integer. Got {time_interval}"
-            )
-
         if indexed_fields is None:
             indexed_fields = ['document_id']
         elif "document_id" not in indexed_fields:
@@ -147,6 +138,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                          metadata_config={
                              'indexed': indexed_fields
                          },
+                         timeout=TIMEOUT_INDEX_CREATE,
                          **create_index_params)
         except Exception as e:
             raise RuntimeError(
@@ -155,9 +147,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
 
         # wait for index to be provisioned
-        cls._wait_for_index_provision(full_index_name=full_index_name,
-                                      timeout=timeout,
-                                      time_interval=time_interval)
+        cls._wait_for_index_provision(full_index_name=full_index_name)
 
         # initialize KnowledgeBase
         return cls(index_name=index_name,
@@ -168,9 +158,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     @classmethod
     def _wait_for_index_provision(cls,
-                                  full_index_name: str,
-                                  timeout: int,
-                                  time_interval: int):
+                                  full_index_name: str):
         start_time = time.time()
         while True:
             try:
@@ -181,13 +169,13 @@ class KnowledgeBase(BaseKnowledgeBase):
                 pass
 
             time_passed = time.time() - start_time
-            if time_passed > timeout:
+            if time_passed > TIMEOUT_INDEX_PROVISION:
                 raise RuntimeError(
                     f"Index {full_index_name} failed to provision "
                     f"for {time_passed} seconds."
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
-            time.sleep(time_interval)
+            time.sleep(INDEX_PROVISION_TIME_INTERVAL)
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:
