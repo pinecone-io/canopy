@@ -154,7 +154,7 @@ def _chat(
 )
 def chat(
     index_name_suffix, chat_service_url, with_vanilla_llm, debug_info, stream
-):  # , message):
+):  
     if not is_healthy(chat_service_url):
         raise ValueError(f"Context Engine service is not running at {chat_service_url}")
 
