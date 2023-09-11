@@ -25,10 +25,7 @@ from service.api_models import \
 
 load_dotenv()
 INDEX_NAME = os.getenv("INDEX_NAME")
-
-
 app = FastAPI()
-
 
 context_engine: ContextEngine
 chat_engine: ChatEngine
@@ -114,8 +111,6 @@ async def upsert(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-
-
 @app.get(
     "/health",
 )
@@ -174,7 +169,6 @@ def _init_engines():
         raise ValueError("INDEX_NAME environment variable must be set")
 
     kb = KnowledgeBase(index_name_suffix=INDEX_NAME)
-    # kb.create_index(dimension=1536)
     kb.connect()
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
