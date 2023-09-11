@@ -24,7 +24,9 @@ class ContextUpsertRequest(BaseModel):
 
 
 class HealthStatus(BaseModel):
-    status: str
+    pinecone_status: str
+    llm_status: str
+
 
 class ChatDebugInfo(BaseModel):
     duration_in_sec: float

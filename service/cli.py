@@ -12,15 +12,10 @@ import openai
 from context_engine.knoweldge_base import KnowledgeBase
 from context_engine.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
-from context_engine.context_engine import ContextEngine
-from context_engine.chat_engine import ChatEngine
-from context_engine.llm.openai import OpenAILLM
 
-from context_engine.models.data_models import Query, Messages
-from context_engine.llm.models import UserMessage
-from context_engine.service.app import start as start_service
-from context_engine.service.cli_spinner import Spinner
-from context_engine.service.models import ChatDebugInfo
+from service.app import start as start_service
+from service.cli_spinner import Spinner
+from service.api_models import ChatDebugInfo
 
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
