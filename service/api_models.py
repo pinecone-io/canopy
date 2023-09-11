@@ -1,6 +1,6 @@
 from typing import Optional, List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from context_engine.models.data_models import Messages, Query, Document
 

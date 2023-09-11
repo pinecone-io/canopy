@@ -36,7 +36,8 @@ def cli():
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name_suffix, tokenizer_model):
     click.echo(
-        f"Context Engine is going to create a new index: {INDEX_NAME_PREFIX}{index_name_suffix}"
+        f"Context Engine is going to create a new index: "
+        f"{INDEX_NAME_PREFIX}{index_name_suffix}"
     )
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
@@ -62,7 +63,8 @@ def upsert(index_name_suffix, data_path, tokenizer_model):
     if data_path is None:
         raise ValueError("Must provide data path")
     click.echo(
-        f"Context Engine is going to upsert data from {data_path} to index: {INDEX_NAME_PREFIX}{index_name_suffix}"
+        f"Context Engine is going to upsert data from {data_path} to index: "
+        f"{INDEX_NAME_PREFIX}{index_name_suffix}"
     )
     kb = KnowledgeBase(index_name_suffix=index_name_suffix)
     kb.connect()
@@ -80,7 +82,7 @@ def is_healthy(url: str):
         res = requests.get(health_url)
         res.raise_for_status()
         return res.ok
-    except:
+    except Exception:
         return False
 
 
@@ -149,7 +151,7 @@ def _chat(
 )
 def chat(
     index_name_suffix, chat_service_url, with_vanilla_llm, debug_info, stream
-):  
+):
     if not is_healthy(chat_service_url):
         raise ValueError(f"Context Engine service is not running at {chat_service_url}")
 
@@ -212,7 +214,8 @@ def stop(host, port):
     running_server_id = p1.stdout.read().decode("utf-8").strip()
     click.confirm(
         click.style(
-            f"Stopping Context Engine service on {host}:{port} with pid {running_server_id}",
+            f"Stopping Context Engine service on {host}:{port} with pid "
+            f"{running_server_id}",
             fg="red",
         ),
         abort=True,
