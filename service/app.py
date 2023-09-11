@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 import uuid
 
 from context_engine.llm.openai import OpenAILLM
@@ -12,7 +13,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-from typing import Tuple, cast
+from typing import cast
 from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
@@ -30,6 +31,7 @@ app = FastAPI()
 context_engine: ContextEngine
 chat_engine: ChatEngine
 kb: KnowledgeBase
+logger: logging.Logger
 
 
 @app.post(
@@ -62,7 +64,6 @@ async def chat(
             return chat_response.json()
 
     except Exception as e:
-        print(f"reached error {e}")
         logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
@@ -119,23 +120,30 @@ async def ping():
 
 @app.on_event("startup")
 async def startup():
-    global kb, context_engine, chat_engine
     _init_logging()
-    kb, context_engine, chat_engine = _init_engines()
+    _init_engines()
 
 
 def _init_logging():
     global logger
+
+    file_handler = logging.FileHandler(
+        filename=os.getenv("CE_LOG_FILENAME", "context_engine.log")
+    )
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    handlers = [file_handler, stdout_handler]
     logging.basicConfig(
         format='%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  '
                '%(message)s',
         level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
-        filename=os.getenv("CE_LOG_FILE", "context_engine.log"),
+        handlers=handlers,
+        force=True
     )
     logger = logging.getLogger(__name__)
 
 
-def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
+def _init_engines():
+    global kb, context_engine, chat_engine
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
 
     if not INDEX_NAME:
@@ -148,8 +156,6 @@ def _init_engines() -> Tuple[KnowledgeBase, ContextEngine, ChatEngine]:
     llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
 
     chat_engine = ChatEngine(llm=llm, context_engine=context_engine)
-
-    return kb, context_engine, chat_engine
 
 
 def start():
