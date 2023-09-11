@@ -6,7 +6,7 @@ from context_engine.models.data_models import ContextContent
 
 
 class ContextSnippet(BaseModel):
-    reference: str
+    source: str
     text: str
 
 
