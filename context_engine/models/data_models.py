@@ -22,7 +22,7 @@ class Document(BaseModel):
     id: str
     text: str
     source: str = ""
-    metadata: Metadata
+    metadata: Metadata = Field(default_factory=dict)
 
     @validator('metadata')
     def metadata_reseved_fields(cls, v):
