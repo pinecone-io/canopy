@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from context_engine.models.api_models import StreamingChatResponse
 from context_engine.models.data_models import Context
 from context_engine.service.models import \
-    ChatRequest, ContextQueryRequest, ContextUpsertRequest
+    ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
 dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path)
@@ -117,10 +117,10 @@ async def upsert(
 
 
 @app.get(
-    "/ping",
+    "/health",
 )
-async def ping():
-    return "pong"
+async def health():
+    return HealthStatus(status="OK")
 
 
 @app.on_event("startup")
