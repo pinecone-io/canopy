@@ -162,7 +162,7 @@ def chat(
         click.echo(click.style("\nUser message:\n", fg="bright_blue"), nl=True)
         message = click.get_text_stream("stdin").readline()
 
-        pinecon_chat_dubug_info = _chat(
+        dubug_info = _chat(
             speaker="🤖 + Pinecone",
             speaker_color="green",
             model="",
@@ -174,10 +174,10 @@ def chat(
         )
 
         if with_vanilla_llm:
-            vanilla_chat_dubug_info = _chat(
+            _ = _chat(
                 speaker="Just 🤖",
                 speaker_color="yellow",
-                model=pinecon_chat_dubug_info.intenal_model,
+                model=dubug_info.intenal_model,
                 history=history_without_pinecone,
                 message=message,
                 stream=stream,
