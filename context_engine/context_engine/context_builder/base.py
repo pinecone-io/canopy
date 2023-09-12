@@ -5,7 +5,7 @@ from context_engine.knoweldge_base.models import QueryResult
 from context_engine.models.data_models import Context
 
 
-class BaseContextBuilder(ABC):
+class ContextBuilder(ABC):
     """
     BaseContextBuilder is an abstract class that defines the interface for a context
     builder.

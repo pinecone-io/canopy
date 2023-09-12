@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from context_engine.context_engine.context_builder import StuffingContextBuilder
-from context_engine.context_engine.context_builder.base import BaseContextBuilder
+from context_engine.context_engine.context_builder.base import ContextBuilder
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
 from context_engine.models.data_models import Context, Query
 
@@ -25,7 +25,7 @@ class ContextEngine(BaseContextEngine):
     def __init__(self,
                  knowledge_base: BaseKnowledgeBase,
                  *,
-                 context_builder: Optional[BaseContextBuilder] = None,
+                 context_builder: Optional[ContextBuilder] = None,
                  global_metadata_filter: Optional[dict] = None
                  ):
         self.knowledge_base = knowledge_base
