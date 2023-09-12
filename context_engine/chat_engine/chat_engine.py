@@ -1,10 +1,11 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional
 
 from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.chat_engine.prompt_builder import PromptBuilder
 from context_engine.chat_engine.query_generator import (QueryGenerator,
-                                                        FunctionCallingQueryGenerator, )
+                                                        QUERY_GENERATOR_CLASSES, )
 from context_engine.context_engine import ContextEngine
 from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.llm import BaseLLM
@@ -12,7 +13,7 @@ from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
 
-
+logger = logging.getLogger(__name__)
 DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
 If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context."
 Don't address the context directly, but use it to answer the user question like it's your own knowledge."""  # noqa
@@ -49,8 +50,6 @@ class BaseChatEngine(ABC):
 
 class ChatEngine(BaseChatEngine):
 
-    DEFAULT_QUERY_GENERATOR = FunctionCallingQueryGenerator
-
     def __init__(self,
                  *,
                  llm: BaseLLM,
@@ -67,14 +66,23 @@ class ChatEngine(BaseChatEngine):
         self.context_engine = context_engine
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
-        self._query_builder = query_builder if query_builder is not None else \
-            self.DEFAULT_QUERY_GENERATOR(llm=self.llm)
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._tokenizer = Tokenizer()
         self._prompt_builder = PromptBuilder(
             history_pruning=HistoryPruningMethod(history_pruning),
             min_history_messages=min_history_messages
         )
+
+        if query_builder is None:
+            query_builder_type = QUERY_GENERATOR_CLASSES['default']
+            logger.info(f"Initializing ChatEngine with default query builder: "
+                        f"{query_builder_type.__name__}")
+            self._query_builder = query_builder_type(llm=self.llm)
+        else:
+            if not isinstance(query_builder, QueryGenerator):
+                raise ValueError(f"query_builder must be an instance of QueryGenerator,"
+                                 f" got {type(query_builder)}")
+            self._query_builder = query_builder
 
         # Set max budget for context tokens, default to 70% of max_prompt_tokens
         max_context_tokens = max_context_tokens or int(max_prompt_tokens * 0.7)
@@ -89,6 +97,15 @@ class ChatEngine(BaseChatEngine):
                 f"max_prompt_tokens of {self.max_prompt_tokens}"
             )
         self.max_context_tokens = max_context_tokens
+
+    @classmethod
+    def from_config(cls,
+                    config: dict,
+                    *,
+                    llm: BaseLLM,
+                    context_engine: ContextEngine,
+                    ):
+        return cls(llm=llm, context_engine=context_engine, **config)
 
     def chat(self,
              messages: Messages,

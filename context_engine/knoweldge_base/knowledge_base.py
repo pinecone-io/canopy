@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 from typing import List, Optional
 import pandas as pd
+import logging
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
 
@@ -14,20 +15,14 @@ except ImportError:
 from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
-from context_engine.knoweldge_base.chunker import (
-    Chunker, MarkdownChunker, CHUNKER_CLASSES
-)
-from context_engine.knoweldge_base.record_encoder import (
-    RecordEncoder, DenseRecordEncoder, ENCODER_CLASSES
-)
+from context_engine.knoweldge_base.chunker import Chunker, CHUNKER_CLASSES
+from context_engine.knoweldge_base.record_encoder import RecordEncoder, ENCODER_CLASSES
 from context_engine.knoweldge_base.models import (
     KBQueryResult, KBQuery, QueryResult, KBDocChunkWithScore,
 )
-from context_engine.knoweldge_base.reranker import (
-    Reranker, TransparentReranker, RERANKER_CLASSES
-)
+from context_engine.knoweldge_base.reranker import Reranker, RERANKER_CLASSES
 from context_engine.models.data_models import Query, Document
-from context_engine.utils import get_class_from_config
+from context_engine.utils import initialize_from_config
 
 
 INDEX_NAME_PREFIX = "context-engine-"
@@ -35,13 +30,10 @@ TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
 
+logger = logging.getLogger(__name__)
+
 
 class KnowledgeBase(BaseKnowledgeBase):
-
-    DEFAULT_RECORD_ENCODER = DenseRecordEncoder
-    DEFAULT_CHUNKER = MarkdownChunker
-    DEFAULT_RERANKER = TransparentReranker
-    MANDATORY_CFG_KEYS = ["index_name"]
 
     def __init__(self,
                  index_name: str,
@@ -56,9 +48,33 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = encoder if encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
-        self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
-        self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
+
+        if encoder is None:
+            logger.info(f"Initalizing KnowledgeBsase with "
+                        f"default encoder {ENCODER_CLASSES['default'].__name__}")
+            self._encoder = ENCODER_CLASSES["default"]()
+        else:
+            if not isinstance(encoder, RecordEncoder):
+                raise TypeError("encoder must be an instance of RecordEncoder")
+            self._encoder = encoder
+
+        if chunker is None:
+            logger.info(f"Initalizing KnowledgeBsase with "
+                        f"default chunker {CHUNKER_CLASSES['default'].__name__}")
+            self._chunker = CHUNKER_CLASSES["default"]()
+        else:
+            if not isinstance(chunker, Chunker):
+                raise TypeError("chunker must be an instance of Chunker")
+            self._chunker = chunker
+
+        if reranker is None:
+            logger.info(f"Initalizing KnowledgeBsase with default "
+                        f"reranker {RERANKER_CLASSES['default'].__name__}")
+            self._reranker = RERANKER_CLASSES["default"]()
+        else:
+            if not isinstance(reranker, Reranker):
+                raise TypeError("reranker must be an instance of Reranker")
+            self._reranker = reranker
 
         self._index: Optional[Index] = self._connect_index(self._index_name)
 
@@ -165,46 +181,43 @@ class KnowledgeBase(BaseKnowledgeBase):
                    default_top_k=default_top_k)
 
     @classmethod
-    def create_from_config(cls,
-                           config: dict,
-                           index_name: str,
-                           *,
-                           encoder: Optional[RecordEncoder] = None,
-                           chunker: Optional[Chunker] = None,
-                           reranker: Optional[Reranker] = None,
-                           ):
-        # missing_keys = set(cls.MANDATORY_CFG_KEYS) - set(config.keys())
-        # if missing_keys:
-        #     raise ValueError(f"Missing mandatory keys in config: {list(missing_keys)}")
-        #
-        # index_name = config["index_name"]
+    def from_config(cls,
+                    config: dict,
+                    index_name: str,
+                    *,
+                    encoder: Optional[RecordEncoder] = None,
+                    chunker: Optional[Chunker] = None,
+                    reranker: Optional[Reranker] = None,
+                    ):
+        override_err_msg = "Cannot provide both {key} override and {key} config. " \
+                            "If you wish to override with your own {key}, " \
+                            "remove the '{key}' key from the config"
 
-        if encoder is None:
-            if "record_encoder" in config:
-                encoder = get_class_from_config(config["record_encoder"],
-                                                ENCODER_CLASSES,
-                                                cls.DEFAULT_RECORD_ENCODER,
-                                                "Record Encoder")
-        if chunker is None:
-            if "chunker" in config:
-                chunker = get_class_from_config(config["chunker"],
-                                                CHUNKER_CLASSES,
-                                                cls.DEFAULT_CHUNKER,
-                                                "Chunker")
-        if reranker is None:
-            if "reranker" in config:
-                reranker = get_class_from_config(config["reranker"],
-                                                 RERANKER_CLASSES,
-                                                 cls.DEFAULT_RERANKER,
-                                                 "Reranker")
+        encoder_config = config.pop("encoder", None)
+        if encoder and encoder_config:
+            raise ValueError(override_err_msg.format(key="encoder"))
+        if encoder_config:
+            encoder = initialize_from_config(encoder_config, ENCODER_CLASSES, "encoder")
 
-        kb_params = config.get("params", {})
+        chunker_config = config.pop("chunker", None)
+        if chunker and chunker_config:
+            raise ValueError(override_err_msg.format(key="chunker"))
+        if chunker_config:
+            chunker = initialize_from_config(chunker_config, CHUNKER_CLASSES, "chunker")
+
+        reranker_config = config.pop("reranker", None)
+        if reranker and reranker_config:
+            raise ValueError(override_err_msg.format(key="reranker"))
+        if reranker_config:
+            reranker = initialize_from_config(reranker_config,
+                                              RERANKER_CLASSES,
+                                              "reranker")
+
         return cls(index_name=index_name,
                    encoder=encoder,
                    chunker=chunker,
                    reranker=reranker,
-                   **kb_params)
-
+                   **config)
 
     @classmethod
     def _wait_for_index_provision(cls,
