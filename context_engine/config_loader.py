@@ -56,6 +56,9 @@ def create_from_config(config: dict,
     if unallowed_keys:
         raise ValueError(f"Unallowed keys in config: {list(unallowed_keys)}")
 
+    # Tokenizer
+    # TODO: add tokenizer to config + add Tokenizer default class
+
     # Knowledge base
     kb_config = config["knowledge_base"]
     kb = KnowledgeBase.from_config(kb_config,
