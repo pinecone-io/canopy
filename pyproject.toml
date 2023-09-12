@@ -18,11 +18,11 @@ pinecone-text = { version = "^0.5.3", extras = ["dense"] }
 flake8-pyproject = "^1.2.3"
 pandas-stubs = "^2.0.3.230814"
 langchain = "^0.0.188"
-pytest-xdist = "^3.3.1"
 fastapi = "^0.92.0"
 uvicorn = "^0.20.0"
 tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
+
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
@@ -34,6 +34,7 @@ flake8-pyproject = "^1.2.3"
 asyncio = "^3.4.3"
 pytest-asyncio = "^0.14.0"
 pytest-mock = "^3.6.1"
+pytest-xdist = "^3.3.1"
 
 [build-system]
 requires = ["poetry-core"]
