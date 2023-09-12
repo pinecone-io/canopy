@@ -49,4 +49,4 @@ In this quickstart, we will show you how to use the Context Engine to build a si
 
 ### 1. Create a new Context Engine Index
 
-![](https://github.com/pinecone-io/context-engine/blob/main/.readme-content/new.gif)
+![](https://github.com/pinecone-io/context-engine/blob/add_cli/.readme-content/new.gif)
