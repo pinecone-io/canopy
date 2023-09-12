@@ -1,6 +1,8 @@
 # context-engine
 
-## How to install and run the demo
+Context Engine is a tool that allows you to build RAG applications using your own data. It is built on top of Pinecone, the world's most powerfull vector database.
+
+## How to install
 
 1. clone the repo and cd into it
 ```bash
@@ -31,15 +33,20 @@ or set them in your shell
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export INDEX_NAME_SUFFIX="test-index-1"
+export INDEX_NAME="test-index-1"
 ```
 
-> NOTE -- the INDEX_NAME_SUFFIX and the index name you use in the CLI operaions should match (i.e. if you use `context-engine new test-index-1` in the CLI, then the INDEX_NAME_SUFFIX should be `test-index-1`). AGAIN THIS IS TEMPORARY AND WILL BECOME OBSOLETE SOON!
-
-3. install the dependencies
+3. install the package
 ```bash
 pip install -e .
 ```
 
-
 4. you are good to go! see the demo on how to run it
+
+## Quickstart
+
+In this quickstart, we will show you how to use the Context Engine to build a simple question answering system using RAG (retrival augmented generation).
+
+### 1. Create a new Context Engine Index
+
+![](https://github.com/pinecone-io/context-engine/blob/main/.readme-content/new.gif)

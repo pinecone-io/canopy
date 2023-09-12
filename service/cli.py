@@ -35,17 +35,25 @@ def is_healthy(url: str):
         return False
 
 
-@click.group(help="CLI for the Context Engine")
+@click.group()
 def cli():
+    """
+    CLI for Pinecone Context Engine. Actively developed by Pinecone.
+    To use the CLI, you need to have a Pinecone account. Visit https://www.pinecone.io/ to sign up for free.
+    """
     pass
 
 
-@cli.command()
-@click.option("--chat-service-url", default="http://0.0.0.0:8000")
-def health(chat_service_url):
-    if not is_healthy(chat_service_url):
+@cli.command(help="Check if Context Engine service is running")
+@click.option("--host", default="0.0.0.0", help="Host")
+@click.option("--port", default=8000, help="Port")
+@click.option("--ssl/--no-ssl", default=False, help="SSL")
+def health(host, port, ssl):
+    ssl_str = "s" if ssl else ""
+    service_url = f"http{ssl_str}://{host}:{port}"
+    if not is_healthy(service_url):
         msg = (
-            f"Context Engine service is not running! on {chat_service_url}"
+            f"Context Engine service is not running! on {service_url}"
             + " please run `context-engine start`"
         )
         click.echo(click.style(msg, fg="red"), err=True)
@@ -63,9 +71,12 @@ def new(index_name, tokenizer_model):
     click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
-    kb = KnowledgeBase(index_name_suffix=index_name)
     with spinner:
-        kb.create_index()
+        kb = KnowledgeBase.create_with_new_index(
+            index_name=index_name, 
+            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(), 
+            chunker=KnowledgeBase.DEFAULT_CHUNKER()
+        )
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
 
@@ -221,6 +232,7 @@ def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
 @cli.command()
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
+@click.option("--ssl/--no-ssl", default=False, help="SSL")
 @click.option("--reload/--no-reload", default=False, help="Reload")
 def start(host, port, reload):
     click.echo(f"Starting Context Engine service on {host}:{port}")
@@ -230,7 +242,19 @@ def start(host, port, reload):
 @cli.command()
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
-def stop(host, port):
+@click.option("--ssl/--no-ssl", default=False, help="SSL")
+def stop(host, port, ssl):
+    ssl_str = "s" if ssl else ""
+    service_url = f"http{ssl_str}://{host}:{port}"
+
+    if not is_healthy(service_url):
+        msg = (
+            f"Context Engine service is not running! on {service_url}"
+            + " please run `context-engine start`"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+
     import subprocess
 
     p1 = subprocess.Popen(["lsof", "-t", "-i", f"tcp:{port}"], stdout=subprocess.PIPE)
@@ -238,7 +262,8 @@ def stop(host, port):
     if running_server_id == "":
         click.echo(
             click.style(
-                f"Did not find active context-engine service on {host}:{port}", fg="red"
+                f"Did not find active process for context-engine service on {host}:{port}",
+                fg="red",
             )
         )
         sys.exit(1)
