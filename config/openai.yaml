@@ -1,0 +1,20 @@
+tokenizer:
+  type: OpenAITokenizer
+  params:
+    model_name: gpt-3.5-turbo-0613
+
+knowledge_base:
+  record_encoder:
+    type: DenseRecordEncoder
+    params:
+      encoder: OpenAIEncoder
+      encoder_params:
+        model_name: "text-embedding-ada-002"
+
+context_engine: {}
+
+llm:
+  type: OpenAILLM
+  model_name: gpt-3.5-turbo-0613
+
+chat_engine: {}
