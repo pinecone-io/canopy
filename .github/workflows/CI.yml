@@ -31,7 +31,7 @@ jobs:
     needs: run-linters
     strategy:
       matrix:
-        python-version: [3.8, 3.9, '3.10', 3.11]
+        python-version: [3.9, '3.10', 3.11]
 
     steps:
     - uses: actions/checkout@v3
@@ -53,7 +53,7 @@ jobs:
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         PINECONE_ENVIRONMENT: eu-west1-gcp
-      run: poetry run pytest -n 3 --dist loadgroup --html=report_system.html --self-contained-html tests/system
+      run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()

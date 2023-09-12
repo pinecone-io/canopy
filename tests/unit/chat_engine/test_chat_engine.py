@@ -9,7 +9,8 @@ from context_engine.context_engine import ContextEngine
 from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import SystemMessage
-from context_engine.models.data_models import MessageBase, Query, Context
+from context_engine.models.api_models import ChatResponse, _Choice, TokenCounts
+from context_engine.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt"
@@ -59,9 +60,10 @@ class TestChatEngine:
         mock_context = Context(
             content=ContextQueryResult(
                 query="How does photosynthesis work?",
-                snippets=[ContextSnippet(reference="ref 1",
+
+                snippets=[ContextSnippet(source="ref 1",
                                          text=self._generate_text(snippet_length)),
-                          ContextSnippet(reference="ref 2",
+                          ContextSnippet(source="ref 2",
                                          text=self._generate_text(12))]
             ),
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
@@ -69,7 +71,21 @@ class TestChatEngine:
         expected_prompt = [SystemMessage(
             content=system_prompt + f"\nContext: {mock_context.to_text()}"
         )] + messages
-        mock_chat_response = "Photosynthesis is a process used by plants..."
+
+        mock_chat_response = ChatResponse(
+            id='chatcmpl-7xuuGZzniUGiqxDSTJnqwb0l1xtfp',
+            object='chat.completion',
+            created=1694514456,
+            model='gpt-3.5-turbo',
+            choices=[_Choice(index=0,
+                             message=MessageBase(
+                                 role=Role.ASSISTANT,
+                                 content="Photosynthesis is a process used by plants"),
+                             finish_reason='stop')],
+            usage=TokenCounts(prompt_tokens=25,
+                              completion_tokens=9,
+                              total_tokens=34),
+            debug_info={})
 
         # Set the return values of the mocked methods
         self.mock_query_builder.generate.return_value = mock_queries

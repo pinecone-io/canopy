@@ -2,10 +2,10 @@ import os
 import logging
 import sys
 import uuid
+from dotenv import load_dotenv
 
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
-from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 from context_engine.knoweldge_base import KnowledgeBase
 from context_engine.context_engine import ContextEngine
@@ -16,14 +16,16 @@ from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
 from typing import cast
-from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context
 from service.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
-load_dotenv()
+load_dotenv()  # load env vars before import of openai
+from context_engine.llm.openai import OpenAILLM  # noqa: E402
+
+
 INDEX_NAME = os.getenv("INDEX_NAME")
 app = FastAPI()
 
@@ -116,7 +118,7 @@ async def upsert(
 )
 async def health_check():
     try:
-        await run_in_threadpool(kb.connect, force=True)
+        await run_in_threadpool(kb.verify_connection_health)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
@@ -168,8 +170,7 @@ def _init_engines():
     if not INDEX_NAME:
         raise ValueError("INDEX_NAME environment variable must be set")
 
-    kb = KnowledgeBase(index_name_suffix=INDEX_NAME)
-    kb.connect()
+    kb = KnowledgeBase(index_name=INDEX_NAME)
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
 
