@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import create_autospec
 
 from resin.context_engine import ContextEngine
-from resin.context_engine.context_builder.base import BaseContextBuilder
+from resin.context_engine.context_builder.base import ContextBuilder
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.knoweldge_base.models import QueryResult, DocumentWithScore
 from resin.models.data_models import Query, Context, ContextContent
@@ -18,7 +18,7 @@ class TestContextEngine:
     @staticmethod
     @pytest.fixture
     def mock_context_builder():
-        return create_autospec(BaseContextBuilder)
+        return create_autospec(ContextBuilder)
 
     @staticmethod
     @pytest.fixture
