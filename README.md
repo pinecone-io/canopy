@@ -9,12 +9,12 @@
 ```
 2. checkout the server branch
 ```bash
-   git checkout server
+   git checkout add_cli
 ```
 
 3. add .env file with --> THIS STEP WILL BECOME OBSOLETE SOON AND WE WILL HAVE PROPER CONFIGURATION MANAGEMENT
 ```bash
-vi context_engine/server/.env
+vi service/.env
 ```
 add the following envs
 
