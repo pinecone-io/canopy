@@ -12,6 +12,8 @@ from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context, Messages
+from context_engine.utils import initialize_from_config
+
 
 logger = logging.getLogger(__name__)
 DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
@@ -62,8 +64,15 @@ class ChatEngine(BaseChatEngine):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1
                  ):
+        if not isinstance(llm, BaseLLM):
+            raise ValueError(f"llm must be an instance of BaseLLM, got {type(llm)}")
         self.llm = llm
+
+        if not isinstance(context_engine, ContextEngine):
+            raise ValueError(f"context_engine must be an instance of ContextEngine,"
+                             f" got {type(context_engine)}")
         self.context_engine = context_engine
+
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
@@ -104,8 +113,27 @@ class ChatEngine(BaseChatEngine):
                     *,
                     llm: BaseLLM,
                     context_engine: ContextEngine,
+                    query_builder: Optional[QueryGenerator] = None,
                     ):
-        return cls(llm=llm, context_engine=context_engine, **config)
+        unallowed_keys = set(config.keys()).intersection({'llm', 'context_engine'})
+        if unallowed_keys:
+            raise ValueError(f"Unallowed keys in ChatEngine config: {unallowed_keys}")
+
+        query_builder_cfg = config.pop('query_builder', None)
+        if query_builder and query_builder_cfg:
+            raise ValueError("Cannot provide both query_builder override and "
+                             "query_builder config. If you wish to override with your"
+                             " own query_builder, remove the 'query_builder' "
+                             "key from the config")
+        if query_builder_cfg:
+            query_builder = initialize_from_config(query_builder_cfg,
+                                                   QUERY_GENERATOR_CLASSES,
+                                                   "query_builder")
+
+        return cls(llm=llm,
+                   context_engine=context_engine,
+                   query_builder=query_builder,
+                   **config)
 
     def chat(self,
              messages: Messages,

@@ -16,6 +16,7 @@ MANDATORY_KEYS = ["knowledge_base",
 
 ALLOWED_KEYS = MANDATORY_KEYS + ["tokenizer", "llm", "chat_engine"]
 
+
 def create_from_config(config: dict,
                        *,
                        index_name: str,
@@ -82,3 +83,12 @@ def create_from_config(config: dict,
         llm = None
 
     chat_engine_config = config.get("chat_engine", None)
+    if chat_engine_config:
+        chat_engine = ChatEngine.from_config(chat_engine_config,
+                                             llm=llm,
+                                             context_engine=context_engine,
+                                             query_builder=query_builder)
+    else:
+        chat_engine = None
+
+    return kb, context_engine, llm, chat_engine
