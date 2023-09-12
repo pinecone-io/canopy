@@ -61,7 +61,7 @@ async def chat(
         else:
             chat_response = cast(ChatResponse, answer)
             chat_response.id = question_id
-            return chat_response.json()
+            return chat_response
 
     except Exception as e:
         logger.exception(f"Chat with question_id {question_id} failed")

@@ -15,9 +15,11 @@ class DenseRecordEncoder(RecordEncoder):
     DEFAULT_MODEL_NAME = "text-embedding-ada-002"
 
     def __init__(self,
+                 dense_encoder: Optional[BaseDenseEncoder] = None,
+                 *,
                  batch_size: int = 500,
-                 dense_encoder: Optional[BaseDenseEncoder] = None, **kwargs):
-        super().__init__(batch_size, **kwargs)
+                 **kwargs):
+        super().__init__(batch_size=batch_size, **kwargs)
         if dense_encoder is None:
             dense_encoder = self.DEFAULT_DENSE_ENCODER(self.DEFAULT_MODEL_NAME)
         self._dense_encoder = dense_encoder
