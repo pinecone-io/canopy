@@ -135,7 +135,7 @@ def _chat(
     )
     end = time.time()
     duration_in_sec = end - start
-    click.echo(click.style(f"\n {speaker} says:\n", fg=speaker_color))
+    click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
     if stream:
         for chunk in openai_response:
             intenal_model = chunk.model
@@ -170,8 +170,8 @@ def _chat(
 @click.option("--stream/--no-stream", default=True, help="Stream")
 @click.option("--debug-info/--no-debug-info", default=False, help="Print debug info")
 @click.option(
-    "--with-vanilla-llm/--no-vanilla-llm",
-    default=False,
+    "--rag/--no-rag",
+    default=True,
     help="Direct chat with the model",
 )
 @click.option("--chat-service-url", default="http://0.0.0.0:8000")
@@ -180,7 +180,7 @@ def _chat(
     default=os.environ.get("INDEX_NAME"),
     help="Index name suffix",
 )
-def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
+def chat(index_name, chat_service_url, rag, debug_info, stream):
     if not is_healthy(chat_service_url):
         msg = (
             f"Context Engine service is not running! on {chat_service_url}"
@@ -197,7 +197,7 @@ def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
         message = click.get_text_stream("stdin").readline()
 
         dubug_info = _chat(
-            speaker="🤖 + Pinecone",
+            speaker="With Context (RAG)",
             speaker_color="green",
             model="",
             history=history_with_pinecone,
@@ -207,9 +207,9 @@ def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
             print_debug_info=debug_info,
         )
 
-        if with_vanilla_llm:
+        if not rag:
             _ = _chat(
-                speaker="Just 🤖",
+                speaker="Without Context (No RAG)",
                 speaker_color="yellow",
                 model=dubug_info.intenal_model,
                 history=history_without_pinecone,
@@ -234,7 +234,7 @@ def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
 @click.option("--reload/--no-reload", default=False, help="Reload")
-def start(host, port, reload):
+def start(host, port, ssl, reload):
     click.echo(f"Starting Context Engine service on {host}:{port}")
     start_service(host, port, reload)
 
