@@ -235,6 +235,21 @@ def stop(host, port):
 
     p1 = subprocess.Popen(["lsof", "-t", "-i", f"tcp:{port}"], stdout=subprocess.PIPE)
     running_server_id = p1.stdout.read().decode("utf-8").strip()
+    if running_server_id == "":
+        click.echo(
+            click.style(
+                f"Did not find active context-engine service on {host}:{port}", fg="red"
+            )
+        )
+        sys.exit(1)
+
+    msg = (
+        "Warning, this will invoke in process kill to the PID of the service, this method is not recommended!"
+        + " We recommend ctrl+c on the terminal where you started the service"
+        + " as this will allow the service to gracefully shutdown"
+    )
+    click.echo(click.style(msg, fg="yellow"))
+
     click.confirm(
         click.style(
             f"Stopping Context Engine service on {host}:{port} with pid "
