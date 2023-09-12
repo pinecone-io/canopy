@@ -14,7 +14,7 @@
 
 3. add .env file with --> THIS STEP WILL BECOME OBSOLETE SOON AND WE WILL HAVE PROPER CONFIGURATION MANAGEMENT
 ```bash
-vi service/.env
+vi .env
 ```
 add the following envs
 
