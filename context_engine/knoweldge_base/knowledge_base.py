@@ -14,13 +14,20 @@ except ImportError:
 from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
 
 from context_engine.knoweldge_base.base import BaseKnowledgeBase
-from context_engine.knoweldge_base.chunker import Chunker, MarkdownChunker
-from context_engine.knoweldge_base.record_encoder import (RecordEncoder,
-                                                          DenseRecordEncoder)
-from context_engine.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                                  KBDocChunkWithScore, )
-from context_engine.knoweldge_base.reranker import Reranker, TransparentReranker
+from context_engine.knoweldge_base.chunker import (
+    Chunker, MarkdownChunker, CHUNKER_CLASSES
+)
+from context_engine.knoweldge_base.record_encoder import (
+    RecordEncoder, DenseRecordEncoder, ENCODER_CLASSES
+)
+from context_engine.knoweldge_base.models import (
+    KBQueryResult, KBQuery, QueryResult, KBDocChunkWithScore,
+)
+from context_engine.knoweldge_base.reranker import (
+    Reranker, TransparentReranker, RERANKER_CLASSES
+)
 from context_engine.models.data_models import Query, Document
+from context_engine.utils import get_class_from_config
 
 
 INDEX_NAME_PREFIX = "context-engine-"
@@ -34,6 +41,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     DEFAULT_RECORD_ENCODER = DenseRecordEncoder
     DEFAULT_CHUNKER = MarkdownChunker
     DEFAULT_RERANKER = TransparentReranker
+    MANDATORY_CFG_KEYS = ["index_name"]
 
     def __init__(self,
                  index_name: str,
@@ -155,6 +163,48 @@ class KnowledgeBase(BaseKnowledgeBase):
                    chunker=chunker,
                    reranker=reranker,
                    default_top_k=default_top_k)
+
+    @classmethod
+    def create_from_config(cls,
+                           config: dict,
+                           index_name: str,
+                           *,
+                           encoder: Optional[RecordEncoder] = None,
+                           chunker: Optional[Chunker] = None,
+                           reranker: Optional[Reranker] = None,
+                           ):
+        # missing_keys = set(cls.MANDATORY_CFG_KEYS) - set(config.keys())
+        # if missing_keys:
+        #     raise ValueError(f"Missing mandatory keys in config: {list(missing_keys)}")
+        #
+        # index_name = config["index_name"]
+
+        if encoder is None:
+            if "record_encoder" in config:
+                encoder = get_class_from_config(config["record_encoder"],
+                                                ENCODER_CLASSES,
+                                                cls.DEFAULT_RECORD_ENCODER,
+                                                "Record Encoder")
+        if chunker is None:
+            if "chunker" in config:
+                chunker = get_class_from_config(config["chunker"],
+                                                CHUNKER_CLASSES,
+                                                cls.DEFAULT_CHUNKER,
+                                                "Chunker")
+        if reranker is None:
+            if "reranker" in config:
+                reranker = get_class_from_config(config["reranker"],
+                                                 RERANKER_CLASSES,
+                                                 cls.DEFAULT_RERANKER,
+                                                 "Reranker")
+
+        kb_params = config.get("params", {})
+        return cls(index_name=index_name,
+                   encoder=encoder,
+                   chunker=chunker,
+                   reranker=reranker,
+                   **kb_params)
+
 
     @classmethod
     def _wait_for_index_provision(cls,
