@@ -4,11 +4,8 @@ import sys
 import uuid
 from dotenv import load_dotenv
 
-load_dotenv()  # noqa: E402
-
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
-from context_engine.llm.openai import OpenAILLM
 from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 from context_engine.knoweldge_base import KnowledgeBase
 from context_engine.context_engine import ContextEngine
@@ -24,6 +21,10 @@ from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context
 from service.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
+
+load_dotenv()  # load env vars before import of openai
+from context_engine.llm.openai import OpenAILLM  # noqa: E402
+
 
 INDEX_NAME = os.getenv("INDEX_NAME")
 app = FastAPI()
