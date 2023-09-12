@@ -23,59 +23,6 @@ load_dotenv(dotenv_path)
 
 spinner = Spinner()
 
-
-@click.group(help="CLI for the Context Engine")
-def cli():
-    pass
-
-
-@cli.command()
-@click.argument(
-    "index-name-suffix", nargs=1, envvar="INDEX_NAME_SUFFIX", type=str, required=True
-)
-@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
-def new(index_name_suffix, tokenizer_model):
-    click.echo(
-        f"Context Engine is going to create a new index: "
-        f"{INDEX_NAME_PREFIX}{index_name_suffix}"
-    )
-    click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
-    kb = KnowledgeBase(index_name_suffix=index_name_suffix)
-    with spinner:
-        kb.create_index()
-    click.echo(click.style("Success!", fg="green"))
-    os.environ["INDEX_NAME_SUFFIX"] = index_name_suffix
-
-
-@cli.command()
-@click.argument("data-path", type=click.Path(exists=True))
-@click.option(
-    "--index-name-suffix",
-    default=os.environ.get("INDEX_NAME_SUFFIX"),
-    help="Index name suffix",
-)
-@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
-def upsert(index_name_suffix, data_path, tokenizer_model):
-    if index_name_suffix is None:
-        raise ValueError("Must provide index name suffix")
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
-    if data_path is None:
-        raise ValueError("Must provide data path")
-    click.echo(
-        f"Context Engine is going to upsert data from {data_path} to index: "
-        f"{INDEX_NAME_PREFIX}{index_name_suffix}"
-    )
-    kb = KnowledgeBase(index_name_suffix=index_name_suffix)
-    kb.connect()
-    click.echo("")
-    data = pd.read_parquet(data_path)
-    click.echo(tabulate(data.head(), headers="keys", tablefmt="psql", showindex=False))
-    click.confirm(click.style("Does this data look right?", fg="red"), abort=True)
-    kb.upsert_dataframe(data)
-    click.echo(click.style("Success!", fg="green"))
-
-
 def is_healthy(url: str):
     try:
         health_url = os.path.join(url, "health")
@@ -84,6 +31,70 @@ def is_healthy(url: str):
         return res.ok
     except Exception:
         return False
+
+
+@click.group(help="CLI for the Context Engine")
+def cli():
+    pass
+
+@cli.command()
+@click.option("--chat-service-url", default="http://0.0.0.0:8000")
+def health(chat_service_url):
+    if not is_healthy(chat_service_url):
+        raise ValueError(f"Context Engine service is not running at {chat_service_url}")
+    else:
+        click.echo(click.style("Context Engine service is healthy!", fg="green"))
+
+@cli.command()
+@click.argument(
+    "index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True
+)
+@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
+def new(index_name, tokenizer_model):
+    click.echo(
+        f"Context Engine is going to create a new index: ", nl=False
+    )
+    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
+    click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
+    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    kb = KnowledgeBase(index_name_suffix=index_name)
+    with spinner:
+        kb.create_index()
+    click.echo(click.style("Success!", fg="green"))
+    os.environ["INDEX_NAME"] = index_name
+
+
+@cli.command()
+@click.argument("data-path", type=click.Path(exists=True))
+@click.option(
+    "--index-name",
+    default=os.environ.get("INDEX_NAME"),
+    help="Index name suffix",
+)
+@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
+def upsert(index_name, data_path, tokenizer_model):
+    if index_name is None:
+        raise ValueError("Must provide index name suffix")
+    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    if data_path is None:
+        raise ValueError("Must provide data path")
+    click.echo(
+        f"Context Engine is going to upsert data from {data_path} to index: "
+        f"{INDEX_NAME_PREFIX}{index_name}"
+    )
+    kb = KnowledgeBase(index_name_suffix=index_name)
+    kb.connect()
+    click.echo("")
+    data = pd.read_parquet(data_path)
+    head = data.head()
+    pd.options.display.max_colwidth = 20
+    pd.options.mode.chained_assignment = None
+    head["text"] = head["text"].apply(lambda x: x[:50] + "...")
+    head["source"] = head["source"].apply(lambda x: x[:30] + "...")
+    click.echo(tabulate(head, headers="keys", tablefmt="psql", showindex=False))
+    click.confirm(click.style("Does this data look right?", fg="red"), abort=True)
+    kb.upsert_dataframe(data)
+    click.echo(click.style("Success!", fg="green"))
 
 
 def _chat(
@@ -99,14 +110,14 @@ def _chat(
     output = ""
     history += [{"role": "user", "content": message}]
     start = time.time()
-    pinecone_res = openai.ChatCompletion.create(
+    openai_response = openai.ChatCompletion.create(
         model=model, messages=history, stream=stream, api_base=api_base
     )
     end = time.time()
     duration_in_sec = end - start
     click.echo(click.style(f"\n {speaker} says:\n", fg=speaker_color))
     if stream:
-        for chunk in pinecone_res:
+        for chunk in openai_response:
             intenal_model = chunk.model
             text = chunk.choices[0].delta.get("content", "")
             output += text
@@ -116,15 +127,15 @@ def _chat(
             intenal_model=intenal_model, duration_in_sec=round(duration_in_sec, 2)
         )
     else:
-        intenal_model = pinecone_res.model
-        text = pinecone_res.choices[0].message.get("content", "")
+        intenal_model = openai_response.model
+        text = openai_response.choices[0].message.get("content", "")
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
             intenal_model=intenal_model,
             duration_in_sec=duration_in_sec,
-            prompt_tokens=pinecone_res.usage.prompt_tokens,
-            generated_tokens=pinecone_res.usage.completion_tokens,
+            prompt_tokens=openai_response.usage.prompt_tokens,
+            generated_tokens=openai_response.usage.completion_tokens,
         )
     if print_debug_info:
         click.echo()
@@ -145,12 +156,12 @@ def _chat(
 )
 @click.option("--chat-service-url", default="http://0.0.0.0:8000")
 @click.option(
-    "--index-name-suffix",
-    default=os.environ.get("INDEX_NAME_SUFFIX"),
+    "--index-name",
+    default=os.environ.get("INDEX_NAME"),
     help="Index name suffix",
 )
 def chat(
-    index_name_suffix, chat_service_url, with_vanilla_llm, debug_info, stream
+    index_name, chat_service_url, with_vanilla_llm, debug_info, stream
 ):
     if not is_healthy(chat_service_url):
         raise ValueError(f"Context Engine service is not running at {chat_service_url}")

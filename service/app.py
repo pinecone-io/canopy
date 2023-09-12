@@ -61,7 +61,7 @@ async def chat(
         else:
             chat_response = cast(ChatResponse, answer)
             chat_response.id = question_id
-            return chat_response.json()
+            return chat_response
 
     except Exception as e:
         logger.exception(f"Chat with question_id {question_id} failed")
@@ -176,9 +176,9 @@ def _init_engines():
     chat_engine = ChatEngine(llm=llm, context_engine=context_engine)
 
 
-def start():
+def start(host="0.0.0.0", port=8000, reload=False):
     uvicorn.run("service.app:app",
-                host="0.0.0.0", port=8000, reload=True)
+                host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":
