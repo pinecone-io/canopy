@@ -1,6 +1,7 @@
 import os
 import click
 import time
+import sys
 
 import requests
 from dotenv import load_dotenv
@@ -23,6 +24,7 @@ load_dotenv(dotenv_path)
 
 spinner = Spinner()
 
+
 def is_healthy(url: str):
     try:
         health_url = os.path.join(url, "health")
@@ -37,23 +39,27 @@ def is_healthy(url: str):
 def cli():
     pass
 
+
 @cli.command()
 @click.option("--chat-service-url", default="http://0.0.0.0:8000")
 def health(chat_service_url):
     if not is_healthy(chat_service_url):
-        raise ValueError(f"Context Engine service is not running at {chat_service_url}")
+        msg = (
+            f"Context Engine service is not running! on {chat_service_url}"
+            + " please run `context-engine start`"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
     else:
         click.echo(click.style("Context Engine service is healthy!", fg="green"))
+        return
+
 
 @cli.command()
-@click.argument(
-    "index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True
-)
+@click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
-    click.echo(
-        f"Context Engine is going to create a new index: ", nl=False
-    )
+    click.echo(f"Context Engine is going to create a new index: ", nl=False)
     click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
@@ -69,21 +75,24 @@ def new(index_name, tokenizer_model):
 @click.option(
     "--index-name",
     default=os.environ.get("INDEX_NAME"),
-    help="Index name suffix",
+    help="Index name",
 )
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        raise ValueError("Must provide index name suffix")
+        msg = 'Index name is not provided, please provide it with --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME"`'
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
-        raise ValueError("Must provide data path")
+        msg = "Data path is not provided, please provide it with --data-path or set it with env var"
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
     click.echo(
         f"Context Engine is going to upsert data from {data_path} to index: "
         f"{INDEX_NAME_PREFIX}{index_name}"
     )
-    kb = KnowledgeBase(index_name_suffix=index_name)
-    kb.connect()
+    kb = KnowledgeBase(index_name=index_name)
     click.echo("")
     data = pd.read_parquet(data_path)
     head = data.head()
@@ -160,11 +169,14 @@ def _chat(
     default=os.environ.get("INDEX_NAME"),
     help="Index name suffix",
 )
-def chat(
-    index_name, chat_service_url, with_vanilla_llm, debug_info, stream
-):
+def chat(index_name, chat_service_url, with_vanilla_llm, debug_info, stream):
     if not is_healthy(chat_service_url):
-        raise ValueError(f"Context Engine service is not running at {chat_service_url}")
+        msg = (
+            f"Context Engine service is not running! on {chat_service_url}"
+            + " please run `context-engine start`"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
 
     history_with_pinecone = []
     history_without_pinecone = []
