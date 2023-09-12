@@ -55,7 +55,8 @@ def create_from_config(config: dict,
     unallowed_keys = config_keys - set(ALLOWED_KEYS)
     if unallowed_keys:
         raise ValueError(f"Unallowed keys in config: {list(unallowed_keys)}")
-#
+
+    # Knowledge base
     kb_config = config["knowledge_base"]
     kb = KnowledgeBase.from_config(kb_config,
                                    index_name=index_name,
@@ -63,11 +64,13 @@ def create_from_config(config: dict,
                                    record_encoder=record_encoder,
                                    reranker=reranker)
 
+    # Context engine
     context_engine_config = config["context_engine"]
     context_engine = ContextEngine.from_config(context_engine_config,
                                                knowledge_base=kb,
                                                context_builder=context_builder)
 
+    # LLM
     override_err_msg = "Cannot provide both {key} override and {key} config. " \
                        "If you wish to override with your own {key}, " \
                        "remove the '{key}' key from the config"
@@ -77,13 +80,14 @@ def create_from_config(config: dict,
         raise ValueError(override_err_msg.format(key="llm"))
     if llm_config:
         llm = initialize_from_config(llm_config, LLM_CLASSES, "llm")
-    elif llm is None:
-        llm = LLM_CLASSES["default"]()
-    else:
-        llm = None
 
+    # Chat engine
     chat_engine_config = config.get("chat_engine", None)
     if chat_engine_config:
+        if llm is None:
+            raise ValueError(
+                "Cannot initialize ChatEngine without an LLM. Please provide "
+                "an LLM or add an 'llm' section to the config")
         chat_engine = ChatEngine.from_config(chat_engine_config,
                                              llm=llm,
                                              context_engine=context_engine,
