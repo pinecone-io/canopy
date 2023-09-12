@@ -2,6 +2,9 @@ import logging
 import os
 import sys
 import uuid
+from dotenv import load_dotenv
+
+load_dotenv()  # noqa: E402
 
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import UserMessage
@@ -16,14 +19,12 @@ from sse_starlette.sse import EventSourceResponse
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
 from typing import cast
-from dotenv import load_dotenv
 
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context
 from service.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest
 
-load_dotenv()
 INDEX_NAME = os.getenv("INDEX_NAME")
 app = FastAPI()
 
