@@ -169,8 +169,7 @@ def _init_engines():
     if not INDEX_NAME:
         raise ValueError("INDEX_NAME environment variable must be set")
 
-    kb = KnowledgeBase(index_name_suffix=INDEX_NAME)
-    kb.connect()
+    kb = KnowledgeBase(index_name=INDEX_NAME)
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
 
