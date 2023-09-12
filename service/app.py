@@ -117,7 +117,7 @@ async def upsert(
 )
 async def health_check():
     try:
-        await run_in_threadpool(kb.connect, force=True)
+        await run_in_threadpool(kb.verify_connection_health)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
