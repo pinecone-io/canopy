@@ -5,7 +5,6 @@ import sys
 
 import requests
 from dotenv import load_dotenv
-from tabulate import tabulate
 
 import pandas as pd
 import openai
@@ -109,13 +108,9 @@ def upsert(index_name, data_path, tokenizer_model):
     kb = KnowledgeBase(index_name=index_name)
     click.echo("")
     data = pd.read_parquet(data_path)
-    head = data.head()
     pd.options.display.max_colwidth = 20
-    pd.options.mode.chained_assignment = None
-    head["text"] = head["text"].apply(lambda x: x[:50] + "...")
-    head["source"] = head["source"].apply(lambda x: x[:30] + "...")
-    click.echo(tabulate(head, headers="keys", tablefmt="psql", showindex=False))
-    click.confirm(click.style("Does this data look right?", fg="red"), abort=True)
+    click.echo(data.head())
+    click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     kb.upsert_dataframe(data)
     click.echo(click.style("Success!", fg="green"))
 
