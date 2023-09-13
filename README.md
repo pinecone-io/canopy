@@ -1,6 +1,28 @@
 # context-engine
 
-Context Engine is a tool that allows you to build RAG applications using your own data. It is built on top of Pinecone, the world's most powerfull vector database.
+Context Engine is a tool that allows you to build AI applications using your own data. It is built on top of Pinecone, the world's most powerfull vector database. Context Engine is desinged to be well packaged and easy to use. It can be used as a library or as a service. It is also designed to be modular, so you can use only the parts that you need. Context Engine is built with the following principles in mind:
+
+* **Easy to use** - Context Engine is designed to be easy to use. It is well packaged and can be installed with a single command. It is also designed to be modular, so you can use only the parts that you need.
+
+* **Production ready** - Context Engine is built on top of Pinecone, the world's most powerfull vector database. It is designed to be production ready, 100% tested, well documented, maintained and supported.
+
+* **Open source** - Context Engine is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
+
+* **Operative AI** - Context Engine is designed to be used in production and as such, it allows developers to set up operating point to have better control over token consumption in prompt or in generation. Context Engine can maximize context quality and relevance while controlling the cost of the AI system.
+
+## Concept
+
+Context Engine can be used as a library and as-a-service. The conceptual model is the following:
+
+![conceptual model](https://github.com/pinecone-io/context-engine/blob/add_cli/.readme-content/sketch.png)
+
+Where:
+
+* **ChatEngine** _`/context/chat/completions`_ - is a complete RAG unit, this will perform the RAG pipeline and return the answer from the LLM. This API follows the OpenAI API specification and can be used as a drop-in replacement for the OpenAI API.
+
+* **ContextEngine** _`/context/query`_ - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. ContextEngine internally performs a process of ContextBuilding - i.e. it will find the most relevant documents to your query and will return them as a single context object.
+
+* **KnowledgeBase** _`/context/upsert`_ - is the interface to upload your data into Pinecone. It will create a new index and will configure it for you. It will also handle the processing of the data, namely - processing, chunking and encoding (embedding).
 
 ## How to install
 
