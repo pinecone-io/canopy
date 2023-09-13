@@ -73,9 +73,9 @@ def new(index_name, tokenizer_model):
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
         kb = KnowledgeBase.create_with_new_index(
-            index_name=index_name, 
-            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(), 
-            chunker=KnowledgeBase.DEFAULT_CHUNKER()
+            index_name=index_name,
+            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
+            chunker=KnowledgeBase.DEFAULT_CHUNKER(),
         )
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
