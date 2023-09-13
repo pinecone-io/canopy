@@ -39,7 +39,8 @@ def is_healthy(url: str):
 def cli():
     """
     CLI for Pinecone Context Engine. Actively developed by Pinecone.
-    To use the CLI, you need to have a Pinecone account. Visit https://www.pinecone.io/ to sign up for free.
+    To use the CLI, you need to have a Pinecone account. 
+    Visit https://www.pinecone.io/ to sign up for free.
     """
     pass
 
@@ -72,7 +73,7 @@ def new(index_name, tokenizer_model):
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
-        kb = KnowledgeBase.create_with_new_index(
+        _ = KnowledgeBase.create_with_new_index(
             index_name=index_name,
             encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
             chunker=KnowledgeBase.DEFAULT_CHUNKER(),
@@ -91,12 +92,14 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = 'Index name is not provided, please provide it with --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME"`'
+        msg = 'Index name is not provided, please provide it with'
+        + ' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
-        msg = "Data path is not provided, please provide it with --data-path or set it with env var"
+        msg = "Data path is not provided,"
+        +" please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo(
@@ -269,7 +272,8 @@ def stop(host, port, ssl):
         sys.exit(1)
 
     msg = (
-        "Warning, this will invoke in process kill to the PID of the service, this method is not recommended!"
+        "Warning, this will invoke in process kill"
+        + " to the PID of the service, this method is not recommended!"
         + " We recommend ctrl+c on the terminal where you started the service"
         + " as this will allow the service to gracefully shutdown"
     )
