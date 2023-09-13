@@ -39,7 +39,7 @@ def is_healthy(url: str):
 def cli():
     """
     CLI for Pinecone Context Engine. Actively developed by Pinecone.
-    To use the CLI, you need to have a Pinecone account. 
+    To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
     pass
@@ -68,7 +68,7 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
-    click.echo(f"Context Engine is going to create a new index: ", nl=False)
+    click.echo("Context Engine is going to create a new index: ", nl=False)
     click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
@@ -265,7 +265,8 @@ def stop(host, port, ssl):
     if running_server_id == "":
         click.echo(
             click.style(
-                f"Did not find active process for context-engine service on {host}:{port}",
+                "Did not find active process for context-engine service"
+                + f" on {host}:{port}",
                 fg="red",
             )
         )
