@@ -150,4 +150,24 @@ If you have started the service in the background, you can stop it by running:
 context-engine stop
 ```
 
+## Advanced usage
 
+### 1. Migrating existing OpenAI application to Context Engine
+
+If you already have an application that uses the OpenAI API, you can migrate it to Context Engine by simply changing the API endpoint to `http://host:port/context/chat/completions` as follows:
+
+```python
+import openai
+
+openai.api_base = "http://host:port/context/chat/completions"
+
+# now you can use the OpenAI API as usual
+```
+
+or without global state change:
+
+```python
+import openai
+
+openai_response = openai.Completion.create(..., api_base="http://host:port/context/chat/completions")
+```
