@@ -27,6 +27,10 @@ class BaseKnowledgeBase(ABC):
         pass
 
     @abstractmethod
+    def verify_connection_health(self) -> None:
+        pass
+
+    @abstractmethod
     async def aquery(self,
                      queries: List[Query],
                      global_metadata_filter: Optional[dict] = None

@@ -9,8 +9,8 @@ from ...models.data_models import Document
 class TokenChunker(Chunker):
 
     def __init__(self,
-                 max_chunk_size: int = 200,
-                 overlap: int = 0, ):
+                 max_chunk_size: int = 256,
+                 overlap: int = 30, ):
         if overlap < 0:
             cls_name = self.__class__.__name__
             raise ValueError(

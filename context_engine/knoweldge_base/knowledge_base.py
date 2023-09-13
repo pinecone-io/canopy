@@ -87,6 +87,29 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
         return index
 
+    def verify_connection_health(self) -> None:
+        self._verify_not_deleted()
+
+        try:
+            self._index.describe_index_stats()  # type: ignore
+        except Exception as e:
+            try:
+                pinecone_whoami()
+            except Exception:
+                raise RuntimeError(
+                    "Failed to connect to Pinecone. "
+                    "Please check your credentials and try again"
+                ) from e
+
+            if self._index_name not in list_indexes():
+                raise RuntimeError(
+                    f"index {self._index_name} does not exist anymore"
+                    "and was probably deleted. "
+                    "Please create it first using `create_with_new_index()`"
+                ) from e
+            raise RuntimeError("Index unexpectedly did not respond. "
+                               "Please try again in few moments") from e
+
     @classmethod
     def create_with_new_index(cls,
                               index_name: str,
@@ -189,11 +212,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         return self._index_name
 
     def delete_index(self):
-        self._validate_not_deleted()
+        self._verify_not_deleted()
         delete_index(self._index_name)
         self._index = None
 
-    def _validate_not_deleted(self):
+    def _verify_not_deleted(self):
         if self._index is None:
             raise RuntimeError(
                 "index was deleted. "
@@ -218,7 +241,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
-        self._validate_not_deleted()
+        self._verify_not_deleted()
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
@@ -252,7 +275,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 100):
-        self._validate_not_deleted()
+        self._verify_not_deleted()
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
@@ -290,7 +313,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                          df: pd.DataFrame,
                          namespace: str = "",
                          batch_size: int = 100):
-        self._validate_not_deleted()
+        self._verify_not_deleted()
 
         expected_columns = ["id", "text", "metadata"]
         if not all([c in df.columns for c in expected_columns]):
@@ -305,7 +328,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
-        self._validate_not_deleted()
+        self._verify_not_deleted()
         self._index.delete(  # type: ignore
             filter={"document_id": {"$in": document_ids}},
             namespace=namespace

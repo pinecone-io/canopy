@@ -1,4 +1,4 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Iterable
 
 from pydantic import BaseModel, Field, validator
 
@@ -37,9 +37,14 @@ class ChatResponse(BaseModel):
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
 
-class StreamingChatResponse(BaseModel):
+class StreamingChatChunk(BaseModel):
     id: str
     object: str
     created: int
     model: str
     choices: Sequence[_StreamChoice]
+
+
+class StreamingChatResponse(BaseModel):
+    chunks: Iterable[StreamingChatChunk]
+    debug_info: dict = Field(default_factory=dict, exclude=True)

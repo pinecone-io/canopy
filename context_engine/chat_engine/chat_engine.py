@@ -1,5 +1,6 @@
+import os
 from abc import ABC, abstractmethod
-from typing import Iterable, Union, Optional
+from typing import Iterable, Union, Optional, cast
 
 from context_engine.chat_engine.models import HistoryPruningMethod
 from context_engine.chat_engine.prompt_builder import PromptBuilder
@@ -9,8 +10,11 @@ from context_engine.context_engine import ContextEngine
 from context_engine.knoweldge_base.tokenizer import Tokenizer
 from context_engine.llm import BaseLLM
 from context_engine.llm.models import ModelParams, SystemMessage
-from context_engine.models.api_models import StreamingChatResponse, ChatResponse
+from context_engine.models.api_models import (StreamingChatChunk, ChatResponse,
+                                              StreamingChatResponse, )
 from context_engine.models.data_models import Context, Messages
+
+CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
 
 DEFAULT_SYSTEM_PROMPT = """"Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
@@ -25,7 +29,7 @@ class BaseChatEngine(ABC):
              *,
              stream: bool = False,
              model_params: Optional[ModelParams] = None
-             ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+             ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
     # TODO: Decide if we want it for first release in the API
@@ -39,7 +43,7 @@ class BaseChatEngine(ABC):
                     *,
                     stream: bool = False,
                     model_params: Optional[ModelParams] = None
-                    ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+                    ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
     @abstractmethod
@@ -55,8 +59,8 @@ class ChatEngine(BaseChatEngine):
                  *,
                  llm: BaseLLM,
                  context_engine: ContextEngine,
-                 max_prompt_tokens: int,
-                 max_generated_tokens: int,
+                 max_prompt_tokens: int = 4096,
+                 max_generated_tokens: Optional[int] = None,
                  max_context_tokens: Optional[int] = None,
                  query_builder: Optional[QueryGenerator] = None,
                  system_prompt: Optional[str] = None,
@@ -95,7 +99,7 @@ class ChatEngine(BaseChatEngine):
              *,
              stream: bool = False,
              model_params: Optional[ModelParams] = None
-             ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+             ) -> Union[ChatResponse, StreamingChatResponse]:
         context = self.get_context(messages)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
@@ -103,10 +107,24 @@ class ChatEngine(BaseChatEngine):
             messages,
             max_tokens=self.max_prompt_tokens
         )
-        return self.llm.chat_completion(llm_messages,
-                                        max_tokens=self.max_generated_tokens,
-                                        stream=stream,
-                                        model_params=model_params)
+        llm_response = self.llm.chat_completion(llm_messages,
+                                                max_tokens=self.max_generated_tokens,
+                                                stream=stream,
+                                                model_params=model_params)
+        debug_info = {}
+        if CE_DEBUG_INFO:
+            debug_info['context'] = context.dict()
+            debug_info['context'].update(context.debug_info)
+
+        if stream:
+            return StreamingChatResponse(
+                chunks=cast(Iterable[StreamingChatChunk], llm_response),
+                debug_info=debug_info
+            )
+        else:
+            resonse = cast(ChatResponse, llm_response)
+            resonse.debug_info = debug_info
+            return resonse
 
     def get_context(self,
                     messages: Messages,
@@ -120,7 +138,7 @@ class ChatEngine(BaseChatEngine):
                     *,
                     stream: bool = False,
                     model_params: Optional[ModelParams] = None
-                    ) -> Union[ChatResponse, Iterable[StreamingChatResponse]]:
+                    ) -> Union[ChatResponse, StreamingChatResponse]:
         raise NotImplementedError
 
     async def aget_context(self, messages: Messages) -> Context:
