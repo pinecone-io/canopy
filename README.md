@@ -14,7 +14,7 @@ Context Engine is a tool that allows you to build AI applications using your own
 
 Context Engine can be used as a library and as-a-service. The conceptual model is the following:
 
-![conceptual model](https://github.com/pinecone-io/context-engine/blob/add_cli/.readme-content/sketch.png)
+![conceptual model](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/sketch.png)
 
 Where:
 
@@ -33,7 +33,7 @@ Where:
 ```
 2. checkout the server branch
 ```bash
-   git checkout add_cli
+   git checkout dev
 ```
 
 3. add .env file with --> THIS STEP WILL BECOME OBSOLETE SOON AND WE WILL HAVE PROPER CONFIGURATION MANAGEMENT
@@ -81,7 +81,7 @@ And follow the CLI instructions. The index that will be created will have a pref
 
 > Note, this will have to be done only once per index.
 
-![](https://github.com/pinecone-io/context-engine/blob/add_cli/.readme-content/new.gif)
+![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/new.gif)
 
 ### 2. Uploading data
 
