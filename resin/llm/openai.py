@@ -11,7 +11,7 @@ from resin.models.data_models import Messages, Query
 class OpenAILLM(BaseLLM):
 
     def __init__(self,
-                 model_name: str,
+                 model_name: str = "gpt-3.5-turbo",
                  *,
                  model_params: Optional[ModelParams] = None,
                  ):
