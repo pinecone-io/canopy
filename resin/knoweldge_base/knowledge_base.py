@@ -115,8 +115,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def create_with_new_index(cls,
                               index_name: str,
                               *,
-                              encoder: RecordEncoder,
-                              chunker: Chunker,
+                              record_encoder: Optional[RecordEncoder] = None,
+                              chunker: Optional[Chunker] = None,
                               reranker: Optional[Reranker] = None,
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
@@ -135,8 +135,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            if encoder.dimension is not None:
-                dimension = encoder.dimension
+            record_encoder = record_encoder if record_encoder is not None else cls.DEFAULT_RECORD_ENCODER()  # noqa: E501
+            if record_encoder.dimension is not None:
+                dimension = record_encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
@@ -175,7 +176,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # initialize KnowledgeBase
         return cls(index_name=index_name,
-                   record_encoder=encoder,
+                   record_encoder=record_encoder,
                    chunker=chunker,
                    reranker=reranker,
                    default_top_k=default_top_k)
