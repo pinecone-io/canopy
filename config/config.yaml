@@ -15,7 +15,9 @@ knowledge_base:
   chunker:
     type: MarkdownChunker
     params:
-      chunk_size: 200
+      chunk_size: 256
+      chunk_overlap: 0
+      keep_separator: true
 
 context_engine:
   context_builder:
