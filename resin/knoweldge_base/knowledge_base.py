@@ -22,7 +22,7 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
-from resin.utils import _load_encapsulated_component
+from resin.utils import _load_component_from_config
 
 
 INDEX_NAME_PREFIX = "resin--"
@@ -97,7 +97,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                     record_encoder: Optional[RecordEncoder] = None,
                     reranker: Optional[Reranker] = None,
                     ):
-        chunker = _load_encapsulated_component(
+        chunker = _load_component_from_config(
             config, 'chunker', Chunker, cls.DEFAULT_CHUNKER, chunker
         )
 

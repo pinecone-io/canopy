@@ -41,20 +41,31 @@ class FactoryMixin:
 
 class ConfigurableMixin:
     _DEFAULT_COMPONENTS = {}
-    _UNALLOWED_CONFIG_KEYS = {}
+    # _UNALLOWED_CONFIG_KxEYS = {}
     _MANDATORY_CONFIG_KEYS = {}
+    _NAME = ""
 
     @classmethod
-    def from_config(cls,
-                    config: dict,
-                    overrides: dict):
-        pass
+    def _load_configurable_components(cls,
+                                      config: dict,
+                                      overrides: dict,
+                                      **kwargs):
+        missing_keys = set(cls._MANDATORY_CONFIG_KEYS) - set(config.keys())
+        if missing_keys:
+            raise ValueError(f"")
 
-def _load_encapsulated_component(config: dict,
-                                 component_name: str,
-                                 component_base: Type[FactoryMixin],
-                                 default_class: Type[FactoryMixin],
-                                 override_object):
+        # unallowed_keys = set(kwargs.keys()).intersection(set(config.keys()))
+        # if unallowed_keys:
+        #     raise ValueError(f"These keys are not allowed in {cls._NAME} config")
+
+
+
+
+def _load_component_from_config(config: dict,
+                                component_name: str,
+                                component_base: Type[FactoryMixin],
+                                default_class: Type[FactoryMixin],
+                                override_object):
     component_config = config.pop(component_name, None)
     if override_object and component_config:
         raise ValueError(f"Cannot specify both {component_name} and {override_object}")
