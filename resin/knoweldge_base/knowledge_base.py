@@ -22,6 +22,7 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
+from resin.utils import _load_encapsulated_component
 
 
 INDEX_NAME_PREFIX = "resin--"
@@ -87,6 +88,19 @@ class KnowledgeBase(BaseKnowledgeBase):
                 f"Please check your credentials and try again."
             ) from e
         return index
+
+
+    @classmethod
+    def from_config(cls,
+                    config: dict,
+                    chunker: Optional[Chunker] = None,
+                    record_encoder: Optional[RecordEncoder] = None,
+                    reranker: Optional[Reranker] = None,
+                    ):
+        chunker = _load_encapsulated_component(
+            config, 'chunker', Chunker, cls.DEFAULT_CHUNKER, chunker
+        )
+
 
     def verify_connection_health(self) -> None:
         self._verify_not_deleted()
