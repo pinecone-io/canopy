@@ -1,5 +1,5 @@
-import logging
 import os
+import logging
 import sys
 import uuid
 from dotenv import load_dotenv
@@ -20,7 +20,7 @@ from typing import cast
 from context_engine.models.api_models import StreamingChatResponse, ChatResponse
 from context_engine.models.data_models import Context
 from service.api_models import \
-    ChatRequest, ContextQueryRequest, ContextUpsertRequest
+    ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
 load_dotenv()  # load env vars before import of openai
 from context_engine.llm.openai import OpenAILLM  # noqa: E402
@@ -136,7 +136,7 @@ async def health_check():
         raise HTTPException(
             status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
 
-    return "All clear!"
+    return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
 @app.on_event("startup")
@@ -177,9 +177,9 @@ def _init_engines():
     chat_engine = ChatEngine(llm=llm, context_engine=context_engine)
 
 
-def start():
+def start(host="0.0.0.0", port=8000, reload=False):
     uvicorn.run("service.app:app",
-                host="0.0.0.0", port=8000, reload=True)
+                host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":
