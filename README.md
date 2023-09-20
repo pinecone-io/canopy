@@ -136,6 +136,8 @@ resin chat
 
 This will open a chat interface in your terminal. You can ask questions and the **Resin** will try to answer them using the data you uploaded.
 
+![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-chat.gif)
+
 To compare the chat response with and without RAG use the `--no-rag` flag
 
 ```bash
@@ -143,6 +145,8 @@ resin chat --no-rag
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
+
+![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-chat-no-rag.gif)
 
 
 ### 5. Stop the **Resin** service
