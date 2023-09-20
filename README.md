@@ -123,6 +123,9 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
+![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-start.gif)
+
+
 ### 4. Chat with your data
 
 Now that you have data in your index, you can chat with it using the CLI:
