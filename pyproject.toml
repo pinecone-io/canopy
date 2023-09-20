@@ -62,5 +62,6 @@ per-file-ignores = [
 max-line-length = 88
 
 [tool.poetry.scripts]
-context-engine = "service.cli:cli"
+resin = "service.cli:cli"
+Resin = "service.cli:cli"
 service = "context_engine.service.app:start"

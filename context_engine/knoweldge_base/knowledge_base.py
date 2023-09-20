@@ -23,7 +23,7 @@ from context_engine.knoweldge_base.reranker import Reranker, TransparentReranker
 from context_engine.models.data_models import Query, Document
 
 
-INDEX_NAME_PREFIX = "context-engine-"
+INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3

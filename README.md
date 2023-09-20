@@ -1,18 +1,18 @@
-# context-engine
+# Resin
 
-Context Engine is a tool that allows you to build AI applications using your own data. It is built on top of Pinecone, the world's most powerfull vector database. Context Engine is desinged to be well packaged and easy to use. It can be used as a library or as a service. It is also designed to be modular, so you can use only the parts that you need. Context Engine is built with the following principles in mind:
+**Resin** is a tool that allows you to build AI applications using your own data. It is built on top of Pinecone, the world's most powerfull vector database. **Resin** is desinged to be well packaged and easy to use. It can be used as a library or as a service. It is also designed to be modular, so you can use only the parts that you need. **Resin** is built with the following principles in mind:
 
-* **Easy to use** - Context Engine is designed to be easy to use. It is well packaged and can be installed with a single command. It is also designed to be modular, so you can use only the parts that you need.
+* **Easy to use** - **Resin** is designed to be easy to use. It is well packaged and can be installed with a single command. It is also designed to be modular, so you can use only the parts that you need.
 
-* **Production ready** - Context Engine is built on top of Pinecone, the world's most powerfull vector database. It is designed to be production ready, 100% tested, well documented, maintained and supported.
+* **Production ready** - **Resin** is built on top of Pinecone, the world's most powerfull vector database. It is designed to be production ready, 100% tested, well documented, maintained and supported.
 
-* **Open source** - Context Engine is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
+* **Open source** - **Resin** is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
 
-* **Operative AI** - Context Engine is designed to be used in production and as such, it allows developers to set up operating point to have better control over token consumption in prompt or in generation. Context Engine can maximize context quality and relevance while controlling the cost of the AI system.
+* **Operative AI** - **Resin** is designed to be used in production and as such, it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Resin** can maximize context quality and relevance while controlling the cost of the AI system.
 
 ## Concept
 
-Context Engine can be used as a library and as-a-service. The conceptual model is the following:
+**Resin** can be used as a library and as-a-service. The conceptual model is the following:
 
 ![conceptual model](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/sketch.png)
 
@@ -67,28 +67,28 @@ pip install -e .
 
 ## Quickstart
 
-In this quickstart, we will show you how to use the Context Engine to build a simple question answering system using RAG (retrival augmented generation).
+In this quickstart, we will show you how to use the **Resin** to build a simple question answering system using RAG (retrival augmented generation).
 
-### 1. Create a new Context Engine Index
+### 1. Create a new **Resin** Index
 
-Context Engine will create and configure a new Pinecone index on your behalf. Just run:
+**Resin** will create and configure a new Pinecone index on your behalf. Just run:
 
 ```bash
-context-engine new
+resin new
 ```
 
 And follow the CLI instructions. The index that will be created will have a prefix `context-engine-INDEX_NAME`.
 
 > Note, this will have to be done only once per index.
 
-![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/new.gif)
+![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/resin-new.gif)
 
 ### 2. Uploading data
 
-You can load data into your Context Engine Index by simply using the CLI:
+You can load data into your **Resin** Index by simply using the CLI:
 
 ```bash
-context-engine upsert <PATH_TO_DATA>
+resin upsert <PATH_TO_DATA>
 ```
 
 The data should be in a parquet format where each row is a document. The documents should have the following schema:
@@ -103,18 +103,20 @@ The data should be in a parquet format where each row is a document. The documen
 
 Follow the instructions in the CLI to upload your data.
 
-### 3. Start the Context Engine service
+![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/resin-upsert.gif)
 
-Context Engine service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
+### 3. Start the **Resin** service
+
+**Resin** service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
 
 ```bash
-context-engine start
+resin start
 ```
 
 Now, you should be prompted with standard Uvicorn logs:
 
 ```
-Starting Context Engine service on 0.0.0.0:8000
+Starting Resin service on 0.0.0.0:8000
 INFO:     Started server process [24431]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
@@ -126,35 +128,35 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 Now that you have data in your index, you can chat with it using the CLI:
 
 ```bash
-context-engine chat
+resin chat
 ```
 
-This will open a chat interface in your terminal. You can ask questions and the Context Engine will try to answer them using the data you uploaded.
+This will open a chat interface in your terminal. You can ask questions and the **Resin** will try to answer them using the data you uploaded.
 
 To compare the chat response with and without RAG use the `--no-rag` flag
 
 ```bash
-context-engine chat --no-rag
+resin chat --no-rag
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
 
 
-### 5. Stop the Context Engine service
+### 5. Stop the **Resin** service
 
 To stop the service, simply press `CTRL+C` in the terminal where you started it.
 
 If you have started the service in the background, you can stop it by running:
 
 ```bash
-context-engine stop
+resin stop
 ```
 
 ## Advanced usage
 
-### 1. Migrating existing OpenAI application to Context Engine
+### 1. Migrating existing OpenAI application to **Resin**
 
-If you already have an application that uses the OpenAI API, you can migrate it to Context Engine by simply changing the API endpoint to `http://host:port/context` as follows:
+If you already have an application that uses the OpenAI API, you can migrate it to **Resin** by simply changing the API endpoint to `http://host:port/context` as follows:
 
 ```python
 import openai

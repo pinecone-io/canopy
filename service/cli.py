@@ -37,14 +37,14 @@ def is_healthy(url: str):
 @click.group()
 def cli():
     """
-    CLI for Pinecone Context Engine. Actively developed by Pinecone.
+    CLI for Pinecone Resin. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
     pass
 
 
-@cli.command(help="Check if Context Engine service is running")
+@cli.command(help="Check if Resin service is running")
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
@@ -53,13 +53,13 @@ def health(host, port, ssl):
     service_url = f"http{ssl_str}://{host}:{port}"
     if not is_healthy(service_url):
         msg = (
-            f"Context Engine service is not running! on {service_url}"
-            + " please run `context-engine start`"
+            f"Resin service is not running! on {service_url}"
+            + " please run `resin start`"
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     else:
-        click.echo(click.style("Context Engine service is healthy!", fg="green"))
+        click.echo(click.style("Resin service is healthy!", fg="green"))
         return
 
 
@@ -67,7 +67,7 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
-    click.echo("Context Engine is going to create a new index: ", nl=False)
+    click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
@@ -102,7 +102,7 @@ def upsert(index_name, data_path, tokenizer_model):
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo(
-        f"Context Engine is going to upsert data from {data_path} to index: "
+        f"Resin is going to upsert data from {data_path} to index: "
         f"{INDEX_NAME_PREFIX}{index_name}"
     )
     kb = KnowledgeBase(index_name=index_name)
@@ -136,13 +136,16 @@ def _chat(
     click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
     if stream:
         for chunk in openai_response:
+            openai_response_id = chunk.id
             intenal_model = chunk.model
             text = chunk.choices[0].delta.get("content", "")
             output += text
             click.echo(text, nl=False)
         click.echo()
         debug_info = ChatDebugInfo(
-            intenal_model=intenal_model, duration_in_sec=round(duration_in_sec, 2)
+            id=openai_response_id,
+            intenal_model=intenal_model, 
+            duration_in_sec=round(duration_in_sec, 2)
         )
     else:
         intenal_model = openai_response.model
@@ -150,6 +153,7 @@ def _chat(
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
+            id=openai_response.id,
             intenal_model=intenal_model,
             duration_in_sec=duration_in_sec,
             prompt_tokens=openai_response.usage.prompt_tokens,
@@ -166,7 +170,7 @@ def _chat(
 
 @cli.command()
 @click.option("--stream/--no-stream", default=True, help="Stream")
-@click.option("--debug-info/--no-debug-info", default=False, help="Print debug info")
+@click.option("--debug/--no-debug", default=False, help="Print debug info")
 @click.option(
     "--rag/--no-rag",
     default=True,
@@ -178,11 +182,11 @@ def _chat(
     default=os.environ.get("INDEX_NAME"),
     help="Index name suffix",
 )
-def chat(index_name, chat_service_url, rag, debug_info, stream):
+def chat(index_name, chat_service_url, rag, debug, stream):
     if not is_healthy(chat_service_url):
         msg = (
-            f"Context Engine service is not running! on {chat_service_url}"
-            + " please run `context-engine start`"
+            f"Resin service is not running! on {chat_service_url}"
+            + " please run `resin start`"
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
@@ -202,7 +206,7 @@ def chat(index_name, chat_service_url, rag, debug_info, stream):
             message=message,
             stream=stream,
             api_base=os.path.join(chat_service_url, "context"),
-            print_debug_info=debug_info,
+            print_debug_info=debug,
         )
 
         if not rag:
@@ -213,7 +217,7 @@ def chat(index_name, chat_service_url, rag, debug_info, stream):
                 history=history_without_pinecone,
                 message=message,
                 stream=stream,
-                print_debug_info=debug_info,
+                print_debug_info=debug,
             )
 
         click.echo(click.style("\n.", fg="bright_black"))
@@ -233,7 +237,7 @@ def chat(index_name, chat_service_url, rag, debug_info, stream):
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
 @click.option("--reload/--no-reload", default=False, help="Reload")
 def start(host, port, ssl, reload):
-    click.echo(f"Starting Context Engine service on {host}:{port}")
+    click.echo(f"Starting Resin service on {host}:{port}")
     start_service(host, port, reload)
 
 
@@ -247,8 +251,8 @@ def stop(host, port, ssl):
 
     if not is_healthy(service_url):
         msg = (
-            f"Context Engine service is not running! on {service_url}"
-            + " please run `context-engine start`"
+            f"Resin service is not running! on {service_url}"
+            + " please run `resin start`"
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
@@ -260,7 +264,7 @@ def stop(host, port, ssl):
     if running_server_id == "":
         click.echo(
             click.style(
-                "Did not find active process for context-engine service"
+                "Did not find active process for Resin service"
                 + f" on {host}:{port}",
                 fg="red",
             )
@@ -277,7 +281,7 @@ def stop(host, port, ssl):
 
     click.confirm(
         click.style(
-            f"Stopping Context Engine service on {host}:{port} with pid "
+            f"Stopping Resin service on {host}:{port} with pid "
             f"{running_server_id}",
             fg="red",
         ),
