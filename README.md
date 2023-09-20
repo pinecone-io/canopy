@@ -81,7 +81,7 @@ And follow the CLI instructions. The index that will be created will have a pref
 
 > Note, this will have to be done only once per index.
 
-![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/resin-new.gif)
+![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-new.gif)
 
 ### 2. Uploading data
 
@@ -103,7 +103,7 @@ The data should be in a parquet format where each row is a document. The documen
 
 Follow the instructions in the CLI to upload your data.
 
-![](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/resin-upsert.gif)
+![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-upsert.gif)
 
 ### 3. Start the **Resin** service
 
