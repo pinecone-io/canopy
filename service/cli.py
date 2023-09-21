@@ -144,7 +144,7 @@ def _chat(
         click.echo()
         debug_info = ChatDebugInfo(
             id=openai_response_id,
-            intenal_model=intenal_model, 
+            intenal_model=intenal_model,
             duration_in_sec=round(duration_in_sec, 2)
         )
     else:
