@@ -29,6 +29,7 @@ class HealthStatus(BaseModel):
 
 
 class ChatDebugInfo(BaseModel):
+    id: str
     duration_in_sec: float
     intenal_model: str
     prompt_tokens: Optional[int] = None
