@@ -77,7 +77,7 @@ In this quickstart, we will show you how to use the **Resin** to build a simple 
 resin new
 ```
 
-And follow the CLI instructions. The index that will be created will have a prefix `context-engine-INDEX_NAME`.
+And follow the CLI instructions. The index that will be created will have a prefix `resin--<INDEX_NAME>`.
 
 > Note, this will have to be done only once per index.
 

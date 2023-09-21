@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "context-engine"
 version = "0.1.0"
-description = "Context engine for intergating LLMs with Pinecone indexes"
+description = "Resin is a orchestration engine for intergating LLMs with Pinecone indexes"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
 packages = [{include = "context_engine"}]
