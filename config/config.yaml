@@ -7,7 +7,7 @@ knowledge_base:
   params:
     default_top_k: 5
 
-  record_encoder:
+record_encoder:
     type: OpenAIEncoder
     params:
       model_name: "text-embedding-ada-002"

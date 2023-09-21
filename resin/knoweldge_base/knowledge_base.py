@@ -22,7 +22,7 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
-from resin.utils import _load_component_from_config
+from resin.utils import ConfigurableMixin
 
 
 INDEX_NAME_PREFIX = "resin--"
@@ -31,11 +31,17 @@ TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
 
 
-class KnowledgeBase(BaseKnowledgeBase):
+class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
 
-    DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
-    DEFAULT_CHUNKER = MarkdownChunker
-    DEFAULT_RERANKER = TransparentReranker
+    _DEFAULT_COMPONENTS = {
+        'record_encoder': OpenAIRecordEncoder,
+        'chunker': MarkdownChunker,
+        'reranker': TransparentReranker
+    }
+
+    # DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
+    # DEFAULT_CHUNKER = MarkdownChunker
+    # DEFAULT_RERANKER = TransparentReranker
 
     def __init__(self,
                  index_name: str,
@@ -50,7 +56,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = record_encoder if record_encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
+        self._encoder = record_encoder if record_encoder is not None else \
+            self._DEFAULT_COMPONENTS['record_encoder    ']  # noqa: E501
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
@@ -92,14 +99,16 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     @classmethod
     def from_config(cls,
+                    index_name: str,
+                    *
                     config: dict,
                     chunker: Optional[Chunker] = None,
                     record_encoder: Optional[RecordEncoder] = None,
                     reranker: Optional[Reranker] = None,
                     ):
-        chunker = _load_component_from_config(
-            config, 'chunker', Chunker, cls.DEFAULT_CHUNKER, chunker
-        )
+        return cls._from_config(config=config, index_name=index_name,
+                                chunker=chunker, record_encoder=record_encoder,
+                                reranker=reranker)
 
 
     def verify_connection_health(self) -> None:

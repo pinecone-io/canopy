@@ -39,20 +39,48 @@ class FactoryMixin:
 
 
 
-class ConfigurableMixin:
+class ConfigurableMixin(abc.ABC):
     _DEFAULT_COMPONENTS = {}
     # _UNALLOWED_CONFIG_KxEYS = {}
     _MANDATORY_CONFIG_KEYS = {}
     _NAME = ""
 
     @classmethod
-    def _load_configurable_components(cls,
-                                      config: dict,
-                                      overrides: dict,
-                                      **kwargs):
+    @abc.abstractmethod
+    def from_config(cls, config: dict):
+        pass
+
+    @classmethod
+    def _from_config(cls,
+                     config: dict,
+                     **kwargs):
         missing_keys = set(cls._MANDATORY_CONFIG_KEYS) - set(config.keys())
         if missing_keys:
             raise ValueError(f"")
+
+        loaded_components = {}
+        for component_name in cls._DEFAULT_COMPONENTS:
+            override = kwargs.get(component_name, None)
+            component_config = config.pop(component_name, None)
+            if component_config and override:
+                raise ValueError(f"Cannot both provide {component_name} override and config."
+                                 f" If you want to use your own {component_name} - remove"
+                                 f" the {component_name} key from the config")
+            if override:
+                 component = override
+            elif component_config:
+                default_class = cls._DEFAULT_COMPONENTS[component_name]
+                if issubclass(default_class, FactoryMixin):
+                    component = default_class.__base__.from_config(component_config,
+                                                                   default_class)
+                elif issubclass(default_class, ConfigurableMixin):
+                    component = default_class.from_config(component_config)
+            else:
+                pass
+            loaded_components[component_name] = component
+
+        return cls(**kwargs, **config)
+
 
         # unallowed_keys = set(kwargs.keys()).intersection(set(config.keys()))
         # if unallowed_keys:
