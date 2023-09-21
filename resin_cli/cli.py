@@ -13,9 +13,9 @@ from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 
-from service.app import start as start_service
-from service.cli_spinner import Spinner
-from service.api_models import ChatDebugInfo
+from .app import start as start_service
+from .cli_spinner import Spinner
+from .api_models import ChatDebugInfo
 
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")

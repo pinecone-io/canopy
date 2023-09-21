@@ -19,7 +19,7 @@ from typing import cast
 
 from resin.models.api_models import StreamingChatResponse, ChatResponse
 from resin.models.data_models import Context
-from service.api_models import \
+from resin_cli.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
 load_dotenv()  # load env vars before import of openai
@@ -178,7 +178,7 @@ def _init_engines():
 
 
 def start(host="0.0.0.0", port=8000, reload=False):
-    uvicorn.run("service.app:app",
+    uvicorn.run("resin_cli.app:app",
                 host=host, port=port, reload=reload)
 
 

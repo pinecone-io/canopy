@@ -4,7 +4,8 @@ version = "0.1.0"
 description = "Resin is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
-packages = [{include = "resin"}]
+packages = [{include = "resin"},
+            {include = "resin_cli"},]
 
 [tool.poetry.dependencies]
 python = "^3.9"
@@ -62,5 +63,5 @@ per-file-ignores = [
 max-line-length = 88
 
 [tool.poetry.scripts]
-resin = "service.cli:cli"
-service = "context_engine.service.app:start"
+resin = "resin_cli.cli:cli"
+service = "resin_cli.service.app:start"
