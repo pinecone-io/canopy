@@ -2,10 +2,10 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from context_engine.llm.openai import OpenAILLM # noqa
-from context_engine.models.data_models import MessageBase, Query # noqa
-from context_engine.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
-from context_engine.chat_engine.prompt_builder import PromptBuilder # noqa
+from resin.llm.openai import OpenAILLM # noqa
+from resin.models.data_models import MessageBase, Query # noqa
+from resin.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
+from resin.chat_engine.prompt_builder import PromptBuilder # noqa
 from typing import List # noqa
 
 

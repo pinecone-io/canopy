@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
 from datetime import datetime
-from context_engine.knoweldge_base import KnowledgeBase
-from context_engine.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
-from context_engine.knoweldge_base.models import DocumentWithScore
-from context_engine.models.data_models import Document, Query
+from resin.knoweldge_base import KnowledgeBase
+from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
+from resin.knoweldge_base.models import DocumentWithScore
+from resin.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker

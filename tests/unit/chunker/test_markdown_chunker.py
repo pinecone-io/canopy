@@ -1,8 +1,8 @@
 import pytest
 
-from context_engine.knoweldge_base.chunker import MarkdownChunker
-from context_engine.knoweldge_base.models import KBDocChunk
-from context_engine.models.data_models import Document
+from resin.knoweldge_base.chunker import MarkdownChunker
+from resin.knoweldge_base.models import KBDocChunk
+from resin.models.data_models import Document
 from tests.unit.chunker.base_test_chunker import BaseTestChunker
 
 

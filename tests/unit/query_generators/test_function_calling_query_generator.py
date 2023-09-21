@@ -3,15 +3,15 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from context_engine.chat_engine.prompt_builder import PromptBuilder
-from context_engine.chat_engine.query_generator.function_calling \
+from resin.chat_engine.prompt_builder import PromptBuilder
+from resin.chat_engine.query_generator.function_calling \
     import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
             DEFAULT_SYSTEM_PROMPT, )
-from context_engine.llm import BaseLLM
-from context_engine.llm.models import (ModelParams, Function,
-                                       FunctionParameters, FunctionArrayProperty,
-                                       UserMessage, )
-from context_engine.models.data_models import Query
+from resin.llm import BaseLLM
+from resin.llm.models import (ModelParams, Function,
+                              FunctionParameters, FunctionArrayProperty,
+                              UserMessage, )
+from resin.models.data_models import Query
 
 
 class TestFunctionCallingQueryGenerator:

@@ -1,6 +1,6 @@
 import pytest
-from context_engine.knoweldge_base.tokenizer import OpenAITokenizer
-from context_engine.models.data_models import MessageBase, Role
+from resin.knoweldge_base.tokenizer import OpenAITokenizer
+from resin.models.data_models import MessageBase, Role
 from .base_test_tokenizer import BaseTestTokenizer
 
 

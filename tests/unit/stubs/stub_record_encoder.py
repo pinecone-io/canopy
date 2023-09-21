@@ -1,8 +1,8 @@
 from typing import List
 
-from context_engine.knoweldge_base.record_encoder import RecordEncoder
-from context_engine.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
-from context_engine.models.data_models import Query
+from resin.knoweldge_base.record_encoder import RecordEncoder
+from resin.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
+from resin.models.data_models import Query
 from .stub_dense_encoder import StubDenseEncoder
 
 

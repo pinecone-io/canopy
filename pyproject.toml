@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "context-engine"
+name = "pinecone-resin"
 version = "0.1.0"
 description = "Context engine for intergating LLMs with Pinecone indexes"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
-packages = [{include = "context_engine"}]
+packages = [{include = "resin"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"

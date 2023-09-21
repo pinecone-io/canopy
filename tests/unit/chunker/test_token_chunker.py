@@ -1,9 +1,9 @@
 import pytest
 
-from context_engine.knoweldge_base.models import KBDocChunk
-from context_engine.models.data_models import Document
+from resin.knoweldge_base.models import KBDocChunk
+from resin.models.data_models import Document
 from .base_test_chunker import BaseTestChunker
-from context_engine.knoweldge_base.chunker.token_chunker import TokenChunker
+from resin.knoweldge_base.chunker.token_chunker import TokenChunker
 
 
 class TestTokenChunker(BaseTestChunker):

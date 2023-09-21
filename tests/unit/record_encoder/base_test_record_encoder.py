@@ -2,8 +2,8 @@ import pytest
 import math
 from abc import ABC, abstractmethod
 
-from context_engine.knoweldge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
-from context_engine.models.data_models import Query
+from resin.knoweldge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
+from resin.models.data_models import Query
 
 
 class BaseTestRecordEncoder(ABC):

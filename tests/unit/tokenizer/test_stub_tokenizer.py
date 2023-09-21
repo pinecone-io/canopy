@@ -1,6 +1,6 @@
 import pytest
 
-from context_engine.models.data_models import MessageBase, Role
+from resin.models.data_models import MessageBase, Role
 from .base_test_tokenizer import BaseTestTokenizer
 from ..stubs.stub_tokenizer import StubTokenizer
 

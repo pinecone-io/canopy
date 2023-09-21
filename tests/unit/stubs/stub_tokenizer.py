@@ -1,6 +1,6 @@
 from typing import List
-from context_engine.knoweldge_base.tokenizer.tokenizer import BaseTokenizer
-from context_engine.models.data_models import Messages
+from resin.knoweldge_base.tokenizer.tokenizer import BaseTokenizer
+from resin.models.data_models import Messages
 
 
 class StubTokenizer(BaseTokenizer):

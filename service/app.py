@@ -4,12 +4,12 @@ import sys
 import uuid
 from dotenv import load_dotenv
 
-from context_engine.llm import BaseLLM
-from context_engine.llm.models import UserMessage
-from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
-from context_engine.knoweldge_base import KnowledgeBase
-from context_engine.context_engine import ContextEngine
-from context_engine.chat_engine import ChatEngine
+from resin.llm import BaseLLM
+from resin.llm.models import UserMessage
+from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
+from resin.knoweldge_base import KnowledgeBase
+from resin.context_engine import ContextEngine
+from resin.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
@@ -17,13 +17,13 @@ from fastapi import FastAPI, HTTPException, Body
 import uvicorn
 from typing import cast
 
-from context_engine.models.api_models import StreamingChatResponse, ChatResponse
-from context_engine.models.data_models import Context
+from resin.models.api_models import StreamingChatResponse, ChatResponse
+from resin.models.data_models import Context
 from service.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
 load_dotenv()  # load env vars before import of openai
-from context_engine.llm.openai import OpenAILLM  # noqa: E402
+from resin.llm.openai import OpenAILLM  # noqa: E402
 
 
 INDEX_NAME = os.getenv("INDEX_NAME")
@@ -149,7 +149,7 @@ def _init_logging():
     global logger
 
     file_handler = logging.FileHandler(
-        filename=os.getenv("CE_LOG_FILENAME", "context_engine.log")
+        filename=os.getenv("CE_LOG_FILENAME", "resin.log")
     )
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]

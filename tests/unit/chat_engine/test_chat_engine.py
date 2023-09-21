@@ -3,14 +3,14 @@ from unittest.mock import create_autospec
 import pytest
 import random
 
-from context_engine.chat_engine import ChatEngine
-from context_engine.chat_engine.query_generator import QueryGenerator
-from context_engine.context_engine import ContextEngine
-from context_engine.context_engine.models import ContextQueryResult, ContextSnippet
-from context_engine.llm import BaseLLM
-from context_engine.llm.models import SystemMessage
-from context_engine.models.api_models import ChatResponse, _Choice, TokenCounts
-from context_engine.models.data_models import MessageBase, Query, Context, Role
+from resin.chat_engine import ChatEngine
+from resin.chat_engine.query_generator import QueryGenerator
+from resin.context_engine import ContextEngine
+from resin.context_engine.models import ContextQueryResult, ContextSnippet
+from resin.llm import BaseLLM
+from resin.llm.models import SystemMessage
+from resin.models.api_models import ChatResponse, _Choice, TokenCounts
+from resin.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt"

@@ -1,6 +1,6 @@
 import pytest
 
-from context_engine.knoweldge_base.models import KBDocChunk
+from resin.knoweldge_base.models import KBDocChunk
 from .base_test_chunker import BaseTestChunker
 from ..stubs.stub_chunker import StubChunker
 

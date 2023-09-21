@@ -9,9 +9,9 @@ from dotenv import load_dotenv
 import pandas as pd
 import openai
 
-from context_engine.knoweldge_base import KnowledgeBase
-from context_engine.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
-from context_engine.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
+from resin.knoweldge_base import KnowledgeBase
+from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
+from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 
 from service.app import start as start_service
 from service.cli_spinner import Spinner

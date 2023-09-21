@@ -1,6 +1,6 @@
 import pytest
 from abc import ABC, abstractmethod
-from context_engine.models.data_models import Document
+from resin.models.data_models import Document
 
 
 class BaseTestChunker(ABC):

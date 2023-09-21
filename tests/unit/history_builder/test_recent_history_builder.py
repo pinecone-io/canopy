@@ -1,7 +1,7 @@
 import pytest
 
-from context_engine.chat_engine.history_pruner import RecentHistoryPruner
-from context_engine.llm.models import UserMessage, AssistantMessage
+from resin.chat_engine.history_pruner import RecentHistoryPruner
+from resin.llm.models import UserMessage, AssistantMessage
 
 
 @pytest.fixture

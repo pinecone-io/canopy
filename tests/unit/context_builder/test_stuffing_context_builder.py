@@ -1,10 +1,10 @@
-from context_engine.context_engine.models import \
+from resin.context_engine.models import \
     ContextSnippet, ContextQueryResult
-from context_engine.models.data_models import Context
+from resin.models.data_models import Context
 from ..stubs.stub_tokenizer import StubTokenizer
-from context_engine.knoweldge_base.models import \
+from resin.knoweldge_base.models import \
     QueryResult, DocumentWithScore
-from context_engine.context_engine.context_builder import StuffingContextBuilder
+from resin.context_engine.context_builder import StuffingContextBuilder
 
 
 class TestStuffingContextBuilder:

@@ -1,5 +1,5 @@
 import pytest
-from context_engine.knoweldge_base.tokenizer import Tokenizer
+from resin.knoweldge_base.tokenizer import Tokenizer
 from ..stubs.stub_tokenizer import StubTokenizer
 
 
