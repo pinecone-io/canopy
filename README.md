@@ -26,30 +26,7 @@ Where:
 
 ## How to install
 
-1. clone the repo and cd into it
-```bash
-   git clone git@github.com:pinecone-io/context-engine.git
-   cd context-engine
-```
-2. checkout the server branch
-```bash
-   git checkout dev
-```
-
-3. add .env file with --> THIS STEP WILL BECOME OBSOLETE SOON AND WE WILL HAVE PROPER CONFIGURATION MANAGEMENT
-```bash
-vi .env
-```
-add the following envs
-
-```bash
-PINECONE_API_KEY="<PINECONE_API_KEY>"
-PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
-OPENAI_API_KEY="<OPENAI_API_KEY>"
-INDEX_NAME_SUFFIX="test-index-1"
-```
-
-or set them in your shell
+1. Set up the environment variables
 
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
@@ -58,12 +35,12 @@ export OPENAI_API_KEY="<OPENAI_API_KEY>"
 export INDEX_NAME="test-index-1"
 ```
 
-3. install the package
+2. install the package
 ```bash
-pip install -e .
+pip install pinecone-resin
 ```
 
-4. you are good to go! see the demo on how to run it
+3. you are good to go! see the quickstart guide on how to run basic demo
 
 ## Quickstart
 
