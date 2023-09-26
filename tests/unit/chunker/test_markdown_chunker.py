@@ -143,8 +143,8 @@ a | b | c
 
             KBDocChunk(
                 id='test_document_1_2',
-                text='## Another second level header\ntext after second level header\n\n'
-                     '## Lists'
+                text='## Another second level header\ntext after second level header'
+                     '\n\n## Lists'
                      '\n\n### Unordered\n\n* Item 1\n* Item 2\n  * Sub-item 2.1'
                      '\n  * Sub-item 2.2'
                      '\n\n### Ordered\n\n1. First item\n2. Second item'
