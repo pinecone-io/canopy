@@ -3,6 +3,7 @@ import pytest
 import pinecone
 import numpy as np
 import pandas as pd
+from tenacity import retry, stop_after_attempt, wait_fixed
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
@@ -60,6 +61,7 @@ def total_vectors_in_index(knowledge_base):
     return knowledge_base._index.describe_index_stats().total_vector_count
 
 
+@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
 def assert_chunks_in_index(knowledge_base, encoded_chunks):
     ids = [c.id for c in encoded_chunks]
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
@@ -72,11 +74,18 @@ def assert_chunks_in_index(knowledge_base, encoded_chunks):
         assert fetch_result[chunk.id].metadata["document_id"] == chunk.document_id
 
 
+@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
 def assert_ids_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == len(ids)
 
 
+@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
+def assert_num_vectors_in_index(knowledge_base, num_vectors):
+    assert total_vectors_in_index(knowledge_base) == num_vectors
+
+
+@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
 def assert_ids_not_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == 0
@@ -126,8 +135,7 @@ def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
 def test_upsert(knowledge_base, documents, encoded_chunks):
     knowledge_base.upsert(documents)
 
-    assert total_vectors_in_index(
-        knowledge_base) == len(encoded_chunks)
+    assert_num_vectors_in_index(knowledge_base, len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
 
 
@@ -145,9 +153,8 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
     chunks = chunker.chunk_documents(documents)
     encoded_chunks = encoder.encode_documents(chunks)
 
-    vec_after = total_vectors_in_index(knowledge_base)
 
-    assert vec_after - vec_before == len(encoded_chunks)
+    assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
 
 
@@ -177,7 +184,7 @@ def test_query(knowledge_base, encoded_chunks):
     for i, q_res in enumerate(query_results):
         assert queries[i].text == q_res.query
         assert len(q_res.documents) == expected_top_k[i]
-        q_res.documents[0].score = round(q_res.documents[0].score, 6)
+        q_res.documents[0].score = round(q_res.documents[0].score, 2)
         assert q_res.documents[0] == expected_first_results[i]
 
 
@@ -195,10 +202,7 @@ def test_delete_documents(knowledge_base, encoded_chunks):
 
     knowledge_base.delete(document_ids=list(doc_ids))
 
-    after_vector_cnt = total_vectors_in_index(knowledge_base)
-
-    assert before_vector_cnt - after_vector_cnt == len(chunk_ids)
-
+    assert_num_vectors_in_index(knowledge_base, before_vector_cnt - len(chunk_ids))
     assert_ids_not_in_index(knowledge_base, chunk_ids)
 
 

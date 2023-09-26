@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from datetime import datetime
 import time
@@ -327,12 +328,26 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete(self,
                document_ids: List[str],
-               namespace: str = "") -> None:
+               namespace: str = "",
+               batch_size: int = 100) -> None:
         self._verify_not_deleted()
-        self._index.delete(  # type: ignore
-            filter={"document_id": {"$in": document_ids}},
-            namespace=namespace
-        )
+
+        for i in range(0, len(document_ids), batch_size):
+            doc_ids_chunk = document_ids[i:i + batch_size]
+            if self._is_starter_env():
+                chunks_ids = [f"{doc_id}_{i}"
+                              for doc_id in doc_ids_chunk for i in range(100)]
+                self._index.delete(ids=chunks_ids, namespace=namespace)
+            else:
+                self._index.delete(  # type: ignore
+                    filter={"document_id": {"$in": doc_ids_chunk}},
+                    namespace=namespace
+                )
+
+    @staticmethod
+    def _is_starter_env():
+        starter_env_suffixes = ("starter", "stage-gcp-0")
+        return os.getenv("PINECONE_ENVIRONMENT").lower().endswith(starter_env_suffixes)
 
     async def aquery(self,
                      queries: List[Query],
@@ -347,5 +362,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     async def adelete(self,
                       document_ids: List[str],
-                      namespace: str = "") -> None:
+                      namespace: str = "",
+                      batch_size: int = 100) -> None:
         raise NotImplementedError()
