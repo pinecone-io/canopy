@@ -36,15 +36,17 @@ class TestTokenChunker(BaseTestChunker):
                 KBDocChunk(id='test_document_1_4',
                            text='this simple chunker',
                            metadata={'test': '1'},
-                           document_id='test_document_1'),
+                           document_id='test_document_1',),
                 KBDocChunk(id='test_document_2_0',
                            text='another simple test string',
                            metadata={'test': '2'},
-                           document_id='test_document_2'),
+                           document_id='test_document_2',
+                           source='doc_2'),
                 KBDocChunk(id='test_document_3_0',
                            text='short',
                            metadata={'test': '2'},
-                           document_id='test_document_3'),
+                           document_id='test_document_3',
+                           source='doc_3'),
                 ]
 
     @staticmethod

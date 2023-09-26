@@ -1,4 +1,6 @@
 import os
+import random
+
 import pytest
 import pinecone
 import numpy as np
@@ -12,6 +14,7 @@ from resin.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker
+from tests.unit import random_words
 
 
 load_dotenv()
@@ -70,6 +73,7 @@ def assert_chunks_in_index(knowledge_base, encoded_chunks):
                            atol=1e-8)
         assert fetch_result[chunk.id].metadata["text"] == chunk.text
         assert fetch_result[chunk.id].metadata["document_id"] == chunk.document_id
+        assert fetch_result[chunk.id].metadata["source"] == chunk.source
 
 
 def assert_ids_in_index(knowledge_base, ids):
@@ -91,10 +95,20 @@ def teardown_knowledge_base(index_full_name, knowledge_base):
         pinecone.delete_index(index_full_name)
 
 
+def _generate_text(num_words: int):
+    return " ".join(random.choices(random_words, k=num_words))
+
+
+@pytest.fixture(scope="module")
+def random_texts():
+    return [_generate_text(10) for _ in range(5)]
+
+
 @pytest.fixture
-def documents():
+def documents(random_texts):
     return [Document(id=f"doc_{i}",
-                     text=f"Sample document {i}",
+                     text=random_texts[i],
+                     source=f"source_{i}",
                      metadata={"test": i})
             for i in range(5)]
 
@@ -144,6 +158,8 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
 
     chunks = chunker.chunk_documents(documents)
     encoded_chunks = encoder.encode_documents(chunks)
+    for chunk in encoded_chunks:
+        chunk.source = ''
 
     vec_after = total_vectors_in_index(knowledge_base)
 
@@ -151,7 +167,28 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
     assert_chunks_in_index(knowledge_base, encoded_chunks)
 
 
-def test_upsert_datafarme_with_wrong_schema(knowledge_base, documents):
+def test_upsert_dataframe_with_source(knowledge_base, documents, chunker, encoder):
+    for doc in documents:
+        doc.id = doc.id + "_df_source"
+        doc.text = doc.text + " of df"
+
+    vec_before = total_vectors_in_index(knowledge_base)
+
+    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata,
+                        "source": doc.source}
+                       for doc in documents])
+    knowledge_base.upsert_dataframe(df)
+
+    chunks = chunker.chunk_documents(documents)
+    encoded_chunks = encoder.encode_documents(chunks)
+
+    vec_after = total_vectors_in_index(knowledge_base)
+
+    assert vec_after - vec_before == len(encoded_chunks)
+    assert_chunks_in_index(knowledge_base, encoded_chunks)
+
+
+def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
     df = pd.DataFrame([{"id": doc.id, "text": doc.text, "md": doc.metadata}
                        for doc in documents])
 
@@ -159,6 +196,17 @@ def test_upsert_datafarme_with_wrong_schema(knowledge_base, documents):
         knowledge_base.upsert_dataframe(df)
 
     assert "Dataframe must contain the following columns" in str(e.value)
+
+
+def test_upsert_datafarme_with_redundant_col(knowledge_base, documents):
+    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata,
+                        "bla": "bla"}
+                       for doc in documents])
+
+    with pytest.raises(ValueError) as e:
+        knowledge_base.upsert_dataframe(df)
+
+    assert "Dataframe contains unknown columns" in str(e.value)
 
 
 def test_query(knowledge_base, encoded_chunks):
@@ -172,13 +220,16 @@ def test_query(knowledge_base, encoded_chunks):
     expected_first_results = [DocumentWithScore(id=chunk.id,
                                                 text=chunk.text,
                                                 metadata=chunk.metadata,
+                                                source=chunk.source,
                                                 score=1.0)
                               for chunk in encoded_chunks[:2]]
     for i, q_res in enumerate(query_results):
         assert queries[i].text == q_res.query
         assert len(q_res.documents) == expected_top_k[i]
         q_res.documents[0].score = round(q_res.documents[0].score, 6)
-        assert q_res.documents[0] == expected_first_results[i]
+        assert q_res.documents[0] == expected_first_results[i], \
+            f"query {i} -  expected: {expected_first_results[i]}, " \
+            f"actual: {q_res.documents[0]}"
 
 
 def test_delete_documents(knowledge_base, encoded_chunks):

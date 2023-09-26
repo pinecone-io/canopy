@@ -18,6 +18,7 @@ class StubChunker(Chunker):
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
                            text=document.text + (f" dup_{i}" if i > 0 else ""),
+                           source=document.source,
                            metadata=document.metadata)
                 for i in range(self.num_chunks_per_doc)]
 
