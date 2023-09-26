@@ -209,6 +209,19 @@ def test_upsert_datafarme_with_redundant_col(knowledge_base, documents):
     assert "Dataframe contains unknown columns" in str(e.value)
 
 
+@pytest.mark.parametrize("key", ["document_id", "text", "source"])
+def test_upsert_forbidden_metadata(knowledge_base, documents, key):
+    doc = random.choice(documents)
+    doc.metadata[key] = "bla"
+
+    with pytest.raises(ValueError) as e:
+        knowledge_base.upsert(documents)
+
+    assert "reserved metadata keys" in str(e.value)
+    assert doc.id in str(e.value)
+    assert key in str(e.value)
+
+
 def test_query(knowledge_base, encoded_chunks):
     queries = [Query(text=encoded_chunks[0].text),
                Query(text=encoded_chunks[1].text, top_k=2)]
