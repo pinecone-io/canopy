@@ -71,7 +71,7 @@ async def chat(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@app.post(
     "/context/query",
 )
 async def query(

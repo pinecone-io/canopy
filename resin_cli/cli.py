@@ -33,15 +33,33 @@ def is_healthy(url: str):
     except Exception:
         return False
 
+def validate_connection():
+    try:
+        KnowledgeBase._connect_pinecone()
+        openai.Model.list()
+    except Exception as e:
+        msg = (
+            f"Failed to connect to Pinecone index and OpenAI API, please make sure" +
+            " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+    click.echo("Resin: ", nl=False)
+    click.echo(click.style("Ready\n", bold=True, fg="green"))
 
-@click.group()
-def cli():
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
     """
     CLI for Pinecone Resin. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        validate_connection()
+        click.echo(ctx.get_help())
+        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if Resin service is running")
