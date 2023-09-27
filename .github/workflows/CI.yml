@@ -66,7 +66,7 @@ jobs:
         # PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
         # PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-      run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/e2e
+      run: poetry run pytest -n 3 --dist loadscope --html=report_e2e.html --self-contained-html tests/e2e
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
