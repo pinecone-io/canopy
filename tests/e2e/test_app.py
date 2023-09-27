@@ -1,5 +1,4 @@
 import os
-import pytest
 from fastapi.testclient import TestClient
 
 from resin.knoweldge_base import KnowledgeBase
@@ -23,13 +22,17 @@ _init_engines()
 
 client = TestClient(app)
 
+
 def test_health():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
 
-# TODO: the following test is a complete e2e test, this it not the final design 
-# for the e2e tests, however there were some issues with the fixtures that will be resovled
+
+# TODO: the following test is a complete e2e test, this it not the final design
+# for the e2e tests, however there were some issues
+# with the fixtures that will be resovled
+
 
 def test_e2e():
     try:
@@ -41,7 +44,8 @@ def test_e2e():
                     "text": "This is a test document, the topic is red bananas",
                     "source": "api_tests",
                     "metadata": {"test": "test"},
-                }],
+                }
+            ],
         )
         upsert_response = client.post("/context/upsert", json=upsert_payload.dict())
         assert upsert_response.status_code == 200
@@ -62,17 +66,23 @@ def test_e2e():
 
         # test response is as expected on /query
         response_as_json = query_response.json()
-        assert response_as_json[0]["query"] == query_payload.dict()["queries"][0]["text"]
-        assert response_as_json[0]["snippets"][0]["text"] == upsert_payload.dict()["documents"][0]["text"]
+        assert (
+            response_as_json[0]["query"] == query_payload.dict()["queries"][0]["text"]
+        )
+        assert (
+            response_as_json[0]["snippets"][0]["text"]
+            == upsert_payload.dict()["documents"][0]["text"]
+        )
         # TODO: uncomment when fix is pushed
-        # assert response_as_json[0]["snippets"][0]["source"] == upsert_payload.dict()["documents"][0]["source"]
+        # assert response_as_json[0]["snippets"][0]["source"] == \
+        # upsert_payload.dict()["documents"][0]["source"]
 
         # test response is as expected on /chat
         chat_payload = {
             "messages": [
                 {
                     "role": "user",
-                    "content": "what is the topic of the test document? be concise"
+                    "content": "what is the topic of the test document? be concise",
                 }
             ]
         }
@@ -80,12 +90,12 @@ def test_e2e():
         assert chat_response.status_code == 200
         chat_response_as_json = chat_response.json()
         assert chat_response_as_json["choices"][0]["message"]["role"] == "assistant"
-        chat_response_content = chat_response_as_json["choices"][0]["message"]["content"]
+        chat_response_content = chat_response_as_json["choices"][0]["message"][
+            "content"
+        ]
         print(chat_response_content)
         assert all([kw in chat_response_content for kw in ["red", "bananas"]])
     except Exception as e:
         raise e
     finally:
         kb.delete_index()
-
-
