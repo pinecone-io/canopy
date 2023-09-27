@@ -51,6 +51,7 @@ jobs:
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
     - name: Run system tests
       env:
+        INDEX_NAME: resin-system-${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
         PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT_3 }}
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY_3 }}
         # PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
@@ -59,6 +60,7 @@ jobs:
       run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
     - name: Run e2e tests
       env:
+        INDEX_NAME: resin-e2e-${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
         PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT_3 }}
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY_3 }}
         # PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}

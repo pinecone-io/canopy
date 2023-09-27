@@ -7,17 +7,15 @@ from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.app import app, _init_engines, _init_logging
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
 
-E2E_INDEX_NAME = "e2e-test-index"
 
 _init_logging()
 Tokenizer.initialize(OpenAITokenizer, "gpt-3.5-turbo")
 kb: KnowledgeBase = KnowledgeBase.create_with_new_index(
-    index_name=E2E_INDEX_NAME,
+    index_name=os.environ["INDEX_NAME"],
     encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
     chunker=KnowledgeBase.DEFAULT_CHUNKER(),
 )
 Tokenizer.clear()
-os.environ["INDEX_NAME"] = E2E_INDEX_NAME
 _init_engines()
 
 client = TestClient(app)
