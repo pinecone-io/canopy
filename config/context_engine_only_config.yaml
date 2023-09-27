@@ -20,6 +20,6 @@ context_engine: {}
 #    params:
 #      chunk_size: 200
 #
-#resin:
+#context_engine:
 #  context_builder:
 #    type: StuffingContextBuilder
