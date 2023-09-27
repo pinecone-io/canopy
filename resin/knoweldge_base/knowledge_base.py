@@ -42,7 +42,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                  record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 10,
+                 default_top_k: int = 5,
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")

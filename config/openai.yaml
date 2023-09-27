@@ -1,7 +1,7 @@
 tokenizer:
   type: OpenAITokenizer
   params:
-    model_name: gpt-3.5-turbo-0613
+    model_name: gpt-3.5-turbo
 
 knowledge_base:
   record_encoder:
@@ -15,6 +15,7 @@ context_engine: {}
 
 llm:
   type: OpenAILLM
-  model_name: gpt-3.5-turbo-0613
+  params:
+    model_name: gpt-3.5-turbo
 
 chat_engine: {}
