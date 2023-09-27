@@ -52,7 +52,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
                                         chunker=chunker)
 
     return KnowledgeBase(index_name=index_name,
-                         encoder=encoder,
+                         record_encoder=encoder,
                          chunker=chunker)
 
 
@@ -118,7 +118,7 @@ def test_is_verify_connection_health_happy_path(knowledge_base):
 
 def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_full_name,
-                       encoder=encoder,
+                       record_encoder=encoder,
                        chunker=chunker)
     assert kb.index_name == index_full_name
 
@@ -208,7 +208,7 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
     # chunker/kb that produces less chunks per doc
     chunker = StubChunker(num_chunks_per_doc=1)
     kb = KnowledgeBase(index_name=index_name,
-                       encoder=encoder,
+                       record_encoder=encoder,
                        chunker=chunker)
     docs = documents[:2]
     doc_ids = [doc.id for doc in docs]
@@ -242,7 +242,7 @@ def test_create_existing_index(index_full_name, index_name):
 def test_init_kb_non_existing_index(index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
         KnowledgeBase(index_name="non-existing-index",
-                      encoder=encoder,
+                      record_encoder=encoder,
                       chunker=chunker)
     expected_msg = f"Index {INDEX_NAME_PREFIX}non-existing-index does not exist"
     assert expected_msg in str(e.value)
@@ -320,7 +320,7 @@ def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encode
 def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
         KnowledgeBase(index_name=index_name,
-                      encoder=encoder,
+                      record_encoder=encoder,
                       chunker=chunker)
 
     assert "Please check your credentials and try again" in str(e.value)

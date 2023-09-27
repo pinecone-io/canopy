@@ -1,0 +1,25 @@
+### Context Engine Only Config
+# Only loads the KnowledgeBase and ContextEngine classes. This is useful if you want to use the ContextEngine as
+# retrieval plugin for an existing LLM based chatbot.
+
+knowledge_base: {}
+context_engine: {}
+
+
+#############################################
+# Elaborate Config example:
+#knowledge_base:
+#  params:
+#    default_top_k: 5
+#
+#  record_encoder:
+#    type: DenseRecordEncoder
+#
+#  chunker:
+#    type: MarkdownChunker
+#    params:
+#      chunk_size: 200
+#
+#resin:
+#  context_builder:
+#    type: StuffingContextBuilder

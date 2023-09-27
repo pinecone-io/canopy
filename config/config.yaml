@@ -1,0 +1,42 @@
+tokenizer:
+  type: OpenAITokenizer
+  params:
+    model_name: gpt-3.5-turbo-0613
+
+knowledge_base:
+  params:
+    default_top_k: 5
+
+  record_encoder:
+    type: OpenAIEncoder
+    params:
+      model_name: "text-embedding-ada-002"
+
+  chunker:
+    type: MarkdownChunker
+    params:
+      chunk_size: 200
+
+context_engine:
+  context_builder:
+    type: StuffingContextBuilder
+
+llm:
+  type: OpenAILLM
+  model_name: gpt-3.5-turbo-0613
+
+chat_engine:
+  params:
+    max_prompt_tokens: 3000
+    max_generated_tokens: 750
+    max_context_tokens: 2500
+    system_prompt: null  # Will use the default system prompt
+    history_pruning: recent  # Options: [raise, recent]
+    min_history_messages: 1
+
+  query_builder:
+    type: FunctionCallingQueryGenerator
+    params:
+      top_k: 5
+      prompt: null  # Will use the default prompt
+      function_description: null  # Will use the default function description

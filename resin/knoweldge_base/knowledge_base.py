@@ -11,12 +11,13 @@ try:
 except ImportError:
     from pinecone import Index
 
-from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
+from pinecone_datasets import Dataset
+from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.knoweldge_base.chunker import Chunker, MarkdownChunker
 from resin.knoweldge_base.record_encoder import (RecordEncoder,
-                                                 DenseRecordEncoder)
+                                                 OpenAIRecordEncoder)
 from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
@@ -31,14 +32,14 @@ INDEX_PROVISION_TIME_INTERVAL = 3
 
 class KnowledgeBase(BaseKnowledgeBase):
 
-    DEFAULT_RECORD_ENCODER = DenseRecordEncoder
+    DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
     DEFAULT_CHUNKER = MarkdownChunker
     DEFAULT_RERANKER = TransparentReranker
 
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: Optional[RecordEncoder] = None,
+                 record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 10,
@@ -48,7 +49,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = encoder if encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
+        self._encoder = record_encoder if record_encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
@@ -174,7 +175,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # initialize KnowledgeBase
         return cls(index_name=index_name,
-                   encoder=encoder,
+                   record_encoder=encoder,
                    chunker=chunker,
                    reranker=reranker,
                    default_top_k=default_top_k)
