@@ -189,7 +189,7 @@ def test_upsert_dataframe_with_source(knowledge_base, documents, chunker, encode
 
 
 def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
-    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "md": doc.metadata}
+    df = pd.DataFrame([{"id": doc.id, "txt": doc.text, "metadata": doc.metadata}
                        for doc in documents])
 
     with pytest.raises(ValueError) as e:
@@ -198,7 +198,7 @@ def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
     assert "Dataframe must contain the following columns" in str(e.value)
 
 
-def test_upsert_datafarme_with_redundant_col(knowledge_base, documents):
+def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
     df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata,
                         "bla": "bla"}
                        for doc in documents])

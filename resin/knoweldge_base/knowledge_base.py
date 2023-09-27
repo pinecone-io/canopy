@@ -326,29 +326,25 @@ class KnowledgeBase(BaseKnowledgeBase):
                          batch_size: int = 100):
         self._verify_not_deleted()
 
-        expected_columns = {"id", "text", "metadata"}
-        optional_columns = {"source"}
+        required_columns = {"id", "text"}
+        optional_columns = {"source", "metadata"}
 
         df_columns = set(df.columns)
-        if not df_columns.issuperset(expected_columns):
+        if not df_columns.issuperset(required_columns):
             raise ValueError(
                 f"Dataframe must contain the following columns: "
-                f"{list(expected_columns)}, Got: {list(df.columns)}"
+                f"{list(required_columns)}, Got: {list(df.columns)}"
             )
 
-        redundant_columns = df_columns - expected_columns - optional_columns
+        redundant_columns = df_columns - required_columns - optional_columns
         if redundant_columns:
             raise ValueError(
                 f"Dataframe contains unknown columns: {list(redundant_columns)}. "
                 f"Only the following columns are allowed: "
-                f"{list(expected_columns) + list(optional_columns)}"
+                f"{list(required_columns) + list(optional_columns)}"
             )
 
-        if 'source' not in df.columns:
-            df['source'] = ''
-
-        documents = [Document(id=row.id, text=row.text, metadata=row.metadata,
-                              source=row.source)
+        documents = [Document(**row._asdict())
                      for row in df.itertuples()]
         self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
