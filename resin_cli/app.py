@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 from resin.llm import BaseLLM
 from resin.llm.models import UserMessage
-from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
+from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin.knoweldge_base import KnowledgeBase
 from resin.context_engine import ContextEngine
 from resin.chat_engine import ChatEngine

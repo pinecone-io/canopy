@@ -7,7 +7,7 @@ from resin.chat_engine.prompt_builder import PromptBuilder
 from resin.chat_engine.query_generator import (QueryGenerator,
                                                FunctionCallingQueryGenerator, )
 from resin.context_engine import ContextEngine
-from resin.knoweldge_base.tokenizer import Tokenizer
+from resin.tokenizer import Tokenizer
 from resin.llm import BaseLLM
 from resin.llm.models import ModelParams, SystemMessage
 from resin.models.api_models import (StreamingChatChunk, ChatResponse,
