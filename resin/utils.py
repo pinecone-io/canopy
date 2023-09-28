@@ -54,8 +54,9 @@ class ConfigurableMixin(abc.ABC):
         logger = logging.getLogger(class_name)
         if component:
             if not isinstance(component, base_class):
-                raise ValueError(
-                    f"{class_name}: {component} must be an instance of {base_class}"
+                raise TypeError(
+                    f"{class_name}: {component_name} must be an instance "
+                    f"of {base_class.__name__}"
                 )
             return component
         else:
