@@ -8,24 +8,7 @@ from resin_cli.app import app, _init_engines, _init_logging
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
 
 
-_init_logging()
-Tokenizer.initialize(OpenAITokenizer, "gpt-3.5-turbo")
-kb: KnowledgeBase = KnowledgeBase.create_with_new_index(
-    index_name=os.environ["INDEX_NAME"],
-    encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
-    chunker=KnowledgeBase.DEFAULT_CHUNKER(),
-)
-Tokenizer.clear()
-_init_engines()
-
 client = TestClient(app)
-
-
-def test_health():
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
-
 
 # TODO: the following test is a complete e2e test, this it not the final design
 # for the e2e tests, however there were some issues
@@ -33,6 +16,20 @@ def test_health():
 
 
 def test_e2e():
+    _init_logging()
+    Tokenizer.initialize(OpenAITokenizer, "gpt-3.5-turbo")
+    kb = KnowledgeBase.create_with_new_index(
+        index_name=os.environ["INDEX_NAME"],
+        encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
+        chunker=KnowledgeBase.DEFAULT_CHUNKER(),
+    )
+    Tokenizer.clear()
+    _init_engines()
+
+    health_response = client.get("/health")
+    assert health_response.status_code == 200
+    assert health_response.json() == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+
     try:
         # Upsert a document to the index
         upsert_payload = ContextUpsertRequest(
