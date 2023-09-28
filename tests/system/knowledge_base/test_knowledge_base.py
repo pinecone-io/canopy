@@ -112,6 +112,20 @@ def documents():
 
 
 @pytest.fixture
+def documents_large():
+    return [Document(id=f"doc_{i}_large",
+                     text=f"Sample document {i}",
+                     metadata={"test": i})
+            for i in range(1000)]
+
+
+@pytest.fixture
+def encoded_chunks_large(documents_large, chunker, encoder):
+    chunks = chunker.chunk_documents(documents_large)
+    return encoder.encode_documents(chunks)
+
+
+@pytest.fixture
 def encoded_chunks(documents, chunker, encoder):
     chunks = chunker.chunk_documents(documents)
     return encoder.encode_documents(chunks)
@@ -240,32 +254,21 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
 
 
 def test_upsert_large_list_happy_path(knowledge_base,
-                                      documents,
-                                      chunker):
-    documents = [Document(id=f"doc_{i}_large",
-                          text=f"Sample document {i}",
-                          metadata={"test": i})
-                 for i in range(1000)]
+                                      documents_large,
+                                      encoded_chunks_large):
+    knowledge_base.upsert(documents_large)
 
-    knowledge_base.upsert(documents)
-
-    expected_chunks = chunker.chunk_documents(documents)
-    chunks_for_validation = expected_chunks[:10] + expected_chunks[-10:]
+    chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
     assert_ids_in_index(knowledge_base, [chunk.id
                                          for chunk in chunks_for_validation])
 
 
 def test_delete_large_df_happy_path(knowledge_base,
-                                    documents,
-                                    chunker):
-    documents = [Document(id=f"doc_{i}_large",
-                          text=f"Sample document {i}",
-                          metadata={"test": i})
-                 for i in range(1000)]
-    knowledge_base.delete([doc.id for doc in documents])
+                                    documents_large,
+                                    encoded_chunks_large):
+    knowledge_base.delete([doc.id for doc in documents_large])
 
-    expected_chunks = chunker.chunk_documents(documents)
-    chunks_for_validation = expected_chunks[:10] + expected_chunks[-10:]
+    chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
     assert_ids_not_in_index(knowledge_base, [chunk.id
                                              for chunk in chunks_for_validation])
 
