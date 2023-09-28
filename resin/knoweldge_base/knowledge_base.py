@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 import time
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from typing import List, Optional
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \

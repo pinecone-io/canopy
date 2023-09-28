@@ -23,7 +23,7 @@ jobs:
     - name: Run flake8 Check
       run: poetry run flake8 .
     - name: Run mypy install types
-      run: poetry run mypy --install-types
+      run: yes | poetry run mypy --install-types .
     - name: Run mypy check
       run: poetry run mypy .
 
