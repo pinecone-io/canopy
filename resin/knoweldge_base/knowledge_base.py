@@ -56,10 +56,9 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = record_encoder if record_encoder is not None else \
-            self._DEFAULT_COMPONENTS['record_encoder    ']  # noqa: E501
-        self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
-        self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
+        self._encoder = self._set_component('record_encoder', record_encoder)
+        self._chunker = self._set_component('chunker', chunker)
+        self._reranker = self._set_component('reranker', reranker)
 
         self._index: Optional[Index] = self._connect_index(self._index_name)
 

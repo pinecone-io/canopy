@@ -1,6 +1,6 @@
 import abc
 from typing import Optional, Type
-
+import logging
 
 class FactoryMixin:
 
@@ -13,15 +13,12 @@ class FactoryMixin:
 
     @classmethod
     def from_config(cls, config: dict, default_class = None):
-        if not hasattr(cls, '_SUPPORTED_CLASSES'):
-            raise ValueError("from_config() can only be called from a subclass.")
-
-        if cls.__base__ is not abc.ABC:
+        if not (hasattr(cls, '_SUPPORTED_CLASSES') and cls.__base__ is abc.ABC):
             raise ValueError("from_config() can only be called from the base class.")
 
         if "type" in config:
             class_name = config["type"]
-            if not class_name in cls._SUPPORTED_CLASSES:
+            if class_name not in cls._SUPPORTED_CLASSES:
                 raise ValueError(
                     f"{class_name} is not supported. Allowed {cls.__name__}s are: "
                     f"{list(cls._SUPPORTED_CLASSES.keys())}"
@@ -33,7 +30,7 @@ class FactoryMixin:
         else:
             raise ValueError(
                 f"Error loading config for {cls.__name__}. Either specify 'type' in the"
-                f" confi or provide a default_class."
+                f" config or provide a default_class."
             )
         return class_type(**config.get("params", {}))
 
@@ -43,12 +40,27 @@ class ConfigurableMixin(abc.ABC):
     _DEFAULT_COMPONENTS = {}
     # _UNALLOWED_CONFIG_KxEYS = {}
     _MANDATORY_CONFIG_KEYS = {}
-    _NAME = ""
 
     @classmethod
     @abc.abstractmethod
     def from_config(cls, config: dict):
         pass
+
+    def _set_component(self, component_name: str, component=None):
+        class_name = self.__class__.__name__
+        logger = logging.getLogger(class_name)
+        if component:
+            if not issubclass(component,
+                              self._DEFAULT_COMPONENTS[component_name].__base__):
+                raise ValueError(
+                    f"{class_name}: {component} must be an instance of "
+                    f"{self._DEFAULT_COMPONENTS[component_name].__base__}"
+                )
+            return component
+        else:
+            logger.info(f"{class_name}: Using default {component_name}: "
+                        f"{self._DEFAULT_COMPONENTS[component_name].__name__}")
+            return self._DEFAULT_COMPONENTS[component_name]()
 
     @classmethod
     def _from_config(cls,
