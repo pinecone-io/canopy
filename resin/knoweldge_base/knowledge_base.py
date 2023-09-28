@@ -2,6 +2,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 import time
+from tqdm import tqdm
 from typing import List, Optional
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
@@ -28,6 +29,9 @@ INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
+
+DELETE_STARTER_BATCH_SIZE = 20
+DELETE_STARTER_CHUNKS_PER_DOC = 50
 
 
 class KnowledgeBase(BaseKnowledgeBase):
@@ -302,8 +306,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         # the number of chunks per document,
         # we need to delete all existing chunks
         # belonging to the same documents before upserting the new ones.
-        self.delete(document_ids=[doc.id for doc in documents],
-                    namespace=namespace)
+        # we currently don't delete documents before upsert in starter env
+        if not self._is_starter_env():
+            self.delete(document_ids=[doc.id for doc in documents],
+                        namespace=namespace)
 
         # Upsert to Pinecone index
         dataset.to_pinecone_index(self._index_name,
@@ -328,21 +334,29 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete(self,
                document_ids: List[str],
-               namespace: str = "",
-               batch_size: int = 100) -> None:
+               namespace: str = "") -> None:
         self._verify_not_deleted()
 
-        for i in range(0, len(document_ids), batch_size):
-            doc_ids_chunk = document_ids[i:i + batch_size]
-            if self._is_starter_env():
-                chunks_ids = [f"{doc_id}_{i}"
-                              for doc_id in doc_ids_chunk for i in range(100)]
-                self._index.delete(ids=chunks_ids, namespace=namespace)
-            else:
-                self._index.delete(  # type: ignore
-                    filter={"document_id": {"$in": doc_ids_chunk}},
-                    namespace=namespace
-                )
+        if self._is_starter_env():
+            for i in tqdm(range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE)):
+                doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
+                if self._is_starter_env():
+                    chunked_ids = [f"{doc_id}_{i}"
+                                   for doc_id in doc_ids_chunk
+                                   for i in range(DELETE_STARTER_CHUNKS_PER_DOC)]
+                    try:
+                        self._index.delete(ids=chunked_ids,  # type: ignore
+                                           namespace=namespace)
+                    except Exception as e:
+                        raise RuntimeError(
+                            f"Failed to delete document ids: {document_ids[i:]}"
+                            f"Please try again."
+                        ) from e
+        else:
+            self._index.delete(  # type: ignore
+                filter={"document_id": {"$in": document_ids}},
+                namespace=namespace
+            )
 
     @staticmethod
     def _is_starter_env():
@@ -362,6 +376,5 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     async def adelete(self,
                       document_ids: List[str],
-                      namespace: str = "",
-                      batch_size: int = 100) -> None:
+                      namespace: str = "") -> None:
         raise NotImplementedError()

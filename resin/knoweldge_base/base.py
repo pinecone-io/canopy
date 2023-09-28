@@ -24,8 +24,7 @@ class BaseKnowledgeBase(ABC):
     # TODO: Do we want delete by metadata?
     @abstractmethod
     def delete(self, document_ids: List[str],
-               namespace: str = "",
-               batch_size: int = 100) -> None:
+               namespace: str = "") -> None:
         pass
 
     @abstractmethod
@@ -49,6 +48,5 @@ class BaseKnowledgeBase(ABC):
 
     @abstractmethod
     async def adelete(self, document_ids: List[str],
-                      namespace: str = "",
-                      batch_size: int = 100) -> None:
+                      namespace: str = "") -> None:
         pass

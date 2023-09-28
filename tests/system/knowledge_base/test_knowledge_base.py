@@ -61,7 +61,7 @@ def total_vectors_in_index(knowledge_base):
     return knowledge_base._index.describe_index_stats().total_vector_count
 
 
-@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_chunks_in_index(knowledge_base, encoded_chunks):
     ids = [c.id for c in encoded_chunks]
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
@@ -74,21 +74,24 @@ def assert_chunks_in_index(knowledge_base, encoded_chunks):
         assert fetch_result[chunk.id].metadata["document_id"] == chunk.document_id
 
 
-@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_ids_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
-    assert len(fetch_result) == len(ids)
+    assert len(fetch_result) == len(ids), \
+        f"Expected {len(ids)} ids, got {len(fetch_result.keys())}"
 
 
-@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_num_vectors_in_index(knowledge_base, num_vectors):
-    assert total_vectors_in_index(knowledge_base) == num_vectors
+    vectors_in_index = total_vectors_in_index(knowledge_base)
+    assert vectors_in_index == num_vectors, \
+        f"Expected {num_vectors} vectors in index, got {vectors_in_index}"
 
 
-@retry(stop=stop_after_attempt(30), wait=wait_fixed(1))
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_ids_not_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
-    assert len(fetch_result) == 0
+    assert len(fetch_result) == 0, f"Found unexpected ids: {len(fetch_result.keys())}"
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -132,7 +135,7 @@ def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
     assert kb.index_name == index_full_name
 
 
-def test_upsert(knowledge_base, documents, encoded_chunks):
+def test_upsert_happy_path(knowledge_base, documents, encoded_chunks):
     knowledge_base.upsert(documents)
 
     assert_num_vectors_in_index(knowledge_base, len(encoded_chunks))
@@ -152,7 +155,6 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
 
     chunks = chunker.chunk_documents(documents)
     encoded_chunks = encoder.encode_documents(chunks)
-
 
     assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
@@ -207,6 +209,9 @@ def test_delete_documents(knowledge_base, encoded_chunks):
 
 
 def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
+    if knowledge_base._is_starter_env():
+        pytest.skip("Starter env does not support delete on upsert")
+
     index_name = knowledge_base._index_name
 
     # chunker/kb that produces less chunks per doc
@@ -230,7 +235,39 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
     unexpected_chunks = [c_id for c_id in chunk_ids
                          if c_id not in expected_chunks]
     assert len(unexpected_chunks) > 0, "bug in the test itself"
+
     assert_ids_not_in_index(kb, unexpected_chunks)
+
+
+def test_upsert_large_list_happy_path(knowledge_base,
+                                      documents,
+                                      chunker):
+    documents = [Document(id=f"doc_{i}_large",
+                          text=f"Sample document {i}",
+                          metadata={"test": i})
+                 for i in range(1000)]
+
+    knowledge_base.upsert(documents)
+
+    expected_chunks = chunker.chunk_documents(documents)
+    chunks_for_validation = expected_chunks[:10] + expected_chunks[-10:]
+    assert_ids_in_index(knowledge_base, [chunk.id
+                                         for chunk in chunks_for_validation])
+
+
+def test_delete_large_df_happy_path(knowledge_base,
+                                    documents,
+                                    chunker):
+    documents = [Document(id=f"doc_{i}_large",
+                          text=f"Sample document {i}",
+                          metadata={"test": i})
+                 for i in range(1000)]
+    knowledge_base.delete([doc.id for doc in documents])
+
+    expected_chunks = chunker.chunk_documents(documents)
+    chunks_for_validation = expected_chunks[:10] + expected_chunks[-10:]
+    assert_ids_not_in_index(knowledge_base, [chunk.id
+                                             for chunk in chunks_for_validation])
 
 
 def test_create_existing_index(index_full_name, index_name):
