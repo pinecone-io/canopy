@@ -49,9 +49,16 @@ jobs:
       run: poetry install --with dev --all-extras
     - name: Run unit tests
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
+    - name: Set Index Name for System / E2E
+      id: gen_suffix
+      run: |
+        RAW_SUFFIX=${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        SUFFIX="${RAW_SUFFIX//./-}"
+        echo "${SUFFIX}"
+        echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
       env:
-        INDEX_NAME: resin-system-${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        INDEX_NAME: resin-system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT_3 }}
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY_3 }}
         # PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
@@ -60,7 +67,7 @@ jobs:
       run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
     - name: Run e2e tests
       env:
-        INDEX_NAME: resin-e2e-${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        INDEX_NAME: resin-e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ secrets.PINECONE_ENVIRONMENT_3 }}
         PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY_3 }}
         # PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
