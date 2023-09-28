@@ -28,7 +28,10 @@ def test_e2e():
 
     health_response = client.get("/health")
     assert health_response.status_code == 200
-    assert health_response.json() == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+    assert (
+        health_response.json()
+        == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+    )
 
     try:
         # Upsert a document to the index
