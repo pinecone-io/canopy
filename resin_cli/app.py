@@ -172,9 +172,9 @@ def _init_engines():
 
     kb = KnowledgeBase(index_name=INDEX_NAME)
     context_engine = ContextEngine(knowledge_base=kb)
-    llm = OpenAILLM(model_name='gpt-3.5-turbo-0613')
+    llm = OpenAILLM()
 
-    chat_engine = ChatEngine(llm=llm, context_engine=context_engine)
+    chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
 
 
 def start(host="0.0.0.0", port=8000, reload=False):

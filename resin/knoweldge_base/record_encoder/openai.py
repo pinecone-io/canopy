@@ -7,11 +7,10 @@ from resin.models.data_models import Query
 
 
 class OpenAIRecordEncoder(DenseRecordEncoder):
-    DEFAULT_MODEL_NAME = "text-embedding-ada-002"
 
     def __init__(self,
                  *,
-                 model_name: str = DEFAULT_MODEL_NAME,
+                 model_name: str = "text-embedding-ada-002",
                  batch_size: int = 100,
                  **kwargs):
         encoder = OpenAIEncoder(model_name)

@@ -5,7 +5,8 @@ context_engine: {} # This is a mandatory field, it will initialize the default C
 # The `llm` field is optional. If it's not passed - no LLM will be initialized (see context_engine_only.yaml)
 llm:
   type: OpenAILLM
-  model_name: gpt-3.5-turbo-0613
+  params:
+    model_name: gpt-3.5-turbo
 
 # The `chat_engine` field is optional (see context_engine_only.yaml)
 chat_engine: {}

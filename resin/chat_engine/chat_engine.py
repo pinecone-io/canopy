@@ -8,7 +8,7 @@ from resin.chat_engine.query_generator import (QueryGenerator,
                                                FunctionCallingQueryGenerator, )
 from resin.context_engine import ContextEngine
 from resin.tokenizer import Tokenizer
-from resin.llm import BaseLLM
+from resin.llm import BaseLLM, OpenAILLM
 from resin.llm.models import ModelParams, SystemMessage
 from resin.models.api_models import (StreamingChatChunk, ChatResponse,
                                      StreamingChatResponse, )
@@ -54,11 +54,12 @@ class BaseChatEngine(ABC):
 class ChatEngine(BaseChatEngine):
 
     DEFAULT_QUERY_GENERATOR = FunctionCallingQueryGenerator
+    DEFAULT_LLM = OpenAILLM
 
     def __init__(self,
                  *,
-                 llm: BaseLLM,
                  context_engine: ContextEngine,
+                 llm: Optional[BaseLLM] = None,
                  max_prompt_tokens: int = 4096,
                  max_generated_tokens: Optional[int] = None,
                  max_context_tokens: Optional[int] = None,
@@ -67,7 +68,7 @@ class ChatEngine(BaseChatEngine):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1
                  ):
-        self.llm = llm
+        self.llm = llm if llm is not None else self.DEFAULT_LLM()
         self.context_engine = context_engine
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens

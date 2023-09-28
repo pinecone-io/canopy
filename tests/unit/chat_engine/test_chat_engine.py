@@ -31,8 +31,8 @@ class TestChatEngine:
                           max_generated_tokens: int = 200,
                           **kwargs):
         return ChatEngine(
-            llm=self.mock_llm,
             context_engine=self.mock_context_engine,
+            llm=self.mock_llm,
             query_builder=self.mock_query_builder,
             system_prompt=system_prompt,
             max_prompt_tokens=max_prompt_tokens,
