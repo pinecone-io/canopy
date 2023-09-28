@@ -168,7 +168,7 @@ def test_query(knowledge_base, encoded_chunks):
 
     assert len(query_results) == 2
 
-    expected_top_k = [10, 2]
+    expected_top_k = [5, 2]
     expected_first_results = [DocumentWithScore(id=chunk.id,
                                                 text=chunk.text,
                                                 metadata=chunk.metadata,
