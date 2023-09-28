@@ -18,7 +18,7 @@ context_engine: {}
 #  chunker:
 #    type: MarkdownChunker
 #    params:
-#      chunk_size: 200
+#      chunk_size: 256
 #
 #context_engine:
 #  context_builder:
