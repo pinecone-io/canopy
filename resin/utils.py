@@ -1,5 +1,5 @@
 import abc
-from typing import Optional, Type
+from typing import Optional, Type, Union
 import logging
 
 class FactoryMixin:
@@ -46,21 +46,23 @@ class ConfigurableMixin(abc.ABC):
     def from_config(cls, config: dict):
         pass
 
-    def _set_component(self, component_name: str, component=None):
+    def _set_component(self,
+                       base_class: type,
+                       component_name: str,
+                       component):
         class_name = self.__class__.__name__
         logger = logging.getLogger(class_name)
         if component:
-            if not issubclass(component,
-                              self._DEFAULT_COMPONENTS[component_name].__base__):
+            if not isinstance(component, base_class):
                 raise ValueError(
-                    f"{class_name}: {component} must be an instance of "
-                    f"{self._DEFAULT_COMPONENTS[component_name].__base__}"
+                    f"{class_name}: {component} must be an instance of {base_class}"
                 )
             return component
         else:
-            logger.info(f"{class_name}: Using default {component_name}: "
-                        f"{self._DEFAULT_COMPONENTS[component_name].__name__}")
-            return self._DEFAULT_COMPONENTS[component_name]()
+            default_class = self._DEFAULT_COMPONENTS[component_name]
+            logger.info(f"{class_name}: Created using default {component_name}: "
+                        f"{default_class}")
+            return default_class()
 
     @classmethod
     def _from_config(cls,
