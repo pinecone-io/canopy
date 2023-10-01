@@ -1,5 +1,6 @@
 import os
 from fastapi.testclient import TestClient
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
@@ -64,13 +65,18 @@ def test_e2e():
 
         # test response is as expected on /query
         response_as_json = query_response.json()
-        assert (
-            response_as_json[0]["query"] == query_payload.dict()["queries"][0]["text"]
-        )
-        assert (
-            response_as_json[0]["snippets"][0]["text"]
-            == upsert_payload.dict()["documents"][0]["text"]
-        )
+
+        @retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+        def test_response_is_expected(response_as_json):
+            (
+                response_as_json[0]["query"]
+                == query_payload.dict()["queries"][0]["text"]
+                and response_as_json[0]["snippets"][0]["text"]
+                == upsert_payload.dict()["documents"][0]["text"]
+            )
+
+        assert test_response_is_expected(response_as_json)
+
         # TODO: uncomment when fix is pushed
         # assert response_as_json[0]["snippets"][0]["source"] == \
         # upsert_payload.dict()["documents"][0]["source"]

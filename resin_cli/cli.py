@@ -37,10 +37,17 @@ def is_healthy(url: str):
 def validate_connection():
     try:
         KnowledgeBase._connect_pinecone()
+    except Exception:
+        msg = (
+            "Failed to connect to Pinecone index, please make sure"
+            + " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
         openai.Model.list()
     except Exception:
         msg = (
-            "Failed to connect to Pinecone index and OpenAI API, please make sure"
+            "Failed to connect to OpenAI, please make sure"
             + " you have set the right env vars"
         )
         click.echo(click.style(msg, fg="red"), err=True)
