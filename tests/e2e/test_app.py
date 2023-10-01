@@ -7,10 +7,10 @@ from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from resin.knoweldge_base import KnowledgeBase
-from resin.tokenizer import Tokenizer
 
 from resin_cli.app import app
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
+from tests import Tokenizer
 
 
 @pytest.fixture(scope="module")
@@ -25,9 +25,7 @@ def knowledge_base(index_name):
     if index_name in pinecone.list_indexes():
         pinecone.delete_index(index_name)
 
-    # Tokenizer.initialize(StubTokenizer)
     KnowledgeBase.create_with_new_index(index_name=index_name,)
-    # Tokenizer.clear()
 
     return KnowledgeBase(index_name=index_name)
 
@@ -128,4 +126,3 @@ def test_e2e(client):
     ]
     print(chat_response_content)
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
-
