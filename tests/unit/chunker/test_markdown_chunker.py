@@ -108,7 +108,8 @@ a | b | c
             Document(
                 id="test_document_1",
                 text=text,
-                metadata={"test": 1}),
+                metadata={"test": 1},
+                source="doc_1"),
             Document(
                 id="test_document_3",
                 text="# short markdown\nmarkdown is short",
@@ -125,7 +126,7 @@ a | b | c
                 text='# Markdown Example for Unit Testing\n\n## Headers\n### Level 3'
                      '\ntext in level 3\n#### Level 4\ntext in level 4\n##### Level 5'
                      '\ntext in level 5\n###### Level 6\ntext in level 6',
-                source='',
+                source='doc_1',
                 metadata={'test': '1'},
                 document_id='test_document_1'),
 
@@ -137,7 +138,7 @@ a | b | c
                      '\n\n**_Bold and italic_** or *__Bold and italic__*\n\n'
                      '~~Strikethrough text~~\n\n'
                      '## Another second level header\ntext after second level header',
-                     source='',
+                     source='doc_1',
                      metadata={'test': '1'},
                      document_id='test_document_1'),
 
@@ -154,13 +155,13 @@ a | b | c
                      '\n\n![Alt text](https://www.example.com/image.jpg)'
                      '\n\n## Blockquotes\n\n'
                      '> This is a blockquote.',
-                source='',
+                source='doc_1',
                 metadata={'test': '1'},
                 document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_3',
                        text='## long text',
-                       source='',
+                       source='doc_1',
                        metadata={'test': '1'},
                        document_id='test_document_1'),
 
@@ -174,7 +175,7 @@ a | b | c
                             'spilled out, The village\'s lost lore. '
                             'Inside, not gold, But memories and '
                             'tales. Of',
-                       source='',
+                       source='doc_1',
                        metadata={'test': '1'},
                        document_id='test_document_1'),
 
@@ -183,7 +184,7 @@ a | b | c
                             'But memories and tales. '
                             'Of brave ancestors, And '
                             'magical whales.',
-                       source='',
+                       source='doc_1',
                        metadata={'test': '1'},
                        document_id='test_document_1'),
 
@@ -193,7 +194,7 @@ a | b | c
                             "whales.\n\nAnna shared the stories, Under stars so bright."
                             "\nThe village united, "
                             "Bathed in tales' light.",
-                       source='',
+                       source='doc_1',
                        metadata={'test': '1'},
                        document_id='test_document_1'),
 
@@ -204,7 +205,7 @@ a | b | c
                             "\n    print(\"Hello, world!\")"
                             "\n```\n## table"
                             "\na | b | c\n--- | --- | ---\n1 | 2 | 3",
-                       source='',
+                       source='doc_1',
                        metadata={'test': '1'},
                        document_id='test_document_1'),
 
