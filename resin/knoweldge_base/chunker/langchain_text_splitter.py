@@ -449,8 +449,6 @@ class RecursiveCharacterTextSplitter(TextSplitter):
             ]
         elif language == Language.MARKDOWN:
             return [
-                # add first level header to langchain implementation
-                "\n# ",
                 "\n## ",
                 "\n### ",
                 "\n#### ",
@@ -460,8 +458,8 @@ class RecursiveCharacterTextSplitter(TextSplitter):
                 # Heading level 2
                 # ---------------
                 # End of code block
-                "```\n\n",
-                # add table rows to langchain implementation
+                "```\n",
+                # add end of table to langchain implementation
                 '|\n\n'
                 # Horizontal lines
                 "\n\n***\n\n",

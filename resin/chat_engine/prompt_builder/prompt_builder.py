@@ -5,7 +5,7 @@ from resin.chat_engine.history_pruner import (RaisingHistoryPruner,
                                               RecentHistoryPruner, )
 from resin.chat_engine.history_pruner.base import HistoryPruner
 from resin.chat_engine.models import HistoryPruningMethod
-from resin.knoweldge_base.tokenizer import Tokenizer
+from resin.tokenizer import Tokenizer
 from resin.models.data_models import Messages, Role, MessageBase
 
 

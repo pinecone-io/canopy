@@ -1,7 +1,7 @@
 import tiktoken
 from typing import List
 from .tokenizer import BaseTokenizer
-from ...models.data_models import Messages, MessageBase, Role
+from ..models.data_models import Messages, MessageBase, Role
 
 
 class OpenAITokenizer(BaseTokenizer):

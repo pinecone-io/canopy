@@ -45,8 +45,8 @@ text in level 6
 
 ~~Strikethrough text~~
 
-# Another first level header
-text after first level header
+## Another second level header
+text after second level header
 
 ## Lists
 
@@ -136,14 +136,15 @@ a | b | c
                      '\n\n**Bold text** or '
                      '__Bold text__'
                      '\n\n**_Bold and italic_** or *__Bold and italic__*\n\n'
-                     '~~Strikethrough text~~',
+                     '~~Strikethrough text~~\n\n'
+                     '## Another second level header\ntext after second level header',
                      source='doc_1',
                      metadata={'test': '1'},
                      document_id='test_document_1'),
 
             KBDocChunk(
                 id='test_document_1_2',
-                text='# Another first level header\ntext after first level header'
+                text='## Another second level header\ntext after second level header'
                      '\n\n## Lists'
                      '\n\n### Unordered\n\n* Item 1\n* Item 2\n  * Sub-item 2.1'
                      '\n  * Sub-item 2.2'
