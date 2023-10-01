@@ -30,8 +30,9 @@ TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
 
-DELETE_STARTER_BATCH_SIZE = 20
-DELETE_STARTER_CHUNKS_PER_DOC = 50
+DELETE_STARTER_BATCH_SIZE = 30
+
+DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 class KnowledgeBase(BaseKnowledgeBase):
@@ -340,18 +341,17 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self._is_starter_env():
             for i in tqdm(range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE)):
                 doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
-                if self._is_starter_env():
-                    chunked_ids = [f"{doc_id}_{i}"
-                                   for doc_id in doc_ids_chunk
-                                   for i in range(DELETE_STARTER_CHUNKS_PER_DOC)]
-                    try:
-                        self._index.delete(ids=chunked_ids,  # type: ignore
-                                           namespace=namespace)
-                    except Exception as e:
-                        raise RuntimeError(
-                            f"Failed to delete document ids: {document_ids[i:]}"
-                            f"Please try again."
-                        ) from e
+                chunked_ids = [f"{doc_id}_{i}"
+                               for doc_id in doc_ids_chunk
+                               for i in range(DELETE_STARTER_CHUNKS_PER_DOC)]
+                try:
+                    self._index.delete(ids=chunked_ids,  # type: ignore
+                                       namespace=namespace)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to delete document ids: {document_ids[i:]}"
+                        f"Please try again."
+                    ) from e
         else:
             self._index.delete(  # type: ignore
                 filter={"document_id": {"$in": document_ids}},
