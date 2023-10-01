@@ -3,6 +3,7 @@ from datetime import datetime
 import time
 from typing import List, Optional
 import pandas as pd
+from oplog import Operation
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
 
@@ -277,7 +278,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                batch_size: int = 100):
         self._verify_not_deleted()
 
-        chunks = self._chunker.chunk_documents(documents)
+        with Operation(name="chunking").progressable(len(documents)) as op:
+            for chunks in self._chunker.chunk_documents(documents):
+                op.progress(len(chunks))
         encoded_chunks = self._encoder.encode_documents(chunks)
 
         encoder_name = self._encoder.__class__.__name__

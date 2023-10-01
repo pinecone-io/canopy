@@ -2,7 +2,11 @@ import os
 import logging
 import sys
 import uuid
+from pathlib import Path
+
 from dotenv import load_dotenv
+from oplog import OperationHandler, Operation
+from oplog.formatters import CsvOperationFormatter
 
 from resin.llm import BaseLLM
 from resin.llm.models import UserMessage
@@ -25,6 +29,13 @@ from resin_cli.api_models import \
 load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
 
+csv_op_handler = OperationHandler(
+    handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs.csv")),  # <-- any logging handler
+    formatter=CsvOperationFormatter(),  # <-- use custom formatter, or built-in ones
+)
+logging.basicConfig(level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
+                    handlers=[csv_op_handler])
+
 
 INDEX_NAME = os.getenv("INDEX_NAME")
 app = FastAPI()
@@ -43,30 +54,33 @@ async def chat(
     request: ChatRequest = Body(...),
 ):
     try:
-        session_id = request.user or "None"  # noqa: F841
-        question_id = str(uuid.uuid4())
-        logger.debug(f"Received chat request: {request.messages[-1].content}")
-        answer = await run_in_threadpool(chat_engine.chat,
-                                         messages=request.messages,
-                                         stream=request.stream)
+        with Operation(name="chat") as op:
+            session_id = request.user or "None"  # noqa: F841
+            question_id = str(uuid.uuid4())
 
-        if request.stream:
-            def stringify_content(response: StreamingChatResponse):
-                for chunk in response.chunks:
-                    chunk.id = question_id
-                    data = chunk.json()
-                    yield data
+            op.add("content", request.messages[-1].content)
+            op.add("question_id", question_id)
 
-            content_stream = stringify_content(cast(StreamingChatResponse, answer))
-            return EventSourceResponse(content_stream, media_type='text/event-stream')
+            answer = await run_in_threadpool(chat_engine.chat,
+                                             messages=request.messages,
+                                             stream=request.stream)
 
-        else:
-            chat_response = cast(ChatResponse, answer)
-            chat_response.id = question_id
-            return chat_response
+            if request.stream:
+                def stringify_content(response: StreamingChatResponse):
+                    for chunk in response.chunks:
+                        chunk.id = question_id
+                        data = chunk.json()
+                        yield data
+
+                content_stream = stringify_content(cast(StreamingChatResponse, answer))
+                return EventSourceResponse(content_stream, media_type='text/event-stream')
+
+            else:
+                chat_response = cast(ChatResponse, answer)
+                chat_response.id = question_id
+                return chat_response
 
     except Exception as e:
-        logger.exception(f"Chat with question_id {question_id} failed")
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -118,7 +132,9 @@ async def upsert(
 )
 async def health_check():
     try:
-        await run_in_threadpool(kb.verify_connection_health)
+        with Operation(name="health_check") as op:
+            op.add("prop", 3)
+            await run_in_threadpool(kb.verify_connection_health)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
@@ -141,8 +157,9 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup():
-    _init_logging()
-    _init_engines()
+    #_init_logging()
+    #_init_engines()
+    pass
 
 
 def _init_logging():
