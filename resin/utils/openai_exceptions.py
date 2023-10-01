@@ -1,7 +1,7 @@
 import openai
 
 
-OPEN_AI_RETRY_EXCEPTIONS = (
+OPEN_AI_TRANSIENT_EXCEPTIONS = (
     openai.error.Timeout,
     openai.error.APIConnectionError,
     openai.error.APIError,
