@@ -3,7 +3,7 @@ import pytest
 import pinecone
 import numpy as np
 import pandas as pd
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, stop_after_delay, wait_fixed
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
@@ -61,7 +61,7 @@ def total_vectors_in_index(knowledge_base):
     return knowledge_base._index.describe_index_stats().total_vector_count
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(stop=stop_after_delay(60), wait=wait_fixed(1))
 def assert_chunks_in_index(knowledge_base, encoded_chunks):
     ids = [c.id for c in encoded_chunks]
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
@@ -74,21 +74,21 @@ def assert_chunks_in_index(knowledge_base, encoded_chunks):
         assert fetch_result[chunk.id].metadata["document_id"] == chunk.document_id
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(stop=stop_after_delay(60), wait=wait_fixed(1))
 def assert_ids_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == len(ids), \
         f"Expected {len(ids)} ids, got {len(fetch_result.keys())}"
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(stop=stop_after_delay(60), wait=wait_fixed(1))
 def assert_num_vectors_in_index(knowledge_base, num_vectors):
     vectors_in_index = total_vectors_in_index(knowledge_base)
     assert vectors_in_index == num_vectors, \
         f"Expected {num_vectors} vectors in index, got {vectors_in_index}"
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(stop=stop_after_delay(60), wait=wait_fixed(1))
 def assert_ids_not_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == 0, f"Found unexpected ids: {len(fetch_result.keys())}"

@@ -2,7 +2,6 @@ import os
 from copy import deepcopy
 from datetime import datetime
 import time
-from tqdm.auto import tqdm
 from typing import List, Optional
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
@@ -24,6 +23,11 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
+
+INDEX_DELETED_MESSAGE = (
+    "index was deleted. "
+    "Please create it first using `create_with_new_index()`"
+)
 
 INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
@@ -94,10 +98,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         return index
 
     def verify_connection_health(self) -> None:
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         try:
-            self._index.describe_index_stats()  # type: ignore
+            self._index.describe_index_stats()
         except Exception as e:
             try:
                 pinecone_whoami()
@@ -218,16 +223,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         return self._index_name
 
     def delete_index(self):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
         delete_index(self._index_name)
         self._index = None
-
-    def _verify_not_deleted(self):
-        if self._index is None:
-            raise RuntimeError(
-                "index was deleted. "
-                "Please create it first using `create_with_new_index()`"
-            )
 
     def query(self,
               queries: List[Query],
@@ -247,7 +246,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
@@ -256,7 +256,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             metadata_filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
 
-        result = self._index.query(vector=query.values,  # type: ignore
+        result = self._index.query(vector=query.values,
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
@@ -281,7 +281,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 100):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
@@ -321,7 +322,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                          df: pd.DataFrame,
                          namespace: str = "",
                          batch_size: int = 100):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         expected_columns = ["id", "text", "metadata"]
         if not all([c in df.columns for c in expected_columns]):
@@ -336,16 +338,17 @@ class KnowledgeBase(BaseKnowledgeBase):
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         if self._is_starter_env():
-            for i in tqdm(range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE)):
+            for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
                 doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
                 chunked_ids = [f"{doc_id}_{i}"
                                for doc_id in doc_ids_chunk
                                for i in range(DELETE_STARTER_CHUNKS_PER_DOC)]
                 try:
-                    self._index.delete(ids=chunked_ids,  # type: ignore
+                    self._index.delete(ids=chunked_ids,
                                        namespace=namespace)
                 except Exception as e:
                     raise RuntimeError(
@@ -353,7 +356,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                         f"Please try again."
                     ) from e
         else:
-            self._index.delete(  # type: ignore
+            self._index.delete(
                 filter={"document_id": {"$in": document_ids}},
                 namespace=namespace
             )
