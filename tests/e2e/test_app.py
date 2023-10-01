@@ -87,26 +87,25 @@ def test_e2e(client):
         ],
         max_tokens=100,
     )
-    query_response = client.post("/context/query", json=query_payload.dict())
-    assert query_response.status_code == 200
-
-    # test response is as expected on /query
-    response_as_json = query_response.json()
 
     @retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
-    def test_response_is_expected(response_as_json):
-        (
+    def test_response_is_expected():
+        query_response = client.post("/context/query", json=query_payload.dict())
+        assert query_response.status_code == 200
+
+        # test response is as expected on /query
+        response_as_json = query_response.json()
+
+        assert(
             response_as_json[0]["query"]
             == query_payload.dict()["queries"][0]["text"]
             and response_as_json[0]["snippets"][0]["text"]
             == upsert_payload.dict()["documents"][0]["text"]
         )
+        assert response_as_json[0]["snippets"][0]["source"] == \
+        upsert_payload.dict()["documents"][0]["source"]
 
-        assert test_response_is_expected(response_as_json)
-
-    # TODO: uncomment when fix is pushed
-    # assert response_as_json[0]["snippets"][0]["source"] == \
-    # upsert_payload.dict()["documents"][0]["source"]
+    test_response_is_expected()
 
     # test response is as expected on /chat
     chat_payload = {
