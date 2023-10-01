@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Tuple
 
-from resin.knoweldge_base.tokenizer.tokenizer import Tokenizer
+from resin.tokenizer import Tokenizer
 from resin.models.data_models import Messages
 
 

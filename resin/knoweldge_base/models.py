@@ -28,6 +28,7 @@ class KBEncodedDocChunk(KBDocChunk):
         metadata = deepcopy(self.metadata)
         metadata["text"] = self.text
         metadata["document_id"] = self.document_id
+        metadata["source"] = self.source
 
         return {
             "id": self.id,

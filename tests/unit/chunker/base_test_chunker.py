@@ -24,11 +24,13 @@ class BaseTestChunker(ABC):
                 id="test_document_2",
                 text="another simple test string",
                 metadata={"test": 2},
+                source="doc_2"
             ),
             Document(
                 id="test_document_3",
                 text="short",
                 metadata={"test": 2},
+                source="doc_3"
             )
         ]
 
@@ -49,7 +51,8 @@ class BaseTestChunker(ABC):
             assert len(actual_chunks) == len(expected_chunks_for_doc)
             for actual_chunk, expected_chunk in zip(actual_chunks,
                                                     expected_chunks_for_doc):
-                assert actual_chunk == expected_chunk
+                assert actual_chunk == expected_chunk, f"actual: {actual_chunk}\n, " \
+                                                       f"expected: {expected_chunk}"
 
     @staticmethod
     def test_chunk_single_document_empty_content(chunker, documents):
