@@ -11,12 +11,13 @@ try:
 except ImportError:
     from pinecone import Index
 
-from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
+from pinecone_datasets import Dataset
+from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.knoweldge_base.chunker import Chunker, MarkdownChunker
 from resin.knoweldge_base.record_encoder import (RecordEncoder,
-                                                 DenseRecordEncoder)
+                                                 OpenAIRecordEncoder)
 from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
@@ -27,28 +28,29 @@ INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
+RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
 
 
 class KnowledgeBase(BaseKnowledgeBase):
 
-    DEFAULT_RECORD_ENCODER = DenseRecordEncoder
+    DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
     DEFAULT_CHUNKER = MarkdownChunker
     DEFAULT_RERANKER = TransparentReranker
 
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: Optional[RecordEncoder] = None,
+                 record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 10,
+                 default_top_k: int = 5,
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = encoder if encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
+        self._encoder = record_encoder if record_encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
@@ -114,8 +116,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def create_with_new_index(cls,
                               index_name: str,
                               *,
-                              encoder: RecordEncoder,
-                              chunker: Chunker,
+                              record_encoder: Optional[RecordEncoder] = None,
+                              chunker: Optional[Chunker] = None,
                               reranker: Optional[Reranker] = None,
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
@@ -134,8 +136,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            if encoder.dimension is not None:
-                dimension = encoder.dimension
+            record_encoder = record_encoder if record_encoder is not None else cls.DEFAULT_RECORD_ENCODER()  # noqa: E501
+            if record_encoder.dimension is not None:
+                dimension = record_encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
@@ -174,7 +177,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # initialize KnowledgeBase
         return cls(index_name=index_name,
-                   encoder=encoder,
+                   record_encoder=record_encoder,
                    chunker=chunker,
                    reranker=reranker,
                    default_top_k=default_top_k)
@@ -267,6 +270,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                     text=text,
                                     document_id=document_id,
                                     score=match['score'],
+                                    source=metadata.pop('source', ''),
                                     metadata=metadata)
             )
         return KBQueryResult(query=query.text, documents=documents)
@@ -276,6 +280,15 @@ class KnowledgeBase(BaseKnowledgeBase):
                namespace: str = "",
                batch_size: int = 100):
         self._verify_not_deleted()
+
+        for doc in documents:
+            metadata_keys = set(doc.metadata.keys())
+            forbidden_keys = metadata_keys.intersection(RESERVED_METADATA_KEYS)
+            if forbidden_keys:
+                raise ValueError(
+                    f"Document with id {doc.id} contains reserved metadata keys: "
+                    f"{forbidden_keys}. Please remove them and try again."
+                )
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
@@ -315,13 +328,25 @@ class KnowledgeBase(BaseKnowledgeBase):
                          batch_size: int = 100):
         self._verify_not_deleted()
 
-        expected_columns = ["id", "text", "metadata"]
-        if not all([c in df.columns for c in expected_columns]):
+        required_columns = {"id", "text"}
+        optional_columns = {"source", "metadata"}
+
+        df_columns = set(df.columns)
+        if not df_columns.issuperset(required_columns):
             raise ValueError(
-                f"Dataframe must contain the following columns: {expected_columns}"
-                f"Got: {df.columns}"
+                f"Dataframe must contain the following columns: "
+                f"{list(required_columns)}, Got: {list(df.columns)}"
             )
-        documents = [Document(id=row.id, text=row.text, metadata=row.metadata)
+
+        redundant_columns = df_columns - required_columns - optional_columns
+        if redundant_columns:
+            raise ValueError(
+                f"Dataframe contains unknown columns: {list(redundant_columns)}. "
+                f"Only the following columns are allowed: "
+                f"{list(required_columns) + list(optional_columns)}"
+            )
+
+        documents = [Document(**row._asdict())
                      for row in df.itertuples()]
         self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
