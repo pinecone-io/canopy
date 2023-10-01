@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from resin.knoweldge_base import KnowledgeBase
-from resin.knoweldge_base.tokenizer import OpenAITokenizer, Tokenizer
+from resin.tokenizer import OpenAITokenizer, Tokenizer
 
 from resin_cli.app import app, _init_engines, _init_logging
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
@@ -21,8 +21,6 @@ def test_e2e():
     Tokenizer.initialize(OpenAITokenizer, "gpt-3.5-turbo")
     kb = KnowledgeBase.create_with_new_index(
         index_name=os.environ["INDEX_NAME"],
-        encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
-        chunker=KnowledgeBase.DEFAULT_CHUNKER(),
     )
     Tokenizer.clear()
     _init_engines()
