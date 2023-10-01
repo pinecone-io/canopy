@@ -12,6 +12,17 @@ from resin_cli.app import app
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
 from tests import Tokenizer
 
+upsert_payload = ContextUpsertRequest(
+    documents=[
+        {
+            "id": "api_tests-1",
+            "text": "This is a test document, the topic is red bananas",
+            "source": "api_tests",
+            "metadata": {"test": "test"},
+        }
+    ],
+)
+
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
@@ -22,9 +33,6 @@ def index_name(testrun_uid):
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
     pinecone.init()
-    if index_name in pinecone.list_indexes():
-        pinecone.delete_index(index_name)
-
     KnowledgeBase.create_with_new_index(index_name=index_name,)
 
     return KnowledgeBase(index_name=index_name)
@@ -37,7 +45,10 @@ def client(knowledge_base, index_name):
     Tokenizer.clear()
     with TestClient(app) as client:
         yield client
-    os.environ["INDEX_NAME"] = index_name_before
+    if index_name_before:
+        os.environ["INDEX_NAME"] = index_name_before
+    else:
+        os.unsetenv("INDEX_NAME")
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -54,29 +65,24 @@ def teardown_knowledge_base(knowledge_base):
 # with the fixtures that will be resovled
 
 
-def test_e2e(client):
+def test_health(client):
     health_response = client.get("/health")
-    assert health_response.status_code == 200
+    assert health_response.is_success
     assert (
         health_response.json()
         == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
     )
 
-    # Upsert a document to the index
-    upsert_payload = ContextUpsertRequest(
-        documents=[
-            {
-                "id": "api_tests-1",
-                "text": "This is a test document, the topic is red bananas",
-                "source": "api_tests",
-                "metadata": {"test": "test"},
-            }
-        ],
-    )
-    upsert_response = client.post("/context/upsert", json=upsert_payload.dict())
-    assert upsert_response.status_code == 200
 
-    # fetech the context with all the right filters
+def test_upsert(client):
+    # Upsert a document to the index
+    upsert_response = client.post("/context/upsert", json=upsert_payload.dict())
+    assert upsert_response.is_success
+
+
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+def test_query(client):
+    # fetch the context with all the right filters
     query_payload = ContextQueryRequest(
         queries=[
             {
@@ -88,25 +94,23 @@ def test_e2e(client):
         max_tokens=100,
     )
 
-    @retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
-    def test_response_is_expected():
-        query_response = client.post("/context/query", json=query_payload.dict())
-        assert query_response.status_code == 200
+    query_response = client.post("/context/query", json=query_payload.dict())
+    assert query_response.is_success
 
-        # test response is as expected on /query
-        response_as_json = query_response.json()
+    # test response is as expected on /query
+    response_as_json = query_response.json()
 
-        assert(
+    assert (
             response_as_json[0]["query"]
             == query_payload.dict()["queries"][0]["text"]
             and response_as_json[0]["snippets"][0]["text"]
             == upsert_payload.dict()["documents"][0]["text"]
-        )
-        assert response_as_json[0]["snippets"][0]["source"] == \
-        upsert_payload.dict()["documents"][0]["source"]
+    )
+    assert (response_as_json[0]["snippets"][0]["source"] ==
+            upsert_payload.dict()["documents"][0]["source"])
 
-    test_response_is_expected()
 
+def test_chat(client):
     # test response is as expected on /chat
     chat_payload = {
         "messages": [
@@ -117,7 +121,7 @@ def test_e2e(client):
         ]
     }
     chat_response = client.post("/context/chat/completions", json=chat_payload)
-    assert chat_response.status_code == 200
+    assert chat_response.is_success
     chat_response_as_json = chat_response.json()
     assert chat_response_as_json["choices"][0]["message"]["role"] == "assistant"
     chat_response_content = chat_response_as_json["choices"][0]["message"][
