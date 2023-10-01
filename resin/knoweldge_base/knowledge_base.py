@@ -28,6 +28,7 @@ INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
+RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
 
 
 class KnowledgeBase(BaseKnowledgeBase):
@@ -269,6 +270,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                     text=text,
                                     document_id=document_id,
                                     score=match['score'],
+                                    source=metadata.pop('source', ''),
                                     metadata=metadata)
             )
         return KBQueryResult(query=query.text, documents=documents)
@@ -278,6 +280,15 @@ class KnowledgeBase(BaseKnowledgeBase):
                namespace: str = "",
                batch_size: int = 100):
         self._verify_not_deleted()
+
+        for doc in documents:
+            metadata_keys = set(doc.metadata.keys())
+            forbidden_keys = metadata_keys.intersection(RESERVED_METADATA_KEYS)
+            if forbidden_keys:
+                raise ValueError(
+                    f"Document with id {doc.id} contains reserved metadata keys: "
+                    f"{forbidden_keys}. Please remove them and try again."
+                )
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
@@ -317,13 +328,25 @@ class KnowledgeBase(BaseKnowledgeBase):
                          batch_size: int = 100):
         self._verify_not_deleted()
 
-        expected_columns = ["id", "text", "metadata"]
-        if not all([c in df.columns for c in expected_columns]):
+        required_columns = {"id", "text"}
+        optional_columns = {"source", "metadata"}
+
+        df_columns = set(df.columns)
+        if not df_columns.issuperset(required_columns):
             raise ValueError(
-                f"Dataframe must contain the following columns: {expected_columns}"
-                f"Got: {df.columns}"
+                f"Dataframe must contain the following columns: "
+                f"{list(required_columns)}, Got: {list(df.columns)}"
             )
-        documents = [Document(id=row.id, text=row.text, metadata=row.metadata)
+
+        redundant_columns = df_columns - required_columns - optional_columns
+        if redundant_columns:
+            raise ValueError(
+                f"Dataframe contains unknown columns: {list(redundant_columns)}. "
+                f"Only the following columns are allowed: "
+                f"{list(required_columns) + list(optional_columns)}"
+            )
+
+        documents = [Document(**row._asdict())
                      for row in df.itertuples()]
         self.upsert(documents, namespace=namespace, batch_size=batch_size)
 

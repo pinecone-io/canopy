@@ -30,6 +30,7 @@ class RecursiveCharacterChunker(Chunker):
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
                            text=text_chunk,
+                           source=document.source,
                            metadata=deepcopy(document.metadata))
                 for i, text_chunk in enumerate(text_chunks)]
 

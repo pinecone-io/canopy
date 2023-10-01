@@ -32,7 +32,8 @@ class BaseTestRecordEncoder(ABC):
         return [KBDocChunk(id=f"doc_1_{i}",
                            text=f"Sample document {i}",
                            document_id=f"doc_{i}",
-                           metadata={"test": i})
+                           metadata={"test": i},
+                           source="doc_1")
                 for i in range(5)]
 
     @staticmethod
