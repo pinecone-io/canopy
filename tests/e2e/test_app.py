@@ -10,7 +10,7 @@ from resin.knoweldge_base import KnowledgeBase
 
 from resin_cli.app import app
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
-from tests import Tokenizer
+from .. import Tokenizer
 
 upsert_payload = ContextUpsertRequest(
     documents=[
