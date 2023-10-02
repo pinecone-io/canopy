@@ -2,6 +2,13 @@ from typing import Union, Iterable, Optional, Any, Dict, List
 
 import openai
 import json
+from tenacity import (
+    retry,
+    wait_random_exponential,
+    stop_after_attempt,
+    retry_if_exception_type,
+)
+from resin.utils.openai_exceptions import OPEN_AI_TRANSIENT_EXCEPTIONS
 from resin.llm import BaseLLM
 from resin.llm.models import Function, ModelParams
 from resin.models.api_models import ChatResponse, StreamingChatChunk
@@ -24,6 +31,11 @@ class OpenAILLM(BaseLLM):
                 " Available models: {self.available_models}"
             )
 
+    @retry(
+        wait=wait_random_exponential(min=1, max=10),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception_type(OPEN_AI_TRANSIENT_EXCEPTIONS),
+    )
     def chat_completion(self,
                         messages: Messages,
                         *,
@@ -55,6 +67,13 @@ class OpenAILLM(BaseLLM):
 
         return ChatResponse(**response)
 
+    @retry(
+        wait=wait_random_exponential(min=1, max=10),
+        stop=stop_after_attempt(3),
+        retry=retry_if_exception_type(
+            OPEN_AI_TRANSIENT_EXCEPTIONS + (json.decoder.JSONDecodeError,)
+        ),
+    )
     def enforced_function_call(self,
                                messages: Messages,
                                function: Function,
