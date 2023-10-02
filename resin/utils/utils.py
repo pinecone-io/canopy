@@ -95,7 +95,16 @@ class ConfigurableMixin(abc.ABC):
                     component = default_class.from_config(component_config)
                 loaded_components[component_name] = component
 
-        return cls(**loaded_components , **config)
+        parameters = config.pop("parameters", None)
+
+        # The config should be empty at this point
+        if config:
+            raise ValueError(
+                f"Unrecognized keys in {cls._NAME} config: {config.keys()}. The allowed"
+                f" keys are: {list(cls._DEFAULT_COMPONENTS.keys()) + ['parameters']}"
+            )
+
+        return cls(**loaded_components , **parameters)
 
 
         # unallowed_keys = set(kwargs.keys()).intersection(set(config.keys()))

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from resin.knoweldge_base.models import KBQueryResult
-from resin.utils import FactoryMixin
+from resin.utils.utils import FactoryMixin
 
 
 class Reranker(ABC, FactoryMixin):

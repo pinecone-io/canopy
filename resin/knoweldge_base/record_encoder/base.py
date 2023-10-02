@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from resin.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
 from resin.models.data_models import Query
-from resin.utils import FactoryMixin
+from resin.utils.utils import FactoryMixin
 
 
 class RecordEncoder(ABC, FactoryMixin):
