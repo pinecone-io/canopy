@@ -72,10 +72,17 @@ jobs:
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
         PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        CE_LOG_FILENAME: e2e.log
       run: poetry run pytest -n 3 --dist loadscope --html=report_e2e.html --self-contained-html tests/e2e
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: dataset-pytest-report-py${{ matrix.python-version }}
+        name: pytest-report-py${{ matrix.python-version }}
         path: report*.html
+    - name: upload pytest report.html
+      uses: actions/upload-artifact@v3
+      if: failure()
+      with:
+        name: e2e-log-failure-report-py${{ matrix.python-version }}
+        path: e2e.log
