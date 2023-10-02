@@ -11,6 +11,7 @@ knowledge_base:
     type: OpenAIEncoder
     params:
       model_name: "text-embedding-ada-002"
+      batch_size: 100
 
   chunker:
     type: MarkdownChunker
@@ -23,15 +24,19 @@ context_engine:
   context_builder:
     type: StuffingContextBuilder
 
+  params:
+    global_metadata_filter: null # An optional metadata filter to apply to all queries
+
 llm:
   type: OpenAILLM
   params:
     model_name: gpt-3.5-turbo
+    model_params: null # Model-specific parameters. May change depending on the model.
 
 chat_engine:
   params:
     max_prompt_tokens: 3000
-    max_generated_tokens: 750
+    max_generated_tokens: null # Will use the LLM's default max generated tokens
     max_context_tokens: 2500
     system_prompt: null  # Will use the default system prompt
     history_pruning: recent  # Options: [raise, recent]
