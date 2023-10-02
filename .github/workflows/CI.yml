@@ -78,11 +78,11 @@ jobs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: pytest-report-py${{ matrix.python-version }}
+        name: pytest-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
         path: report*.html
-    - name: upload pytest report.html
+    - name: upload e2e test log
       uses: actions/upload-artifact@v3
       if: failure()
       with:
-        name: e2e-log-failure-report-py${{ matrix.python-version }}
+        name: e2e-log-failure-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
         path: e2e.log
