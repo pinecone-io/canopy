@@ -23,7 +23,7 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
-from resin.utils.utils import ConfigurableMixin
+from resin.utils.config import ConfigurableMixin
 
 
 INDEX_DELETED_MESSAGE = (

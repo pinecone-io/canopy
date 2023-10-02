@@ -3,7 +3,7 @@ from typing import List
 
 from resin.knoweldge_base.models import KBDocChunk
 from resin.models.data_models import Document
-from resin.utils.utils import FactoryMixin
+from resin.utils.config import FactoryMixin
 
 
 class Chunker(ABC, FactoryMixin):
