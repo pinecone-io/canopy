@@ -26,7 +26,6 @@ load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
 
 
-INDEX_NAME = os.getenv("INDEX_NAME")
 app = FastAPI()
 
 context_engine: ContextEngine
@@ -71,7 +70,7 @@ async def chat(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@app.post(
     "/context/query",
 )
 async def query(
@@ -167,6 +166,7 @@ def _init_engines():
     global kb, context_engine, chat_engine, llm
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
 
+    INDEX_NAME = os.getenv("INDEX_NAME")
     if not INDEX_NAME:
         raise ValueError("INDEX_NAME environment variable must be set")
 
