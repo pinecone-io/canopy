@@ -1,6 +1,5 @@
 from typing import List
 from functools import cached_property
-
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
 from .base import RecordEncoder
