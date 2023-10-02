@@ -44,6 +44,7 @@ def validate_connection():
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+    try:
         openai.Model.list()
     except Exception:
         msg = (
