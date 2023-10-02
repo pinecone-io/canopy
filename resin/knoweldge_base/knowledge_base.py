@@ -1,3 +1,4 @@
+import os
 from copy import deepcopy
 from datetime import datetime
 import time
@@ -12,44 +13,55 @@ try:
 except ImportError:
     from pinecone import Index
 
-from pinecone_datasets import Dataset, DatasetMetadata, DenseModelMetadata
+from pinecone_datasets import Dataset
+from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.knoweldge_base.chunker import Chunker, MarkdownChunker
 from resin.knoweldge_base.record_encoder import (RecordEncoder,
-                                                 DenseRecordEncoder)
+                                                 OpenAIRecordEncoder)
 from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
 
+INDEX_DELETED_MESSAGE = (
+    "index was deleted. "
+    "Please create it first using `create_with_new_index()`"
+)
+
 INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
 INDEX_PROVISION_TIME_INTERVAL = 3
+RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
+
+DELETE_STARTER_BATCH_SIZE = 30
+
+DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 class KnowledgeBase(BaseKnowledgeBase):
 
-    DEFAULT_RECORD_ENCODER = DenseRecordEncoder
+    DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
     DEFAULT_CHUNKER = MarkdownChunker
     DEFAULT_RERANKER = TransparentReranker
 
     def __init__(self,
                  index_name: str,
                  *,
-                 encoder: Optional[RecordEncoder] = None,
+                 record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 10,
+                 default_top_k: int = 5,
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = encoder if encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
+        self._encoder = record_encoder if record_encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
@@ -89,10 +101,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         return index
 
     def verify_connection_health(self) -> None:
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         try:
-            self._index.describe_index_stats()  # type: ignore
+            self._index.describe_index_stats()
         except Exception as e:
             try:
                 pinecone_whoami()
@@ -115,8 +128,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def create_with_new_index(cls,
                               index_name: str,
                               *,
-                              encoder: RecordEncoder,
-                              chunker: Chunker,
+                              record_encoder: Optional[RecordEncoder] = None,
+                              chunker: Optional[Chunker] = None,
                               reranker: Optional[Reranker] = None,
                               default_top_k: int = 10,
                               indexed_fields: Optional[List[str]] = None,
@@ -135,8 +148,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            if encoder.dimension is not None:
-                dimension = encoder.dimension
+            record_encoder = record_encoder if record_encoder is not None else cls.DEFAULT_RECORD_ENCODER()  # noqa: E501
+            if record_encoder.dimension is not None:
+                dimension = record_encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
@@ -175,7 +189,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # initialize KnowledgeBase
         return cls(index_name=index_name,
-                   encoder=encoder,
+                   record_encoder=record_encoder,
                    chunker=chunker,
                    reranker=reranker,
                    default_top_k=default_top_k)
@@ -213,16 +227,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         return self._index_name
 
     def delete_index(self):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
         delete_index(self._index_name)
         self._index = None
-
-    def _verify_not_deleted(self):
-        if self._index is None:
-            raise RuntimeError(
-                "index was deleted. "
-                "Please create it first using `create_with_new_index()`"
-            )
 
     def query(self,
               queries: List[Query],
@@ -242,7 +250,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
@@ -251,7 +260,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             metadata_filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
 
-        result = self._index.query(vector=query.values,  # type: ignore
+        result = self._index.query(vector=query.values,
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
@@ -268,6 +277,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                     text=text,
                                     document_id=document_id,
                                     score=match['score'],
+                                    source=metadata.pop('source', ''),
                                     metadata=metadata)
             )
         return KBQueryResult(query=query.text, documents=documents)
@@ -276,7 +286,17 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 100):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
+
+        for doc in documents:
+            metadata_keys = set(doc.metadata.keys())
+            forbidden_keys = metadata_keys.intersection(RESERVED_METADATA_KEYS)
+            if forbidden_keys:
+                raise ValueError(
+                    f"Document with id {doc.id} contains reserved metadata keys: "
+                    f"{forbidden_keys}. Please remove them and try again."
+                )
 
         with Operation(name="chunking").progressable(len(documents)) as op:
             for chunks in self._chunker.chunk_documents(documents):
@@ -304,8 +324,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         # the number of chunks per document,
         # we need to delete all existing chunks
         # belonging to the same documents before upserting the new ones.
-        self.delete(document_ids=[doc.id for doc in documents],
-                    namespace=namespace)
+        # we currently don't delete documents before upsert in starter env
+        if not self._is_starter_env():
+            self.delete(document_ids=[doc.id for doc in documents],
+                        namespace=namespace)
 
         # Upsert to Pinecone index
         dataset.to_pinecone_index(self._index_name,
@@ -316,26 +338,61 @@ class KnowledgeBase(BaseKnowledgeBase):
                          df: pd.DataFrame,
                          namespace: str = "",
                          batch_size: int = 100):
-        self._verify_not_deleted()
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
 
-        expected_columns = ["id", "text", "metadata"]
-        if not all([c in df.columns for c in expected_columns]):
+        required_columns = {"id", "text"}
+        optional_columns = {"source", "metadata"}
+
+        df_columns = set(df.columns)
+        if not df_columns.issuperset(required_columns):
             raise ValueError(
-                f"Dataframe must contain the following columns: {expected_columns}"
-                f"Got: {df.columns}"
+                f"Dataframe must contain the following columns: "
+                f"{list(required_columns)}, Got: {list(df.columns)}"
             )
-        documents = [Document(id=row.id, text=row.text, metadata=row.metadata)
+
+        redundant_columns = df_columns - required_columns - optional_columns
+        if redundant_columns:
+            raise ValueError(
+                f"Dataframe contains unknown columns: {list(redundant_columns)}. "
+                f"Only the following columns are allowed: "
+                f"{list(required_columns) + list(optional_columns)}"
+            )
+
+        documents = [Document(**row._asdict())
                      for row in df.itertuples()]
         self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
-        self._verify_not_deleted()
-        self._index.delete(  # type: ignore
-            filter={"document_id": {"$in": document_ids}},
-            namespace=namespace
-        )
+        if self._index is None:
+            raise RuntimeError(INDEX_DELETED_MESSAGE)
+
+        if self._is_starter_env():
+            for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
+                doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
+                chunked_ids = [f"{doc_id}_{i}"
+                               for doc_id in doc_ids_chunk
+                               for i in range(DELETE_STARTER_CHUNKS_PER_DOC)]
+                try:
+                    self._index.delete(ids=chunked_ids,
+                                       namespace=namespace)
+                except Exception as e:
+                    raise RuntimeError(
+                        f"Failed to delete document ids: {document_ids[i:]}"
+                        f"Please try again."
+                    ) from e
+        else:
+            self._index.delete(
+                filter={"document_id": {"$in": document_ids}},
+                namespace=namespace
+            )
+
+    @staticmethod
+    def _is_starter_env():
+        starter_env_suffixes = ("starter", "stage-gcp-0")
+        return os.getenv("PINECONE_ENVIRONMENT").lower().endswith(starter_env_suffixes)
 
     async def aquery(self,
                      queries: List[Query],

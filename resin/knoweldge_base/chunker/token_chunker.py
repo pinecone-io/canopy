@@ -2,7 +2,7 @@ from typing import List
 
 from .base import Chunker
 from ..models import KBDocChunk
-from ..tokenizer.tokenizer import Tokenizer
+from resin.tokenizer import Tokenizer
 from ...models.data_models import Document
 
 
@@ -45,6 +45,7 @@ class TokenChunker(Chunker):
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
                            text=text_chunk,
+                           source=document.source,
                            metadata=document.metadata)
                 for i, text_chunk in enumerate(text_chunks)]
 

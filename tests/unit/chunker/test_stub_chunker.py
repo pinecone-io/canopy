@@ -18,5 +18,6 @@ class TestStubChunker(BaseTestChunker):
         return [KBDocChunk(id=f"{document.id}_0",
                            document_id=document.id,
                            text=document.text,
-                           metadata=document.metadata)
+                           metadata=document.metadata,
+                           source=document.source)
                 for document in documents]
