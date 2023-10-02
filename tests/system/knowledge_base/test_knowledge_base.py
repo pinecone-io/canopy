@@ -206,9 +206,7 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
     for chunk in encoded_chunks:
         chunk.source = ''
 
-    vec_after = total_vectors_in_index(knowledge_base)
-
-    assert vec_after - vec_before == len(encoded_chunks)
+    assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
 
 
