@@ -362,7 +362,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete(self,
                document_ids: List[str],
-               namespace: str = "") -> None:
+               namespace: str = ""):
         if self._index is None:
             raise RuntimeError(INDEX_DELETED_MESSAGE)
 

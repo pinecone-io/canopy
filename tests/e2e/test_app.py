@@ -129,3 +129,11 @@ def test_chat(client):
     ]
     print(chat_response_content)
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
+
+
+def test_delete(client):
+    delete_payload = {
+        "document_ids": ["api_tests-1"]
+    }
+    delete_response = client.post("/context/delete", json=delete_payload)
+    assert delete_response.is_success

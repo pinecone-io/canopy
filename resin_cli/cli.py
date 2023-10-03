@@ -101,7 +101,7 @@ def new(index_name, tokenizer_model):
     with spinner:
         _ = KnowledgeBase.create_with_new_index(
             index_name=index_name,
-            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
+            record_encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
             chunker=KnowledgeBase.DEFAULT_CHUNKER(),
         )
     click.echo(click.style("Success!", fg="green"))
@@ -140,6 +140,44 @@ def upsert(index_name, data_path, tokenizer_model):
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     kb.upsert_dataframe(data)
     click.echo(click.style("Success!", fg="green"))
+
+
+@cli.command()
+@click.option(
+    "--document-ids",
+    type=click.STRING,
+    required=True,
+    help="Comma-separated string of document IDs to delete",
+)
+@click.option("--host", default="0.0.0.0", help="Host")
+@click.option("--port", default=8000, help="Port")
+@click.option("--ssl/--no-ssl", default=False, help="SSL")
+def delete(document_ids, host, port, ssl):
+    """
+    Delete specified documents from the given index.
+
+    Parameters:
+    document_ids (str): A comma-separated string of document IDs to delete.
+    index_name (str): The name of the index to delete documents from.
+
+    """
+    # Convert the comma-separated string of document IDs to a list of strings
+    doc_ids_list = document_ids.split(',')
+
+    ssl_str = "s" if ssl else ""
+    chat_service_url = f"http{ssl_str}://{host}:{port}"
+
+    click.echo(f"Resin is going to delete documents with IDs: "
+               f"{', '.join(doc_ids_list)}")
+    click.echo("")
+    result = requests.post(f"{chat_service_url}/context/delete",
+                           json={"document_ids": doc_ids_list})
+    if result.status_code != requests.codes.ok:
+        click.echo(
+            click.style(f"Failed! {result.status_code}: {result.text}", fg="red")
+        )
+    else:
+        click.echo(click.style("Success! Documents deleted.", fg="green"))
 
 
 def _chat(
