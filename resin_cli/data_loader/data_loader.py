@@ -30,7 +30,6 @@ def _validate_dataframe(df: pd.DataFrame) -> bool:
     return True
 
 def _load_single_file_by_suffix(f: str) -> pd.DataFrame:
-    print(f)
     if f.endswith(".parquet"):
         df = pd.read_parquet(f)
     elif f.endswith(".jsonl"):
@@ -38,15 +37,12 @@ def _load_single_file_by_suffix(f: str) -> pd.DataFrame:
     else:
         raise ValueError("Only .parquet and .jsonl files are supported")
     
-    print(df)
     return df
 
 
 def load_dataframe_from_path(path: str) -> pd.DataFrame:
     if os.path.isdir(path):
-        print(path)
         all_files = glob.glob(os.path.join(path, "*.jsonl")) + glob.glob(os.path.join(path, "*.parquet"))
-        print(all_files)
         df = pd.concat([_load_single_file_by_suffix(f) for f in all_files], axis=0, ignore_index=True)
     else:
         df = _load_single_file_by_suffix(path)
