@@ -1,6 +1,6 @@
 import tiktoken
 from typing import List
-from .tokenizer import BaseTokenizer
+from .base import BaseTokenizer
 from ..models.data_models import Messages, MessageBase, Role
 
 
@@ -9,7 +9,7 @@ class OpenAITokenizer(BaseTokenizer):
     MESSAGE_TOKENS_OVERHEAD = 3
     FIXED_PREFIX_TOKENS = 3
 
-    def __init__(self, model_name: str):
+    def __init__(self, model_name: str = "gpt-3.5-turbo"):
         self._encoder = tiktoken.encoding_for_model(model_name)
 
     def tokenize(self, text: str) -> List[str]:
