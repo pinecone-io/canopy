@@ -76,7 +76,6 @@ class KnowledgeBase(BaseKnowledgeBase):
             self._connect_pinecone()
 
         if self.index_name not in list_indexes():
-            print(self._connection_error_msg)
             return None
 
         try:
