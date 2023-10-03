@@ -5,9 +5,10 @@ on: pull_request
 jobs:
   run-linters:
     name: Run linters
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
         python-version: [3.9, '3.10', 3.11]
 
     steps:
