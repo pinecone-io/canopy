@@ -90,7 +90,10 @@ def test_except_not_dataframe():
 
 
 def test_except_not_unique():
-    """Test that _validate_dataframe raises a ValueError if passed a dataframe with a non-unique index."""
+    """
+    Test that _validate_dataframe raises a
+    ValueError if passed a dataframe with a non-unique index.
+    """
     with pytest.raises(IndexNotUniqueError):
         _validate_dataframe(
             pd.DataFrame(
@@ -105,13 +108,16 @@ def test_except_not_unique():
 
 
 def test_all_validator_cases():
-    """Test that _validate_dataframe returns True for all dataframes in all_dataframes."""
+    """
+    Test that _validate_dataframe returns
+    True for all dataframes in all_dataframes.
+    """
     for name, df in all_dataframes_as_dict_with_name.items():
         print(name)
         if name.startswith("bad"):
-            assert _validate_dataframe(df) == False
+            assert not _validate_dataframe(df)
         elif name.startswith("good"):
-            assert _validate_dataframe(df) == True
+            assert _validate_dataframe(df)
         print("ok")
 
 

@@ -12,7 +12,10 @@ import openai
 from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
-from resin_cli.data_loader import load_dataframe_from_path, IndexNotUniqueError, DataframeValidationError
+from resin_cli.data_loader import (
+    load_dataframe_from_path,
+    IndexNotUniqueError,
+    DataframeValidationError)
 
 from .app import start as start_service
 from .cli_spinner import Spinner
@@ -22,11 +25,14 @@ from .api_models import ChatDebugInfo
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
+
 spinner = Spinner()
+
 
 class OpenAIError(Exception):
     def __init__(self, message):
         super().__init__(message)
+
 
 def is_healthy(url: str):
     try:
@@ -127,34 +133,34 @@ def upsert(index_name, data_path, tokenizer_model):
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
         msg = "Data path is not provided,"
-        +" please provide it with --data-path or set it with env var"
+        + " please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo("Resin is going to upsert data from ", nl=False)
-    click.echo(click.style(f'{data_path}', fg='yellow'), nl=False) 
+    click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
     click.echo(click.style(f'{INDEX_NAME_PREFIX}{index_name} \n', fg='green'))
     with spinner:
         kb = KnowledgeBase(index_name=index_name)
         try:
             data = load_dataframe_from_path(data_path)
-        except IndexNotUniqueError as e:
+        except IndexNotUniqueError:
             msg = (
                 "Error: the id field on the data is not unique"
                 + " this will cause records to override each other on upsert"
-                + " please make sure the id field is unique" 
+                + " please make sure the id field is unique"
             )
-            click.echo(click.style(f, fg="red"), err=True)
+            click.echo(click.style(msg, fg="red"), err=True)
             sys.exit(1)
-        except DataframeValidationError as e:
+        except DataframeValidationError:
             msg = (
                 "Error: one or more rows have not passed validation"
                 + " data should agree with the Document Schema on models/data_models.py"
                 + " please make sure the data is valid"
             )
-            click.echo(click.style(f, fg="red"), err=True)
+            click.echo(click.style(msg, fg="red"), err=True)
             sys.exit(1)
-        except Exception as e:
+        except Exception:
             msg = (
                 "Error: an unexpected error has occured in loading data from files"
                 + " it may be due to issue with the data format"

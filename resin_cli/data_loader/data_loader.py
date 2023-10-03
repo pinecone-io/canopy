@@ -12,10 +12,12 @@ class IndexNotUniqueError(ValueError):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
+
 class DataframeValidationError(ValueError):
     def __init__(self, message):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
+
 
 def _validate_dataframe(df: pd.DataFrame) -> bool:
     if not isinstance(df, pd.DataFrame):
@@ -27,7 +29,7 @@ def _validate_dataframe(df: pd.DataFrame) -> bool:
             Document.validate(row)
 
         # if any row fails validation, return False
-        except ValidationError as e:
+        except ValidationError:
             return False
         except ValueError as e:
             raise e
