@@ -1,30 +1,34 @@
-system_prompt: &system_prompt
-  "asdasdasd a"
+system_prompt: &system_prompt |
+  Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
+  If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context.
+  Don't address the context directly, but use it to answer the user question like it's your own knowledge.
 query_builder_prompt: &query_builder_prompt
   "asdasdasd b"
 
 tokenizer:
   type: OpenAITokenizer
   params:
-    model_name: gpt-3.5-turbo-0613
+    model_name: gpt-3.5-turbo
 
 chat_engine:
   params:
     max_prompt_tokens: 3000
     max_generated_tokens: 750
     max_context_tokens: 2500
-    system_prompt: *system_prompt  # Will use the default system prompt
+    system_prompt: *system_prompt
     history_pruning: recent  # Options: [raise, recent]
     min_history_messages: 1
 
   llm: &llm
     type: OpenAILLM
-    model_name: gpt-3.5-turbo-0613
+    model_name: gpt-3.5-turbo
 
   query_builder:
     type: FunctionCallingQueryGenerator
+    llm:
+      <<: *llm
+
     params:
-      llm: *llm
       top_k: 5
       prompt: *query_builder_prompt
       function_description: null  # Will use the default function description
