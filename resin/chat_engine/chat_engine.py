@@ -13,6 +13,7 @@ from resin.llm.models import ModelParams, SystemMessage
 from resin.models.api_models import (StreamingChatChunk, ChatResponse,
                                      StreamingChatResponse, )
 from resin.models.data_models import Context, Messages
+from resin.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
@@ -51,14 +52,17 @@ class BaseChatEngine(ABC):
         pass
 
 
-class ChatEngine(BaseChatEngine):
+class ChatEngine(BaseChatEngine, ConfigurableMixin):
 
-    DEFAULT_QUERY_GENERATOR = FunctionCallingQueryGenerator
-    DEFAULT_LLM = OpenAILLM
+    _DEFAULT_COMPONENTS = {
+        'context_engine': ContextEngine,
+        'llm': OpenAILLM,
+        'query_builder': FunctionCallingQueryGenerator,
+    }
 
     def __init__(self,
                  *,
-                 context_engine: ContextEngine,
+                 context_engine: Optional[ContextEngine] = None,
                  llm: Optional[BaseLLM] = None,
                  max_prompt_tokens: int = 4096,
                  max_generated_tokens: Optional[int] = None,
@@ -68,12 +72,16 @@ class ChatEngine(BaseChatEngine):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1
                  ):
-        self.llm = llm if llm is not None else self.DEFAULT_LLM()
-        self.context_engine = context_engine
+        self.llm = self._set_component(BaseLLM, "llm", llm)
+        self.context_engine = self._set_component(
+            ContextEngine, "context_engine", context_engine
+        )
+        self._query_builder = self._set_component(
+            QueryGenerator, "query_builder", query_builder
+        )
+
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
-        self._query_builder = query_builder if query_builder is not None else \
-            self.DEFAULT_QUERY_GENERATOR(llm=self.llm)
         self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._tokenizer = Tokenizer()
         self._prompt_builder = PromptBuilder(

@@ -45,10 +45,14 @@ class ConfigurableMixin(abc.ABC):
     # _UNALLOWED_CONFIG_KxEYS = {}
     _MANDATORY_CONFIG_KEYS = {}
 
+    # @classmethod
+    # @abc.abstractmethod
+    # def from_config(cls, config: dict):
+    #     pass
+
     @classmethod
-    @abc.abstractmethod
     def from_config(cls, config: dict):
-        pass
+        return cls._from_config(config)
 
     def _set_component(self,
                        base_class: type,
