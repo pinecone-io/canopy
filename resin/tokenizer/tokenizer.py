@@ -4,7 +4,7 @@ from .openai import OpenAITokenizer
 from .base import BaseTokenizer
 
 
-class Tokenizer(BaseTokenizer):
+class Tokenizer:
     _instance = None
     _tokenizer_instance: Optional[BaseTokenizer] = None
     _initialized = False
@@ -20,14 +20,14 @@ class Tokenizer(BaseTokenizer):
         return cls._instance
 
     @classmethod
-    def initialize(cls, tokenizer_class=DEFAULT_TOKENIZER_CLASS, *args, **kwargs):
+    def initialize(cls, tokenizer_class=DEFAULT_TOKENIZER_CLASS, **kwargs):
         if cls._initialized:
             raise ValueError("Tokenizer has already been initialized")
         if not issubclass(tokenizer_class, BaseTokenizer):
             raise ValueError("Invalid tokenizer class provided")
         if issubclass(tokenizer_class, Tokenizer):
             raise ValueError("Tokenizer singleton cannot be passed as tokenizer_class")
-        cls._tokenizer_instance = tokenizer_class(*args, **kwargs)
+        cls._tokenizer_instance = tokenizer_class(**kwargs)
         cls._initialized = True
 
     @classmethod
@@ -38,9 +38,11 @@ class Tokenizer(BaseTokenizer):
 
     @classmethod
     def initialize_from_config(cls, config: dict):
-        return Tokenizer.initialize(cls,
-                                    tokenizer_class=config.get("type"),
-                                    **config.get("params", {}))
+        if cls._initialized:
+            raise ValueError("Tokenizer has already been initialized")
+        cls._tokenizer_instance = BaseTokenizer.from_config(config,
+                                                            cls.DEFAULT_TOKENIZER_CLASS)
+        cls._initialized = True
 
     def tokenize(self, text: str) -> List[str]:
         return self._tokenizer_instance.tokenize(text)  # type: ignore[union-attr]

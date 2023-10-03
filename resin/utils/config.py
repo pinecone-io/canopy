@@ -17,7 +17,7 @@ class FactoryMixin:
             raise ValueError("from_config() can only be called from the base class.")
 
         if "type" in config:
-            class_name = config["type"]
+            class_name = config.pop("type")
             if class_name not in cls._SUPPORTED_CLASSES:
                 raise ValueError(
                     f"{cls.__name__} load error: {class_name} is not supported. "
