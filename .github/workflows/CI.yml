@@ -10,10 +10,13 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
         python-version: [3.9, '3.10', 3.11]
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.9
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
@@ -38,6 +41,9 @@ jobs:
         python-version: [3.9, '3.10', 3.11]
         os: [macos-latest, windows-latest, ubuntu-latest]
         pinecone-plan: ["paid", "starter"]
+    defaults:
+      run:
+        shell: bash
 
     steps:
     - uses: actions/checkout@v3
