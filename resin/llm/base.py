@@ -4,9 +4,10 @@ from typing import Union, Iterable, Optional, List
 from resin.llm.models import Function, ModelParams
 from resin.models.api_models import ChatResponse, StreamingChatChunk
 from resin.models.data_models import Messages, Query
+from resin.utils.config import FactoryMixin
 
 
-class BaseLLM(ABC):
+class BaseLLM(ABC, FactoryMixin):
     def __init__(self,
                  model_name: str,
                  *,
