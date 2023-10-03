@@ -31,7 +31,7 @@ stream_handler = OperationHandler(
     handler=logging.StreamHandler(),
     formatter=VerboseOperationFormatter(),
 )
-logging.basicConfig(level=logging.INFO,
+logging.basicConfig(level=logging.WARNING,
                     handlers=[stream_handler])
 
 

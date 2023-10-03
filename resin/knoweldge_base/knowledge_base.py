@@ -298,9 +298,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"{forbidden_keys}. Please remove them and try again."
                 )
 
-        with Operation(name="chunking").progressable(len(documents)) as op:
-            for chunks in self._chunker.chunk_documents(documents):
-                op.progress(len(chunks))
+        chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
 
         encoder_name = self._encoder.__class__.__name__

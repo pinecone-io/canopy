@@ -1,11 +1,12 @@
+import json
 import os
 import logging
-import sys
 import uuid
 
 from dotenv import load_dotenv
+
 from oplog import OperationHandler, Operation
-from oplog.formatters import CsvOperationFormatter
+from oplog.formatters import BaseOperationFormatter
 
 from resin.llm import BaseLLM
 from resin.llm.models import UserMessage
@@ -28,12 +29,34 @@ from resin_cli.api_models import \
 load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
 
-csv_op_handler = OperationHandler(
-    handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs.csv")),
-    formatter=CsvOperationFormatter(),
+
+class JsonFormatter(BaseOperationFormatter):
+    def format_op(self, op: Operation) -> str:
+        optional_fields = {
+            "exception_type": str(op.exception_type or ""),
+            "traceback": str(op.traceback or ""),
+            "custom_props": op.custom_props,
+            "global_props": op.global_props,
+        }
+
+        row = {
+            "start_time_utc": op.start_time_utc_str,
+            "name": op.name,
+            "result": op.result,
+            "duration_ms": str(op.duration_ms),
+            "correlation_id": op.correlation_id,
+            **{k: v for k, v in optional_fields.items() if v},
+        }
+
+        return json.dumps(row, ensure_ascii=False)
+
+
+json_op_handler = OperationHandler(
+    handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs")),
+    formatter=JsonFormatter(),
 )
 logging.basicConfig(level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
-                    handlers=[csv_op_handler])
+                    handlers=[json_op_handler])
 
 
 INDEX_NAME = os.getenv("INDEX_NAME")
@@ -63,20 +86,22 @@ async def chat(
             answer = await run_in_threadpool(chat_engine.chat,
                                              messages=request.messages,
                                              stream=request.stream)
-
             if request.stream:
                 def stringify_content(response: StreamingChatResponse):
+                    entire_answer = ""
                     for chunk in response.chunks:
                         chunk.id = question_id
                         data = chunk.json()
                         yield data
+                        entire_answer += chunk.choices[0].delta.get("content", "")
+                    op.add("answer", entire_answer)
 
                 content_stream = stringify_content(cast(StreamingChatResponse, answer))
                 return EventSourceResponse(content_stream, media_type='text/event-stream')
-
             else:
                 chat_response = cast(ChatResponse, answer)
                 chat_response.id = question_id
+                op.add("answer", chat_response.choices[0].message.content)
                 return chat_response
 
     except Exception as e:
@@ -91,10 +116,13 @@ async def query(
     request: ContextQueryRequest = Body(...),
 ):
     try:
-        context: Context = await run_in_threadpool(
-            context_engine.query,
-            queries=request.queries,
-            max_context_tokens=request.max_tokens)
+        with Operation(name="query") as op:
+            op.add("max_context_tokens", request.max_tokens)
+            op.add("queries", [q.text for q in request.queries])
+            context: Context = await run_in_threadpool(
+                context_engine.query,
+                queries=request.queries,
+                max_context_tokens=request.max_tokens)
 
         return context.content
 
@@ -111,14 +139,18 @@ async def upsert(
     request: ContextUpsertRequest = Body(...),
 ):
     try:
-        logger.info(f"Upserting {len(request.documents)} documents")
-        upsert_results = await run_in_threadpool(
-            kb.upsert,
-            documents=request.documents,
-            namespace=request.namespace,
-            batch_size=request.batch_size)
+        with Operation(name="upsert") as op:
+            op.add("num_documents", len(request.documents))
+            op.add("batch_size", request.batch_size)
+            op.add("namespace", request.namespace)
 
-        return upsert_results
+            upsert_results = await run_in_threadpool(
+                kb.upsert,
+                documents=request.documents,
+                namespace=request.namespace,
+                batch_size=request.batch_size)
+
+            return upsert_results
 
     except Exception as e:
         logger.exception(e)
@@ -131,8 +163,7 @@ async def upsert(
 )
 async def health_check():
     try:
-        with Operation(name="health_check") as op:
-            op.add("prop", 3)
+        with Operation(name="health_check_kb_connection"):
             await run_in_threadpool(kb.verify_connection_health)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
@@ -141,10 +172,11 @@ async def health_check():
             status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
 
     try:
-        msg = UserMessage(content="This is a health check. Are you alive? Be concise")
-        await run_in_threadpool(llm.chat_completion,
-                                messages=[msg],
-                                max_tokens=50)
+        with Operation(name="health_check_chat"):
+            msg = UserMessage(content="This is a health check. Are you alive? Be concise")
+            await run_in_threadpool(llm.chat_completion,
+                                    messages=[msg],
+                                    max_tokens=50)
     except Exception as e:
         err_msg = f"Failed to communicate with {llm.__class__.__name__}"
         logger.exception(err_msg)
@@ -156,27 +188,8 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup():
-    #_init_logging()
-    #_init_engines()
+    _init_engines()
     pass
-
-
-def _init_logging():
-    global logger
-
-    file_handler = logging.FileHandler(
-        filename=os.getenv("CE_LOG_FILENAME", "resin.log")
-    )
-    stdout_handler = logging.StreamHandler(stream=sys.stdout)
-    handlers = [file_handler, stdout_handler]
-    logging.basicConfig(
-        format='%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  '
-               '%(message)s',
-        level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
-        handlers=handlers,
-        force=True
-    )
-    logger = logging.getLogger(__name__)
 
 
 def _init_engines():
