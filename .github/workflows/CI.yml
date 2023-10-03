@@ -31,11 +31,12 @@ jobs:
 
   run-tests:
     name: Run tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     needs: run-linters
     strategy:
       matrix:
         python-version: [3.9, '3.10', 3.11]
+        os: [macos-latest, windows-latest, ubuntu-latest]
         pinecone-plan: ["paid", "starter"]
 
     steps:
