@@ -94,16 +94,13 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
+    kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
-    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
+    click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
-        _ = KnowledgeBase.create_with_new_index(
-            index_name=index_name,
-            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
-            chunker=KnowledgeBase.DEFAULT_CHUNKER(),
-        )
+        kb.create_resin_index()
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
 
@@ -128,11 +125,12 @@ def upsert(index_name, data_path, tokenizer_model):
         +" please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+    kb = KnowledgeBase(index_name=index_name)
+    kb.verify_connection_health()
     click.echo(
         f"Resin is going to upsert data from {data_path} to index: "
-        f"{INDEX_NAME_PREFIX}{index_name}"
+        f"{kb.index_name}"
     )
-    kb = KnowledgeBase(index_name=index_name)
     click.echo("")
     data = pd.read_parquet(data_path)
     pd.options.display.max_colwidth = 20
