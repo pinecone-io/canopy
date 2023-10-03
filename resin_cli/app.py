@@ -2,7 +2,6 @@ import os
 import logging
 import sys
 import uuid
-from pathlib import Path
 
 from dotenv import load_dotenv
 from oplog import OperationHandler, Operation
@@ -30,8 +29,8 @@ load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
 
 csv_op_handler = OperationHandler(
-    handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs.csv")),  # <-- any logging handler
-    formatter=CsvOperationFormatter(),  # <-- use custom formatter, or built-in ones
+    handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs.csv")),
+    formatter=CsvOperationFormatter(),
 )
 logging.basicConfig(level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
                     handlers=[csv_op_handler])

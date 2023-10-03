@@ -27,12 +27,12 @@ load_dotenv(dotenv_path)
 spinner = Spinner()
 
 
-csv_op_handler = OperationHandler(
-    handler=logging.StreamHandler(),  # <-- any logging handler
-    formatter=VerboseOperationFormatter(),  # <-- use custom formatter, or built-in ones
+stream_handler = OperationHandler(
+    handler=logging.StreamHandler(),
+    formatter=VerboseOperationFormatter(),
 )
 logging.basicConfig(level=logging.INFO,
-                    handlers=[csv_op_handler])
+                    handlers=[stream_handler])
 
 
 def is_healthy(url: str):
