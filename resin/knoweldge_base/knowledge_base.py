@@ -25,11 +25,6 @@ from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
 
-INDEX_DELETED_MESSAGE = (
-    "index was deleted. "
-    "Please create it first using `create_with_new_index()`"
-)
-
 INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
@@ -75,19 +70,16 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError("Failed to connect to Pinecone. "
                                "Please check your credentials and try again") from e
 
-    @classmethod
-    def _connect_index(cls,
+    def _connect_index(self,
                        full_index_name: str,
                        connect_pinecone: bool = True
                        ) -> Index:
         if connect_pinecone:
-            cls._connect_pinecone()
+            self._connect_pinecone()
 
         if full_index_name not in list_indexes():
-            raise RuntimeError(
-                f"Index {full_index_name} does not exist. "
-                "Please create it first using `create_with_new_index()`"
-            )
+            print(self._connection_error_msg)
+            return None
 
         try:
             index = Index(index_name=full_index_name)
@@ -99,9 +91,17 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
         return index
 
+    @property
+    def _connection_error_msg(self) -> str:
+        return (
+            f"The index {self.index_name} doesn't exist or was deleted. "
+            "Please create it by calling knowledge_base.create_resin_index() or "
+            "running the `resin new` command"
+        )
+
     def verify_connection_health(self) -> None:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         try:
             self._index.describe_index_stats()
@@ -115,26 +115,23 @@ class KnowledgeBase(BaseKnowledgeBase):
                 ) from e
 
             if self._index_name not in list_indexes():
-                raise RuntimeError(
-                    f"index {self._index_name} does not exist anymore"
-                    "and was probably deleted. "
-                    "Please create it first using `create_with_new_index()`"
-                ) from e
+                raise RuntimeError(self._connection_error_msg) from e
             raise RuntimeError("Index unexpectedly did not respond. "
                                "Please try again in few moments") from e
 
-    @classmethod
-    def create_with_new_index(cls,
-                              index_name: str,
-                              *,
-                              record_encoder: Optional[RecordEncoder] = None,
-                              chunker: Optional[Chunker] = None,
-                              reranker: Optional[Reranker] = None,
-                              default_top_k: int = 10,
-                              indexed_fields: Optional[List[str]] = None,
-                              dimension: Optional[int] = None,
-                              create_index_params: Optional[dict] = None
-                              ) -> 'KnowledgeBase':
+    def create_resin_index(self,
+                           index_name: str,
+                           *,
+                           indexed_fields: Optional[List[str]] = None,
+                           dimension: Optional[int] = None,
+                           create_index_params: Optional[dict] = None
+                           ):
+        if self._index is not None:
+            raise RuntimeError(
+                f"KnowledgeBase is already connected to index {self.index_name}. "
+                f"If you wish to create a new index, please instantiate a new "
+                f"KnowledgeBase object"
+            )
 
         # validate inputs
         if indexed_fields is None:
@@ -147,24 +144,21 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            record_encoder = record_encoder if record_encoder is not None else cls.DEFAULT_RECORD_ENCODER()  # noqa: E501
-            if record_encoder.dimension is not None:
-                dimension = record_encoder.dimension
+            if self._encoder.dimension is not None:
+                dimension = self._encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
         # connect to pinecone and create index
-        cls._connect_pinecone()
+        self._connect_pinecone()
 
-        full_index_name = cls._get_full_index_name(index_name)
+        full_index_name = self._get_full_index_name(index_name)
 
         if full_index_name in list_indexes():
             raise RuntimeError(
                 f"Index {full_index_name} already exists. "
                 "If you wish to delete it, use `delete_index()`. "
-                "If you wish to connect to it,"
-                "directly initialize a `KnowledgeBase` instance"
             )
 
         # create index
@@ -184,23 +178,16 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
 
         # wait for index to be provisioned
-        cls._wait_for_index_provision(full_index_name=full_index_name)
+        self._wait_for_index_provision(full_index_name=full_index_name)
 
-        # initialize KnowledgeBase
-        return cls(index_name=index_name,
-                   record_encoder=record_encoder,
-                   chunker=chunker,
-                   reranker=reranker,
-                   default_top_k=default_top_k)
-
-    @classmethod
-    def _wait_for_index_provision(cls,
+    def _wait_for_index_provision(self,
                                   full_index_name: str):
         start_time = time.time()
         while True:
             try:
-                cls._connect_index(full_index_name,
-                                   connect_pinecone=False)
+                self._index = self._connect_index(
+                    full_index_name, connect_pinecone=False
+                )
                 break
             except RuntimeError:
                 pass
@@ -227,7 +214,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete_index(self):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
         delete_index(self._index_name)
         self._index = None
 
@@ -250,7 +237,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
@@ -286,7 +273,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                namespace: str = "",
                batch_size: int = 100):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         for doc in documents:
             metadata_keys = set(doc.metadata.keys())
@@ -336,7 +323,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                          namespace: str = "",
                          batch_size: int = 100):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         required_columns = {"id", "text"}
         optional_columns = {"source", "metadata"}
@@ -364,7 +351,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                document_ids: List[str],
                namespace: str = "") -> None:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         if self._is_starter_env():
             for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
