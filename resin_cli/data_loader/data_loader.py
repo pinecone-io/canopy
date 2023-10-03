@@ -12,11 +12,15 @@ class IndexNotUniqueError(ValueError):
         # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
+class DataframeValidationError(ValueError):
+    def __init__(self, message):
+        # Call the base class constructor with the parameters it needs
+        super().__init__(message)
 
 def _validate_dataframe(df: pd.DataFrame) -> bool:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
-    if not df.index.is_unique:
+    if df.id.nunique() != df.shape[0]:
         raise IndexNotUniqueError("Dataframe index must be unique")
     for row in df.to_dict(orient="records"):
         try:
@@ -56,6 +60,6 @@ def load_dataframe_from_path(path: str) -> pd.DataFrame:
         df = _load_single_file_by_suffix(path)
 
     if not _validate_dataframe(df):
-        raise ValueError("Dataframe failed validation")
+        raise DataframeValidationError("Dataframe failed validation")
 
     return df

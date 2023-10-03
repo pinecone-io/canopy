@@ -14,7 +14,7 @@ good_df_minimal = pd.DataFrame(
     [
         {"id": 1, "text": "foo"},
         {"id": 2, "text": "bar"},
-        {"id": 2, "text": "baz"},
+        {"id": 3, "text": "baz"},
     ]
 )
 
@@ -54,7 +54,6 @@ bad_df_bad_type_metadata = pd.DataFrame(
     [
         {"id": 1, "text": "foo", "metadata": "foo"},
         {"id": 2, "text": "bar", "metadata": {"bar": "bar"}},
-        {"id": 2, "text": "baz", "metadata": {"baz": "baz"}},
         {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
     ]
 )
@@ -63,7 +62,6 @@ bad_df_bad_type_metadata_list = pd.DataFrame(
     [
         {"id": 1, "text": "foo", "metadata": ["foo"]},
         {"id": 2, "text": "bar", "metadata": {"bar": "bar"}},
-        {"id": 2, "text": "baz", "metadata": {"baz": "baz"}},
         {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
     ]
 )
