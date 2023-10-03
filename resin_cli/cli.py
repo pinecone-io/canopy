@@ -1,4 +1,3 @@
-import logging
 import os
 import click
 import time
@@ -9,8 +8,6 @@ from dotenv import load_dotenv
 
 import pandas as pd
 import openai
-from oplog import OperationHandler, Operation
-from oplog.formatters import VerboseOperationFormatter
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
@@ -25,14 +22,6 @@ dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
 spinner = Spinner()
-
-
-stream_handler = OperationHandler(
-    handler=logging.StreamHandler(),
-    formatter=VerboseOperationFormatter(),
-)
-logging.basicConfig(level=logging.WARNING,
-                    handlers=[stream_handler])
 
 
 def is_healthy(url: str):
@@ -109,12 +98,11 @@ def new(index_name, tokenizer_model):
     click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
-    with Operation(name="create_index", on_start=True):
-        with spinner:
-            _ = KnowledgeBase.create_with_new_index(
-                index_name=index_name,
-                encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
-                chunker=KnowledgeBase.DEFAULT_CHUNKER(),
+    with spinner:
+        _ = KnowledgeBase.create_with_new_index(
+            index_name=index_name,
+            record_encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
+            chunker=KnowledgeBase.DEFAULT_CHUNKER(),
             )
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name

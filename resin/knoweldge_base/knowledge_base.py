@@ -4,7 +4,6 @@ from datetime import datetime
 import time
 from typing import List, Optional
 import pandas as pd
-from oplog import Operation
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
 
