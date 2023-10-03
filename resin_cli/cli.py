@@ -45,14 +45,41 @@ def is_healthy(url: str):
         return False
 
 
-@click.group()
-def cli():
+def validate_connection():
+    try:
+        KnowledgeBase._connect_pinecone()
+    except Exception:
+        msg = (
+            "Failed to connect to Pinecone index, please make sure"
+            + " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+    try:
+        openai.Model.list()
+    except Exception:
+        msg = (
+            "Failed to connect to OpenAI, please make sure"
+            + " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+    click.echo("Resin: ", nl=False)
+    click.echo(click.style("Ready\n", bold=True, fg="green"))
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
     """
     CLI for Pinecone Resin. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        validate_connection()
+        click.echo(ctx.get_help())
+        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if Resin service is running")
@@ -103,8 +130,8 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = 'Index name is not provided, please provide it with'
-        + ' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
+        msg = "Index name is not provided, please provide it with"
+        +' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
@@ -157,7 +184,7 @@ def _chat(
         debug_info = ChatDebugInfo(
             id=openai_response_id,
             intenal_model=intenal_model,
-            duration_in_sec=round(duration_in_sec, 2)
+            duration_in_sec=round(duration_in_sec, 2),
         )
     else:
         intenal_model = openai_response.model
@@ -276,8 +303,7 @@ def stop(host, port, ssl):
     if running_server_id == "":
         click.echo(
             click.style(
-                "Did not find active process for Resin service"
-                + f" on {host}:{port}",
+                "Did not find active process for Resin service" + f" on {host}:{port}",
                 fg="red",
             )
         )
@@ -293,8 +319,7 @@ def stop(host, port, ssl):
 
     click.confirm(
         click.style(
-            f"Stopping Resin service on {host}:{port} with pid "
-            f"{running_server_id}",
+            f"Stopping Resin service on {host}:{port} with pid " f"{running_server_id}",
             fg="red",
         ),
         abort=True,

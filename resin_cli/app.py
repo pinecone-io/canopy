@@ -66,7 +66,6 @@ context_engine: ContextEngine
 chat_engine: ChatEngine
 kb: KnowledgeBase
 llm: BaseLLM
-logger: logging.Logger
 
 
 @app.post(
@@ -109,7 +108,7 @@ async def chat(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@app.post(
     "/context/query",
 )
 async def query(
@@ -127,7 +126,6 @@ async def query(
         return context.content
 
     except Exception as e:
-        logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -153,7 +151,6 @@ async def upsert(
             return upsert_results
 
     except Exception as e:
-        logger.exception(e)
         raise HTTPException(
             status_code=500, detail=f"Internal Service Error: {str(e)}")
 
@@ -167,7 +164,6 @@ async def health_check():
             await run_in_threadpool(kb.verify_connection_health)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
-        logger.exception(err_msg)
         raise HTTPException(
             status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
 
@@ -179,7 +175,6 @@ async def health_check():
                                     max_tokens=50)
     except Exception as e:
         err_msg = f"Failed to communicate with {llm.__class__.__name__}"
-        logger.exception(err_msg)
         raise HTTPException(
             status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
 
@@ -196,6 +191,7 @@ def _init_engines():
     global kb, context_engine, chat_engine, llm
     Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
 
+    INDEX_NAME = os.getenv("INDEX_NAME")
     if not INDEX_NAME:
         raise ValueError("INDEX_NAME environment variable must be set")
 
