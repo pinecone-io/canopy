@@ -4,13 +4,15 @@ from typing import List, Optional
 
 from resin.context_engine.context_builder import StuffingContextBuilder
 from resin.context_engine.context_builder.base import ContextBuilder
+from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.models.data_models import Context, Query
+from resin.utils.config import ConfigurableMixin, FactoryMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
 
-class BaseContextEngine(ABC):
+class BaseContextEngine(ABC, FactoryMixin):
 
     @abstractmethod
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
@@ -21,19 +23,24 @@ class BaseContextEngine(ABC):
         pass
 
 
-class ContextEngine(BaseContextEngine):
+class ContextEngine(BaseContextEngine, ConfigurableMixin):
 
-    DEFAULT_CONTEXT_BUILDER = StuffingContextBuilder
+    _DEFAULT_COMPONENTS = {
+        'knowledge_base': KnowledgeBase,
+        'context_builder': StuffingContextBuilder,
+    }
+
 
     def __init__(self,
-                 knowledge_base: BaseKnowledgeBase,
                  *,
+                 knowledge_base: Optional[BaseKnowledgeBase] = None,
                  context_builder: Optional[ContextBuilder] = None,
                  global_metadata_filter: Optional[dict] = None
                  ):
-        self.knowledge_base = knowledge_base
-        self.context_builder = context_builder if context_builder is not None else \
-            self.DEFAULT_CONTEXT_BUILDER()
+        self.knowledge_base = self._set_component(
+            BaseKnowledgeBase, 'knowledge_base', knowledge_base)
+        self.context_builder = self._set_component(
+            ContextBuilder, 'context_builder', context_builder)
         self.global_metadata_filter = global_metadata_filter
 
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
@@ -48,3 +55,7 @@ class ContextEngine(BaseContextEngine):
 
     async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:
         raise NotImplementedError()
+
+    @classmethod
+    def from_config(cls, config: dict):
+        return cls._from_config(config=config)

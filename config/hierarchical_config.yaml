@@ -1,5 +1,7 @@
-system_prompt: "asdasdasd a"
-query_builder_prompt: "asdasdasd b"
+system_prompt: &system_prompt
+  "asdasdasd a"
+query_builder_prompt: &query_builder_prompt
+  "asdasdasd b"
 
 tokenizer:
   type: OpenAITokenizer
@@ -11,15 +13,20 @@ chat_engine:
     max_prompt_tokens: 3000
     max_generated_tokens: 750
     max_context_tokens: 2500
-    system_prompt: <<*system_prompt  # Will use the default system prompt
+    system_prompt: *system_prompt  # Will use the default system prompt
     history_pruning: recent  # Options: [raise, recent]
     min_history_messages: 1
+
+  llm: &llm
+    type: OpenAILLM
+    model_name: gpt-3.5-turbo-0613
 
   query_builder:
     type: FunctionCallingQueryGenerator
     params:
+      llm: *llm
       top_k: 5
-      prompt: null  # Will use the default prompt
+      prompt: *query_builder_prompt
       function_description: null  # Will use the default function description
 
   context_engine:
@@ -31,7 +38,7 @@ chat_engine:
         default_top_k: 5
 
       record_encoder:
-        type: OpenAIEncoder
+        type: OpenAIRecordEncoder
         params:
           model_name: "text-embedding-ada-002"
 
@@ -40,8 +47,5 @@ chat_engine:
         params:
           chunk_size: 200
 
-  llm:
-    type: OpenAILLM
-    model_name: gpt-3.5-turbo-0613
 
 

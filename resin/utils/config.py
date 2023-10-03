@@ -20,8 +20,8 @@ class FactoryMixin:
             class_name = config["type"]
             if class_name not in cls._SUPPORTED_CLASSES:
                 raise ValueError(
-                    f"{class_name} is not supported. Allowed {cls.__name__}s are: "
-                    f"{list(cls._SUPPORTED_CLASSES.keys())}"
+                    f"{cls.__name__} load error: {class_name} is not supported. "
+                    f"Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
                 )
 
             class_type = cls._SUPPORTED_CLASSES[class_name]
@@ -32,6 +32,10 @@ class FactoryMixin:
                 f"Error loading config for {cls.__name__}. Either specify 'type' in the"
                 f" config or provide a default_class."
             )
+
+        if issubclass(class_type, ConfigurableMixin):
+            return class_type.from_config(config)
+
         return class_type(**config.get("params", {}))
 
 
@@ -89,19 +93,23 @@ class ConfigurableMixin(abc.ABC):
                 if issubclass(default_class, FactoryMixin):
                     base_class = default_class
                     while base_class.__base__ is not abc.ABC:
-                        base_class = default_class.__base__
+                        base_class = base_class.__base__
                     component = base_class.from_config(component_config, default_class)
-                elif issubclass(default_class, ConfigurableMixin):
-                    component = default_class.from_config(component_config)
+                else:
+                    raise ValueError(
+                        f"{cls.__name__} load error: cannot load {component_name} from "
+                        f"config"
+                    )
                 loaded_components[component_name] = component
 
-        parameters = config.pop("parameters", None)
+        parameters = config.pop("params", {})
 
         # The config should be empty at this point
         if config:
+            allowed_keys = list(cls._DEFAULT_COMPONENTS.keys()) + ['params', 'type']
             raise ValueError(
-                f"Unrecognized keys in {cls._NAME} config: {config.keys()}. The allowed"
-                f" keys are: {list(cls._DEFAULT_COMPONENTS.keys()) + ['parameters']}"
+                f"Unrecognized keys in {cls.__name__} config: {config.keys()}. "
+                f"The allowed keys are: {allowed_keys}"
             )
 
         return cls(**loaded_components , **parameters)

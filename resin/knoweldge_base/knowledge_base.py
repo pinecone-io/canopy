@@ -107,19 +107,23 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
             ) from e
         return index
 
-
     @classmethod
-    def from_config(cls,
-                    index_name: str,
-                    *
-                    config: dict,
-                    chunker: Optional[Chunker] = None,
-                    record_encoder: Optional[RecordEncoder] = None,
-                    reranker: Optional[Reranker] = None,
-                    ):
-        return cls._from_config(config=config, index_name=index_name,
-                                chunker=chunker, record_encoder=record_encoder,
-                                reranker=reranker)
+    def from_config(cls, config: dict):
+        return cls._from_config(config=config)
+
+
+    # @classmethod
+    # def from_config(cls,
+    #                 index_name: str,
+    #                 *
+    #                 config: dict,
+    #                 chunker: Optional[Chunker] = None,
+    #                 record_encoder: Optional[RecordEncoder] = None,
+    #                 reranker: Optional[Reranker] = None,
+    #                 ):
+    #     return cls._from_config(config=config, index_name=index_name,
+    #                             chunker=chunker, record_encoder=record_encoder,
+    #                             reranker=reranker)
 
 
     def verify_connection_health(self) -> None:

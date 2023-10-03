@@ -3,9 +3,10 @@ from typing import List
 
 from resin.knoweldge_base.models import QueryResult
 from resin.models.data_models import Context
+from resin.utils.config import FactoryMixin
 
 
-class ContextBuilder(ABC):
+class ContextBuilder(ABC, FactoryMixin):
     """
     BaseContextBuilder is an abstract class that defines the interface for a context
     builder.

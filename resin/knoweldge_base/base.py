@@ -3,9 +3,10 @@ from typing import List, Optional
 
 from resin.knoweldge_base.models import QueryResult
 from resin.models.data_models import Query, Document
+from resin.utils.config import FactoryMixin
 
 
-class BaseKnowledgeBase(ABC):
+class BaseKnowledgeBase(ABC, FactoryMixin):
     """
     KnowledgeBase is an abstract class that defines the interface for a knowledge base.
     """
