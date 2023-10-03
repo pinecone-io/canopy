@@ -1,7 +1,9 @@
 import pytest
+import json
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
-from resin_cli.data_loader.data_loader import _validate_dataframe, IndexNotUniqueError
+from resin_cli.data_loader.data_loader import _validate_dataframe, IndexNotUniqueError, _load_single_file_by_suffix, load_dataframe_from_path
 
 good_df_minimal = pd.DataFrame([
     {"id": 1, "text": "foo"},
@@ -12,7 +14,7 @@ good_df_minimal = pd.DataFrame([
 good_df_maximal = pd.DataFrame([
     {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
     {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"bar": "bar"}},
-    {"id": 2, "text": "baz", "source": "baz_source", "metadata": {"baz": "baz"}},
+    {"id": 3, "text": "baz", "source": "baz_source", "metadata": {"baz": "baz"}},
 ])
 
 bad_df_missing_field = pd.DataFrame([
@@ -84,3 +86,55 @@ def test_all_validator_cases():
         elif name.startswith("good"):
             assert _validate_dataframe(df) == True
         print("ok")
+
+
+def test_load_single_file_jsonl(tmpdir):
+    data = [
+        {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
+        {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"bar": "bar"}},
+        {"id": 3, "text": "baz", "source": "baz_source", "metadata": {"baz": "baz"}},
+    ]
+
+    path = tmpdir.join("test.jsonl")
+    path.write("\n".join([json.dumps(row) for row in data]))
+
+    df = _load_single_file_by_suffix(str(path))
+    assert_frame_equal(df, pd.DataFrame(data)) 
+    
+
+def test_load_single_file_parquet(tmpdir):
+    data = [
+        {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
+        {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"foo": "bar"}},
+        {"id": 3, "text": "baz", "source": "baz_source", "metadata": {"foo": "baz"}},
+    ]
+
+    path = tmpdir.join("test.parquet")
+    pd.DataFrame(data).to_parquet(str(path))
+
+    df = _load_single_file_by_suffix(str(path))
+    assert_frame_equal(df, pd.DataFrame(data))
+
+
+def test_load_multiple_files_jsonl(tmpdir):
+    data1 = [
+        {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
+        {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"foo": "bar"}},
+        {"id": 3, "text": "baz", "source": "baz_source", "metadata": {"foo": "baz"}},
+    ]
+
+    data2 = [
+        {"id": 4, "text": "foofoo", "source": "foo_source", "metadata": {"foo": "foo"}},
+        {"id": 5, "text": "barbar", "source": "bar_source", "metadata": {"foo": "bar"}},
+        {"id": 6, "text": "bazbaz", "source": "baz_source", "metadata": {"foo": "baz"}},
+    ]
+    
+    tmpdir.mkdir("test_jsonl")
+    base_path = tmpdir.join("test_jsonl")
+    path1 = base_path.join("test1.jsonl")
+    path2 = base_path.join("test2.jsonl")
+    path1.write("\n".join([json.dumps(row) for row in data1]))
+    path2.write("\n".join([json.dumps(row) for row in data2]))
+
+    df = load_dataframe_from_path(str(base_path))
+    assert_frame_equal(df, pd.concat([pd.DataFrame(data2), pd.DataFrame(data1)], ignore_index=True))
