@@ -37,7 +37,6 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 class KnowledgeBase(BaseKnowledgeBase):
-
     DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
     DEFAULT_CHUNKER = MarkdownChunker
     DEFAULT_RERANKER = TransparentReranker
@@ -59,7 +58,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
-        self._index: Optional[Index] = self._connect_index(self._index_name)
+        self._index: Optional[Index] = self._connect_index()
 
     @staticmethod
     def _connect_pinecone():
@@ -71,22 +70,21 @@ class KnowledgeBase(BaseKnowledgeBase):
                                "Please check your credentials and try again") from e
 
     def _connect_index(self,
-                       full_index_name: str,
                        connect_pinecone: bool = True
                        ) -> Index:
         if connect_pinecone:
             self._connect_pinecone()
 
-        if full_index_name not in list_indexes():
+        if self.index_name not in list_indexes():
             print(self._connection_error_msg)
             return None
 
         try:
-            index = Index(index_name=full_index_name)
+            index = Index(index_name=self.index_name)
             index.describe_index_stats()
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while connecting to index {full_index_name}. "
+                f"Unexpected error while connecting to index {self.index_name}. "
                 f"Please check your credentials and try again."
             ) from e
         return index
@@ -120,11 +118,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                                "Please try again in few moments") from e
 
     def create_resin_index(self,
-                           index_name: str,
-                           *,
                            indexed_fields: Optional[List[str]] = None,
                            dimension: Optional[int] = None,
-                           create_index_params: Optional[dict] = None
+                           index_params: Optional[dict] = None
                            ):
         if self._index is not None:
             raise RuntimeError(
@@ -153,40 +149,37 @@ class KnowledgeBase(BaseKnowledgeBase):
         # connect to pinecone and create index
         self._connect_pinecone()
 
-        full_index_name = self._get_full_index_name(index_name)
-
-        if full_index_name in list_indexes():
+        if self.index_name in list_indexes():
             raise RuntimeError(
-                f"Index {full_index_name} already exists. "
+                f"Index {self.index_name} already exists. "
                 "If you wish to delete it, use `delete_index()`. "
             )
 
         # create index
-        create_index_params = create_index_params or {}
+        index_params = index_params or {}
         try:
-            create_index(name=full_index_name,
+            create_index(name=self.index_name,
                          dimension=dimension,
                          metadata_config={
                              'indexed': indexed_fields
                          },
                          timeout=TIMEOUT_INDEX_CREATE,
-                         **create_index_params)
+                         **index_params)
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while creating index {full_index_name}."
+                f"Unexpected error while creating index {self.index_name}."
                 f"Please try again."
             ) from e
 
         # wait for index to be provisioned
-        self._wait_for_index_provision(full_index_name=full_index_name)
+        self._wait_for_index_provision()
 
-    def _wait_for_index_provision(self,
-                                  full_index_name: str):
+    def _wait_for_index_provision(self):
         start_time = time.time()
         while True:
             try:
                 self._index = self._connect_index(
-                    full_index_name, connect_pinecone=False
+                    self.index_name, connect_pinecone=False
                 )
                 break
             except RuntimeError:
@@ -195,7 +188,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             time_passed = time.time() - start_time
             if time_passed > TIMEOUT_INDEX_PROVISION:
                 raise RuntimeError(
-                    f"Index {full_index_name} failed to provision "
+                    f"Index {self.index_name} failed to provision "
                     f"for {time_passed} seconds."
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
