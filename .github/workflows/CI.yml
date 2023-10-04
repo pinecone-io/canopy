@@ -44,6 +44,8 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      SUFFIX: py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}-${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v3
@@ -63,10 +65,10 @@ jobs:
     - name: Set Index Name for System / E2E
       id: gen_suffix
       run: |
-        RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
-        SUFFIX="${RAW_SUFFIX//./-}"
-        echo "${SUFFIX}"
-        echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
+        SUFFIX="${{ env.SUFFIX }}"
+        SUFFIX="${SUFFIX//./-}"
+        echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_ENV
+
     - name: Run system tests
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
@@ -86,11 +88,11 @@ jobs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: pytest-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        name: pytest-report-${{ env.SUFFIX }}
         path: report*.html
     - name: upload e2e test log
       uses: actions/upload-artifact@v3
       if: failure()
       with:
-        name: e2e-log-failure-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        name: e2e-log-failure-report-${{ env.SUFFIX }}
         path: e2e.log
