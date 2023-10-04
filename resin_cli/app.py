@@ -74,7 +74,8 @@ async def chat(
                         stringify_op.add("answer", entire_answer)
 
                 content_stream = stringify_content(cast(StreamingChatResponse, answer))
-                return EventSourceResponse(content_stream, media_type='text/event-stream')
+                return EventSourceResponse(content_stream,
+                                           media_type='text/event-stream')
             else:
                 chat_response = cast(ChatResponse, answer)
                 chat_response.id = question_id
@@ -146,7 +147,9 @@ async def health_check():
 
     try:
         with Operation(name="health_check_chat"):
-            msg = UserMessage(content="This is a health check. Are you alive? Be concise")
+            msg = UserMessage(
+                content="This is a health check. Are you alive? Be concise"
+            )
             await run_in_threadpool(llm.chat_completion,
                                     messages=[msg],
                                     max_tokens=50)
