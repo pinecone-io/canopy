@@ -142,42 +142,6 @@ def upsert(index_name, data_path, tokenizer_model):
     click.echo(click.style("Success!", fg="green"))
 
 
-@cli.command()
-@click.argument(
-    "document-ids",
-    type=click.STRING,
-)
-@click.option("--host", default="0.0.0.0", help="Host")
-@click.option("--port", default=8000, help="Port")
-@click.option("--ssl/--no-ssl", default=False, help="SSL")
-def delete(document_ids, host, port, ssl):
-    """
-    Delete specified documents from the given index.
-
-    Parameters:
-    document_ids (str): A comma-separated string of document IDs to delete.
-    index_name (str): The name of the index to delete documents from.
-
-    """
-    # Convert the comma-separated string of document IDs to a list of strings
-    doc_ids_list = document_ids.split(',')
-
-    ssl_str = "s" if ssl else ""
-    chat_service_url = f"http{ssl_str}://{host}:{port}"
-
-    click.echo(f"Resin is going to delete documents with IDs: "
-               f"{', '.join(doc_ids_list)}")
-    click.echo("")
-    result = requests.post(f"{chat_service_url}/context/delete",
-                           json={"document_ids": doc_ids_list})
-    if result.status_code != requests.codes.ok:
-        click.echo(
-            click.style(f"Failed! {result.status_code}: {result.text}", fg="red")
-        )
-    else:
-        click.echo(click.style("Success! Documents deleted.", fg="green"))
-
-
 def _chat(
     speaker,
     speaker_color,
