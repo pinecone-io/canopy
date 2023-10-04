@@ -10,7 +10,6 @@ import pandas as pd
 import openai
 
 from resin.knoweldge_base import KnowledgeBase
-from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 
 from .app import start as start_service

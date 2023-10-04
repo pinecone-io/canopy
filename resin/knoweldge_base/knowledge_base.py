@@ -91,7 +91,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     @property
     def _connection_error_msg(self) -> str:
         return (
-            f"The index {self.index_name} doesn't exist or was deleted. "
+            f"The index {self.index_name} does not exist or was deleted. "
             "Please create it by calling knowledge_base.create_resin_index() or "
             "running the `resin new` command"
         )
@@ -177,9 +177,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         start_time = time.time()
         while True:
             try:
-                self._index = self._connect_index(
-                    self.index_name, connect_pinecone=False
-                )
+                self._index = self._connect_index(connect_pinecone=False)
                 break
             except RuntimeError:
                 pass
@@ -222,7 +220,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = self._reranker.rerank(results)
 
         return [
-            QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
+            QueryResult(**r.dict(exclude={'values', 'sprase_values', 'document_id'})) for r in results
         ]
 
     def _query_index(self,

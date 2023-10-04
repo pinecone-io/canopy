@@ -66,9 +66,10 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     if index_full_name in pinecone.list_indexes():
         pinecone.delete_index(index_full_name)
 
-    KnowledgeBase.create_with_new_index(index_name=index_name,
-                                        record_encoder=encoder,
-                                        chunker=chunker)
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
+    kb.create_resin_index()
 
     return KnowledgeBase(index_name=index_name,
                          record_encoder=encoder,
@@ -362,20 +363,30 @@ def test_delete_large_df_happy_path(knowledge_base,
 
 def test_create_existing_index(index_full_name, index_name):
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=StubRecordEncoder(
-                                                StubDenseEncoder(dimension=3)),
-                                            chunker=StubChunker(num_chunks_per_doc=2))
+        kb = KnowledgeBase(
+            index_name=index_name,
+            record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
+            chunker=StubChunker(num_chunks_per_doc=2))
+        kb.create_resin_index()
 
-    assert f"Index {index_full_name} already exists" in str(e.value)
+    assert (f"Index {index_full_name} already exists" in str(e.value) or
+            f"KnowledgeBase is already connected to index" in str(e.value))
 
 
-def test_init_kb_non_existing_index(index_name, chunker, encoder):
+def test_kb_non_existing_index(index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name="non-existing-index",
+                       record_encoder=encoder,
+                       chunker=chunker)
+    assert kb._index is None
+
+
+def test_verify_kb_non_existing_index(index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase(index_name="non-existing-index",
-                      record_encoder=encoder,
-                      chunker=chunker)
-    expected_msg = f"Index {INDEX_NAME_PREFIX}non-existing-index does not exist"
+        kb = KnowledgeBase(index_name="non-existing-index",
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.verify_connection_health()
+    expected_msg = f"index {INDEX_NAME_PREFIX}non-existing-index does not exist"
     assert expected_msg in str(e.value)
 
 
@@ -387,42 +398,43 @@ def test_delete_index_happy_path(knowledge_base):
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete(["doc_0"])
 
-    assert "index was deleted." in str(e.value)
+    assert "does not exist or was deleted" in str(e.value)
 
 
 def test_delete_index_for_non_existing(knowledge_base):
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete_index()
 
-    assert "index was deleted." in str(e.value)
+    assert "does not exist or was deleted" in str(e.value)
 
 
 def test_verify_connection_health_raise_for_deleted_index(knowledge_base):
     with pytest.raises(RuntimeError) as e:
         knowledge_base.verify_connection_health()
 
-    assert "index was deleted" in str(e.value)
+    assert "does not exist or was deleted" in str(e.value)
 
 
 def test_create_with_text_in_indexed_field_raise(index_name,
                                                  chunker,
                                                  encoder):
     with pytest.raises(ValueError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker,
-                                            indexed_fields=["id", "text", "metadata"])
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_resin_index(indexed_fields=["id", "text", "metadata"])
 
     assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
 
-def test_create_with_new_index_encoder_dimension_none(index_name, chunker):
+def test_create_with_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
     with pytest.raises(ValueError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker)
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_resin_index()
 
     assert "Could not infer dimension from encoder" in str(e.value)
 
@@ -441,9 +453,10 @@ def set_bad_credentials():
 
 def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker)
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_resin_index()
 
     assert "Please check your credentials" in str(e.value)
 
