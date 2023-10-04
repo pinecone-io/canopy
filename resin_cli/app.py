@@ -1,4 +1,3 @@
-import json
 import os
 import logging
 import uuid
@@ -6,7 +5,6 @@ import uuid
 from dotenv import load_dotenv
 
 from oplog import OperationHandler, Operation
-from oplog.formatters import BaseOperationFormatter
 
 from resin.llm import BaseLLM
 from resin.llm.models import UserMessage
@@ -23,6 +21,7 @@ from typing import cast
 
 from resin.models.api_models import StreamingChatResponse, ChatResponse
 from resin.models.data_models import Context
+from resin_cli.oplog_json_formatter import OplogJsonFormatter
 from resin_cli.api_models import \
     ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
 
@@ -30,30 +29,9 @@ load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
 
 
-class JsonFormatter(BaseOperationFormatter):
-    def format_op(self, op: Operation) -> str:
-        optional_fields = {
-            "exception_type": str(op.exception_type or ""),
-            "traceback": str(op.traceback or ""),
-            "custom_props": op.custom_props,
-            "global_props": op.global_props,
-        }
-
-        row = {
-            "start_time_utc": op.start_time_utc_str,
-            "name": op.name,
-            "result": op.result,
-            "duration_ms": str(op.duration_ms),
-            "correlation_id": op.correlation_id,
-            **{k: v for k, v in optional_fields.items() if v},
-        }
-
-        return json.dumps(row, ensure_ascii=False)
-
-
 json_op_handler = OperationHandler(
     handler=logging.FileHandler(filename=os.getenv("CE_LOG_FILENAME", "resin.logs")),
-    formatter=JsonFormatter(),
+    formatter=OplogJsonFormatter(),
 )
 logging.basicConfig(level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
                     handlers=[json_op_handler])
@@ -75,32 +53,31 @@ async def chat(
     request: ChatRequest = Body(...),
 ):
     try:
-        with Operation(name="chat") as op:
+        with Operation(name="chat"):
             session_id = request.user or "None"  # noqa: F841
             question_id = str(uuid.uuid4())
-
-            op.add("content", request.messages[-1].content)
-            op.add("question_id", question_id)
 
             answer = await run_in_threadpool(chat_engine.chat,
                                              messages=request.messages,
                                              stream=request.stream)
             if request.stream:
                 def stringify_content(response: StreamingChatResponse):
-                    entire_answer = ""
-                    for chunk in response.chunks:
-                        chunk.id = question_id
-                        data = chunk.json()
-                        yield data
-                        entire_answer += chunk.choices[0].delta.get("content", "")
-                    op.add("answer", entire_answer)
+                    with Operation(name="stringify_content") as stringify_op:
+                        stringify_op.add("content", request.messages[-1].content)
+                        stringify_op.add("question_id", question_id)
+                        entire_answer = ""
+                        for chunk in response.chunks:
+                            chunk.id = question_id
+                            data = chunk.json()
+                            yield data
+                            entire_answer += chunk.choices[0].delta.get("content", "")
+                        stringify_op.add("answer", entire_answer)
 
                 content_stream = stringify_content(cast(StreamingChatResponse, answer))
                 return EventSourceResponse(content_stream, media_type='text/event-stream')
             else:
                 chat_response = cast(ChatResponse, answer)
                 chat_response.id = question_id
-                op.add("answer", chat_response.choices[0].message.content)
                 return chat_response
 
     except Exception as e:
@@ -123,7 +100,7 @@ async def query(
                 queries=request.queries,
                 max_context_tokens=request.max_tokens)
 
-        return context.content
+            return context.content
 
     except Exception as e:
         raise HTTPException(
@@ -183,8 +160,8 @@ async def health_check():
 
 @app.on_event("startup")
 async def startup():
-    _init_engines()
-    pass
+    with Operation(name="startup"):
+        _init_engines()
 
 
 def _init_engines():
