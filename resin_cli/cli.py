@@ -143,11 +143,9 @@ def upsert(index_name, data_path, tokenizer_model):
 
 
 @cli.command()
-@click.option(
-    "--document-ids",
+@click.argument(
+    "document-ids",
     type=click.STRING,
-    required=True,
-    help="Comma-separated string of document IDs to delete",
 )
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
