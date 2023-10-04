@@ -50,10 +50,6 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
         'reranker': TransparentReranker
     }
 
-    # DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
-    # DEFAULT_CHUNKER = MarkdownChunker
-    # DEFAULT_RERANKER = TransparentReranker
-
     def __init__(self,
                  *,
                  index_name: Optional[str] = None,
@@ -65,8 +61,7 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
-        if index_name is None:
-            index_name = os.getenv("INDEX_NAME")
+        index_name = index_name or os.getenv("INDEX_NAME")
         if index_name is None:
             raise ValueError(
                 "index_name must be provided. Either pass it to KnowledgeBase's "
