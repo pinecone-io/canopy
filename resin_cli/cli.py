@@ -15,7 +15,9 @@ from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
     load_dataframe_from_path,
     IndexNotUniqueError,
-    DataframeValidationError)
+    DataframeValidationError
+)
+from resin import __version__
 
 from .app import start as start_service
 from .cli_spinner import Spinner
@@ -49,8 +51,9 @@ def validate_connection():
         KnowledgeBase._connect_pinecone()
     except Exception:
         msg = (
-            "Failed to connect to Pinecone index, please make sure"
-            + " you have set the right env vars"
+            "Error: Failed to connect to Pinecone index, please make sure"
+            + " you have set the right env vars" 
+            + " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
@@ -58,7 +61,7 @@ def validate_connection():
         openai.Model.list()
     except Exception:
         msg = (
-            "Failed to connect to OpenAI, please make sure"
+            "Error: Failed to connect to OpenAI, please make sure"
             + " you have set the right env vars"
         )
         click.echo(click.style(msg, fg="red"), err=True)
@@ -68,6 +71,7 @@ def validate_connection():
 
 
 @click.group(invoke_without_command=True)
+@click.version_option(__version__, '-v', '--version', prog_name='Resin')
 @click.pass_context
 def cli(ctx):
     """
@@ -78,7 +82,6 @@ def cli(ctx):
     if ctx.invoked_subcommand is None:
         validate_connection()
         click.echo(ctx.get_help())
-        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if Resin service is running")
