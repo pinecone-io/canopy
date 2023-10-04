@@ -70,6 +70,49 @@ bad_df_bad_type_metadata_list = pd.DataFrame(
     ]
 )
 
+bad_df_bad_type_metadata_list_int = pd.DataFrame(
+    [
+        {"id": 1, "text": "foo", "metadata": {"foo": [1]}},
+        {"id": 2, "text": "bar", "metadata": {"bar": "bar"}},
+        {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
+    ]
+)
+
+bad_df_has_excess_field = pd.DataFrame(
+    [
+        {
+            "id": 1,
+            "text": "foo",
+            "source": "foo_source",
+            "metadata": {"foo": "foo"},
+            "excess": "excess",
+        },
+        {
+            "id": 2,
+            "text": "bar",
+            "source": "bar_source",
+            "metadata": {"bar": "bar"},
+            "excess": "excess",
+        },
+        {
+            "id": 3,
+            "text": "baz",
+            "source": "baz_source",
+            "metadata": {"baz": "baz"},
+            "excess": "excess",
+        },
+    ]
+)
+
+bad_df_missing_mandatory_field = pd.DataFrame(
+    [
+        {"text": "foo", "metadata": {"foo": "foo"}},
+        {"text": "bar", "metadata": {"bar": "bar"}},
+        {"text": "baz", "metadata": {"baz": "baz"}},
+    ]
+)
+
+
 all_dataframes_as_dict_with_name = [
     ("good_df_minimal", good_df_minimal),
     ("good_df_maximal", good_df_maximal),
@@ -78,6 +121,9 @@ all_dataframes_as_dict_with_name = [
     ("bad_df_bad_type_optional", bad_df_bad_type_optional),
     ("bad_df_bad_type_metadata", bad_df_bad_type_metadata),
     ("bad_df_bad_type_metadata_list", bad_df_bad_type_metadata_list),
+    ("bad_df_bad_type_metadata_list_int", bad_df_bad_type_metadata_list_int),
+    ("bad_df_has_excess_field", bad_df_has_excess_field),
+    ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field),
 ]
 
 

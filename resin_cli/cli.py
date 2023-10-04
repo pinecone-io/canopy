@@ -10,6 +10,7 @@ import pandas as pd
 import openai
 
 from resin.knoweldge_base import KnowledgeBase
+from resin.models.data_models import Document
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
@@ -27,11 +28,6 @@ load_dotenv(dotenv_path)
 
 
 spinner = Spinner()
-
-
-class OpenAIError(Exception):
-    def __init__(self, message):
-        super().__init__(message)
 
 
 def is_healthy(url: str):
@@ -155,7 +151,8 @@ def upsert(index_name, data_path, tokenizer_model):
         except DataframeValidationError:
             msg = (
                 "Error: one or more rows have not passed validation"
-                + " data should agree with the Document Schema on models/data_models.py"
+                + " data should agree with the Document Schema"
+                + f" on {Document.__annotations__}"
                 + " please make sure the data is valid"
             )
             click.echo(click.style(msg, fg="red"), err=True)

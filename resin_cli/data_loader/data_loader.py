@@ -22,6 +22,8 @@ class DataframeValidationError(ValueError):
 def _validate_dataframe(df: pd.DataFrame):
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
+    if "id" not in df.columns:
+        raise DataframeValidationError("Dataframe must have an 'id' column")
     if df.id.nunique() != df.shape[0]:
         raise IndexNotUniqueError("Dataframe index must be unique")
     try:
