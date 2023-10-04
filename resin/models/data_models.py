@@ -25,7 +25,8 @@ class Document(BaseModel):
     metadata: Metadata = Field(default_factory=dict)
 
     class Config:
-        extra = Extra.forbid
+        allow_extra = False
+        ignore_extra = False
 
     @validator('metadata')
     def metadata_reseved_fields(cls, v):
