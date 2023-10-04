@@ -38,6 +38,9 @@ class FactoryMixin:
 
         return class_type(**config.get("params", {}))
 
+    @classmethod
+    def list_supported_types(cls):
+        return list(cls._SUPPORTED_CLASSES.keys())
 
 
 class ConfigurableMixin(abc.ABC):
