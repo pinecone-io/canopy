@@ -221,6 +221,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             return INDEX_NAME_PREFIX + index_name
 
+    @staticmethod
+    def _df_to_documents(df: pd.DataFrame) -> List[Document]:
+        documents = [
+            Document(**row) for row in df.to_dict(orient="records")  # type: ignore
+            ]
+        return documents
+
     @property
     def index_name(self) -> str:
         return self._index_name
@@ -338,26 +345,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self._index is None:
             raise RuntimeError(INDEX_DELETED_MESSAGE)
 
-        required_columns = {"id", "text"}
-        optional_columns = {"source", "metadata"}
+        documents = self._df_to_documents(df)
 
-        df_columns = set(df.columns)
-        if not df_columns.issuperset(required_columns):
-            raise ValueError(
-                f"Dataframe must contain the following columns: "
-                f"{list(required_columns)}, Got: {list(df.columns)}"
-            )
-
-        redundant_columns = df_columns - required_columns - optional_columns
-        if redundant_columns:
-            raise ValueError(
-                f"Dataframe contains unknown columns: {list(redundant_columns)}. "
-                f"Only the following columns are allowed: "
-                f"{list(required_columns) + list(optional_columns)}"
-            )
-
-        documents = [Document(**row._asdict())
-                     for row in df.itertuples()]
         self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
     def delete(self,

@@ -70,15 +70,15 @@ bad_df_bad_type_metadata_list = pd.DataFrame(
     ]
 )
 
-all_dataframes_as_dict_with_name = {
-    "good_df_minimal": good_df_minimal,
-    "good_df_maximal": good_df_maximal,
-    "bad_df_missing_field": bad_df_missing_field,
-    "bad_df_bad_type": bad_df_bad_type,
-    "bad_df_bad_type_optional": bad_df_bad_type_optional,
-    "bad_df_bad_type_metadata": bad_df_bad_type_metadata,
-    "bad_df_bad_type_metadata_list": bad_df_bad_type_metadata_list,
-}
+all_dataframes_as_dict_with_name = [
+    ("good_df_minimal", good_df_minimal),
+    ("good_df_maximal", good_df_maximal),
+    ("bad_df_missing_field", bad_df_missing_field),
+    ("bad_df_bad_type", bad_df_bad_type),
+    ("bad_df_bad_type_optional", bad_df_bad_type_optional),
+    ("bad_df_bad_type_metadata", bad_df_bad_type_metadata),
+    ("bad_df_bad_type_metadata_list", bad_df_bad_type_metadata_list),
+]
 
 
 def test_except_not_dataframe():
@@ -111,26 +111,28 @@ def test_except_not_unique():
         )
 
 
-def test_all_validator_cases():
+@pytest.mark.parametrize("name, df", all_dataframes_as_dict_with_name)
+def test_all_validator_cases(name, df):
     """
     Test that _validate_dataframe returns
     True for all dataframes in all_dataframes.
     """
-    for name, df in all_dataframes_as_dict_with_name.items():
-        if name.startswith("bad"):
-            try:
-                _validate_dataframe(df)
-            except DataframeValidationError:
-                pass
-            except Exception as e:
-                pytest.fail(f"Unexpected error in validation for {name}: {e}")
-        elif name.startswith("good"):
-            try:
-                _validate_dataframe(df)
-            except Exception as e:
-                pytest.fail(f"Unexpected error in validation for {name}: {e}")
-            finally:
-                assert True
+    if name.startswith("bad"):
+        try:
+            _validate_dataframe(df)
+        except DataframeValidationError:
+            pass
+        except Exception as e:
+            pytest.fail(f"Unexpected error in validation for {name}: {e}")
+        # with pytest.raises(DataframeValidationError):
+        #     _validate_dataframe(df)
+    elif name.startswith("good"):
+        try:
+            _validate_dataframe(df)
+        except Exception as e:
+            pytest.fail(f"Unexpected error in validation for {name}: {e}")
+        finally:
+            assert True
 
 
 def test_load_single_file_jsonl(tmpdir):

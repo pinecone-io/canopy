@@ -4,7 +4,7 @@ import pandas as pd
 
 from pydantic import ValidationError
 
-from resin.models.data_models import Document
+from resin.knoweldge_base import KnowledgeBase
 
 
 class IndexNotUniqueError(ValueError):
@@ -24,14 +24,12 @@ def _validate_dataframe(df: pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if df.id.nunique() != df.shape[0]:
         raise IndexNotUniqueError("Dataframe index must be unique")
-    for row in df.to_dict(orient="records"):
-        try:
-            Document.validate(row)
-        # if any row fails validation, return False
-        except ValidationError:
-            return DataframeValidationError("Dataframe failed validation")
-        except ValueError as e:
-            raise DataframeValidationError(f"Unexpected error in validation: {e}")
+    try:
+        KnowledgeBase._df_to_documents(df)
+    except ValidationError:
+        return DataframeValidationError("Dataframe failed validation")
+    except ValueError as e:
+        raise DataframeValidationError(f"Unexpected error in validation: {e}")
 
 
 def _load_single_file_by_suffix(f: str) -> pd.DataFrame:
