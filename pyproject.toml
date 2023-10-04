@@ -52,7 +52,8 @@ exclude = ['tests']
 module = [
     'pinecone_text.*',
     'pinecone_datasets',
-    'pinecone'
+    'pinecone',
+    'oplog.*'
 ]
 ignore_missing_imports = true
 
