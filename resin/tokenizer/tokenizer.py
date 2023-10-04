@@ -40,8 +40,8 @@ class Tokenizer:
     def initialize_from_config(cls, config: dict):
         if cls._initialized:
             raise ValueError("Tokenizer has already been initialized")
-        cls._tokenizer_instance = BaseTokenizer.from_config(config,
-                                                            cls.DEFAULT_TOKENIZER_CLASS)
+        config["type"] = config.get("type", cls.DEFAULT_TOKENIZER_CLASS.__name__)
+        cls._tokenizer_instance = BaseTokenizer.from_config(config)
         cls._initialized = True
 
     def tokenize(self, text: str) -> List[str]:

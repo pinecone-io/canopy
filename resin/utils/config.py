@@ -13,26 +13,22 @@ class FactoryMixin:
             cls._SUPPORTED_CLASSES[cls.__name__] = cls
 
     @classmethod
-    def from_config(cls, config: dict, default_class=None):
+    def from_config(cls, config: Dict[str, Any]):
         if not (hasattr(cls, '_SUPPORTED_CLASSES') and cls.__base__ is abc.ABC):
             raise ValueError("from_config() can only be called from the base class.")
 
-        if "type" in config:
-            class_name = config.pop("type")
-            if class_name not in cls._SUPPORTED_CLASSES:
-                raise ValueError(
-                    f"{cls.__name__} load error: {class_name} is not supported. "
-                    f"Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
-                )
-
-            class_type = cls._SUPPORTED_CLASSES[class_name]
-        elif default_class:
-            class_type = default_class
-        else:
+        class_name = config.pop("type")
+        if class_name is None:
             raise ValueError(
-                f"Error loading config for {cls.__name__}. Either specify 'type' in the"
-                f" config or provide a default_class."
+                f"{cls.__name__} load error: missing 'type' field in config."
             )
+        if class_name not in cls._SUPPORTED_CLASSES:
+            raise ValueError(
+                f"{cls.__name__} load error: {class_name} is not supported. "
+                f"Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
+            )
+
+        class_type = cls._SUPPORTED_CLASSES[class_name]
 
         if issubclass(class_type, ConfigurableMixin):
             return class_type.from_config(config)
@@ -46,10 +42,6 @@ class FactoryMixin:
 
 class ConfigurableMixin(abc.ABC):
     _DEFAULT_COMPONENTS: Dict[str, type] = {}
-
-    @classmethod
-    def from_config(cls, config: Dict[str, Any]):  # type: ignore[override]
-        return cls._from_config(config)
 
     def _set_component(self,
                        base_class: type,
@@ -71,17 +63,24 @@ class ConfigurableMixin(abc.ABC):
             return default_class()
 
     @classmethod
-    def _from_config(cls, config: Dict[str, Any]):
+    def from_config(cls, config: Dict[str, Any]):
         loaded_components = {}
         for component_name in cls._DEFAULT_COMPONENTS:
             component_config = config.pop(component_name, None)
             if component_config:
                 default_class = cls._DEFAULT_COMPONENTS[component_name]
                 if issubclass(default_class, FactoryMixin):
+                    component_config['type'] = component_config.get(
+                        'type', default_class.__name__
+                    )
+
+                    # For classes implementing FactoryMixin, we need to call
+                    # `from_config()` from the base class
                     base_class = default_class
                     while base_class.__base__ is not abc.ABC:
                         base_class = base_class.__base__
-                    component = base_class.from_config(component_config, default_class)
+
+                    component = base_class.from_config(component_config)
                 else:
                     raise ValueError(
                         f"{cls.__name__} load error: cannot load {component_name} from "
