@@ -112,9 +112,17 @@ def new(index_name, tokenizer_model):
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
-        _ = KnowledgeBase.create_with_new_index(
-            index_name=index_name
-        )
+        try:
+            _ = KnowledgeBase.create_with_new_index(
+                index_name=index_name
+            )
+        except Exception as e: #TODO: kb should throw a specific exception for each case
+            msg = (
+                "Error: Failed to create a new index"
+            )
+            click.echo(click.style(msg, fg="red"), err=True, nl=False)
+            click.echo(f" Reason: {e}")
+            sys.exit(1)
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
 
@@ -133,7 +141,14 @@ def upsert(index_name, data_path, tokenizer_model):
         +' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    try:
+        Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    except Exception:
+        msg = (
+            "Error: Failed to initialize tokenizer"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
     if data_path is None:
         msg = "Data path is not provided,"
         + " please provide it with --data-path or set it with env var"
@@ -144,7 +159,16 @@ def upsert(index_name, data_path, tokenizer_model):
     click.echo(" to index: ")
     click.echo(click.style(f'{INDEX_NAME_PREFIX}{index_name} \n', fg='green'))
     with spinner:
-        kb = KnowledgeBase(index_name=index_name)
+        try:
+            kb = KnowledgeBase(index_name=index_name)
+        except Exception:
+            msg = (
+                "Error: Failed to connect to Pinecone index, please make sure"
+                + " you have set the right env vars"
+                + " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
+            )
+            click.echo(click.style(msg, fg="red"), err=True)
+            sys.exit(1)
         try:
             data = load_dataframe_from_path(data_path)
         except IndexNotUniqueError:
@@ -172,7 +196,17 @@ def upsert(index_name, data_path, tokenizer_model):
         pd.options.display.max_colwidth = 20
     click.echo(data.head())
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
-    kb.upsert_dataframe(data)
+    try:
+        kb.upsert_dataframe(data)
+    except Exception:
+        msg = (
+            "Error: Failed to upsert data to index"
+            + f" {INDEX_NAME_PREFIX}{index_name}"
+            + " this could be due to connection issues"
+            + " please re-run `resin upsert`"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
     click.echo(click.style("Success!", fg="green"))
 
 
@@ -189,9 +223,18 @@ def _chat(
     output = ""
     history += [{"role": "user", "content": message}]
     start = time.time()
-    openai_response = openai.ChatCompletion.create(
-        model=model, messages=history, stream=stream, api_base=api_base
-    )
+    try:
+        openai_response = openai.ChatCompletion.create(
+            model=model, messages=history, stream=stream, api_base=api_base
+        )
+    except Exception as e:
+        msg = (
+            "Oops... something went wrong with the LLM"
+            + " the error I got is: "
+        )
+        click.echo(click.style(msg, fg="red"), err=True, nl= False)
+        click.echo(f"{e}")
+        sys.exit(1)
     end = time.time()
     duration_in_sec = end - start
     click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
