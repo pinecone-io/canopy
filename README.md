@@ -154,6 +154,13 @@ If you have started the service in the background, you can stop it by running:
 resin stop
 ```
 
+## Logs
+
+Resin uses the standard Python logging module together with [oplog](https://github.com/oribarilan/oplog).
+Operations are logged to `resin.log` file, in a `jsonl` format.
+You can tailor the logs (level, format, destination, etc.) according to your needs.
+See [oplog documentation](https://oribarilan.github.io/oplog/) for more information.
+
 ## Advanced usage
 
 ### 1. Migrating existing OpenAI application to **Resin**
