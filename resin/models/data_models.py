@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional, List, Union, Dict, Sequence
 
-from pydantic import BaseModel, Field, validator, Extra
+from pydantic import BaseModel, Field, validator
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
