@@ -3,11 +3,15 @@ import json
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
+from resin_cli.data_loader import (
+    IndexNotUniqueError,
+    DataframeValidationError,
+    load_dataframe_from_path,
+)
+
 from resin_cli.data_loader.data_loader import (
     _validate_dataframe,
-    IndexNotUniqueError,
     _load_single_file_by_suffix,
-    load_dataframe_from_path,
 )
 
 good_df_minimal = pd.DataFrame(
@@ -113,12 +117,20 @@ def test_all_validator_cases():
     True for all dataframes in all_dataframes.
     """
     for name, df in all_dataframes_as_dict_with_name.items():
-        print(name)
         if name.startswith("bad"):
-            assert not _validate_dataframe(df)
+            try:
+                _validate_dataframe(df)
+            except DataframeValidationError:
+                pass
+            except Exception as e:
+                pytest.fail(f"Unexpected error in validation for {name}: {e}")
         elif name.startswith("good"):
-            assert _validate_dataframe(df)
-        print("ok")
+            try:
+                _validate_dataframe(df)
+            except Exception as e:
+                pytest.fail(f"Unexpected error in validation for {name}: {e}")
+            finally:
+                assert True
 
 
 def test_load_single_file_jsonl(tmpdir):

@@ -19,7 +19,7 @@ class DataframeValidationError(ValueError):
         super().__init__(message)
 
 
-def _validate_dataframe(df: pd.DataFrame) -> bool:
+def _validate_dataframe(df: pd.DataFrame):
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if df.id.nunique() != df.shape[0]:
@@ -27,14 +27,11 @@ def _validate_dataframe(df: pd.DataFrame) -> bool:
     for row in df.to_dict(orient="records"):
         try:
             Document.validate(row)
-
         # if any row fails validation, return False
         except ValidationError:
-            return False
+            return DataframeValidationError("Dataframe failed validation")
         except ValueError as e:
-            raise e
-    # all rows validated
-    return True
+            raise DataframeValidationError(f"Unexpected error in validation: {e}")
 
 
 def _load_single_file_by_suffix(f: str) -> pd.DataFrame:
@@ -61,7 +58,6 @@ def load_dataframe_from_path(path: str) -> pd.DataFrame:
     else:
         df = _load_single_file_by_suffix(path)
 
-    if not _validate_dataframe(df):
-        raise DataframeValidationError("Dataframe failed validation")
+    _validate_dataframe(df)
 
     return df
