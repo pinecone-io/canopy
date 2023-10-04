@@ -30,7 +30,6 @@ class ContextEngine(BaseContextEngine, ConfigurableMixin):
         'context_builder': StuffingContextBuilder,
     }
 
-
     def __init__(self,
                  *,
                  knowledge_base: Optional[BaseKnowledgeBase] = None,
@@ -55,7 +54,3 @@ class ContextEngine(BaseContextEngine, ConfigurableMixin):
 
     async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:
         raise NotImplementedError()
-
-    @classmethod
-    def from_config(cls, config: dict):
-        return cls._from_config(config=config)

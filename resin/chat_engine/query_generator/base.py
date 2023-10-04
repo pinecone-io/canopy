@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from resin.chat_engine.models import HistoryPruningMethod
-from resin.chat_engine.prompt_builder import PromptBuilder
-from resin.llm import BaseLLM
 from resin.models.data_models import Messages, Query
 from resin.utils.config import FactoryMixin
 

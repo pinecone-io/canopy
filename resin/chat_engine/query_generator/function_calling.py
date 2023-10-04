@@ -28,7 +28,7 @@ class FunctionCallingQueryGenerator(QueryGenerator, ConfigurableMixin):
                  top_k: int = 10,
                  prompt: Optional[str] = None,
                  function_description: Optional[str] = None):
-        self.llm = self._set_component(BaseLLM, "llm", llm)
+        self._llm = self._set_component(BaseLLM, "llm", llm)
         self._top_k = top_k
         self._system_prompt = prompt or DEFAULT_SYSTEM_PROMPT
         self._function_description = \

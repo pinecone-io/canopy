@@ -131,9 +131,9 @@ class ChatEngine(BaseChatEngine, ConfigurableMixin):
                 debug_info=debug_info
             )
         else:
-            resonse = cast(ChatResponse, llm_response)
-            resonse.debug_info = debug_info
-            return resonse
+            response = cast(ChatResponse, llm_response)
+            response.debug_info = debug_info
+            return response
 
     def get_context(self,
                     messages: Messages,

@@ -500,5 +500,3 @@ def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder)
                       chunker=chunker)
 
     assert "Please check your credentials and try again" in str(e.value)
-
-
