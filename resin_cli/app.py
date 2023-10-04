@@ -121,11 +121,10 @@ async def delete(
 ):
     try:
         logger.info(f"Delete {len(request.document_ids)} documents")
-        delete_response = await run_in_threadpool(
+        await run_in_threadpool(
             kb.delete,
             document_ids=request.document_ids)
-
-        return delete_response
+        return {"message": "success"}
 
     except Exception as e:
         logger.exception(e)
