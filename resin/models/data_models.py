@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional, List, Union, Dict, Sequence
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, Extra
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
@@ -25,8 +25,7 @@ class Document(BaseModel):
     metadata: Metadata = Field(default_factory=dict)
 
     class Config:
-        allow_extra = False
-        ignore_extra = False
+        extra = Extra.forbid
 
     @validator('metadata')
     def metadata_reseved_fields(cls, v):
