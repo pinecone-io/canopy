@@ -250,7 +250,9 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = self._reranker.rerank(results)
 
         return [
-            QueryResult(**r.dict(exclude={'values', 'sprase_values'})) for r in results
+            QueryResult(
+                **r.dict(exclude={'values', 'sprase_values', 'document_id'})
+            ) for r in results
         ]
 
     def _query_index(self,

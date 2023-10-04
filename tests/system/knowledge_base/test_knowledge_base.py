@@ -232,7 +232,7 @@ def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
     df = pd.DataFrame([{"id": doc.id, "txt": doc.text, "metadata": doc.metadata}
                        for doc in documents])
 
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
 
 
@@ -241,7 +241,7 @@ def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
                         "bla": "bla"}
                        for doc in documents])
 
-    with pytest.raises(ValidationError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
 
 
