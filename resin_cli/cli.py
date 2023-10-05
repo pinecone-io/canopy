@@ -112,7 +112,8 @@ def new(index_name, tokenizer_model):
             _ = KnowledgeBase.create_with_new_index(
                 index_name=index_name
             )
-        except Exception as e: #TODO: kb should throw a specific exception for each case
+        # TODO: kb should throw a specific exception for each case
+        except Exception as e:
             msg = (
                 "Error: Failed to create a new index"
             )
@@ -229,7 +230,7 @@ def _chat(
             "Oops... something went wrong with the LLM"
             + " the error I got is: "
         )
-        click.echo(click.style(msg, fg="red"), err=True, nl= False)
+        click.echo(click.style(msg, fg="red"), err=True, nl=False)
         click.echo(f"{e}")
         sys.exit(1)
     end = time.time()
