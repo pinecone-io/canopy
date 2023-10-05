@@ -104,6 +104,14 @@ bad_df_has_excess_field = pd.DataFrame(
     ]
 )
 
+bad_df_missppelled_optional_field = pd.DataFrame(
+    [
+        {"id": 1, "text": "foo", "sorce": "foo_source"},
+        {"id": 2, "text": "bar", "metdata": {"key": "value"}},
+        {"id": 3, "text": "baz", "sorce": "baz_source"},
+    ]
+)
+
 bad_df_missing_mandatory_field = pd.DataFrame(
     [
         {"text": "foo", "metadata": {"foo": "foo"}},
@@ -124,6 +132,7 @@ all_dataframes_as_dict_with_name = [
     ("bad_df_bad_type_metadata_list_int", bad_df_bad_type_metadata_list_int),
     ("bad_df_has_excess_field", bad_df_has_excess_field),
     ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field),
+    ("bad_df_missppelled_optional_field", bad_df_missppelled_optional_field),
 ]
 
 
