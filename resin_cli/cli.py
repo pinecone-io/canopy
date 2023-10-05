@@ -16,7 +16,7 @@ from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
     load_dataframe_from_path,
     IndexNotUniqueError,
-    DataframeValidationError
+    DataframeValidationError,
 )
 from resin import __version__
 
@@ -67,7 +67,7 @@ def validate_connection():
 
 
 @click.group(invoke_without_command=True)
-@click.version_option(__version__, '-v', '--version', prog_name='Resin')
+@click.version_option(__version__, "-v", "--version", prog_name="Resin")
 @click.pass_context
 def cli(ctx):
     """
@@ -80,9 +80,7 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(
-    help="Check if service is running by sending a health check request"
-)
+@cli.command(help="Check if service is running by sending a health check request")
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
@@ -118,14 +116,10 @@ def new(index_name, tokenizer_model):
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
         try:
-            _ = KnowledgeBase.create_with_new_index(
-                index_name=index_name
-            )
+            _ = KnowledgeBase.create_with_new_index(index_name=index_name)
         # TODO: kb should throw a specific exception for each case
         except Exception as e:
-            msg = (
-                "Error: Failed to create a new index"
-            )
+            msg = "Error: Failed to create a new index"
             click.echo(click.style(msg, fg="red"), err=True, nl=False)
             click.echo(f" Reason: {e}")
             sys.exit(1)
@@ -155,20 +149,18 @@ def upsert(index_name, data_path, tokenizer_model):
     try:
         Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     except Exception:
-        msg = (
-            "Error: Failed to initialize tokenizer"
-        )
+        msg = "Error: Failed to initialize tokenizer"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     if data_path is None:
         msg = "Data path is not provided,"
-        + " please provide it with --data-path or set it with env var"
+        +" please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo("Resin is going to upsert data from ", nl=False)
-    click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
+    click.echo(click.style(f"{data_path}", fg="yellow"), nl=False)
     click.echo(" to index: ")
-    click.echo(click.style(f'{INDEX_NAME_PREFIX}{index_name} \n', fg='green'))
+    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name} \n", fg="green"))
     with spinner:
         try:
             kb = KnowledgeBase(index_name=index_name)
@@ -240,10 +232,7 @@ def _chat(
             model=model, messages=history, stream=stream, api_base=api_base
         )
     except Exception as e:
-        msg = (
-            "Oops... something went wrong with the LLM"
-            + " the error I got is: "
-        )
+        msg = "Oops... something went wrong with the LLM" + " the error I got is: "
         click.echo(click.style(msg, fg="red"), err=True, nl=False)
         click.echo(f"{e}")
         sys.exit(1)
@@ -379,7 +368,9 @@ def chat(index_name, chat_service_url, rag, debug, stream):
         + " to start a new terminal window with the right env vars for `resin chat`"
     )
 )
-@click.option("--debug/--no-debug", default=False, help="open a new terminal window for debugging")
+@click.option(
+    "--debug/--no-debug", default=False, help="open a new terminal window for debugging"
+)
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
@@ -387,7 +378,8 @@ def chat(index_name, chat_service_url, rag, debug, stream):
 def start(debug, host, port, ssl, reload):
     if debug:
         sys_msg = (
-            f'open -na Terminal --env PINECONE_API_KEY="{os.environ["PINECONE_API_KEY"]}"'
+            'open -na Terminal'
+            + f' --env PINECONE_API_KEY="{os.environ["PINECONE_API_KEY"]}"'
             + f' --env INDEX_NAME="{os.environ["INDEX_NAME"]}"'
             + f' --env PINECONE_ENVIRONMENT="{os.environ["PINECONE_ENVIRONMENT"]}"'
             + f' --env OPENAI_API_KEY="{os.environ["OPENAI_API_KEY"]}"'
@@ -401,8 +393,10 @@ def start(debug, host, port, ssl, reload):
     help=(
         "Stop the Resin service, this will kill the uvicorn server"
         + " that is serving the Resin API."
-        + " This method is not recommended, as it will kill the server by looking for the PID"
-        + " of the server, instead, we recommend using ctrl+c on the terminal where you started"
+        + " This method is not recommended,"
+        + " as it will kill the server by looking for the PID"
+        + " of the server, instead, we recommend using"
+        + " ctrl+c on the terminal where you started"
     )
 )
 @click.option("--host", default="0.0.0.0", help="Host")
