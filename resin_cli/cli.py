@@ -48,7 +48,7 @@ def validate_connection():
     except Exception:
         msg = (
             "Error: Failed to connect to Pinecone index, please make sure"
-            + " you have set the right env vars" 
+            + " you have set the right env vars"
             + " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
         )
         click.echo(click.style(msg, fg="red"), err=True)

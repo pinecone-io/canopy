@@ -22,6 +22,15 @@ good_df_minimal = pd.DataFrame(
     ]
 )
 
+good_df_all_good_metadata_permutations = pd.DataFrame(
+    [
+        {"id": 1, "text": "foo", "metadata": {"string": "string"}},
+        {"id": 2, "text": "bar", "metadata": {"int": 1}},
+        {"id": 3, "text": "baz", "metadata": {"float": 1.0}},
+        {"id": 4, "text": "foo", "metadata": {"list": ["list", "another"]}},
+    ]
+)
+
 good_df_maximal = pd.DataFrame(
     [
         {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
@@ -75,6 +84,17 @@ bad_df_bad_type_metadata_list_int = pd.DataFrame(
         {"id": 1, "text": "foo", "metadata": {"foo": [1]}},
         {"id": 2, "text": "bar", "metadata": {"bar": "bar"}},
         {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
+    ]
+)
+
+bad_df_metadata_not_allowed_all_permutations = pd.DataFrame(
+    [
+        {"id": 1, "text": "foo", "metadata": {"list_of_int": [1, 2, 3]}},
+        {"id": 2, "text": "bar", "metadata": {"list_of_float": [1.0, 2.0, 3.0]}},
+        {"id": 3, "text": "baz", "metadata": {"dict": {"key": "value"}}},
+        {"id": 4, "text": "foo", "metadata": {"list_of_dict": [{"key": "value"}]}},
+        {"id": 5, "text": "bar", "metadata": {"list_of_list": [["value"]]}},
+        {"id": 6, "text": "baz", "metadata": {1: "foo"}},
     ]
 )
 
@@ -133,6 +153,7 @@ all_dataframes_as_dict_with_name = [
     ("bad_df_has_excess_field", bad_df_has_excess_field),
     ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field),
     ("bad_df_missppelled_optional_field", bad_df_missppelled_optional_field),
+    ("good_df_all_good_metadata_permutations", good_df_all_good_metadata_permutations),
 ]
 
 
