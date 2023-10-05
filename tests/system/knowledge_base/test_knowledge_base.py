@@ -11,6 +11,7 @@ from tenacity import (
     wait_fixed,
     wait_chain,
 )
+from pydantic import ValidationError
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
@@ -231,10 +232,8 @@ def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
     df = pd.DataFrame([{"id": doc.id, "txt": doc.text, "metadata": doc.metadata}
                        for doc in documents])
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
-
-    assert "Dataframe must contain the following columns" in str(e.value)
 
 
 def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
@@ -242,10 +241,8 @@ def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
                         "bla": "bla"}
                        for doc in documents])
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
-
-    assert "Dataframe contains unknown columns" in str(e.value)
 
 
 @pytest.mark.parametrize("key", ["document_id", "text", "source"])
