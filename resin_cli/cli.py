@@ -80,7 +80,9 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(help="Check if Resin service is running")
+@cli.command(
+    help="Check if service is running by sending a health check request"
+)
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
@@ -99,7 +101,14 @@ def health(host, port, ssl):
         return
 
 
-@cli.command()
+@cli.command(
+    help=(
+        "New command sets up a new index in Pinecone that is configured for Resin."
+        + " This will automatically tap the embedding model with a single toeken to "
+        + "assert for the dimensionality of the embedding space. This will also set up "
+        + "the index with the right schema for Resin."
+    )
+)
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
@@ -124,7 +133,12 @@ def new(index_name, tokenizer_model):
     os.environ["INDEX_NAME"] = index_name
 
 
-@cli.command()
+@cli.command(
+    help=(
+        "Upsert allows you to load a loacal data file into a your Resin index."
+        + " The allowed formats are .jsonl and .parquet. The data will be validated"
+    )
+)
 @click.argument("data-path", type=click.Path(exists=True))
 @click.option(
     "--index-name",
@@ -270,7 +284,12 @@ def _chat(
     return debug_info
 
 
-@cli.command()
+@cli.command(
+    help=(
+        "Chat allows you to chat with your Resin index, "
+        + "Chat is a debugging tool, it is not meant to be used for production"
+    )
+)
 @click.option("--stream/--no-stream", default=True, help="Stream")
 @click.option("--debug/--no-debug", default=False, help="Print debug info")
 @click.option(
@@ -292,6 +311,25 @@ def chat(index_name, chat_service_url, rag, debug, stream):
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+    note_msg = (
+        "🚨 Note 🚨\n"
+        + "Chat is a debugging tool, it is not meant to be used for production!"
+    )
+    for c in note_msg:
+        click.echo(click.style(c, fg="red"), nl=False)
+        time.sleep(0.01)
+    click.echo()
+    note_white_message = (
+        "This method should be used by developers to test the model and the data"
+        + " in development time, in local environment. "
+        + "For production use cases, we recommend using the"
+        + " Resin Service or Resin Library directly \n\n"
+        + "Let's Chat!"
+    )
+    for c in note_white_message:
+        click.echo(click.style(c, fg="white"), nl=False)
+        time.sleep(0.01)
+    click.echo()
 
     history_with_pinecone = []
     history_without_pinecone = []
@@ -333,17 +371,40 @@ def chat(index_name, chat_service_url, rag, debug, stream):
         click.echo(click.style("˙", fg="bright_black", bold=True))
 
 
-@cli.command()
+@cli.command(
+    help=(
+        "Start the Resin service, this will start a uvicorn server"
+        + " that will serve the Resin API."
+        + " If you are are locally debugging, you can use the --debug flag"
+        + " to start a new terminal window with the right env vars for `resin chat`"
+    )
+)
+@click.option("--debug/--no-debug", default=False, help="open a new terminal window for debugging")
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
 @click.option("--reload/--no-reload", default=False, help="Reload")
-def start(host, port, ssl, reload):
+def start(debug, host, port, ssl, reload):
+    if debug:
+        sys_msg = (
+            f'open -na Terminal --env PINECONE_API_KEY="{os.environ["PINECONE_API_KEY"]}"'
+            + f' --env INDEX_NAME="{os.environ["INDEX_NAME"]}"'
+            + f' --env PINECONE_ENVIRONMENT="{os.environ["PINECONE_ENVIRONMENT"]}"'
+            + f' --env OPENAI_API_KEY="{os.environ["OPENAI_API_KEY"]}"'
+        )
+        os.system(sys_msg)
     click.echo(f"Starting Resin service on {host}:{port}")
     start_service(host, port, reload)
 
 
-@cli.command()
+@cli.command(
+    help=(
+        "Stop the Resin service, this will kill the uvicorn server"
+        + " that is serving the Resin API."
+        + " This method is not recommended, as it will kill the server by looking for the PID"
+        + " of the server, instead, we recommend using ctrl+c on the terminal where you started"
+    )
+)
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
