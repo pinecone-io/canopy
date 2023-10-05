@@ -249,7 +249,7 @@ def _chat(
         sys.exit(1)
     end = time.time()
     duration_in_sec = end - start
-    click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
+    click.echo(click.style(f"\n> AI {speaker}:\n", fg=speaker_color))
     if stream:
         for chunk in openai_response:
             openai_response_id = chunk.id
