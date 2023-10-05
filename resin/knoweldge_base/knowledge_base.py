@@ -20,7 +20,7 @@ from resin.knoweldge_base.chunker import Chunker, MarkdownChunker
 from resin.knoweldge_base.record_encoder import (RecordEncoder,
                                                  OpenAIRecordEncoder)
 from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                         KBDocChunkWithScore, )
+                                         KBDocChunkWithScore, DocumentWithScore)
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
@@ -251,7 +251,15 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         return [
             QueryResult(
-                **r.dict(exclude={'values', 'sprase_values', 'document_id'})
+                query=r.query,
+                documents=[
+                    DocumentWithScore(
+                        **d.dict(exclude={
+                            'values', 'sparse_values', 'document_id'
+                        })
+                    )
+                    for d in r.documents
+                ]
             ) for r in results
         ]
 
