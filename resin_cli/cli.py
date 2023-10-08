@@ -43,8 +43,9 @@ def is_healthy(url: str):
     except Exception:
         return False
 
+
 @retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
-def wait_for_service(url: str):
+def wait_for_service(chat_service_url: str):
     if not is_healthy(chat_service_url):
         msg = (
             f"Resin service is not running! on {chat_service_url}"
@@ -52,6 +53,7 @@ def wait_for_service(url: str):
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+
 
 def validate_connection():
     try:
@@ -380,7 +382,7 @@ def chat(index_name, chat_service_url, rag, debug, stream):
     )
 )
 @click.option(
-    "--chat", is_flag=True ,help="open a new terminal window for debugging"
+    "--chat", is_flag=True, help="open a new terminal window for debugging"
 )
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
@@ -388,7 +390,7 @@ def chat(index_name, chat_service_url, rag, debug, stream):
 @click.option("--reload/--no-reload", default=False, help="Reload")
 def start(chat, host, port, ssl, reload):
     if chat:
-        command_to_run = f"clear && echo Welcome to Pinecone Canopy,"
+        command_to_run = "clear && echo Welcome to Pinecone Canopy,"
         + " run *resin chat* to start chatting with your index"
 
         script = f'''
