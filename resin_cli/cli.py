@@ -2,9 +2,11 @@ import os
 import click
 import time
 import sys
+import subprocess
 
 import requests
 from dotenv import load_dotenv
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 import pandas as pd
 import openai
@@ -41,6 +43,15 @@ def is_healthy(url: str):
     except Exception:
         return False
 
+@retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
+def wait_for_service(url: str):
+    if not is_healthy(chat_service_url):
+        msg = (
+            f"Resin service is not running! on {chat_service_url}"
+            + " please run `resin start`"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
 
 def validate_connection():
     try:
@@ -369,22 +380,25 @@ def chat(index_name, chat_service_url, rag, debug, stream):
     )
 )
 @click.option(
-    "--debug/--no-debug", default=False, help="open a new terminal window for debugging"
+    "--chat", is_flag=True ,help="open a new terminal window for debugging"
 )
 @click.option("--host", default="0.0.0.0", help="Host")
 @click.option("--port", default=8000, help="Port")
 @click.option("--ssl/--no-ssl", default=False, help="SSL")
 @click.option("--reload/--no-reload", default=False, help="Reload")
-def start(debug, host, port, ssl, reload):
-    if debug:
-        sys_msg = (
-            'open -na Terminal'
-            + f' --env PINECONE_API_KEY="{os.environ["PINECONE_API_KEY"]}"'
-            + f' --env INDEX_NAME="{os.environ["INDEX_NAME"]}"'
-            + f' --env PINECONE_ENVIRONMENT="{os.environ["PINECONE_ENVIRONMENT"]}"'
-            + f' --env OPENAI_API_KEY="{os.environ["OPENAI_API_KEY"]}"'
-        )
-        os.system(sys_msg)
+def start(chat, host, port, ssl, reload):
+    if chat:
+        command_to_run = f"clear && echo Welcome to Pinecone Canopy,"
+        + " run *resin chat* to start chatting with your index"
+
+        script = f'''
+        tell application "Terminal"
+            activate
+            do script "{command_to_run}"
+        end tell
+        '''
+
+        subprocess.run(["osascript", "-e", script], env=os.environ.copy())
     click.echo(f"Starting Resin service on {host}:{port}")
     start_service(host, port, reload)
 
