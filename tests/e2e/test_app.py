@@ -1,4 +1,6 @@
 import os
+from typing import List
+
 from datetime import datetime
 
 import pinecone
@@ -22,6 +24,20 @@ upsert_payload = ContextUpsertRequest(
         }
     ],
 )
+
+
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+def assert_vector_ids_exist(vector_ids: List[str],
+                            knowledge_base: KnowledgeBase):
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
+    assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
+
+
+@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+def assert_vector_ids_not_exist(vector_ids: List[str],
+                                knowledge_base: KnowledgeBase):
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
+    assert len(fetch_response["vectors"]) == 0
 
 
 @pytest.fixture(scope="module")
@@ -130,3 +146,18 @@ def test_chat(client):
     ]
     print(chat_response_content)
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
+
+
+def test_delete(client, knowledge_base):
+    doc_ids = ["api_tests-1"]
+    vector_ids = [f"{d_id}_{0}" for d_id in doc_ids]
+
+    assert_vector_ids_exist(vector_ids, knowledge_base)
+
+    delete_payload = {
+        "document_ids": doc_ids
+    }
+    delete_response = client.post("/context/delete", json=delete_payload)
+    assert delete_response.is_success
+
+    assert_vector_ids_not_exist(vector_ids, knowledge_base)

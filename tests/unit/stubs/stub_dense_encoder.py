@@ -24,7 +24,7 @@ class StubDenseEncoder(BaseDenseEncoder):
         # consistent embedding function that project each text to a unique angle
         embedding = []
         for i in range(self.dimension):
-            sha256_hash = hashlib.sha256((text + str(i)).encode()).hexdigest()
+            sha256_hash = hashlib.sha256(f"{text} {i}".encode()).hexdigest()
             int_value = int(sha256_hash, 16)
             embedding.append(int_value / float(1 << 256))
 
