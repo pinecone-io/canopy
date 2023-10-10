@@ -102,7 +102,6 @@ async def upsert(
         upsert_results = await run_in_threadpool(
             kb.upsert,
             documents=request.documents,
-            namespace=request.namespace,
             batch_size=request.batch_size)
 
         return upsert_results

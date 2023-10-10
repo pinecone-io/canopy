@@ -19,7 +19,6 @@ class ContextQueryRequest(BaseModel):
 
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
-    namespace: str = ""
     batch_size: int = 100
 
 
