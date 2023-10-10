@@ -377,7 +377,7 @@ def test_create_after_connect(index_full_name, index_name):
     with pytest.raises(RuntimeError) as e:
         kb.create_resin_index()
 
-    assert f"KnowledgeBase is already connected to index" in str(e.value)
+    assert "KnowledgeBase is already connected to index" in str(e.value)
 
 
 def test_kb_non_existing_index(index_name, chunker, encoder):
