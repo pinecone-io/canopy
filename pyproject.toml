@@ -65,5 +65,5 @@ per-file-ignores = [
 max-line-length = 88
 
 [tool.poetry.scripts]
-resin = "resin_cli.cli:cli"
+canopy = "resin_cli.cli:cli"
 service = "resin_cli.service.app:start"
