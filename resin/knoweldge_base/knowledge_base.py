@@ -213,11 +213,11 @@ class KnowledgeBase(BaseKnowledgeBase):
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
-        queries: List[KBQuery] = self._encoder.encode_queries(queries)
+        if self._index is None:
+            raise RuntimeError(self._connection_error_msg)
 
-        results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
-                                        for q in queries]
-
+        queries = self._encoder.encode_queries(queries)
+        results = [self._query_index(q, global_metadata_filter) for q in queries]
         results = self._reranker.rerank(results)
 
         return [
