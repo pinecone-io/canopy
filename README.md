@@ -2,7 +2,14 @@
 
 **Canopy** is a Sofware Development Kit and a Framework for AI applications. Canopy allows you to test, build and package Retrieval Augmented Application and on top of Pinecone Vector Database. **Canopy** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
 
-What's inside the box?
+* **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
+
+* **Operational & Production ready** - Canopy is built on top of **Pinecone** and can Scale to billions of vectors. Unlike other AI frameworks, **Canopy** optimizes for production use cases it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Canopy** can maximize context quality and relevance while controlling the cost of the AI system.
+
+* **Open source** - **Canopy** is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
+
+
+## What's inside the box?
 
 1. **Canopy Core** - the core library. Canopy has 3 high level classes that act as API level components:
     * **ChatEngine** - is a complete RAG unit [TBD]
@@ -11,29 +18,8 @@ What's inside the box?
 
 2. **Canopy Service** - a service that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. 
 
-3. **Canopy CLI** 
+3. **Canopy CLI** - [TBD]
 
-* **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
-
-* **Production ready** - Canopy is built on top of **Pinecone** and can Scale to billions of vectors. Unlike other AI frameworks, **Canopy** optimizes for production use cases it is test
-
-* **Open source** - **Canopy** is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
-
-* **Operative AI** - **Canopy** is designed to be used in production and as such, it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Canopy** can maximize context quality and relevance while controlling the cost of the AI system.
-
-## Concept
-
-**Canopy** can be used as a library and as-a-service. The conceptual model is the following:
-
-![conceptual model](https://github.com/pinecone-io/context-engine/blob/dev/.readme-content/sketch.png)
-
-Where:
-
-* **ChatEngine** _`/context/chat/completions`_ - is a complete RAG unit, this will perform the RAG pipeline and return the answer from the LLM. This API follows the OpenAI API specification and can be used as a drop-in replacement for the OpenAI API.
-
-* **ContextEngine** _`/context/query`_ - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. ContextEngine internally performs a process of ContextBuilding - i.e. it will find the most relevant documents to your query and will return them as a single context object.
-
-* **KnowledgeBase** _`/context/upsert`_ - is the interface to upload your data into Pinecone. It will create a new index and will configure it for you. It will also handle the processing of the data, namely - processing, chunking and encoding (embedding).
 
 ## How to install
 
