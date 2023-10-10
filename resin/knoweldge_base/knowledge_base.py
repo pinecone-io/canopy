@@ -159,7 +159,7 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
 
         if dimension is None:
             record_encoder = record_encoder if record_encoder is not None \
-                else cls._DEFAULT_COMPONENTS['record_encoder']
+                else cls._DEFAULT_COMPONENTS['record_encoder']()
             if record_encoder.dimension is not None:
                 dimension = record_encoder.dimension
             else:
