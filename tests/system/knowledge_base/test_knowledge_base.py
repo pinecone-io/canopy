@@ -469,19 +469,20 @@ def set_bad_credentials():
 
 
 def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
     with pytest.raises(RuntimeError) as e:
-        kb = KnowledgeBase(index_name=index_name,
-                           record_encoder=encoder,
-                           chunker=chunker)
         kb.create_resin_index()
 
     assert "Please check your credentials" in str(e.value)
 
 
 def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase(index_name=index_name,
-                      record_encoder=encoder,
-                      chunker=chunker)
+        kb.connect()
 
     assert "Please check your credentials and try again" in str(e.value)
