@@ -125,7 +125,7 @@ def upsert(index_name, data_path, tokenizer_model):
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     kb = KnowledgeBase(index_name=index_name)
-    kb.verify_connection_health()
+    kb.connect()
     click.echo(
         f"Resin is going to upsert data from {data_path} to index: "
         f"{kb.index_name}"

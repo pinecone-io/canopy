@@ -172,7 +172,7 @@ def test_create_index(index_full_name, knowledge_base):
 
 
 def test_is_verify_connection_health_happy_path(knowledge_base):
-    knowledge_base.verify_connection_health()
+    knowledge_base.verify_index_connection()
 
 
 def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
@@ -385,7 +385,7 @@ def test_verify_kb_non_existing_index(index_name, chunker, encoder):
         kb = KnowledgeBase(index_name="non-existing-index",
                            record_encoder=encoder,
                            chunker=chunker)
-        kb.verify_connection_health()
+        kb.verify_index_connection()
     expected_msg = f"index {INDEX_NAME_PREFIX}non-existing-index does not exist"
     assert expected_msg in str(e.value)
 
@@ -410,7 +410,7 @@ def test_delete_index_for_non_existing(knowledge_base):
 
 def test_verify_connection_health_raise_for_deleted_index(knowledge_base):
     with pytest.raises(RuntimeError) as e:
-        knowledge_base.verify_connection_health()
+        knowledge_base.verify_index_connection()
 
     assert "does not exist or was deleted" in str(e.value)
 

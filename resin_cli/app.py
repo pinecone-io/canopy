@@ -117,7 +117,7 @@ async def upsert(
 )
 async def health_check():
     try:
-        await run_in_threadpool(kb.verify_connection_health)
+        await run_in_threadpool(kb.verify_index_connection)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
@@ -173,8 +173,9 @@ def _init_engines():
     kb = KnowledgeBase(index_name=INDEX_NAME)
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM()
-
     chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
+
+    kb.connect()
 
 
 def start(host="0.0.0.0", port=8000, reload=False):

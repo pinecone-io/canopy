@@ -58,7 +58,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
-        self._index: Optional[Index] = self._connect_index()
+        self._index: Optional[Index] = None
 
     @staticmethod
     def _connect_pinecone():
@@ -76,7 +76,11 @@ class KnowledgeBase(BaseKnowledgeBase):
             self._connect_pinecone()
 
         if self.index_name not in list_indexes():
-            return None
+            raise RuntimeError(
+                f"The index {self.index_name} does not exist or was deleted. "
+                "Please create it by calling knowledge_base.create_resin_index() or "
+                "running the `resin new` command"
+            )
 
         try:
             index = Index(index_name=self.index_name)
@@ -91,30 +95,27 @@ class KnowledgeBase(BaseKnowledgeBase):
     @property
     def _connection_error_msg(self) -> str:
         return (
-            f"The index {self.index_name} does not exist or was deleted. "
-            "Please create it by calling knowledge_base.create_resin_index() or "
-            "running the `resin new` command"
+            f"KnowledgeBase is not connected to index {self.index_name}, "
+            f"Please call knowledge_base.connect(). "
         )
 
-    def verify_connection_health(self) -> None:
+    def connect(self) -> None:
+        if self._index is not None:
+            raise RuntimeError(
+                f"KnowledgeBase is already connected to index {self.index_name}. "
+            )
+        self._index = self._connect_index()
+
+    def verify_index_connection(self) -> None:
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
         try:
             self._index.describe_index_stats()
         except Exception as e:
-            try:
-                pinecone_whoami()
-            except Exception:
-                raise RuntimeError(
-                    "Failed to connect to Pinecone. "
-                    "Please check your credentials and try again"
-                ) from e
-
-            if self._index_name not in list_indexes():
-                raise RuntimeError(self._connection_error_msg) from e
-            raise RuntimeError("Index unexpectedly did not respond. "
-                               "Please try again in few moments") from e
+            raise RuntimeError(
+                "The index did not respond. Please try running "
+                "knowledge_base.connect() to re-connect it") from e
 
     def create_resin_index(self,
                            indexed_fields: Optional[List[str]] = None,
