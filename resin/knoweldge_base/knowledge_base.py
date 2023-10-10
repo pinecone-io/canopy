@@ -158,7 +158,8 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            record_encoder = record_encoder if record_encoder is not None else cls.DEFAULT_RECORD_ENCODER()  # noqa: E501
+            record_encoder = record_encoder if record_encoder is not None \
+                else cls._DEFAULT_COMPONENTS['record_encoder']
             if record_encoder.dimension is not None:
                 dimension = record_encoder.dimension
             else:
