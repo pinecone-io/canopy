@@ -20,7 +20,8 @@ from typing import cast
 from resin.models.api_models import StreamingChatResponse, ChatResponse
 from resin.models.data_models import Context
 from resin_cli.api_models import \
-    ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
+    ChatRequest, ContextQueryRequest, \
+    ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
 load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
@@ -104,6 +105,25 @@ async def upsert(
             batch_size=request.batch_size)
 
         return upsert_results
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=500, detail=f"Internal Service Error: {str(e)}")
+
+
+@app.post(
+    "/context/delete",
+)
+async def delete(
+    request: ContextDeleteRequest = Body(...),
+):
+    try:
+        logger.info(f"Delete {len(request.document_ids)} documents")
+        await run_in_threadpool(
+            kb.delete,
+            document_ids=request.document_ids)
+        return {"message": "success"}
 
     except Exception as e:
         logger.exception(e)

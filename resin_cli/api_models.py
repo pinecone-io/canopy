@@ -22,6 +22,10 @@ class ContextUpsertRequest(BaseModel):
     batch_size: int = 100
 
 
+class ContextDeleteRequest(BaseModel):
+    document_ids: List[str]
+
+
 class HealthStatus(BaseModel):
     pinecone_status: str
     llm_status: str
