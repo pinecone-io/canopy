@@ -18,11 +18,9 @@ class FunctionCallingQueryGenerator(QueryGenerator):
     def __init__(self,
                  *,
                  llm: BaseLLM,
-                 top_k: int = 10,
                  prompt: Optional[str] = None,
                  function_description: Optional[str] = None):
         super().__init__(llm=llm)
-        self._top_k = top_k
         self._system_prompt = prompt or DEFAULT_SYSTEM_PROMPT
         self._function_description = \
             function_description or DEFAULT_FUNCTION_DESCRIPTION
@@ -36,9 +34,7 @@ class FunctionCallingQueryGenerator(QueryGenerator):
         arguments = self._llm.enforced_function_call(messages,
                                                      function=self._function)
 
-        return [Query(text=q,
-                      top_k=self._top_k,
-                      metadata_filter=None)
+        return [Query(text=q)
                 for q in arguments["queries"]]
 
     async def agenerate(self,
