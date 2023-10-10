@@ -64,8 +64,17 @@ class ConfigurableMixin(abc.ABC):
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]):
+        return cls._from_config(config)
+
+    @classmethod
+    def _from_config(cls, config: Dict[str, Any], **kwargs):
         loaded_components = {}
         for component_name in cls._DEFAULT_COMPONENTS:
+            if component_name in kwargs:
+                raise RuntimeError(
+                    f"{cls.__name__} load error: Overriding {component_name} is not "
+                    f"allowed. Please set it in the config file."
+                )
             component_config = config.pop(component_name, None)
             if component_config:
                 default_class = cls._DEFAULT_COMPONENTS[component_name]
@@ -89,6 +98,12 @@ class ConfigurableMixin(abc.ABC):
                 loaded_components[component_name] = component
 
         parameters = config.pop("params", {})
+        params_in_kwargs = set(parameters.keys()) & set(kwargs.keys())
+        if params_in_kwargs:
+            raise RuntimeError(
+                f"{cls.__name__} load error: can't set {params_in_kwargs} in both "
+                f"config and constructor."
+            )
 
         # The config should be empty at this point
         if config:
@@ -98,4 +113,4 @@ class ConfigurableMixin(abc.ABC):
                 f"The allowed keys are: {allowed_keys}"
             )
 
-        return cls(**loaded_components, **parameters)
+        return cls(**loaded_components, **parameters, **kwargs)

@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
@@ -51,8 +51,8 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
     }
 
     def __init__(self,
+                 index_name: str,
                  *,
-                 index_name: Optional[str] = None,
                  record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
@@ -60,13 +60,6 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
-
-        index_name = index_name or os.getenv("INDEX_NAME")
-        if index_name is None:
-            raise ValueError(
-                "index_name must be provided. Either pass it to KnowledgeBase's "
-                "constructor or set INDEX_NAME environment variable"
-            )
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
@@ -397,6 +390,16 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
                 filter={"document_id": {"$in": document_ids}},
                 namespace=namespace
             )
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any], index_name: Optional[str] = None):
+        index_name = index_name or os.getenv("INDEX_NAME")
+        if index_name is None:
+            raise ValueError(
+                "index_name must be provided. Either pass it to KnowledgeBase's "
+                "constructor or set INDEX_NAME environment variable"
+            )
+        return cls._from_config(config, index_name=index_name)
 
     @staticmethod
     def _is_starter_env():
