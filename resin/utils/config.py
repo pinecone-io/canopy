@@ -52,31 +52,24 @@ class ConfigurableMixin(abc.ABC):
     @classmethod
     def _from_config(cls, config: Dict[str, Any], **kwargs):
         loaded_components = {}
-        for component_name in cls._DEFAULT_COMPONENTS:
+        for component_name, default_class in cls._DEFAULT_COMPONENTS.items():
             if component_name in kwargs:
                 raise RuntimeError(
                     f"{cls.__name__} load error: Overriding {component_name} is not "
                     f"allowed. Please set it in the config file."
                 )
-            component_config = config.pop(component_name, None)
-            if component_config:
-                default_class = cls._DEFAULT_COMPONENTS[component_name]
-                if issubclass(default_class, FactoryMixin):
-                    component_config['type'] = component_config.get(
-                        'type', default_class.__name__
-                    )
+            component_config = config.pop(component_name, {})
+            assert issubclass(default_class, FactoryMixin)
+            component_config['type'] = component_config.get(
+                'type', default_class.__name__
+            )
 
-                    # For classes implementing FactoryMixin, we need to call
-                    # `from_config()` on the base class
-                    assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
-                    base_class = default_class.__FACTORY_BASE_CLASS__
-                    component = base_class.from_config(component_config)
-                else:
-                    raise ValueError(
-                        f"{cls.__name__} load error: cannot load {component_name} from "
-                        f"config"
-                    )
-                loaded_components[component_name] = component
+            # For classes implementing FactoryMixin, we need to call
+            # `from_config()` on the base class
+            assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
+            base_class = default_class.__FACTORY_BASE_CLASS__
+            component = base_class.from_config(component_config)
+            loaded_components[component_name] = component
 
         parameters = config.pop("params", {})
         params_in_kwargs = set(parameters.keys()) & set(kwargs.keys())
