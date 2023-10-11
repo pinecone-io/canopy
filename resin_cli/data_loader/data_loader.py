@@ -41,7 +41,7 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
                         raise DocumentsValidationError(
                             f"Metadata must be a valid json string. Error: {e}"
                         ) from e
-                elif type(row["metadata"]) is dict:
+                elif type(row["metadata"]) is not dict:
                     raise DocumentsValidationError(
                         "Metadata must be a dict or json string"
                     )
