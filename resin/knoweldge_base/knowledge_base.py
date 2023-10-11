@@ -63,10 +63,34 @@ class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = self._set_component(RecordEncoder,
-                                            'record_encoder', record_encoder)
-        self._chunker = self._set_component(Chunker, 'chunker', chunker)
-        self._reranker = self._set_component(Reranker, 'reranker', reranker)
+
+        if record_encoder:
+            if not isinstance(record_encoder, RecordEncoder):
+                raise TypeError(
+                    f"record_encoder must be an instance of RecordEncoder, "
+                    f"not {type(record_encoder)}"
+                )
+            self._encoder = record_encoder
+        else:
+            self._encoder = self._DEFAULT_COMPONENTS['record_encoder']()
+
+        if chunker:
+            if not isinstance(chunker, Chunker):
+                raise TypeError(
+                    f"chunker must be an instance of Chunker, not {type(chunker)}"
+                )
+            self._chunker = chunker
+        else:
+            self._chunker = self._DEFAULT_COMPONENTS['chunker']()
+
+        if reranker:
+            if not isinstance(reranker, Reranker):
+                raise TypeError(
+                    f"reranker must be an instance of Reranker, not {type(reranker)}"
+                )
+            self._reranker = reranker
+        else:
+            self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
         self._index: Optional[Index] = self._connect_index(self._index_name)
 

@@ -61,8 +61,8 @@ class ChatEngine(BaseChatEngine, ConfigurableMixin):
     }
 
     def __init__(self,
+                 context_engine: ContextEngine,
                  *,
-                 context_engine: Optional[ContextEngine] = None,
                  llm: Optional[BaseLLM] = None,
                  max_prompt_tokens: int = 4096,
                  max_generated_tokens: Optional[int] = None,
@@ -72,13 +72,31 @@ class ChatEngine(BaseChatEngine, ConfigurableMixin):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1
                  ):
-        self.llm = self._set_component(BaseLLM, "llm", llm)
-        self.context_engine = self._set_component(
-            ContextEngine, "context_engine", context_engine
-        )
-        self._query_builder = self._set_component(
-            QueryGenerator, "query_builder", query_builder
-        )
+        if not isinstance(context_engine, ContextEngine):
+            raise TypeError(
+                f"context_engine must be an instance of ContextEngine, "
+                f"got {type(context_engine)}"
+            )
+        self.context_engine = context_engine
+
+        if llm:
+            if not isinstance(llm, BaseLLM):
+                raise TypeError(
+                    f"llm must be an instance of BaseLLM, got {type(llm)}"
+                )
+            self.llm = llm
+        else:
+            self.llm = self._DEFAULT_COMPONENTS['llm']()
+
+        if query_builder:
+            if not isinstance(query_builder, QueryGenerator):
+                raise TypeError(
+                    f"query_builder must be an instance of QueryGenerator, "
+                    f"got {type(query_builder)}"
+                )
+            self._query_builder = query_builder
+        else:
+            self._query_builder = self._DEFAULT_COMPONENTS['query_builder']()
 
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens

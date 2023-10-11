@@ -1,6 +1,5 @@
 import abc
 from typing import Dict, Any
-import logging
 
 
 class FactoryMixin:
@@ -45,25 +44,6 @@ class FactoryMixin:
 
 class ConfigurableMixin(abc.ABC):
     _DEFAULT_COMPONENTS: Dict[str, type] = {}
-
-    def _set_component(self,
-                       base_class: type,
-                       component_name: str,
-                       component):
-        class_name = self.__class__.__name__
-        logger = logging.getLogger(class_name)
-        if component:
-            if not isinstance(component, base_class):
-                raise TypeError(
-                    f"{class_name}: {component_name} must be an instance "
-                    f"of {base_class.__name__}"
-                )
-            return component
-        else:
-            default_class = self._DEFAULT_COMPONENTS[component_name]
-            logger.info(f"{class_name}: Created using default {component_name}: "
-                        f"{default_class}")
-            return default_class()
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]):

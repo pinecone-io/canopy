@@ -31,15 +31,27 @@ class ContextEngine(BaseContextEngine, ConfigurableMixin):
     }
 
     def __init__(self,
+                 knowledge_base: BaseKnowledgeBase,
                  *,
-                 knowledge_base: Optional[BaseKnowledgeBase] = None,
                  context_builder: Optional[ContextBuilder] = None,
                  global_metadata_filter: Optional[dict] = None
                  ):
-        self.knowledge_base = self._set_component(
-            BaseKnowledgeBase, 'knowledge_base', knowledge_base)
-        self.context_builder = self._set_component(
-            ContextBuilder, 'context_builder', context_builder)
+
+        if not isinstance(knowledge_base, BaseKnowledgeBase):
+            raise TypeError("knowledge_base must be an instance of BaseKnowledgeBase, "
+                            f"not {type(self.knowledge_base)}")
+        self.knowledge_base = knowledge_base
+
+        if context_builder:
+            if not isinstance(context_builder, ContextBuilder):
+                raise TypeError(
+                    "context_builder must be an instance of ContextBuilder, "
+                    f"not {type(context_builder)}"
+                )
+            self.context_builder = context_builder
+        else:
+            self.context_builder = self._DEFAULT_COMPONENTS['context_builder']()
+
         self.global_metadata_filter = global_metadata_filter
 
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
