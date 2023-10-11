@@ -9,12 +9,15 @@ class FactoryMixin:
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, '_SUPPORTED_CLASSES'):
             cls._SUPPORTED_CLASSES = {}
-        if cls.__base__ is not abc.ABC:
+        # if cls.__base__ is not abc.ABC:
+        if FactoryMixin in cls.__bases__:
+            cls.__FACTORY_BASE_CLASS__ = cls
+        else:
             cls._SUPPORTED_CLASSES[cls.__name__] = cls
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]):
-        if not (hasattr(cls, '_SUPPORTED_CLASSES') and cls.__base__ is abc.ABC):
+        if not (hasattr(cls, '_SUPPORTED_CLASSES') and FactoryMixin in cls.__bases__):
             raise ValueError("from_config() can only be called from the base class.")
 
         class_name = config.pop("type")
@@ -84,11 +87,9 @@ class ConfigurableMixin(abc.ABC):
                     )
 
                     # For classes implementing FactoryMixin, we need to call
-                    # `from_config()` from the base class
-                    base_class = default_class
-                    while base_class.__base__ is not abc.ABC:
-                        base_class = base_class.__base__
-
+                    # `from_config()` on the base class
+                    assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
+                    base_class = default_class.__FACTORY_BASE_CLASS__
                     component = base_class.from_config(component_config)
                 else:
                     raise ValueError(
