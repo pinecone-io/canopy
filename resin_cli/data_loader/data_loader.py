@@ -45,6 +45,8 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
                     raise DocumentsValidationError(
                         "Metadata must be a dict or json string"
                     )
+                row["metadata"] = {k: v for k, v in row["metadata"].items() if not pd.isna(v)}
+            row = {k: v for k, v in row.items() if not pd.isna(v)}
             documents.append(Document(**row))  # type: ignore
     except ValidationError as e:
         raise DocumentsValidationError("Documents failed validation") from e

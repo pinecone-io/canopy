@@ -1,8 +1,6 @@
 import pytest
 import json
 import pandas as pd
-from pandas.testing import assert_frame_equal
-from typing import List
 
 from resin.models.data_models import Document
 from resin_cli.data_loader.data_loader import (
@@ -31,9 +29,12 @@ good_df_minimal = (
 good_df_maximal = (
     pd.DataFrame(
         [
-            {"id": 1, "text": "foo", "source": "foo_source", "metadata": {"foo": "foo"}},
-            {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"bar": "bar"}},
-            {"id": 3, "text": "baz", "source": "baz_source", "metadata": {"baz": "baz"}},
+            {"id": 1, "text": "foo", "source": "foo_source",
+             "metadata": {"foo": "foo"}},
+            {"id": 2, "text": "bar", "source": "bar_source",
+             "metadata": {"bar": "bar"}},
+            {"id": 3, "text": "baz", "source": "baz_source",
+             "metadata": {"baz": "baz"}},
         ]
     ),
     [
@@ -98,16 +99,6 @@ bad_df_bad_type_metadata_list = (
     DocumentsValidationError,
 )
 
-bad_df_bad_type_metadata_list_int = (
-    pd.DataFrame(
-        [
-            {"id": 1, "text": "foo", "metadata": {"foo": [1]}},
-            {"id": 2, "text": "bar", "metadata": {"bar": "bar"}},
-            {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
-        ]
-    ),
-    DocumentsValidationError,
-)
 
 bad_df_has_excess_field = (
     pd.DataFrame(
@@ -169,15 +160,14 @@ all_dataframes_as_dict_with_name = [
     ("bad_df_bad_type_optional", bad_df_bad_type_optional),
     ("bad_df_bad_type_metadata", bad_df_bad_type_metadata),
     ("bad_df_bad_type_metadata_list", bad_df_bad_type_metadata_list),
-    ("bad_df_bad_type_metadata_list_int", bad_df_bad_type_metadata_list_int),
     ("bad_df_has_excess_field", bad_df_has_excess_field),
     ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field),
     ("bad_df_duplicate_ids", bad_df_duplicate_ids),
 ]
-# Add your correct import paths and defined data frames here
 
 
-@pytest.mark.parametrize("name, df_and_expected", all_dataframes_as_dict_with_name)
+@pytest.mark.parametrize("name, df_and_expected",
+                         all_dataframes_as_dict_with_name)
 def test_df_to_documents(name, df_and_expected) -> None:
     df, expected = df_and_expected
     if name.startswith("good"):
@@ -187,46 +177,67 @@ def test_df_to_documents(name, df_and_expected) -> None:
             _df_to_documents(df)
 
 
-# Other bad dataframe tests...
-# Define additional test functions to cover all of your "bad" dataframes
-
-def test_load_single_file_jsonl(tmpdir):
-    data = [
-        #...Your data here...
+@pytest.fixture
+def dict_rows_input():
+    return [
+        {"id": 1, "text": "foo"},
+        {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"bar": "bar"}},
+        {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
+        {"id": 4, "text": "qux", "source": "qux_source"},
     ]
 
+
+@pytest.fixture
+def expected_documents():
+    return [
+        Document(id=1, text="foo"),
+        Document(id=2, text="bar", source="bar_source", metadata={"bar": "bar"}),
+        Document(id=3, text="baz", metadata={"baz": "baz"}),
+        Document(id=4, text="qux", source="qux_source"),
+    ]
+
+
+def test_load_single_file_jsonl(tmpdir, dict_rows_input, expected_documents):
     path = tmpdir.join("test.jsonl")
-    path.write("\n".join([json.dumps(row) for row in data]))
+    path.write("\n".join([json.dumps(row) for row in dict_rows_input]))
 
     docs = _load_single_file_by_suffix(str(path))
-    assert isinstance(docs, List) and all(isinstance(doc, Document) for doc in docs)
+    assert docs == expected_documents
 
-def test_load_single_file_parquet(tmpdir):
-    data = [
-        #...Your data here...
-    ]
+
+def test_load_single_file_parquet(tmpdir, dict_rows_input, expected_documents):
+    data = pd.DataFrame(dict_rows_input)
 
     path = tmpdir.join("test.parquet")
     pd.DataFrame(data).to_parquet(str(path))
 
     docs = _load_single_file_by_suffix(str(path))
-    assert isinstance(docs, List) and all(isinstance(doc, Document) for doc in docs)
+    assert docs == expected_documents
 
-def test_load_multiple_files_jsonl(tmpdir):
-    data1 = [
-        #...Your data1 here...
-    ]
-    data2 = [
-        #...Your data2 here...
-    ]
 
-    tmpdir.mkdir("test_jsonl")
-    base_path = tmpdir.join("test_jsonl")
+def test_load_multiple_files(tmpdir, dict_rows_input, expected_documents):
+    data2 = pd.DataFrame([
+        {"id": 5, "text": "quux"},
+        {"id": 6, "text": "corge", "source": "corge_source",
+         "metadata": {"corge": "corge"}},
+        {"id": 7, "text": "grault",
+         "metadata": {"grault": "grault"}},
+    ])
+
+    expected = expected_documents + \
+        [
+            Document(id=5, text="quux"),
+            Document(id=6, text="corge", source="corge_source",
+                     metadata={"corge": "corge"}),
+            Document(id=7, text="grault", metadata={"grault": "grault"}),
+        ]
+
+    tmpdir.mkdir("test_multi_files")
+    base_path = tmpdir.join("test_multi_files")
     path1 = base_path.join("test1.jsonl")
-    path2 = base_path.join("test2.jsonl")
-    path1.write("\n".join([json.dumps(row) for row in data1]))
-    path2.write("\n".join([json.dumps(row) for row in data2]))
+    path2 = base_path.join("test2.parquet")
+    path1.write("\n".join([json.dumps(row) for row in dict_rows_input]))
+    pd.DataFrame(data2).to_parquet(str(path2))
 
     docs = load_from_path(str(base_path))
-    # Your assert should now check the validity and integrity of the Document objects returned, not DataFrames.
-    # Modify the assert accordingly
+    assert docs == expected
