@@ -2,48 +2,18 @@ import abc
 from typing import Dict, Any
 
 
-class FactoryMixin:
+class ConfigurableMixin:
+    _DEFAULT_COMPONENTS: Dict[str, type] = {}
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, '_SUPPORTED_CLASSES'):
             cls._SUPPORTED_CLASSES = {}
         # if cls.__base__ is not abc.ABC:
-        if FactoryMixin in cls.__bases__:
+        if ConfigurableMixin in cls.__bases__:
             cls.__FACTORY_BASE_CLASS__ = cls
         else:
             cls._SUPPORTED_CLASSES[cls.__name__] = cls
-
-    @classmethod
-    def from_config(cls, config: Dict[str, Any]):
-        if not (hasattr(cls, '_SUPPORTED_CLASSES') and FactoryMixin in cls.__bases__):
-            raise ValueError("from_config() can only be called from the base class.")
-
-        class_name = config.pop("type")
-        if class_name is None:
-            raise ValueError(
-                f"{cls.__name__} load error: missing 'type' field in config."
-            )
-        if class_name not in cls._SUPPORTED_CLASSES:
-            raise ValueError(
-                f"{cls.__name__} load error: {class_name} is not supported. "
-                f"Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
-            )
-
-        class_type = cls._SUPPORTED_CLASSES[class_name]
-
-        if issubclass(class_type, ConfigurableMixin):
-            return class_type.from_config(config)
-
-        return class_type(**config.get("params", {}))
-
-    @classmethod
-    def list_supported_types(cls):
-        return list(cls._SUPPORTED_CLASSES.keys())
-
-
-class ConfigurableMixin(abc.ABC):
-    _DEFAULT_COMPONENTS: Dict[str, type] = {}
 
     @classmethod
     def from_config(cls, config: Dict[str, Any]):
@@ -51,25 +21,28 @@ class ConfigurableMixin(abc.ABC):
 
     @classmethod
     def _from_config(cls, config: Dict[str, Any], **kwargs):
-        loaded_components = {}
-        for component_name, default_class in cls._DEFAULT_COMPONENTS.items():
-            if component_name in kwargs:
-                raise RuntimeError(
-                    f"{cls.__name__} load error: Overriding {component_name} is not "
-                    f"allowed. Please set it in the config file."
-                )
-            component_config = config.pop(component_name, {})
-            assert issubclass(default_class, FactoryMixin)
-            component_config['type'] = component_config.get(
-                'type', default_class.__name__
+        # These asserts should be true for all subclasses of ConfigurableMixin
+        assert hasattr(cls, '_SUPPORTED_CLASSES')
+        assert hasattr(cls, '__FACTORY_BASE_CLASS__')
+
+        # If this is the base class, we expect a 'type' field in the config which will
+        # tell us which derived class to load.
+        if cls is cls.__FACTORY_BASE_CLASS__:
+            derived_class = cls._get_derived_class(config)
+            return derived_class.from_config(config)
+
+        # If we got here, this is a derived class. We do not expect a 'type' field
+        # in the config since we already know which class to load.
+        if "type" in config:
+            base_name = cls.__FACTORY_BASE_CLASS__.__name__
+            raise ValueError(
+                f"{cls.__name__} load error: 'type' field is not allowed in config. "
+                f"if you wish to load another {base_name} subclass, use "
+                f"`{base_name}.from_config(config)` instead."
             )
 
-            # For classes implementing FactoryMixin, we need to call
-            # `from_config()` on the base class
-            assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
-            base_class = default_class.__FACTORY_BASE_CLASS__
-            component = base_class.from_config(component_config)
-            loaded_components[component_name] = component
+        # Load the class's subcomponents (dependencies) recursively
+        loaded_components = cls._load_sub_components(config, kwargs)
 
         parameters = config.pop("params", {})
         params_in_kwargs = set(parameters.keys()) & set(kwargs.keys())
@@ -81,10 +54,61 @@ class ConfigurableMixin(abc.ABC):
 
         # The config should be empty at this point
         if config:
-            allowed_keys = list(cls._DEFAULT_COMPONENTS.keys()) + ['params', 'type']
+            allowed_keys = ['type', 'params'] + list(cls._DEFAULT_COMPONENTS.keys())
             raise ValueError(
-                f"Unrecognized keys in {cls.__name__} config: {config.keys()}. "
+                f"Unrecognized keys in {cls.__name__} config: {list(config.keys())}. "
                 f"The allowed keys are: {allowed_keys}"
             )
 
-        return cls(**loaded_components, **parameters, **kwargs)
+        try:
+            return cls(**loaded_components, **parameters, **kwargs)
+        except TypeError as e:
+            raise RuntimeError(
+                f"{cls.__name__} load error: {e}. Please check the config."
+            )
+
+    @classmethod
+    def _get_derived_class(cls, config):
+        if "type" not in config:
+            raise ValueError(
+                f"{cls.__name__} load error: missing 'type' field in config."
+            )
+        derived_class_name = config.pop("type")
+        if derived_class_name not in cls._SUPPORTED_CLASSES:
+            raise ValueError(
+                f"{cls.__name__} load error: {derived_class_name} is not supported."
+                f" Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
+            )
+        derived_class = cls._SUPPORTED_CLASSES[derived_class_name]
+        return derived_class
+
+    @classmethod
+    def list_supported_types(cls):
+        if cls is not cls.__FACTORY_BASE_CLASS__:
+            raise RuntimeError(
+                f"{cls.__name__} list_supported_types() should only be called on the "
+                f"base class."
+            )
+        return list(cls._SUPPORTED_CLASSES.keys())
+
+    @classmethod
+    def _load_sub_components(cls, config, kwargs):
+        loaded_components = {}
+        for component_name, default_class in cls._DEFAULT_COMPONENTS.items():
+            if component_name in kwargs:
+                raise RuntimeError(
+                    f"{cls.__name__} load error: Overriding {component_name} is not "
+                    f"allowed. Please set it in the config file."
+                )
+            component_config = config.pop(component_name, {})
+            component_config['type'] = component_config.get(
+                'type', default_class.__name__
+            )
+
+            # For classes implementing ConfigurableMixin, we need to call
+            # `from_config()` on the base class
+            assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
+            base_class = default_class.__FACTORY_BASE_CLASS__
+            component = base_class.from_config(component_config)
+            loaded_components[component_name] = component
+        return loaded_components

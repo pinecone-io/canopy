@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from resin.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
 from resin.models.data_models import Query
-from resin.utils.config import FactoryMixin
+from resin.utils.config import ConfigurableMixin
 
 
-class RecordEncoder(ABC, FactoryMixin):
+class RecordEncoder(ABC, ConfigurableMixin):
     """
     Base class for all encoders. Encoders are used to encode documents' and queries'
     text into vectors.

@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from resin.models.data_models import Messages
-from resin.utils.config import FactoryMixin
+from resin.utils.config import ConfigurableMixin
 
 
-class BaseTokenizer(ABC, FactoryMixin):
+class BaseTokenizer(ABC, ConfigurableMixin):
 
     @abstractmethod
     def tokenize(self, text: str) -> List[str]:

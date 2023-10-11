@@ -23,7 +23,6 @@ from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, )
 from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
-from resin.utils.config import ConfigurableMixin
 
 
 INDEX_DELETED_MESSAGE = (
@@ -42,7 +41,7 @@ DELETE_STARTER_BATCH_SIZE = 30
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
-class KnowledgeBase(BaseKnowledgeBase, ConfigurableMixin):
+class KnowledgeBase(BaseKnowledgeBase):
 
     _DEFAULT_COMPONENTS = {
         'record_encoder': OpenAIRecordEncoder,

@@ -7,12 +7,12 @@ from resin.context_engine.context_builder.base import ContextBuilder
 from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.models.data_models import Context, Query
-from resin.utils.config import ConfigurableMixin, FactoryMixin
+from resin.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
 
-class BaseContextEngine(ABC, FactoryMixin):
+class BaseContextEngine(ABC, ConfigurableMixin):
 
     @abstractmethod
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
@@ -23,7 +23,7 @@ class BaseContextEngine(ABC, FactoryMixin):
         pass
 
 
-class ContextEngine(BaseContextEngine, ConfigurableMixin):
+class ContextEngine(BaseContextEngine):
 
     _DEFAULT_COMPONENTS = {
         'knowledge_base': KnowledgeBase,

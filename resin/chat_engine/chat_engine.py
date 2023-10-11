@@ -23,7 +23,7 @@ If you don't know the answer, just say that you don't know, don't try to make up
 Don't address the context directly, but use it to answer the user question like it's your own knowledge."""  # noqa
 
 
-class BaseChatEngine(ABC):
+class BaseChatEngine(ABC, ConfigurableMixin):
     @abstractmethod
     def chat(self,
              messages: Messages,
@@ -52,7 +52,7 @@ class BaseChatEngine(ABC):
         pass
 
 
-class ChatEngine(BaseChatEngine, ConfigurableMixin):
+class ChatEngine(BaseChatEngine):
 
     _DEFAULT_COMPONENTS = {
         'context_engine': ContextEngine,

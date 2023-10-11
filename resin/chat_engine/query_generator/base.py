@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 from typing import List
 
 from resin.models.data_models import Messages, Query
-from resin.utils.config import FactoryMixin
+from resin.utils.config import ConfigurableMixin
 
 
-class QueryGenerator(ABC, FactoryMixin):
+class QueryGenerator(ABC, ConfigurableMixin):
     @abstractmethod
     def generate(self,
                  messages: Messages,

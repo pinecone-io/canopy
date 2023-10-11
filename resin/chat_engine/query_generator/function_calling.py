@@ -7,7 +7,6 @@ from resin.llm import BaseLLM, OpenAILLM
 from resin.llm.models import (Function, FunctionParameters,
                               FunctionArrayProperty)
 from resin.models.data_models import Messages, Query
-from resin.utils.config import ConfigurableMixin
 
 DEFAULT_SYSTEM_PROMPT = """Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
 You should break down complex questions into sub-queries if needed."""  # noqa: E501
@@ -15,7 +14,7 @@ You should break down complex questions into sub-queries if needed."""  # noqa: 
 DEFAULT_FUNCTION_DESCRIPTION = """Query search engine for relevant information"""
 
 
-class FunctionCallingQueryGenerator(QueryGenerator, ConfigurableMixin):
+class FunctionCallingQueryGenerator(QueryGenerator):
 
     _DEFAULT_COMPONENTS = {
         "llm": OpenAILLM,
