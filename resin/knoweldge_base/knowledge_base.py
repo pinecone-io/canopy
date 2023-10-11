@@ -348,17 +348,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                                   namespace=namespace,
                                   should_create_index=False)
 
-    def upsert_dataframe(self,
-                         df: pd.DataFrame,
-                         namespace: str = "",
-                         batch_size: int = 100):
-        if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
-
-        documents = self._df_to_documents(df)
-
-        self.upsert(documents, namespace=namespace, batch_size=batch_size)
-
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:

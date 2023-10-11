@@ -34,18 +34,19 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
             if "metadata" in row:
                 if pd.isna(row["metadata"]):
                     row["metadata"] = {}
-                elif type(row["metadata"]) == str:
+                elif type(row["metadata"]) is str:
                     try:
                         row["metadata"] = json.loads(row["metadata"])
                     except json.JSONDecodeError as e:
                         raise DocumentsValidationError(
                             f"Metadata must be a valid json string. Error: {e}"
                         ) from e
-                elif type(row["metadata"]) != dict:
+                elif type(row["metadata"]) is dict:
                     raise DocumentsValidationError(
                         "Metadata must be a dict or json string"
                     )
-                row["metadata"] = {k: v for k, v in row["metadata"].items() if not pd.isna(v)}
+                row["metadata"] = {k: v for k, v in row["metadata"].items()
+                                   if not pd.isna(v)}
             row = {k: v for k, v in row.items() if not pd.isna(v)}
             documents.append(Document(**row))  # type: ignore
     except ValidationError as e:
