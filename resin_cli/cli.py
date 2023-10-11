@@ -1,4 +1,5 @@
 import os
+
 import click
 import time
 import sys
@@ -14,9 +15,9 @@ from resin.models.data_models import Document
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
-    load_dataframe_from_path,
-    IndexNotUniqueError,
-    DataframeValidationError)
+    load_from_path,
+    IDsNotUniqueError,
+    DocumentsValidationError)
 
 from .app import start as start_service
 from .cli_spinner import Spinner
@@ -122,14 +123,14 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = "Index name is not provided, please provide it with"
-        +' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
+        msg = "Index name is not provided, please provide it with" + \
+              ' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
-        msg = "Data path is not provided,"
-        + " please provide it with --data-path or set it with env var"
+        msg = "Data path is not provided," + \
+              " please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo("Resin is going to upsert data from ", nl=False)
@@ -139,8 +140,8 @@ def upsert(index_name, data_path, tokenizer_model):
     with spinner:
         kb = KnowledgeBase(index_name=index_name)
         try:
-            data = load_dataframe_from_path(data_path)
-        except IndexNotUniqueError:
+            data = load_from_path(data_path)
+        except IDsNotUniqueError:
             msg = (
                 "Error: the id field on the data is not unique"
                 + " this will cause records to override each other on upsert"
@@ -148,7 +149,7 @@ def upsert(index_name, data_path, tokenizer_model):
             )
             click.echo(click.style(msg, fg="red"), err=True)
             sys.exit(1)
-        except DataframeValidationError:
+        except DocumentsValidationError:
             msg = (
                 "Error: one or more rows have not passed validation"
                 + " data should agree with the Document Schema"
@@ -163,10 +164,12 @@ def upsert(index_name, data_path, tokenizer_model):
                 + " it may be due to issue with the data format"
                 + " please make sure the data is valid, and can load with pandas"
             )
+            click.echo(click.style(msg, fg="red"), err=True)
+            sys.exit(1)
         pd.options.display.max_colwidth = 20
-    click.echo(data.head())
+    click.echo(data[0].json(exclude_none=True, indent=2))
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
-    kb.upsert_dataframe(data)
+    kb.upsert(data)
     click.echo(click.style("Success!", fg="green"))
 
 

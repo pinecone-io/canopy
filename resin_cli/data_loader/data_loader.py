@@ -1,63 +1,82 @@
+import json
 import os
 import glob
+from typing import List
+
 import pandas as pd
 
 from pydantic import ValidationError
 
-from resin.knoweldge_base import KnowledgeBase
+from resin.models.data_models import Document
 
 
-class IndexNotUniqueError(ValueError):
+class IDsNotUniqueError(ValueError):
     def __init__(self, message):
-        # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
 
-class DataframeValidationError(ValueError):
+class DocumentsValidationError(ValueError):
     def __init__(self, message):
-        # Call the base class constructor with the parameters it needs
         super().__init__(message)
 
 
-def _validate_dataframe(df: pd.DataFrame):
+def _df_to_documents(df: pd.DataFrame) -> List[Document]:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if "id" not in df.columns:
-        raise DataframeValidationError("Dataframe must have an 'id' column")
+        raise DocumentsValidationError("Missing 'id' column")
     if df.id.nunique() != df.shape[0]:
-        raise IndexNotUniqueError("Dataframe index must be unique")
+        raise IDsNotUniqueError("IDs must be unique")
+
     try:
-        KnowledgeBase._df_to_documents(df)
-    except ValidationError:
-        return DataframeValidationError("Dataframe failed validation")
+        documents: List[Document] = []
+        for row in df.to_dict(orient="records"):
+            if "metadata" in row:
+                if pd.isna(row["metadata"]):
+                    row["metadata"] = {}
+                elif type(row["metadata"]) == str:
+                    try:
+                        row["metadata"] = json.loads(row["metadata"])
+                    except json.JSONDecodeError as e:
+                        raise DocumentsValidationError(
+                            f"Metadata must be a valid json string. Error: {e}"
+                        ) from e
+                elif type(row["metadata"]) != dict:
+                    raise DocumentsValidationError(
+                        "Metadata must be a dict or json string"
+                    )
+            documents.append(Document(**row))  # type: ignore
+    except ValidationError as e:
+        raise DocumentsValidationError("Documents failed validation") from e
     except ValueError as e:
-        raise DataframeValidationError(f"Unexpected error in validation: {e}")
+        raise DocumentsValidationError(f"Unexpected error in validation: {e}") from e
+    return documents
 
 
-def _load_single_file_by_suffix(f: str) -> pd.DataFrame:
-    if f.endswith(".parquet"):
-        df = pd.read_parquet(f)
-    elif f.endswith(".jsonl"):
-        df = pd.read_json(f, lines=True)
+def _load_single_file_by_suffix(file_path: str) -> List[Document]:
+    if file_path.endswith(".parquet"):
+        df = pd.read_parquet(file_path)
+    elif file_path.endswith(".csv"):
+        df = pd.read_csv(file_path)
+    elif file_path.endswith(".jsonl"):
+        df = pd.read_json(file_path, lines=True)
     else:
         raise ValueError("Only .parquet and .jsonl files are supported")
 
-    return df
+    return _df_to_documents(df)
 
 
-def load_dataframe_from_path(path: str) -> pd.DataFrame:
+def load_from_path(path: str) -> List[Document]:
     if os.path.isdir(path):
-        all_files = glob.glob(os.path.join(path, "*.jsonl")) + glob.glob(
-            os.path.join(path, "*.parquet")
-        )
-        df = pd.concat(
-            [_load_single_file_by_suffix(f) for f in all_files],
-            axis=0,
-            ignore_index=True,
-        )
+        all_files = [f for ext in ['*.jsonl', '*.parquet', '*.csv']
+                     for f in glob.glob(os.path.join(path, ext))]
+        if len(all_files) == 0:
+            raise ValueError("No files found in directory")
+        documents: List[Document] = []
+        for f in all_files:
+            documents.extend(_load_single_file_by_suffix(f))
+    elif os.path.isfile(path):
+        documents = _load_single_file_by_suffix(path)
     else:
-        df = _load_single_file_by_suffix(path)
-
-    _validate_dataframe(df)
-
-    return df
+        raise ValueError(f"Could not find file or directory at {path}")
+    return documents
