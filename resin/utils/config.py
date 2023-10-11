@@ -9,7 +9,6 @@ class ConfigurableMixin:
         super().__init_subclass__(**kwargs)
         if not hasattr(cls, '_SUPPORTED_CLASSES'):
             cls._SUPPORTED_CLASSES = {}
-        # if cls.__base__ is not abc.ABC:
         if ConfigurableMixin in cls.__bases__:
             cls.__FACTORY_BASE_CLASS__ = cls
         else:
