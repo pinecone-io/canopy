@@ -1,6 +1,6 @@
 # Canopy
 
-**Canopy** is a Sofware Development Kit and a Framework for AI applications. Canopy allows you to test, build and package Retrieval Augmented Application and on top of Pinecone Vector Database. **Canopy** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
+**Canopy** is a Sofware Development Kit and a Framework for AI applications. Canopy allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Canopy** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
 
 * **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
 
