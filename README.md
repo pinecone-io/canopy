@@ -46,6 +46,24 @@ pip install pinecone-resin
 
 In this quickstart, we will show you how to use the **Resin** to build a simple question answering system using RAG (retrival augmented generation).
 
+### 0. Before we start
+
+Before we start, run the `resin` command alone to verify the connection to services in healthy:
+    
+```bash
+resin
+```
+
+output should be similar to this:
+
+```bash
+Resin: Ready
+
+Usage: resin [OPTIONS] COMMAND [ARGS]...
+# rest of the help message
+```
+
+
 ### 1. Create a new **Resin** Index
 
 **Resin** will create and configure a new Pinecone index on your behalf. Just run:

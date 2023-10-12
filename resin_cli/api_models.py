@@ -19,8 +19,11 @@ class ContextQueryRequest(BaseModel):
 
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
-    namespace: str = ""
     batch_size: int = 100
+
+
+class ContextDeleteRequest(BaseModel):
+    document_ids: List[str]
 
 
 class HealthStatus(BaseModel):

@@ -10,8 +10,13 @@ import pandas as pd
 import openai
 
 from resin.knoweldge_base import KnowledgeBase
+from resin.models.data_models import Document
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
+from resin_cli.data_loader import (
+    load_dataframe_from_path,
+    IndexNotUniqueError,
+    DataframeValidationError)
 
 from .app import start as start_service
 from .cli_spinner import Spinner
@@ -20,6 +25,7 @@ from .api_models import ChatDebugInfo
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
+
 
 spinner = Spinner()
 
@@ -34,14 +40,41 @@ def is_healthy(url: str):
         return False
 
 
-@click.group()
-def cli():
+def validate_connection():
+    try:
+        KnowledgeBase._connect_pinecone()
+    except Exception:
+        msg = (
+            "Failed to connect to Pinecone index, please make sure"
+            + " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+    try:
+        openai.Model.list()
+    except Exception:
+        msg = (
+            "Failed to connect to OpenAI, please make sure"
+            + " you have set the right env vars"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+    click.echo("Resin: ", nl=False)
+    click.echo(click.style("Ready\n", bold=True, fg="green"))
+
+
+@click.group(invoke_without_command=True)
+@click.pass_context
+def cli(ctx):
     """
     CLI for Pinecone Resin. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
-    pass
+    if ctx.invoked_subcommand is None:
+        validate_connection()
+        click.echo(ctx.get_help())
+        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if Resin service is running")
@@ -73,9 +106,7 @@ def new(index_name, tokenizer_model):
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
         _ = KnowledgeBase.create_with_new_index(
-            index_name=index_name,
-            encoder=KnowledgeBase.DEFAULT_RECORD_ENCODER(),
-            chunker=KnowledgeBase.DEFAULT_CHUNKER(),
+            index_name=index_name
         )
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
@@ -91,24 +122,48 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = 'Index name is not provided, please provide it with'
-        + ' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
+        msg = "Index name is not provided, please provide it with"
+        +' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
         msg = "Data path is not provided,"
-        +" please provide it with --data-path or set it with env var"
+        + " please provide it with --data-path or set it with env var"
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
-    click.echo(
-        f"Resin is going to upsert data from {data_path} to index: "
-        f"{INDEX_NAME_PREFIX}{index_name}"
-    )
-    kb = KnowledgeBase(index_name=index_name)
-    click.echo("")
-    data = pd.read_parquet(data_path)
-    pd.options.display.max_colwidth = 20
+    click.echo("Resin is going to upsert data from ", nl=False)
+    click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
+    click.echo(" to index: ")
+    click.echo(click.style(f'{INDEX_NAME_PREFIX}{index_name} \n', fg='green'))
+    with spinner:
+        kb = KnowledgeBase(index_name=index_name)
+        try:
+            data = load_dataframe_from_path(data_path)
+        except IndexNotUniqueError:
+            msg = (
+                "Error: the id field on the data is not unique"
+                + " this will cause records to override each other on upsert"
+                + " please make sure the id field is unique"
+            )
+            click.echo(click.style(msg, fg="red"), err=True)
+            sys.exit(1)
+        except DataframeValidationError:
+            msg = (
+                "Error: one or more rows have not passed validation"
+                + " data should agree with the Document Schema"
+                + f" on {Document.__annotations__}"
+                + " please make sure the data is valid"
+            )
+            click.echo(click.style(msg, fg="red"), err=True)
+            sys.exit(1)
+        except Exception:
+            msg = (
+                "Error: an unexpected error has occured in loading data from files"
+                + " it may be due to issue with the data format"
+                + " please make sure the data is valid, and can load with pandas"
+            )
+        pd.options.display.max_colwidth = 20
     click.echo(data.head())
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     kb.upsert_dataframe(data)
@@ -145,7 +200,7 @@ def _chat(
         debug_info = ChatDebugInfo(
             id=openai_response_id,
             intenal_model=intenal_model,
-            duration_in_sec=round(duration_in_sec, 2)
+            duration_in_sec=round(duration_in_sec, 2),
         )
     else:
         intenal_model = openai_response.model
@@ -264,8 +319,7 @@ def stop(host, port, ssl):
     if running_server_id == "":
         click.echo(
             click.style(
-                "Did not find active process for Resin service"
-                + f" on {host}:{port}",
+                "Did not find active process for Resin service" + f" on {host}:{port}",
                 fg="red",
             )
         )
@@ -281,8 +335,7 @@ def stop(host, port, ssl):
 
     click.confirm(
         click.style(
-            f"Stopping Resin service on {host}:{port} with pid "
-            f"{running_server_id}",
+            f"Stopping Resin service on {host}:{port} with pid " f"{running_server_id}",
             fg="red",
         ),
         abort=True,

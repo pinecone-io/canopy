@@ -15,7 +15,7 @@ openai = "^0.27.5"
 tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.1"
 pydantic = "^1.10.7"
-pinecone-text = { version = "^0.5.4", extras = ["openai"] }
+pinecone-text = { version = "^0.6.0", extras = ["openai"] }
 flake8-pyproject = "^1.2.3"
 pandas-stubs = "^2.0.3.230814"
 langchain = "^0.0.188"
@@ -37,6 +37,7 @@ pytest-asyncio = "^0.14.0"
 pytest-mock = "^3.6.1"
 pytest-xdist = "^3.3.1"
 types-requests = "^2.31.0.2"
+httpx = "^0.25.0"
 
 [build-system]
 requires = ["poetry-core"]

@@ -11,6 +11,7 @@ from tenacity import (
     wait_fixed,
     wait_chain,
 )
+from pydantic import ValidationError
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
@@ -29,6 +30,16 @@ from tests.unit import random_words
 load_dotenv()
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
+RETRY_TIMEOUT = 120
+FIRST_RETRY_WAIT = 10
+RETRY_WAIT = 1
+
+
+def retry_decorator():
+    return retry(
+        wait=wait_chain(*[wait_fixed(FIRST_RETRY_WAIT), wait_fixed(RETRY_WAIT)]),
+        stop=stop_after_delay(RETRY_TIMEOUT),
+    )
 
 
 @pytest.fixture(scope="module")
@@ -72,10 +83,7 @@ def total_vectors_in_index(knowledge_base):
     return knowledge_base._index.describe_index_stats().total_vector_count
 
 
-@retry(
-    stop=stop_after_delay(60),
-    wait=wait_chain(*[wait_fixed(10)] + [wait_fixed(1)] * 100)
-)
+@retry_decorator()
 def assert_chunks_in_index(knowledge_base, encoded_chunks):
     ids = [c.id for c in encoded_chunks]
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
@@ -92,30 +100,21 @@ def assert_chunks_in_index(knowledge_base, encoded_chunks):
             assert fetch_result[chunk.id].metadata[key] == value
 
 
-@retry(
-    stop=stop_after_delay(60),
-    wait=wait_chain(*[wait_fixed(10)] + [wait_fixed(1)] * 100)
-)
+@retry_decorator()
 def assert_ids_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == len(ids), \
         f"Expected {len(ids)} ids, got {len(fetch_result.keys())}"
 
 
-@retry(
-    stop=stop_after_delay(60),
-    wait=wait_chain(*[wait_fixed(10)] + [wait_fixed(1)] * 100)
-)
+@retry_decorator()
 def assert_num_vectors_in_index(knowledge_base, num_vectors):
     vectors_in_index = total_vectors_in_index(knowledge_base)
     assert vectors_in_index == num_vectors, \
         f"Expected {num_vectors} vectors in index, got {vectors_in_index}"
 
 
-@retry(
-    stop=stop_after_delay(60),
-    wait=wait_chain(*[wait_fixed(10)] + [wait_fixed(1)] * 100)
-)
+@retry_decorator()
 def assert_ids_not_in_index(knowledge_base, ids):
     fetch_result = knowledge_base._index.fetch(ids=ids)["vectors"]
     assert len(fetch_result) == 0, f"Found unexpected ids: {len(fetch_result.keys())}"
@@ -209,9 +208,7 @@ def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
     for chunk in encoded_chunks:
         chunk.source = ''
 
-    vec_after = total_vectors_in_index(knowledge_base)
-
-    assert vec_after - vec_before == len(encoded_chunks)
+    assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
 
 
@@ -238,10 +235,8 @@ def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
     df = pd.DataFrame([{"id": doc.id, "txt": doc.text, "metadata": doc.metadata}
                        for doc in documents])
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
-
-    assert "Dataframe must contain the following columns" in str(e.value)
 
 
 def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
@@ -249,10 +244,8 @@ def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
                         "bla": "bla"}
                        for doc in documents])
 
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(ValidationError):
         knowledge_base.upsert_dataframe(df)
-
-    assert "Dataframe contains unknown columns" in str(e.value)
 
 
 @pytest.mark.parametrize("key", ["document_id", "text", "source"])
@@ -339,7 +332,7 @@ def test_update_documents(encoder,
     expected_chunks = [chunk.id for chunk in updated_chunks]
     assert_chunks_in_index(kb, updated_chunks)
 
-    if knowledge_base._is_starter_env():
+    if not knowledge_base._is_starter_env():
         unexpected_chunks = [c_id for c_id in chunk_ids
                              if c_id not in expected_chunks]
         assert len(unexpected_chunks) > 0, "bug in the test itself"
