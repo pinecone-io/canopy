@@ -30,7 +30,7 @@ class BaseKnowledgeBase(ABC, ConfigurableMixin):
         pass
 
     @abstractmethod
-    def verify_connection_health(self) -> None:
+    def verify_index_connection(self) -> None:
         pass
 
     @abstractmethod

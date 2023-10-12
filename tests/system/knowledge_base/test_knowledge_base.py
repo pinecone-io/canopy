@@ -70,13 +70,12 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     if index_full_name in pinecone.list_indexes():
         pinecone.delete_index(index_full_name)
 
-    KnowledgeBase.create_with_new_index(index_name=index_name,
-                                        record_encoder=encoder,
-                                        chunker=chunker)
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
+    kb.create_resin_index()
 
-    return KnowledgeBase(index_name=index_name,
-                         record_encoder=encoder,
-                         chunker=chunker)
+    return kb
 
 
 def total_vectors_in_index(knowledge_base):
@@ -174,8 +173,8 @@ def test_create_index(index_full_name, knowledge_base):
     assert knowledge_base._index.describe_index_stats()
 
 
-def test_is_verify_connection_health_happy_path(knowledge_base):
-    knowledge_base.verify_connection_health()
+def test_is_verify_index_connection_happy_path(knowledge_base):
+    knowledge_base.verify_index_connection()
 
 
 def test_init_with_context_engine_prefix(index_full_name, chunker, encoder):
@@ -316,6 +315,7 @@ def test_update_documents(encoder,
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
+    kb.connect()
     docs = documents[:2]
     doc_ids = [doc.id for doc in docs]
     chunk_ids = [chunk.id for chunk in encoded_chunks
@@ -360,28 +360,61 @@ def test_delete_large_df_happy_path(knowledge_base,
                                              for chunk in chunks_for_validation])
 
 
-def test_create_existing_index(index_full_name, index_name):
+def test_create_existing_index_no_connect(index_full_name, index_name):
+    kb = KnowledgeBase(
+        index_name=index_name,
+        record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
+        chunker=StubChunker(num_chunks_per_doc=2))
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=StubRecordEncoder(
-                                                StubDenseEncoder(dimension=3)),
-                                            chunker=StubChunker(num_chunks_per_doc=2))
+        kb.create_resin_index()
 
     assert f"Index {index_full_name} already exists" in str(e.value)
 
 
-def test_init_kb_non_existing_index(index_name, chunker, encoder):
+def test_create_after_connect(index_full_name, index_name):
+    kb = KnowledgeBase(
+        index_name=index_name,
+        record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
+        chunker=StubChunker(num_chunks_per_doc=2))
+    kb.connect()
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase(index_name="non-existing-index",
-                      record_encoder=encoder,
-                      chunker=chunker)
-    expected_msg = f"Index {INDEX_NAME_PREFIX}non-existing-index does not exist"
+        kb.create_resin_index()
+
+    assert "KnowledgeBase is already connected to index" in str(e.value)
+
+
+def test_kb_non_existing_index(index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name="non-existing-index",
+                       record_encoder=encoder,
+                       chunker=chunker)
+    assert kb._index is None
+    with pytest.raises(RuntimeError) as e:
+        kb.connect()
+    expected_msg = f"index {INDEX_NAME_PREFIX}non-existing-index does not exist"
     assert expected_msg in str(e.value)
+
+
+@pytest.mark.parametrize("operation", ["upsert", "delete", "query",
+                                       "verify_index_connection", "delete_index"])
+def test_error_not_connected(operation, index_name):
+    kb = KnowledgeBase(
+        index_name=index_name,
+        record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
+        chunker=StubChunker(num_chunks_per_doc=2))
+
+    method = getattr(kb, operation)
+    with pytest.raises(RuntimeError) as e:
+        if operation == "verify_index_connection" or operation == "delete_index":
+            method()
+        else:
+            method("dummy_input")
+    assert "KnowledgeBase is not connected to index" in str(e.value)
 
 
 def test_init_defaults(knowledge_base):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name)
+    new_kb.connect()
     assert isinstance(new_kb._index, pinecone.Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
@@ -396,6 +429,7 @@ def test_init_defaults(knowledge_base):
 def test_init_defaults_with_override(knowledge_base, chunker):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name, chunker=chunker)
+    new_kb.connect()
     assert isinstance(new_kb._index, pinecone.Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
@@ -423,43 +457,43 @@ def test_delete_index_happy_path(knowledge_base):
     assert knowledge_base._index is None
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete(["doc_0"])
-
-    assert "index was deleted." in str(e.value)
+    assert "KnowledgeBase is not connected" in str(e.value)
 
 
 def test_delete_index_for_non_existing(knowledge_base):
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete_index()
 
-    assert "index was deleted." in str(e.value)
+    assert "KnowledgeBase is not connected" in str(e.value)
 
 
-def test_verify_connection_health_raise_for_deleted_index(knowledge_base):
+def test_connect_after_delete(knowledge_base):
     with pytest.raises(RuntimeError) as e:
-        knowledge_base.verify_connection_health()
+        knowledge_base.connect()
 
-    assert "index was deleted" in str(e.value)
+    assert "does not exist or was deleted" in str(e.value)
 
 
 def test_create_with_text_in_indexed_field_raise(index_name,
                                                  chunker,
                                                  encoder):
     with pytest.raises(ValueError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker,
-                                            indexed_fields=["id", "text", "metadata"])
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_resin_index(indexed_fields=["id", "text", "metadata"])
 
     assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
 
-def test_create_with_new_index_encoder_dimension_none(index_name, chunker):
+def test_create_with_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
     with pytest.raises(ValueError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker)
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_resin_index()
 
     assert "Could not infer dimension from encoder" in str(e.value)
 
@@ -477,18 +511,20 @@ def set_bad_credentials():
 
 
 def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase.create_with_new_index(index_name=index_name,
-                                            record_encoder=encoder,
-                                            chunker=chunker)
+        kb.create_resin_index()
 
     assert "Please check your credentials" in str(e.value)
 
 
 def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+    kb = KnowledgeBase(index_name=index_name,
+                       record_encoder=encoder,
+                       chunker=chunker)
     with pytest.raises(RuntimeError) as e:
-        KnowledgeBase(index_name=index_name,
-                      record_encoder=encoder,
-                      chunker=chunker)
+        kb.connect()
 
     assert "Please check your credentials and try again" in str(e.value)

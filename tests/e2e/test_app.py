@@ -49,9 +49,10 @@ def index_name(testrun_uid):
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
     pinecone.init()
-    KnowledgeBase.create_with_new_index(index_name=index_name,)
+    kb = KnowledgeBase(index_name=index_name)
+    kb.create_resin_index()
 
-    return KnowledgeBase(index_name=index_name)
+    return kb
 
 
 @pytest.fixture(scope="module")

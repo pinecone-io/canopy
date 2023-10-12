@@ -25,11 +25,6 @@ from resin.knoweldge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
 
-INDEX_DELETED_MESSAGE = (
-    "index was deleted. "
-    "Please create it first using `create_with_new_index()`"
-)
-
 INDEX_NAME_PREFIX = "resin--"
 TIMEOUT_INDEX_CREATE = 300
 TIMEOUT_INDEX_PROVISION = 30
@@ -56,6 +51,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 5,
+                 index_params: Optional[dict] = None,
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
@@ -91,7 +87,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
-        self._index: Optional[Index] = self._connect_index(self._index_name)
+        self._index: Optional[Index] = None
+        self._index_params = index_params
 
     @staticmethod
     def _connect_pinecone():
@@ -102,66 +99,62 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError("Failed to connect to Pinecone. "
                                "Please check your credentials and try again") from e
 
-    @classmethod
-    def _connect_index(cls,
-                       full_index_name: str,
+    def _connect_index(self,
                        connect_pinecone: bool = True
                        ) -> Index:
         if connect_pinecone:
-            cls._connect_pinecone()
+            self._connect_pinecone()
 
-        if full_index_name not in list_indexes():
+        if self.index_name not in list_indexes():
             raise RuntimeError(
-                f"Index {full_index_name} does not exist. "
-                "Please create it first using `create_with_new_index()`"
+                f"The index {self.index_name} does not exist or was deleted. "
+                "Please create it by calling knowledge_base.create_resin_index() or "
+                "running the `resin new` command"
             )
 
         try:
-            index = Index(index_name=full_index_name)
-            index.describe_index_stats()
+            index = Index(index_name=self.index_name)
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while connecting to index {full_index_name}. "
+                f"Unexpected error while connecting to index {self.index_name}. "
                 f"Please check your credentials and try again."
             ) from e
         return index
 
-    def verify_connection_health(self) -> None:
+    @property
+    def _connection_error_msg(self) -> str:
+        return (
+            f"KnowledgeBase is not connected to index {self.index_name}, "
+            f"Please call knowledge_base.connect(). "
+        )
+
+    def connect(self) -> None:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            self._index = self._connect_index()
+        self.verify_index_connection()
+
+    def verify_index_connection(self) -> None:
+        if self._index is None:
+            raise RuntimeError(self._connection_error_msg)
 
         try:
             self._index.describe_index_stats()
         except Exception as e:
-            try:
-                pinecone_whoami()
-            except Exception:
-                raise RuntimeError(
-                    "Failed to connect to Pinecone. "
-                    "Please check your credentials and try again"
-                ) from e
+            raise RuntimeError(
+                "The index did not respond. Please check your credentials and try again"
+            ) from e
 
-            if self._index_name not in list_indexes():
-                raise RuntimeError(
-                    f"index {self._index_name} does not exist anymore"
-                    "and was probably deleted. "
-                    "Please create it first using `create_with_new_index()`"
-                ) from e
-            raise RuntimeError("Index unexpectedly did not respond. "
-                               "Please try again in few moments") from e
-
-    @classmethod
-    def create_with_new_index(cls,
-                              index_name: str,
-                              *,
-                              record_encoder: Optional[RecordEncoder] = None,
-                              chunker: Optional[Chunker] = None,
-                              reranker: Optional[Reranker] = None,
-                              default_top_k: int = 10,
-                              indexed_fields: Optional[List[str]] = None,
-                              dimension: Optional[int] = None,
-                              create_index_params: Optional[dict] = None
-                              ) -> 'KnowledgeBase':
+    def create_resin_index(self,
+                           indexed_fields: Optional[List[str]] = None,
+                           dimension: Optional[int] = None,
+                           index_params: Optional[dict] = None
+                           ):
+        if self._index is not None:
+            raise RuntimeError(
+                f"KnowledgeBase is already connected to index {self.index_name}. "
+                f"If you wish to create a new index, please instantiate a new "
+                f"KnowledgeBase object"
+            )
 
         # validate inputs
         if indexed_fields is None:
@@ -174,61 +167,45 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            record_encoder = record_encoder if record_encoder is not None \
-                else cls._DEFAULT_COMPONENTS['record_encoder']()
-            if record_encoder.dimension is not None:
-                dimension = record_encoder.dimension
+            if self._encoder.dimension is not None:
+                dimension = self._encoder.dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
         # connect to pinecone and create index
-        cls._connect_pinecone()
+        self._connect_pinecone()
 
-        full_index_name = cls._get_full_index_name(index_name)
-
-        if full_index_name in list_indexes():
+        if self.index_name in list_indexes():
             raise RuntimeError(
-                f"Index {full_index_name} already exists. "
+                f"Index {self.index_name} already exists. "
                 "If you wish to delete it, use `delete_index()`. "
-                "If you wish to connect to it,"
-                "directly initialize a `KnowledgeBase` instance"
             )
 
         # create index
-        create_index_params = create_index_params or {}
+        index_params = index_params or self._index_params or {}
         try:
-            create_index(name=full_index_name,
+            create_index(name=self.index_name,
                          dimension=dimension,
                          metadata_config={
                              'indexed': indexed_fields
                          },
                          timeout=TIMEOUT_INDEX_CREATE,
-                         **create_index_params)
+                         **index_params)
         except Exception as e:
             raise RuntimeError(
-                f"Unexpected error while creating index {full_index_name}."
+                f"Unexpected error while creating index {self.index_name}."
                 f"Please try again."
             ) from e
 
         # wait for index to be provisioned
-        cls._wait_for_index_provision(full_index_name=full_index_name)
+        self._wait_for_index_provision()
 
-        # initialize KnowledgeBase
-        return cls(index_name=index_name,
-                   record_encoder=record_encoder,
-                   chunker=chunker,
-                   reranker=reranker,
-                   default_top_k=default_top_k)
-
-    @classmethod
-    def _wait_for_index_provision(cls,
-                                  full_index_name: str):
+    def _wait_for_index_provision(self):
         start_time = time.time()
         while True:
             try:
-                cls._connect_index(full_index_name,
-                                   connect_pinecone=False)
+                self._index = self._connect_index(connect_pinecone=False)
                 break
             except RuntimeError:
                 pass
@@ -236,7 +213,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             time_passed = time.time() - start_time
             if time_passed > TIMEOUT_INDEX_PROVISION:
                 raise RuntimeError(
-                    f"Index {full_index_name} failed to provision "
+                    f"Index {self.index_name} failed to provision "
                     f"for {time_passed} seconds."
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
@@ -262,7 +239,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete_index(self):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
         delete_index(self._index_name)
         self._index = None
 
@@ -270,11 +247,11 @@ class KnowledgeBase(BaseKnowledgeBase):
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
-        queries: List[KBQuery] = self._encoder.encode_queries(queries)
+        if self._index is None:
+            raise RuntimeError(self._connection_error_msg)
 
-        results: List[KBQueryResult] = [self._query_index(q, global_metadata_filter)
-                                        for q in queries]
-
+        queries = self._encoder.encode_queries(queries)
+        results = [self._query_index(q, global_metadata_filter) for q in queries]
         results = self._reranker.rerank(results)
 
         return [
@@ -295,7 +272,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                      query: KBQuery,
                      global_metadata_filter: Optional[dict]) -> KBQueryResult:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         metadata_filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
@@ -331,7 +308,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                namespace: str = "",
                batch_size: int = 100):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         for doc in documents:
             metadata_keys = set(doc.metadata.keys())
@@ -381,7 +358,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                          namespace: str = "",
                          batch_size: int = 100):
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         documents = self._df_to_documents(df)
 
@@ -391,7 +368,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                document_ids: List[str],
                namespace: str = "") -> None:
         if self._index is None:
-            raise RuntimeError(INDEX_DELETED_MESSAGE)
+            raise RuntimeError(self._connection_error_msg)
 
         if self._is_starter_env():
             for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
