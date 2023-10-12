@@ -46,7 +46,7 @@ chat_engine:
       record_encoder:
         type: OpenAIRecordEncoder
         params:
-          model_name: "text-embedding-ada-002"
+          model_name: text-embedding-ada-002
           batch_size: 100
 
       chunker:

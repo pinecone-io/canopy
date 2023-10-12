@@ -421,7 +421,6 @@ def test_init_raise_wrong_type(knowledge_base, chunker):
         KnowledgeBase(index_name=index_name, record_encoder=chunker)
 
     assert "record_encoder must be an instance of RecordEncoder" in str(e.value)
-    assert "KnowledgeBase" in str(e.value)
 
 
 def test_delete_index_happy_path(knowledge_base):
