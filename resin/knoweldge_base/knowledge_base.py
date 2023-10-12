@@ -48,6 +48,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 5,
+                 index_params: Optional[dict] = None,
                  ):
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
@@ -59,6 +60,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
 
         self._index: Optional[Index] = None
+        self._index_params = index_params
 
     @staticmethod
     def _connect_pinecone():
@@ -84,7 +86,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         try:
             index = Index(index_name=self.index_name)
-            index.describe_index_stats()
         except Exception as e:
             raise RuntimeError(
                 f"Unexpected error while connecting to index {self.index_name}. "
@@ -100,11 +101,9 @@ class KnowledgeBase(BaseKnowledgeBase):
         )
 
     def connect(self) -> None:
-        if self._index is not None:
-            raise RuntimeError(
-                f"KnowledgeBase is already connected to index {self.index_name}. "
-            )
-        self._index = self._connect_index()
+        if self._index is None:
+            self._index = self._connect_index()
+        self.verify_index_connection()
 
     def verify_index_connection(self) -> None:
         if self._index is None:
@@ -114,8 +113,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             self._index.describe_index_stats()
         except Exception as e:
             raise RuntimeError(
-                "The index did not respond. Please try running "
-                "knowledge_base.connect() to re-connect it") from e
+                "The index did not respond. Please check your credentials and try again"
+            ) from e
 
     def create_resin_index(self,
                            indexed_fields: Optional[List[str]] = None,
@@ -156,7 +155,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         # create index
-        index_params = index_params or {}
+        index_params = index_params or self._index_params or {}
         try:
             create_index(name=self.index_name,
                          dimension=dimension,
