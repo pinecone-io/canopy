@@ -40,7 +40,7 @@ def test_from_config_partial_params():
     chunker = BaseStubChunker.from_config(config)
     _assert_chunker(chunker, expected_chunk_size=300)
 
-    config = {'type': 'StubOtherChunker', 'params': {'chunk_size': 300}}
+    config['type'] = 'StubOtherChunker'
     other_chunker = BaseStubChunker.from_config(config)
     _assert_chunker(other_chunker,
                     expected_type=StubOtherChunker,
@@ -136,6 +136,11 @@ def test_from_config_derived_class_with_type():
     assert 'BaseStubChunker.from_config(' in str(e.value)
 
 
+def test_init_with_default_params():
+    chunker = StubChunker()
+    _assert_chunker(chunker)
+
+
 def _assert_kb(kb,
                expected_type=StubKB,
                expected_top_k=StubKB.DEFAULT_TOP_K,
@@ -221,6 +226,11 @@ def test_from_config_with_components_unsupported_component_type():
     assert "['StubChunker', 'StubOtherChunker']" in str(e.value)
 
 
+def test_init_with_components_default():
+    kb = StubKB()
+    _assert_kb(kb)
+
+
 def _assert_context_builder(context_builder,
                             expected_type=StubContextBuilder,
                             max_context_length=StubContextBuilder.DEFAULT_MAX_CONTEXT_LENGTH,
@@ -242,31 +252,75 @@ def _assert_context_engine(context_engine,
     assert context_engine.filter == expected_filter
 
 
-# def test_from_config_complex():
-#     config = {
-#         'type': 'StubContextEngine',
-#         'params': {
-#             'filter': 'some_filter',
-#         },
-#         'knowledge_base': _non_default_kb_config,
-#         'context_builder': {
-#             'type': 'StubContextBuilder',
-#             'params': {'max_context_length': 100},
-#         },
-#     }
-#
-#     context_engine = BaseStubContextEngine.from_config(config)
-#     _assert_context_engine(context_engine,
-#                            expected_kb={
-#                                'expected_top_k': 10,
-#                                'expected_chunker': {
-#                                    'expected_type': StubOtherChunker,
-#                                    'expected_chunk_size': 200,
-#                                    'expected_splitter': ','
-#                                },
-#                            },
-#                            expected_context_builder={
-#                                'expected_type': StubContextBuilder,
-#                                'max_context_length': 100,
-#                            },
-#                            expected_filter='some_filter')
+def test_from_config_complex():
+    config = {
+        'type': 'StubContextEngine',
+        'params': {
+            'filter': 'some_filter',
+        },
+        'knowledge_base': _non_default_kb_config,
+        'context_builder': {
+            'type': 'StubContextBuilder',
+            'params': {'max_context_length': 100},
+        },
+    }
+
+    context_engine = BaseStubContextEngine.from_config(config)
+    _assert_context_engine(context_engine,
+                           expected_kb={
+                               'expected_top_k': 10,
+                               'expected_chunker': {
+                                   'expected_type': StubOtherChunker,
+                                   'expected_chunk_size': 200,
+                                   'expected_splitter': ','
+                               },
+                           },
+                           expected_context_builder={
+                               'expected_type': StubContextBuilder,
+                               'max_context_length': 100,
+                           },
+                           expected_filter='some_filter')
+
+
+def test_from_config_complex_default():
+    config = {'type': 'StubContextEngine'}
+    context_engine = BaseStubContextEngine.from_config(config)
+    _assert_context_engine(context_engine)
+
+
+def test_from_config_complex_derived_default():
+    config = {}
+    context_engine = StubContextEngine.from_config(config)
+    _assert_context_engine(context_engine)
+
+
+def test_from_config_complex_derived_partial():
+    config = {'params': {'filter': 'some_filter'}}
+    context_engine = StubContextEngine.from_config(config)
+    _assert_context_engine(context_engine, expected_filter='some_filter')
+
+
+def test_from_config_complex_unsupported_keys():
+    config = {
+        'type': 'StubContextEngine',
+        'params': {'filter': 'some_filter'},
+        'knowledge_base': _non_default_kb_config,
+        'unsupported_key': 'some_value'
+    }
+    with pytest.raises(ValueError) as e:
+        context_engine = BaseStubContextEngine.from_config(config)
+    assert 'unsupported_key' in str(e.value)
+    assert 'StubContextEngine' in str(e.value)
+    assert "['type', 'params', 'knowledge_base', 'context_builder']" in str(e.value)
+
+
+def test_init_complex_default():
+    kb = StubKB()
+    context_engine = StubContextEngine(kb)
+    _assert_context_engine(context_engine)
+
+
+def test_init_complex_missing_mandatory_dependency():
+    with pytest.raises(TypeError) as e:
+        context_engine = StubContextEngine()
+    assert 'knowledge_base' in str(e.value)
