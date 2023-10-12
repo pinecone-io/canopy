@@ -61,7 +61,7 @@ class ConfigurableMixin:
         try:
             return cls(**loaded_components, **parameters, **kwargs)
         except TypeError as e:
-            raise RuntimeError(
+            raise TypeError(
                 f"{cls.__name__} load error: {e}. Please check the config."
             )
 
@@ -75,7 +75,7 @@ class ConfigurableMixin:
         if derived_class_name not in cls._SUPPORTED_CLASSES:
             raise ValueError(
                 f"{cls.__name__} load error: {derived_class_name} is not supported."
-                f" Allowed values are: {list(cls._SUPPORTED_CLASSES.keys())}"
+                f" Supported types are: {list(cls._SUPPORTED_CLASSES.keys())}"
             )
         derived_class = cls._SUPPORTED_CLASSES[derived_class_name]
         return derived_class
