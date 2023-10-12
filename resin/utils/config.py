@@ -19,6 +19,10 @@ class ConfigurableMixin:
 
     @classmethod
     def _from_config(cls, config: Dict[str, Any], **kwargs):
+        # Make a copy of the config, so we can modify it (e.g. pop fields) without
+        # affecting the user's original config.
+        config = config.copy()
+
         # These asserts should be true for all subclasses of ConfigurableMixin
         assert hasattr(cls, '_SUPPORTED_CLASSES')
         assert hasattr(cls, '__FACTORY_BASE_CLASS__')
