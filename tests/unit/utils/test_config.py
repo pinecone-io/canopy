@@ -29,7 +29,7 @@ def _assert_chunker(chunker,
     assert chunker.splitter == expected_splitter
 
 
-def test_from_config_derived_class():
+def test_from_config():
     config = {'type': 'StubChunker', 'params': {'chunk_size': 200, 'splitter': ','}}
     chunker = BaseStubChunker.from_config(config)
     _assert_chunker(chunker, expected_chunk_size=200, expected_splitter=',')
