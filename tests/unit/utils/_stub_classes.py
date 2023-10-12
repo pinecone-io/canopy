@@ -14,6 +14,7 @@ class BaseStubChunker(abc.ABC, ConfigurableMixin):
 class StubChunker(BaseStubChunker):
     DEFAULT_CHUNK_SIZE = 100
     DEFAULT_SPLITTER = ' '
+
     def __init__(self, chunk_size=DEFAULT_CHUNK_SIZE, splitter=DEFAULT_SPLITTER):
         self.chunk_size = chunk_size
         self.splitter = splitter
@@ -24,6 +25,7 @@ class StubChunker(BaseStubChunker):
 
 class StubOtherChunker(BaseStubChunker):
     DEFAULT_CHUNK_SIZE = 200
+
     def __init__(self, chunk_size=DEFAULT_CHUNK_SIZE, some_param=' '):
         self.chunk_size = chunk_size
         self.splitter = some_param
@@ -49,7 +51,6 @@ class StubKB(BaseStubKB):
                  chunker: Optional[BaseStubChunker] = None,
                  top_k: int = DEFAULT_TOP_K,
                  ):
-
         self.chunker = chunker or self._DEFAULT_COMPONENTS['chunker']()
         self.top_k = top_k
 
@@ -83,8 +84,6 @@ class StubContextEngine(BaseStubContextEngine):
                  filter: Optional[dict] = None,
                  ):
         self.knowledge_base = knowledge_base or self._DEFAULT_COMPONENTS['kb']()
-        self.context_builder = context_builder or self._DEFAULT_COMPONENTS['context_builder']()
+        self.context_builder = (context_builder or
+                                self._DEFAULT_COMPONENTS['context_builder']())
         self.filter = filter
-
-
-

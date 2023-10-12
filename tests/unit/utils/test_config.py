@@ -1,6 +1,9 @@
+# noqa: F405
 import pytest
 
-from ._stub_classes import *
+from ._stub_classes import (BaseStubChunker, StubChunker, StubKB,
+                            BaseStubContextEngine, StubOtherChunker, StubContextBuilder,
+                            StubContextEngine, BaseStubKB)
 
 
 def test_list_supported_classes():
@@ -15,7 +18,7 @@ def test_list_supported_classes():
 
 def test_list_supported_derived_class():
     with pytest.raises(RuntimeError) as e:
-        supported_chunkers = StubChunker.list_supported_types()
+        StubChunker.list_supported_types()
     assert 'StubChunker' in str(e.value)
     assert 'base class' in str(e.value)
 
@@ -62,7 +65,7 @@ def test_from_config_no_params():
 def test_from_config_no_type():
     config = {'params': {'chunk_size': 200, 'splitter': ','}}
     with pytest.raises(ValueError) as e:
-        chunker = BaseStubChunker.from_config(config)
+        BaseStubChunker.from_config(config)
     assert 'type' in str(e.value)
     assert 'BaseStubChunker' in str(e.value)
 
@@ -73,7 +76,7 @@ def test_from_config_non_existing_param():
         'params': {'chunk_size': 200, 'non_existing_param': 'some_value'}
     }
     with pytest.raises(TypeError) as e:
-        chunker = BaseStubChunker.from_config(config)
+        BaseStubChunker.from_config(config)
     assert 'non_existing_param' in str(e.value)
     assert 'StubChunker' in str(e.value)
 
@@ -81,10 +84,11 @@ def test_from_config_non_existing_param():
 def test_from_config_non_existing_type():
     config = {'type': 'NonExistingChunker', 'params': {'chunk_size': 200}}
     with pytest.raises(ValueError) as e:
-        chunker = BaseStubChunker.from_config(config)
+        BaseStubChunker.from_config(config)
     assert 'NonExistingChunker' in str(e.value)
     assert 'BaseStubChunker' in str(e.value)
-    assert f"Supported types are: {BaseStubChunker.list_supported_types()}" in str(e.value)
+    supported_types = BaseStubChunker.list_supported_types()
+    assert f"Supported types are: {supported_types}" in str(e.value)
 
 
 def test_from_config_unsupported_key():
@@ -92,7 +96,7 @@ def test_from_config_unsupported_key():
               'params': {'chunk_size': 200},
               'unsupported_key': 'some_value'}
     with pytest.raises(ValueError) as e:
-        chunker = BaseStubChunker.from_config(config)
+        BaseStubChunker.from_config(config)
     assert 'unsupported_key' in str(e.value)
     assert 'StubChunker' in str(e.value)
 
@@ -103,7 +107,7 @@ def test_from_config_misspelled_key():
         'parms': {'chunk_size': 200},
     }
     with pytest.raises(ValueError) as e:
-        chunker = BaseStubChunker.from_config(config)
+        BaseStubChunker.from_config(config)
     assert 'parms' in str(e.value)
     assert 'StubChunker' in str(e.value)
     assert "['type', 'params']" in str(e.value)
@@ -130,7 +134,7 @@ def test_from_config_derived_class_partial_params():
 def test_from_config_derived_class_with_type():
     config = {'type': 'StubChunker', 'params': {'chunk_size': 200, 'splitter': ','}}
     with pytest.raises(ValueError) as e:
-        chunker = StubChunker.from_config(config)
+        StubChunker.from_config(config)
     assert 'type' in str(e.value)
     assert 'BaseStubChunker' in str(e.value)
     assert 'BaseStubChunker.from_config(' in str(e.value)
@@ -205,7 +209,7 @@ def test_from_config_with_components_unsupported_keys():
         'unsupported_key': 'some_value'
     }
     with pytest.raises(ValueError) as e:
-        kb = BaseStubKB.from_config(config)
+        BaseStubKB.from_config(config)
     assert 'unsupported_key' in str(e.value)
     assert 'StubKB' in str(e.value)
     assert "['type', 'params', 'chunker']" in str(e.value)
@@ -220,7 +224,7 @@ def test_from_config_with_components_unsupported_component_type():
         },
     }
     with pytest.raises(ValueError) as e:
-        kb = BaseStubKB.from_config(config)
+        BaseStubKB.from_config(config)
     assert 'NonExistingChunker' in str(e.value)
     assert 'BaseStubChunker' in str(e.value)
     assert "['StubChunker', 'StubOtherChunker']" in str(e.value)
@@ -233,7 +237,7 @@ def test_init_with_components_default():
 
 def _assert_context_builder(context_builder,
                             expected_type=StubContextBuilder,
-                            max_context_length=StubContextBuilder.DEFAULT_MAX_CONTEXT_LENGTH,
+                            max_context_length=StubContextBuilder.DEFAULT_MAX_CONTEXT_LENGTH, # noqa E501
                             ):
     assert isinstance(context_builder, expected_type)
     assert context_builder.max_context_length == max_context_length
@@ -308,7 +312,7 @@ def test_from_config_complex_unsupported_keys():
         'unsupported_key': 'some_value'
     }
     with pytest.raises(ValueError) as e:
-        context_engine = BaseStubContextEngine.from_config(config)
+        BaseStubContextEngine.from_config(config)
     assert 'unsupported_key' in str(e.value)
     assert 'StubContextEngine' in str(e.value)
     assert "['type', 'params', 'knowledge_base', 'context_builder']" in str(e.value)
@@ -322,5 +326,5 @@ def test_init_complex_default():
 
 def test_init_complex_missing_mandatory_dependency():
     with pytest.raises(TypeError) as e:
-        context_engine = StubContextEngine()
+        StubContextEngine()
     assert 'knowledge_base' in str(e.value)
