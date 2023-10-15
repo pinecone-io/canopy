@@ -36,7 +36,6 @@ class TestFunctionCallingQueryGenerator:
     def query_generator(mock_llm, mock_prompt_builder, mock_model_params):
         query_gen = FunctionCallingQueryGenerator(
             llm=mock_llm,
-            top_k=5,
         )
         query_gen._prompt_builder = mock_prompt_builder
         return query_gen
@@ -86,8 +85,8 @@ class TestFunctionCallingQueryGenerator:
         # Ensure the result is correct
         assert isinstance(result, List)
         assert len(result) == 2
-        assert result[0] == Query(text="query1", top_k=5)
-        assert result[1] == Query(text="query2", top_k=5)
+        assert result[0] == Query(text="query1")
+        assert result[1] == Query(text="query2")
 
     @staticmethod
     def test_generate_with_non_defaults(query_generator,
@@ -100,7 +99,6 @@ class TestFunctionCallingQueryGenerator:
 
         gen_custom = FunctionCallingQueryGenerator(
             llm=mock_llm,
-            top_k=5,
             prompt=custom_system_prompt,
             function_description=custom_function_description,
         )
@@ -112,7 +110,7 @@ class TestFunctionCallingQueryGenerator:
         result = gen_custom.generate(messages=sample_messages,
                                      max_prompt_tokens=100)
 
-        expected_result = [Query(text="query1", top_k=5)]
+        expected_result = [Query(text="query1")]
         assert result == expected_result
 
         mock_prompt_builder.build.assert_called_once_with(

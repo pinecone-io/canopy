@@ -26,7 +26,6 @@ class TestFunctionCallingQueryGeneratorSystem:
     def query_generator(openai_llm, prompt_builder):
         query_gen = FunctionCallingQueryGenerator(
             llm=openai_llm,
-            top_k=5,
         )
         query_gen._prompt_builder = prompt_builder
         return query_gen

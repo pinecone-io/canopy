@@ -45,6 +45,5 @@ chat_engine:
   query_builder:
     type: FunctionCallingQueryGenerator
     params:
-      top_k: 5
       prompt: null  # Will use the default prompt
       function_description: null  # Will use the default function description
