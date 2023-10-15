@@ -123,14 +123,15 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = "Index name is not provided, please provide it with" + \
-              ' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
+        msg = ("Index name is not provided, please provide it with" +
+               ' --index-name or set it with env var + '
+               '`export INDEX_NAME="MY_INDEX_NAME`')
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     if data_path is None:
-        msg = "Data path is not provided," + \
-              " please provide it with --data-path or set it with env var"
+        msg = ("Data path is not provided," +
+               " please provide it with --data-path or set it with env var")
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     click.echo("Resin is going to upsert data from ", nl=False)

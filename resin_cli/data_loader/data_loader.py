@@ -20,6 +20,24 @@ class DocumentsValidationError(ValueError):
         super().__init__(message)
 
 
+def _process_metadata(value):
+    if pd.isna(value):
+        return {}
+
+    if isinstance(value, str):
+        try:
+            value = json.loads(value)
+        except json.JSONDecodeError as e:
+            raise DocumentsValidationError(
+                f"Metadata must be a valid json string. Error: {e}"
+            ) from e
+
+    if not isinstance(value, dict):
+        raise DocumentsValidationError("Metadata must be a dict or json string")
+
+    return {k: v for k, v in value.items() if not pd.isna(v)}
+
+
 def _df_to_documents(df: pd.DataFrame) -> List[Document]:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
@@ -29,26 +47,12 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
         raise IDsNotUniqueError("IDs must be unique")
 
     try:
-        documents: List[Document] = []
-        for row in df.to_dict(orient="records"):
-            if "metadata" in row:
-                if pd.isna(row["metadata"]):
-                    row["metadata"] = {}
-                elif type(row["metadata"]) is str:
-                    try:
-                        row["metadata"] = json.loads(row["metadata"])
-                    except json.JSONDecodeError as e:
-                        raise DocumentsValidationError(
-                            f"Metadata must be a valid json string. Error: {e}"
-                        ) from e
-                elif type(row["metadata"]) is not dict:
-                    raise DocumentsValidationError(
-                        "Metadata must be a dict or json string"
-                    )
-                row["metadata"] = {k: v for k, v in row["metadata"].items()
-                                   if not pd.isna(v)}
-            row = {k: v for k, v in row.items() if not pd.isna(v)}
-            documents.append(Document(**row))  # type: ignore
+        if "metadata" in df.columns:
+            df.loc[:, "metadata"] = df["metadata"].apply(_process_metadata)
+        documents = [
+            Document(**{k: v for k, v in row._asdict().items() if not pd.isna(v)})
+            for row in df.itertuples(index=False)
+        ]
     except ValidationError as e:
         raise DocumentsValidationError("Documents failed validation") from e
     except ValueError as e:

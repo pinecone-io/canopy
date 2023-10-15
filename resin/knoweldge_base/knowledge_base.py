@@ -221,13 +221,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             return INDEX_NAME_PREFIX + index_name
 
-    @staticmethod
-    def _df_to_documents(df: pd.DataFrame) -> List[Document]:
-        documents = [
-            Document(**row) for row in df.to_dict(orient="records")  # type: ignore
-            ]
-        return documents
-
     @property
     def index_name(self) -> str:
         return self._index_name
