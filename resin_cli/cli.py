@@ -12,7 +12,6 @@ import openai
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.models.data_models import Document
-from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
@@ -101,14 +100,13 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
+    kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
-    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
+    click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
-        _ = KnowledgeBase.create_with_new_index(
-            index_name=index_name
-        )
+        kb.create_resin_index()
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
 
@@ -134,12 +132,19 @@ def upsert(index_name, data_path, tokenizer_model):
                " please provide it with --data-path or set it with env var")
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+
+    kb = KnowledgeBase(index_name=index_name)
+    try:
+        kb.connect()
+    except RuntimeError as e:
+        click.echo(click.style(str(e), fg="red"), err=True)
+        sys.exit(1)
+
     click.echo("Resin is going to upsert data from ", nl=False)
     click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
-    click.echo(click.style(f'{INDEX_NAME_PREFIX}{index_name} \n', fg='green'))
+    click.echo(click.style(f'{kb.index_name} \n', fg='green'))
     with spinner:
-        kb = KnowledgeBase(index_name=index_name)
         try:
             data = load_from_path(data_path)
         except IDsNotUniqueError:
