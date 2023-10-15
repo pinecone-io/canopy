@@ -149,13 +149,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                            dimension: Optional[int] = None,
                            index_params: Optional[dict] = None
                            ):
-        if self._index is not None:
-            raise RuntimeError(
-                f"KnowledgeBase is already connected to index {self.index_name}. "
-                f"If you wish to create a new index, please instantiate a new "
-                f"KnowledgeBase object"
-            )
-
         # validate inputs
         if indexed_fields is None:
             indexed_fields = ['document_id']

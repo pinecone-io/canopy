@@ -371,18 +371,6 @@ def test_create_existing_index_no_connect(index_full_name, index_name):
     assert f"Index {index_full_name} already exists" in str(e.value)
 
 
-def test_create_after_connect(index_full_name, index_name):
-    kb = KnowledgeBase(
-        index_name=index_name,
-        record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
-        chunker=StubChunker(num_chunks_per_doc=2))
-    kb.connect()
-    with pytest.raises(RuntimeError) as e:
-        kb.create_resin_index()
-
-    assert "KnowledgeBase is already connected to index" in str(e.value)
-
-
 def test_kb_non_existing_index(index_name, chunker, encoder):
     kb = KnowledgeBase(index_name="non-existing-index",
                        record_encoder=encoder,
