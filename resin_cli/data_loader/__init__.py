@@ -1,5 +1,5 @@
 from .data_loader import (
-    load_dataframe_from_path,
-    IndexNotUniqueError,
-    DataframeValidationError
+    load_from_path,
+    IDsNotUniqueError,
+    DocumentsValidationError
 )
