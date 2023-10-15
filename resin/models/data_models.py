@@ -15,7 +15,7 @@ class Query(BaseModel):
     namespace: str = ""
     metadata_filter: Optional[dict] = None
     top_k: Optional[int] = None
-    query_params: Optional[dict] = None
+    query_params: dict = Field(default_factory=dict)
 
 
 class Document(BaseModel):
