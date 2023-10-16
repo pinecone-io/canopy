@@ -1,4 +1,5 @@
 import os
+from textwrap import dedent
 
 import click
 import time
@@ -30,29 +31,34 @@ from .api_models import ChatDebugInfo
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
-
 spinner = Spinner()
+format_multiline = lambda s: dedent(s).strip()
 
 
-def is_healthy(url: str):
+def check_service_health(url: str):
     try:
         health_url = os.path.join(url, "health")
         res = requests.get(health_url)
         res.raise_for_status()
         return res.ok
-    except Exception:
-        return False
+    except requests.exceptions.ConnectionError:
+        msg = f"""
+        Resin service is not running on {url}. 
+        please run `resin start`"
+        """
+        click.echo(click.style(format_multiline(msg), fg="red"), err=True)
+        sys.exit(1)
+    except Exception as e:
+        msg = (
+            f"Resin service on {url} is not healthy, failed with error: {e}"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
 
 
 @retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
-    if not is_healthy(chat_service_url):
-        msg = (
-            f"Resin service is not running! on {chat_service_url}"
-            + " please run `resin start`"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+    check_service_health(chat_service_url)
 
 
 def validate_connection():
@@ -93,23 +99,17 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(help="Check if service is running by sending a health check request")
-@click.option("--host", default="0.0.0.0", help="Host")
-@click.option("--port", default=8000, help="Port")
-@click.option("--ssl/--no-ssl", default=False, help="SSL")
+@cli.command(help="Check if resin service is running by sending a health check request")
+@click.option("--host", default="0.0.0.0", help="Resin's service hostname")
+@click.option("--port", default=8000, help="The port of the resin service")
+@click.option("--ssl/--no-ssl", default=False, help="Whether to use ssl for the "
+                                                    "connection to resin service")
 def health(host, port, ssl):
     ssl_str = "s" if ssl else ""
     service_url = f"http{ssl_str}://{host}:{port}"
-    if not is_healthy(service_url):
-        msg = (
-            f"Resin service is not running! on {service_url}"
-            + " please run `resin start`"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
-    else:
-        click.echo(click.style("Resin service is healthy!", fg="green"))
-        return
+    check_service_health(service_url)
+    click.echo(click.style("Resin service is healthy!", fg="green"))
+    return
 
 
 @cli.command(
@@ -313,13 +313,7 @@ def _chat(
     help="Index name suffix",
 )
 def chat(index_name, chat_service_url, rag, debug, stream):
-    if not is_healthy(chat_service_url):
-        msg = (
-            f"Resin service is not running! on {chat_service_url}"
-            + " please run `resin start`"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+    check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
         + "Chat is a debugging tool, it is not meant to be used for production!"
@@ -429,13 +423,7 @@ def stop(host, port, ssl):
     ssl_str = "s" if ssl else ""
     service_url = f"http{ssl_str}://{host}:{port}"
 
-    if not is_healthy(service_url):
-        msg = (
-            f"Resin service is not running! on {service_url}"
-            + " please run `resin start`"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+    check_service_health(service_url)
 
     import subprocess
 
