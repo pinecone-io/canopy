@@ -53,6 +53,27 @@ class KnowledgeBase(BaseKnowledgeBase):
                  default_top_k: int = 5,
                  index_params: Optional[dict] = None,
                  ):
+        """
+        Init the knowledge base object.
+        Note: The knowledge base is not connected to the index
+              until connect() is called.
+
+        Args:
+            index_name: The name of the index to connect to.
+            record_encoder: An instance of RecordEncoder to use for encoding documents
+                            and queries. Defaults to OpenAIRecordEncoder.
+            chunker: An instance of Chunker to use for chunking documents.
+                        Defaults to MarkdownChunker.
+            reranker: An instance of Reranker to use for reranking query results.
+                      Defaults to TransparentReranker.
+            default_top_k: The default number of documents to return for each query.
+                            Defaults to 5.
+            index_params: A dictionary of parameters to pass to the index creation API.
+                          see https://docs.pinecone.io/docs/python-client#create_index
+
+        Returns:
+            KnowledgeBase object.
+        """
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
@@ -129,6 +150,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         )
 
     def connect(self) -> None:
+        """
+        Connect to the knowledge base index.
+        This method must be called before making any other calls to the knowledge base.
+
+        Returns:
+            None if successful, raises an exception otherwise.
+        """
         if self._index is None:
             self._index = self._connect_index()
         self.verify_index_connection()
@@ -149,6 +177,24 @@ class KnowledgeBase(BaseKnowledgeBase):
                            dimension: Optional[int] = None,
                            index_params: Optional[dict] = None
                            ):
+        """
+        Create a new index in Pinecone.
+
+        Note: This operation may take a few minutes to complete.
+
+        Once created, you can see the index in the
+             Pinecone console at https://app.pinecone.io/
+
+        Args:
+            indexed_fields: A list of fields to index. Defaults to ['document_id'].
+            dimension: The dimension of the vectors to index.
+                       Defaults to the encoder's dimension.
+            index_params: A dictionary of parameters to pass to the index creation API.
+                          see https://docs.pinecone.io/docs/python-client#create_index
+
+        Returns:
+            None
+        """
         # validate inputs
         if indexed_fields is None:
             indexed_fields = ['document_id']
@@ -221,9 +267,18 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     @property
     def index_name(self) -> str:
+        """
+        The full name of the index the knowledge base is connected to.
+        """
         return self._index_name
 
     def delete_index(self):
+        """
+        Delete the index the knowledge base is connected to.
+
+        Note: Once deleted, the index cannot be recovered
+              and all operations on this knowledge base object will not be available.
+        """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
         delete_index(self._index_name)
@@ -233,6 +288,22 @@ class KnowledgeBase(BaseKnowledgeBase):
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
+        """
+        Query the knowledge base.
+
+        This operation includes several steps:
+        1. Encode the queries to vectors.
+        2. Query the index.
+        3. Rerank the results.
+
+        Args:
+            queries: A list of queries to run against the knowledge base.
+            global_metadata_filter: A metadata filter to apply to all queries.
+                                    in addition to any query-specific filters.
+
+        Returns:
+            A list of QueryResult objects.
+        """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -293,6 +364,23 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 100):
+        """
+        Upsert documents into the knowledge base.
+
+        This operation includes several steps:
+        1. Chunk the documents into smaller chunks.
+        2. Encode the chunks to vectors.
+        3. Delete any existing chunks belonging to the same documents.
+        4. Upsert the chunks to the index.
+
+        Args:
+            documents: A list of documents to upsert.
+            namespace: The namespace to upsert the documents into.
+            batch_size: The number of documents to upsert at once.
+
+        Returns:
+            None
+        """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -342,6 +430,20 @@ class KnowledgeBase(BaseKnowledgeBase):
     def delete(self,
                document_ids: List[str],
                namespace: str = "") -> None:
+        """
+        Delete documents from the knowledge base.
+
+        Note: Currently in starter env the delete by metadata
+              operation is not supported. Therefore, in starter env
+              this method will simply delete the first 32 chunks of each document.
+
+        Args:
+            document_ids: A list of document ids to delete.
+            namespace: The namespace to delete the documents from.
+
+        Returns:
+            None
+        """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -366,7 +468,21 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
     @classmethod
-    def from_config(cls, config: Dict[str, Any], index_name: Optional[str] = None):
+    def from_config(cls,
+                    config: Dict[str, Any],
+                    index_name: Optional[str] = None) -> "KnowledgeBase":
+        """
+        Create a KnowledgeBase object from a configuration dictionary.
+
+        Args:
+            config: A dictionary containing the configuration for the knowledge base.
+            index_name: The name of the index to connect to (optional).
+                        If not provided, the index name will be read
+                        from the environment variable INDEX_NAME.
+
+        Returns:
+            A KnowledgeBase object.
+        """
         index_name = index_name or os.getenv("INDEX_NAME")
         if index_name is None:
             raise ValueError(
