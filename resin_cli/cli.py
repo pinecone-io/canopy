@@ -104,7 +104,7 @@ def new(index_name, tokenizer_model):
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    Tokenizer.initialize(OpenAITokenizer, model_name=tokenizer_model)
     with spinner:
         kb.create_resin_index()
     click.echo(click.style("Success!", fg="green"))
@@ -126,7 +126,7 @@ def upsert(index_name, data_path, tokenizer_model):
                '`export INDEX_NAME="MY_INDEX_NAME`')
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
+    Tokenizer.initialize(OpenAITokenizer, model_name=tokenizer_model)
     if data_path is None:
         msg = ("Data path is not provided," +
                " please provide it with --data-path or set it with env var")
@@ -173,8 +173,11 @@ def upsert(index_name, data_path, tokenizer_model):
             click.echo(click.style(msg, fg="red"), err=True)
             sys.exit(1)
         pd.options.display.max_colwidth = 20
-    click.echo(data[0].json(exclude_none=True, indent=2))
-    click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
+
+    click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
+    click.echo(click.style(f"\nTotal records: {len(data)}"))
+    click.confirm(click.style("\nDoes this data look right?", fg="red"),
+                  abort=True)
     kb.upsert(data)
     click.echo(click.style("Success!", fg="green"))
 
