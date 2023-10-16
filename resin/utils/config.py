@@ -18,7 +18,7 @@ class ConfigurableMixin:
         return cls._from_config(config)
 
     @classmethod
-    def _from_config(cls, config: Dict[str, Any], **kwargs):
+    def _from_config(cls, config: Dict[str, Any]):
         # Make a copy of the config, so we can modify it (e.g. pop fields) without
         # affecting the user's original config.
         config = config.copy()
@@ -44,15 +44,9 @@ class ConfigurableMixin:
             )
 
         # Load the class's subcomponents (dependencies) recursively
-        loaded_components = cls._load_sub_components(config, kwargs)
+        loaded_components = cls._load_sub_components(config)
 
         parameters = config.pop("params", {})
-        params_in_kwargs = set(parameters.keys()) & set(kwargs.keys())
-        if params_in_kwargs:
-            raise RuntimeError(
-                f"{cls.__name__} load error: can't set {params_in_kwargs} in both "
-                f"config and constructor."
-            )
 
         # The config should be empty at this point
         if config:
@@ -63,7 +57,7 @@ class ConfigurableMixin:
             )
 
         try:
-            return cls(**loaded_components, **parameters, **kwargs)
+            return cls(**loaded_components, **parameters)
         except TypeError as e:
             raise TypeError(
                 f"{cls.__name__} load error: {e}. Please check the config."
@@ -94,14 +88,9 @@ class ConfigurableMixin:
         return list(cls._SUPPORTED_CLASSES.keys())
 
     @classmethod
-    def _load_sub_components(cls, config, kwargs):
+    def _load_sub_components(cls, config):
         loaded_components = {}
         for component_name, default_class in cls._DEFAULT_COMPONENTS.items():
-            if component_name in kwargs:
-                raise RuntimeError(
-                    f"{cls.__name__} load error: Overriding {component_name} is not "
-                    f"allowed. Please set it in the config file."
-                )
             component_config = config.pop(component_name, {})
             component_config['type'] = component_config.get(
                 'type', default_class.__name__

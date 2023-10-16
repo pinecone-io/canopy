@@ -388,10 +388,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         index_name = index_name or os.getenv("INDEX_NAME")
         if index_name is None:
             raise ValueError(
-                "index_name must be provided. Either pass it to KnowledgeBase's "
-                "constructor or set INDEX_NAME environment variable"
+                "index_name must be provided. Either pass it explicitly or set the "
+                "INDEX_NAME environment variable"
             )
-        return cls._from_config(config, index_name=index_name)
+        config = deepcopy(config)
+        config['params'] = config.get('params', {})
+        config['params']['index_name'] = index_name
+        return cls._from_config(config)
 
     @staticmethod
     def _is_starter_env():
