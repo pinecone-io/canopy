@@ -3,9 +3,11 @@ from typing import List
 
 from resin.knoweldge_base.models import KBDocChunk
 from resin.models.data_models import Document
+from resin.utils.config import ConfigurableMixin
 
 
-class Chunker(ABC):
+class Chunker(ABC, ConfigurableMixin):
+
     """
     BaseChunker is an abstract class that defines the interface for a chunker.
     """

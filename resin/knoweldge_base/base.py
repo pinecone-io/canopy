@@ -3,9 +3,10 @@ from typing import List, Optional
 
 from resin.knoweldge_base.models import QueryResult
 from resin.models.data_models import Query, Document
+from resin.utils.config import ConfigurableMixin
 
 
-class BaseKnowledgeBase(ABC):
+class BaseKnowledgeBase(ABC, ConfigurableMixin):
     """
     KnowledgeBase is an abstract class that defines the interface for a knowledge base.
     """
@@ -29,7 +30,7 @@ class BaseKnowledgeBase(ABC):
         pass
 
     @abstractmethod
-    def verify_connection_health(self) -> None:
+    def verify_index_connection(self) -> None:
         pass
 
     @abstractmethod

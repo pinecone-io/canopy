@@ -20,7 +20,8 @@ from typing import cast
 from resin.models.api_models import StreamingChatResponse, ChatResponse
 from resin.models.data_models import Context
 from resin_cli.api_models import \
-    ChatRequest, ContextQueryRequest, ContextUpsertRequest, HealthStatus
+    ChatRequest, ContextQueryRequest, \
+    ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
 load_dotenv()  # load env vars before import of openai
 from resin.llm.openai import OpenAILLM  # noqa: E402
@@ -101,10 +102,28 @@ async def upsert(
         upsert_results = await run_in_threadpool(
             kb.upsert,
             documents=request.documents,
-            namespace=request.namespace,
             batch_size=request.batch_size)
 
         return upsert_results
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(
+            status_code=500, detail=f"Internal Service Error: {str(e)}")
+
+
+@app.post(
+    "/context/delete",
+)
+async def delete(
+    request: ContextDeleteRequest = Body(...),
+):
+    try:
+        logger.info(f"Delete {len(request.document_ids)} documents")
+        await run_in_threadpool(
+            kb.delete,
+            document_ids=request.document_ids)
+        return {"message": "success"}
 
     except Exception as e:
         logger.exception(e)
@@ -117,7 +136,7 @@ async def upsert(
 )
 async def health_check():
     try:
-        await run_in_threadpool(kb.verify_connection_health)
+        await run_in_threadpool(kb.verify_index_connection)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
@@ -173,8 +192,9 @@ def _init_engines():
     kb = KnowledgeBase(index_name=INDEX_NAME)
     context_engine = ContextEngine(knowledge_base=kb)
     llm = OpenAILLM()
-
     chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
+
+    kb.connect()
 
 
 def start(host="0.0.0.0", port=8000, reload=False):

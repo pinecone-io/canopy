@@ -1,4 +1,5 @@
 import os
+
 import click
 import time
 import sys
@@ -13,13 +14,12 @@ import openai
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.models.data_models import Document
-from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
-    load_dataframe_from_path,
-    IndexNotUniqueError,
-    DataframeValidationError,
-)
+    load_from_path,
+    IDsNotUniqueError,
+    DocumentsValidationError)
+
 from resin import __version__
 
 from .app import start as start_service
@@ -123,13 +123,14 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
+    kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
-    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name}", fg="green"))
+    click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
         try:
-            _ = KnowledgeBase.create_with_new_index(index_name=index_name)
+            kb.create_resin_index()
         # TODO: kb should throw a specific exception for each case
         except Exception as e:
             msg = "Error: Failed to create a new index"
@@ -155,8 +156,9 @@ def new(index_name, tokenizer_model):
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def upsert(index_name, data_path, tokenizer_model):
     if index_name is None:
-        msg = "Index name is not provided, please provide it with"
-        +' --index-name or set it with env var `export INDEX_NAME="MY_INDEX_NAME`'
+        msg = ("Index name is not provided, please provide it with" +
+               ' --index-name or set it with env var + '
+               '`export INDEX_NAME="MY_INDEX_NAME`')
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     try:
@@ -166,28 +168,31 @@ def upsert(index_name, data_path, tokenizer_model):
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
     if data_path is None:
-        msg = "Data path is not provided,"
-        +" please provide it with --data-path or set it with env var"
+        msg = ("Data path is not provided,"
+               " please provide it with --data-path or set it with env var")
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)
+
+    kb = KnowledgeBase(index_name=index_name)
+    try:
+        kb.connect()
+    except Exception:
+        msg = (
+            "Error: Failed to connect to Pinecone index, please make sure"
+            " you have set the right env vars"
+            " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
+        )
+        click.echo(click.style(msg, fg="red"), err=True)
+        sys.exit(1)
+
     click.echo("Resin is going to upsert data from ", nl=False)
     click.echo(click.style(f"{data_path}", fg="yellow"), nl=False)
     click.echo(" to index: ")
-    click.echo(click.style(f"{INDEX_NAME_PREFIX}{index_name} \n", fg="green"))
+    click.echo(click.style(f'{kb.index_name} \n', fg='green'))
     with spinner:
         try:
-            kb = KnowledgeBase(index_name=index_name)
-        except Exception:
-            msg = (
-                "Error: Failed to connect to Pinecone index, please make sure"
-                + " you have set the right env vars"
-                + " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
-            )
-            click.echo(click.style(msg, fg="red"), err=True)
-            sys.exit(1)
-        try:
-            data = load_dataframe_from_path(data_path)
-        except IndexNotUniqueError:
+            data = load_from_path(data_path)
+        except IDsNotUniqueError:
             msg = (
                 "Error: the id field on the data is not unique"
                 + " this will cause records to override each other on upsert"
@@ -195,7 +200,7 @@ def upsert(index_name, data_path, tokenizer_model):
             )
             click.echo(click.style(msg, fg="red"), err=True)
             sys.exit(1)
-        except DataframeValidationError:
+        except DocumentsValidationError:
             msg = (
                 "Error: one or more rows have not passed validation"
                 + " data should agree with the Document Schema"
@@ -210,17 +215,19 @@ def upsert(index_name, data_path, tokenizer_model):
                 + " it may be due to issue with the data format"
                 + " please make sure the data is valid, and can load with pandas"
             )
+            click.echo(click.style(msg, fg="red"), err=True)
+            sys.exit(1)
         pd.options.display.max_colwidth = 20
-    click.echo(data.head())
+    click.echo(data[0].json(exclude_none=True, indent=2))
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     try:
-        kb.upsert_dataframe(data)
+        kb.upsert(data)
     except Exception:
         msg = (
             "Error: Failed to upsert data to index"
-            + f" {INDEX_NAME_PREFIX}{index_name}"
-            + " this could be due to connection issues"
-            + " please re-run `resin upsert`"
+            f" {kb.index_name}"
+            " this could be due to connection issues"
+            " please re-run `resin upsert`"
         )
         click.echo(click.style(msg, fg="red"), err=True)
         sys.exit(1)

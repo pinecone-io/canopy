@@ -1,17 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from resin.chat_engine.models import HistoryPruningMethod
-from resin.chat_engine.prompt_builder import PromptBuilder
-from resin.llm import BaseLLM
 from resin.models.data_models import Messages, Query
+from resin.utils.config import ConfigurableMixin
 
 
-class QueryGenerator(ABC):
-    def __init__(self, *, llm: BaseLLM):
-        self._llm = llm
-        self._prompt_builder = PromptBuilder(HistoryPruningMethod.RAISE, 1)
-
+class QueryGenerator(ABC, ConfigurableMixin):
     @abstractmethod
     def generate(self,
                  messages: Messages,
