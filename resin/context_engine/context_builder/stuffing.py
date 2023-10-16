@@ -1,14 +1,14 @@
 from itertools import zip_longest
 from typing import List, Tuple
 
-from resin.context_engine.context_builder.base import BaseContextBuilder
+from resin.context_engine.context_builder.base import ContextBuilder
 from resin.context_engine.models import ContextQueryResult, ContextSnippet
 from resin.knoweldge_base.models import QueryResult, DocumentWithScore
 from resin.tokenizer import Tokenizer
 from resin.models.data_models import Context
 
 
-class StuffingContextBuilder(BaseContextBuilder):
+class StuffingContextBuilder(ContextBuilder):
 
     def __init__(self):
         self._tokenizer = Tokenizer()

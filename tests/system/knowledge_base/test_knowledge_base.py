@@ -13,8 +13,11 @@ from tenacity import (
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
+from resin.knoweldge_base.chunker import Chunker
 from resin.knoweldge_base.knowledge_base import INDEX_NAME_PREFIX
 from resin.knoweldge_base.models import DocumentWithScore
+from resin.knoweldge_base.record_encoder import RecordEncoder
+from resin.knoweldge_base.reranker import Reranker
 from resin.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
@@ -336,6 +339,45 @@ def test_error_not_connected(operation, index_name):
         else:
             method("dummy_input")
     assert "KnowledgeBase is not connected to index" in str(e.value)
+
+
+def test_init_defaults(knowledge_base):
+    index_name = knowledge_base.index_name
+    new_kb = KnowledgeBase(index_name=index_name)
+    new_kb.connect()
+    assert isinstance(new_kb._index, pinecone.Index)
+    assert new_kb.index_name == index_name
+    assert isinstance(new_kb._chunker, Chunker)
+    assert isinstance(new_kb._chunker, KnowledgeBase._DEFAULT_COMPONENTS["chunker"])
+    assert isinstance(new_kb._encoder, RecordEncoder)
+    assert isinstance(new_kb._encoder,
+                      KnowledgeBase._DEFAULT_COMPONENTS["record_encoder"])
+    assert isinstance(new_kb._reranker, Reranker)
+    assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
+
+
+def test_init_defaults_with_override(knowledge_base, chunker):
+    index_name = knowledge_base.index_name
+    new_kb = KnowledgeBase(index_name=index_name, chunker=chunker)
+    new_kb.connect()
+    assert isinstance(new_kb._index, pinecone.Index)
+    assert new_kb.index_name == index_name
+    assert isinstance(new_kb._chunker, Chunker)
+    assert isinstance(new_kb._chunker, StubChunker)
+    assert new_kb._chunker is chunker
+    assert isinstance(new_kb._encoder, RecordEncoder)
+    assert isinstance(new_kb._encoder,
+                      KnowledgeBase._DEFAULT_COMPONENTS["record_encoder"])
+    assert isinstance(new_kb._reranker, Reranker)
+    assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
+
+
+def test_init_raise_wrong_type(knowledge_base, chunker):
+    index_name = knowledge_base.index_name
+    with pytest.raises(TypeError) as e:
+        KnowledgeBase(index_name=index_name, record_encoder=chunker)
+
+    assert "record_encoder must be an instance of RecordEncoder" in str(e.value)
 
 
 def test_delete_index_happy_path(knowledge_base):

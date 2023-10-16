@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 from datetime import datetime
 import time
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
@@ -37,9 +37,12 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 class KnowledgeBase(BaseKnowledgeBase):
-    DEFAULT_RECORD_ENCODER = OpenAIRecordEncoder
-    DEFAULT_CHUNKER = MarkdownChunker
-    DEFAULT_RERANKER = TransparentReranker
+
+    _DEFAULT_COMPONENTS = {
+        'record_encoder': OpenAIRecordEncoder,
+        'chunker': MarkdownChunker,
+        'reranker': TransparentReranker
+    }
 
     def __init__(self,
                  index_name: str,
@@ -55,9 +58,34 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
-        self._encoder = record_encoder if record_encoder is not None else self.DEFAULT_RECORD_ENCODER()  # noqa: E501
-        self._chunker = chunker if chunker is not None else self.DEFAULT_CHUNKER()
-        self._reranker = reranker if reranker is not None else self.DEFAULT_RERANKER()
+
+        if record_encoder:
+            if not isinstance(record_encoder, RecordEncoder):
+                raise TypeError(
+                    f"record_encoder must be an instance of RecordEncoder, "
+                    f"not {type(record_encoder)}"
+                )
+            self._encoder = record_encoder
+        else:
+            self._encoder = self._DEFAULT_COMPONENTS['record_encoder']()
+
+        if chunker:
+            if not isinstance(chunker, Chunker):
+                raise TypeError(
+                    f"chunker must be an instance of Chunker, not {type(chunker)}"
+                )
+            self._chunker = chunker
+        else:
+            self._chunker = self._DEFAULT_COMPONENTS['chunker']()
+
+        if reranker:
+            if not isinstance(reranker, Reranker):
+                raise TypeError(
+                    f"reranker must be an instance of Reranker, not {type(reranker)}"
+                )
+            self._reranker = reranker
+        else:
+            self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
         self._index: Optional[Index] = None
         self._index_params = index_params
@@ -336,6 +364,19 @@ class KnowledgeBase(BaseKnowledgeBase):
                 filter={"document_id": {"$in": document_ids}},
                 namespace=namespace
             )
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any], index_name: Optional[str] = None):
+        index_name = index_name or os.getenv("INDEX_NAME")
+        if index_name is None:
+            raise ValueError(
+                "index_name must be provided. Either pass it explicitly or set the "
+                "INDEX_NAME environment variable"
+            )
+        config = deepcopy(config)
+        config['params'] = config.get('params', {})
+        config['params']['index_name'] = index_name
+        return cls._from_config(config)
 
     @staticmethod
     def _is_starter_env():

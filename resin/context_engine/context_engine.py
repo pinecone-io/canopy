@@ -3,14 +3,16 @@ from abc import ABC, abstractmethod
 from typing import List, Optional
 
 from resin.context_engine.context_builder import StuffingContextBuilder
-from resin.context_engine.context_builder.base import BaseContextBuilder
+from resin.context_engine.context_builder.base import ContextBuilder
+from resin.knoweldge_base import KnowledgeBase
 from resin.knoweldge_base.base import BaseKnowledgeBase
 from resin.models.data_models import Context, Query
+from resin.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
 
-class BaseContextEngine(ABC):
+class BaseContextEngine(ABC, ConfigurableMixin):
 
     @abstractmethod
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
@@ -23,17 +25,33 @@ class BaseContextEngine(ABC):
 
 class ContextEngine(BaseContextEngine):
 
-    DEFAULT_CONTEXT_BUILDER = StuffingContextBuilder
+    _DEFAULT_COMPONENTS = {
+        'knowledge_base': KnowledgeBase,
+        'context_builder': StuffingContextBuilder,
+    }
 
     def __init__(self,
                  knowledge_base: BaseKnowledgeBase,
                  *,
-                 context_builder: Optional[BaseContextBuilder] = None,
+                 context_builder: Optional[ContextBuilder] = None,
                  global_metadata_filter: Optional[dict] = None
                  ):
+
+        if not isinstance(knowledge_base, BaseKnowledgeBase):
+            raise TypeError("knowledge_base must be an instance of BaseKnowledgeBase, "
+                            f"not {type(self.knowledge_base)}")
         self.knowledge_base = knowledge_base
-        self.context_builder = context_builder if context_builder is not None else \
-            self.DEFAULT_CONTEXT_BUILDER()
+
+        if context_builder:
+            if not isinstance(context_builder, ContextBuilder):
+                raise TypeError(
+                    "context_builder must be an instance of ContextBuilder, "
+                    f"not {type(context_builder)}"
+                )
+            self.context_builder = context_builder
+        else:
+            self.context_builder = self._DEFAULT_COMPONENTS['context_builder']()
+
         self.global_metadata_filter = global_metadata_filter
 
     def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:

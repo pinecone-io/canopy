@@ -1,5 +1,5 @@
 from typing import List
-from resin.tokenizer.tokenizer import BaseTokenizer
+from resin.tokenizer.base import BaseTokenizer
 from resin.models.data_models import Messages
 
 
