@@ -4,14 +4,12 @@ import random
 import pytest
 import pinecone
 import numpy as np
-import pandas as pd
 from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
     wait_chain,
 )
-from pydantic import ValidationError
 from dotenv import load_dotenv
 from datetime import datetime
 from resin.knoweldge_base import KnowledgeBase
@@ -189,62 +187,6 @@ def test_upsert_happy_path(knowledge_base, documents, encoded_chunks):
 
     assert_num_vectors_in_index(knowledge_base, len(encoded_chunks))
     assert_chunks_in_index(knowledge_base, encoded_chunks)
-
-
-def test_upsert_dataframe(knowledge_base, documents, chunker, encoder):
-    for doc in documents:
-        doc.id = doc.id + "_df"
-        doc.text = doc.text + " of df"
-
-    vec_before = total_vectors_in_index(knowledge_base)
-
-    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata}
-                       for doc in documents])
-    knowledge_base.upsert_dataframe(df)
-
-    chunks = chunker.chunk_documents(documents)
-    encoded_chunks = encoder.encode_documents(chunks)
-    for chunk in encoded_chunks:
-        chunk.source = ''
-
-    assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
-    assert_chunks_in_index(knowledge_base, encoded_chunks)
-
-
-def test_upsert_dataframe_with_source(knowledge_base, documents, chunker, encoder):
-    for doc in documents:
-        doc.id = doc.id + "_df_source"
-        doc.text = doc.text + " of df"
-
-    vec_before = total_vectors_in_index(knowledge_base)
-
-    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata,
-                        "source": doc.source}
-                       for doc in documents])
-    knowledge_base.upsert_dataframe(df)
-
-    chunks = chunker.chunk_documents(documents)
-    encoded_chunks = encoder.encode_documents(chunks)
-
-    assert_num_vectors_in_index(knowledge_base, vec_before + len(encoded_chunks))
-    assert_chunks_in_index(knowledge_base, encoded_chunks)
-
-
-def test_upsert_dataframe_with_wrong_schema(knowledge_base, documents):
-    df = pd.DataFrame([{"id": doc.id, "txt": doc.text, "metadata": doc.metadata}
-                       for doc in documents])
-
-    with pytest.raises(ValidationError):
-        knowledge_base.upsert_dataframe(df)
-
-
-def test_upsert_dataframe_with_redundant_col(knowledge_base, documents):
-    df = pd.DataFrame([{"id": doc.id, "text": doc.text, "metadata": doc.metadata,
-                        "bla": "bla"}
-                       for doc in documents])
-
-    with pytest.raises(ValidationError):
-        knowledge_base.upsert_dataframe(df)
 
 
 @pytest.mark.parametrize("key", ["document_id", "text", "source"])

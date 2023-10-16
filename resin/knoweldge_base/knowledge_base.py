@@ -219,13 +219,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             return INDEX_NAME_PREFIX + index_name
 
-    @staticmethod
-    def _df_to_documents(df: pd.DataFrame) -> List[Document]:
-        documents = [
-            Document(**row) for row in df.to_dict(orient="records")  # type: ignore
-            ]
-        return documents
-
     @property
     def index_name(self) -> str:
         return self._index_name
@@ -345,17 +338,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         dataset.to_pinecone_index(self._index_name,
                                   namespace=namespace,
                                   should_create_index=False)
-
-    def upsert_dataframe(self,
-                         df: pd.DataFrame,
-                         namespace: str = "",
-                         batch_size: int = 100):
-        if self._index is None:
-            raise RuntimeError(self._connection_error_msg)
-
-        documents = self._df_to_documents(df)
-
-        self.upsert(documents, namespace=namespace, batch_size=batch_size)
 
     def delete(self,
                document_ids: List[str],

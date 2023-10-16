@@ -28,7 +28,6 @@ chat_engine:
   query_builder:
     type: FunctionCallingQueryGenerator
     params:
-      top_k: 5
       prompt: *query_builder_prompt
       function_description: Query search engine for relevant information
 
