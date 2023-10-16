@@ -100,11 +100,11 @@ def health(host, port, ssl):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
 def new(index_name, tokenizer_model):
+    Tokenizer.initialize(OpenAITokenizer, model_name=tokenizer_model)
     kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
-    Tokenizer.initialize(OpenAITokenizer, model_name=tokenizer_model)
     with spinner:
         kb.create_resin_index()
     click.echo(click.style("Success!", fg="green"))
