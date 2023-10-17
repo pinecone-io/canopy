@@ -62,23 +62,23 @@ def wait_for_service(chat_service_url: str):
 def validate_connection():
     try:
         KnowledgeBase._connect_pinecone()
-    except Exception:
+    except RuntimeError as e:
         msg = (
-            "Error: Failed to connect to Pinecone index, please make sure"
-            + " you have set the right env vars"
-            + " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
+            f"{str(e)}\n"
+            "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
+            " envriorment variables. "
+            "Please visit https://www.pinecone.io/docs/quick-start/ for more details."
         )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+        raise CLIError(msg)
     try:
         openai.Model.list()
     except Exception:
         msg = (
-            "Error: Failed to connect to OpenAI, please make sure"
-            + " you have set the right env vars"
+            "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+            "environment variable is set correctly.\n"
+            "Please visit https://platform.openai.com/account/api-keys for more details"
         )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+        raise CLIError(msg)
     click.echo("Resin: ", nl=False)
     click.echo(click.style("Ready\n", bold=True, fg="green"))
 
