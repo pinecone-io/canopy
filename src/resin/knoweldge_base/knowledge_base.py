@@ -384,7 +384,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise ValueError(
                 f"index_name in config ({config['params']['index_name']}), while "
                 f"INDEX_NAME environment variable is {index_name}. "
-                f"Please make sure they are the same or remove the config's index_name."
+                f"Please make sure they are the same or remove the 'index_name' key "
+                f"from the config."
             )
         config['params']['index_name'] = index_name
 
