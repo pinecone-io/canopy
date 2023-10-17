@@ -326,8 +326,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Delete the underlying Pinecone index.
 
-        Note: Once deleted, the index cannot be recovered
-              and all operations on this knowledge base object will not be available.
+        **Note: THIS OPERATION IS NOT REVERSABLE!!**  
+        Once deleted, the index, together with any stored documents cannot be restored!
+        
+        After deletion - the `KnowledgeBase` would not be connected to a Pinecone index anymore, so you will not be able to insert documents or query. If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_resin_index()`
         """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
