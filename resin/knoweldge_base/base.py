@@ -64,7 +64,7 @@ class BaseKnowledgeBase(ABC, ConfigurableMixin):
     @abstractmethod
     def verify_index_connection(self) -> None:
         """
-        Verify that the knowledge base is connected
+        Verify that the knowledge base is connected to the underlying Pinecone index
         and the index is ready to be queried.
 
         Returns:
