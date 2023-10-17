@@ -236,7 +236,8 @@ class KnowledgeBase(BaseKnowledgeBase):
              Pinecone console at https://app.pinecone.io/
 
         Args:
-            indexed_fields: A list of fields to index. Defaults to ['document_id'].
+            indexed_fields: A list of metadata fields that would be indexed, allowing them to be later used for metadata filtering. All other metadata fields are stored but not indexed. See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.  
+           Resin always indexes a built-in `document_id` field, which is added to every vector. By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
             dimension: The dimension of the vectors to index.
                        Defaults to the encoder's dimension.
             index_params: A dictionary of parameters to pass to the index creation API.
