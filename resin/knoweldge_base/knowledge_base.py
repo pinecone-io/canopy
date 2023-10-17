@@ -38,6 +38,36 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 class KnowledgeBase(BaseKnowledgeBase):
 
+    """
+    The `KnowledgeBase` is used for store and retrieve text documents, using an underlying Pinecone index.
+    Every document is chunked into multiple text snippets
+    based on the text structure (e.g. Markdown or HTML formatting)
+    Then, each chunk is encoded into a vector using an embedding model, and the resulting vectors are
+    inserted to the Pinecone index.
+    After documents were inserted, the KnowledgeBase can be queried
+    by sending a textual query, which will first encoded to a vector and then used to retrieve the
+    closest top-k document chunks.
+
+    Note: Since Resin defines its own data format,
+          you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
+          The index must be created by using `knowledge_base.create_resin_index()` or the CLI command `resin new`.
+
+    When creating a new Resin service, the user must first create the underlying Pinecone index.
+    This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
+
+    Example:
+        >>> kb = KnowledgeBase(index_name="my_index")
+        >>> kb.create_resin_index()
+
+    In any future interactions, the user simply needs to connect to the existing service:
+
+    Example:
+        >>> kb = KnowledgeBase(index_name="my_index")
+        >>> kb.connect()
+
+    Note: the KnowledgeBase is not connected to the index until connect() is called.
+    """
+
     _DEFAULT_COMPONENTS = {
         'record_encoder': OpenAIRecordEncoder,
         'chunker': MarkdownChunker,
@@ -55,8 +85,24 @@ class KnowledgeBase(BaseKnowledgeBase):
                  ):
         """
         Init the knowledge base object.
-        Note: The knowledge base is not connected to the index
-              until connect() is called.
+
+        If the index does not exist, the user must first create it by calling `create_resin_index()`.
+
+        Note: Resin will add the prefix --resin to your selected index name.
+             You can retrieve the full index name knowledge_base.index_name at any time.
+             Or find it in the Pinecone console at https://app.pinecone.io/
+
+        Example:
+            >>> kb = KnowledgeBase(index_name="my_index")
+            >>> kb.create_resin_index()
+
+        In any future interactions, the user simply needs to connect to the existing service:
+
+        Example:
+            >>> kb = KnowledgeBase(index_name="my_index")
+            >>> kb.connect()
+
+        Note: the KnowledgeBase is not connected to the index until connect() is called.
 
         Args:
             index_name: The name of the index to connect to.
