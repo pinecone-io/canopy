@@ -86,8 +86,14 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
-        self._index: Optional[Index] = None
+        # Normally, index creation params are passed directly to the `.create_resin_index()` method.  # noqa: E501
+        # However, when KnowledgeBase is initialized from a config file, these params
+        # would be set by the `KnowledgeBase.from_config()` constructor.
         self._index_params: Optional[Dict[str, Any]] = None
+
+        # The index object is initialized lazily, when the user calls `connect()` or
+        # `create_resin_index()`
+        self._index: Optional[Index] = None
 
     @staticmethod
     def _connect_pinecone():
