@@ -197,7 +197,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def connect(self) -> None:
         """
-        Connect to the knowledge base index.
+        Connect to the underlying Pinecone index.
         This method must be called before making any other calls to the knowledge base.
 
         Returns:
