@@ -238,8 +238,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Args:
             indexed_fields: A list of metadata fields that would be indexed, allowing them to be later used for metadata filtering. All other metadata fields are stored but not indexed. See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.  
            Resin always indexes a built-in `document_id` field, which is added to every vector. By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
-            dimension: The dimension of the vectors to index.
-                       Defaults to the encoder's dimension.
+            dimension (optional): The dimension of the vectors to index. If `dimension` isn't explicitly provided, Resin would try to infer the embedding's dimension based on the configured `Encoder`
             index_params: A dictionary of parameters to pass to the index creation API.
                           see https://docs.pinecone.io/docs/python-client#create_index
 
