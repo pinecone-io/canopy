@@ -224,7 +224,11 @@ class KnowledgeBase(BaseKnowledgeBase):
                            index_params: Optional[dict] = None
                            ):
         """
-        Create a new index in Pinecone.
+        Create the underlying Pinecone index that will be used by the Resin KnowledgeBase.
+        This is a one time set-up operation, that only needs to be done once for every new Resin service. After the index was created, it will persist in Pinecone's servers until explicitly deleted. 
+        
+        Since Resin defines it's own data format, namely a few dedicated metadata fields -  you can not use a pre-existing Pinecone index with Resin's KnowledgeBase. The index must be created by using `knowledge_base.create_resin_index()`. 
+  Note: A `resin--` prefix would be added to the user-selected index name. You can retrieve the full index name `knowledge_base.index_name`
 
         Note: This operation may take a few minutes to complete.
 
