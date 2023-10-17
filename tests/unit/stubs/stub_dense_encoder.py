@@ -1,5 +1,7 @@
-import hashlib
+import mmh3
 import numpy as np
+from collections import defaultdict
+from scipy.sparse import csr_matrix
 from typing import Union, List
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
@@ -7,8 +9,39 @@ from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
 class StubDenseEncoder(BaseDenseEncoder):
 
-    def __init__(self, dimension: int = 3):
+    """
+    Bag-of-words encoder that uses a random projection matrix to
+    project sparse vectors to dense vectors.
+    uses Johnson–Lindenstrauss lemma to project BOW sparse vectors to dense vectors.
+    """
+
+    def __init__(self,
+                 dimension: int = 128,
+                 vocab_size: int = 2 ** 20,
+                 seed: int = 42):
+        self.input_dim = vocab_size
         self.dimension = dimension
+        rng = np.random.default_rng(seed)
+        self.random_matrix = rng.standard_normal((self.input_dim, self.dimension))
+
+    def _text_to_sparse_vector(self, text: str) -> csr_matrix:
+        words = text.split()
+        word_counts = defaultdict(int)
+        for word in words:
+            hashed_word = mmh3.hash(word) % self.input_dim
+            word_counts[hashed_word] += 1
+
+        indices = list(word_counts.keys())
+        values = list(word_counts.values())
+        sparse_vector = csr_matrix((values, (np.zeros_like(indices), indices)),
+                                   shape=(1, self.input_dim))
+
+        return sparse_vector
+
+    def _encode_text(self, text: str) -> List[float]:
+        sparse_vector = self._text_to_sparse_vector(text)
+        projected_embedding = sparse_vector.dot(self.random_matrix).flatten()
+        return list(projected_embedding / np.linalg.norm(projected_embedding))
 
     def encode_documents(self,
                          texts: Union[str, List[str]]
@@ -20,23 +53,10 @@ class StubDenseEncoder(BaseDenseEncoder):
                        ) -> Union[List[float], List[List[float]]]:
         return self._encode(texts)
 
-    def consistent_embedding(self, text: str) -> List[float]:
-        # consistent embedding function that project each text to a unique angle
-        embedding = []
-        for i in range(self.dimension):
-            sha256_hash = hashlib.sha256(f"{text} {i}".encode()).hexdigest()
-            int_value = int(sha256_hash, 16)
-            embedding.append(int_value / float(1 << 256))
-
-        l2_norm = np.linalg.norm(embedding)
-        normalized_embedding = [float(value / l2_norm) for value in embedding]
-
-        return normalized_embedding
-
     def _encode(self,
                 texts: Union[str, List[str]]
                 ) -> Union[List[float], List[List[float]]]:
         if isinstance(texts, str):
-            return self.consistent_embedding(texts)
+            return self._encode_text(texts)
         else:
-            return [self.consistent_embedding(text) for text in texts]
+            return [self._encode_text(text) for text in texts]
