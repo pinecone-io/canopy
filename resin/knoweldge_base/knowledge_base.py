@@ -112,7 +112,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                         Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results.
                       Defaults to TransparentReranker.
-            default_top_k: The default number of documents to return for each query.
+            default_top_k: The default number of document chunks to return for each query.
                             Defaults to 5.
             index_params: A dictionary of parameters to pass to the index creation API.
                           see https://docs.pinecone.io/docs/python-client#create_index
