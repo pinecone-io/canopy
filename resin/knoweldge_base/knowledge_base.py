@@ -39,14 +39,11 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
-    The `KnowledgeBase` is used for store and retrieve text documents,
+    The `KnowledgeBase` is used to store and retrieve text documents,
     using an underlying Pinecone index.
-    Every document is chunked into multiple text snippets based on the text structure
-    (e.g. Markdown or HTML formatting)
-    Then, each chunk is encoded into a vector using an embedding model,
-    and the resulting vectors are inserted to the Pinecone index.
-    After documents were inserted, the KnowledgeBase can be queried
-    by sending a textual query, which will first encoded to a vector
+    Every document is chunked into multiple text snippets based on the text structure (e.g. Markdown or HTML formatting)
+    Then, each chunk is encoded into a vector using an embedding model, and the resulting vectors are inserted to the Pinecone index.
+    After documents were inserted, the KnowledgeBase can be queried by sending a textual query, which will first encoded to a vector
     and then used to retrieve the closest top-k document chunks.
 
     Note: Since Resin defines its own data format,
@@ -90,8 +87,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Init the knowledge base object.
 
-        If the index does not exist,
-        the user must first create it by calling `create_resin_index()`.
+        If the index does not exist, the user must first create it by calling `create_resin_index()`.
 
         Note: Resin will add the prefix --resin to your selected index name.
              You can retrieve the full index name knowledge_base.index_name at any time.
@@ -113,14 +109,14 @@ class KnowledgeBase(BaseKnowledgeBase):
         Note: the KnowledgeBase is not connected to the index until connect() is called.
 
         Args:
-            index_name: The name of the underlying Pinecone index. 
+            index_name: The name of the underlying Pinecone index.
             record_encoder: An instance of RecordEncoder to use for encoding documents
                             and queries. Defaults to OpenAIRecordEncoder.
             chunker: An instance of Chunker to use for chunking documents.
                         Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results.
                       Defaults to TransparentReranker.
-            default_top_k: The default number of document chunks to return for each query.
+            default_top_k: The default number of document chunks to return per query.
                             Defaults to 5.
             index_params: A dictionary of parameters to pass to the index creation API.
                           see https://docs.pinecone.io/docs/python-client#create_index
@@ -208,7 +204,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Connect to the underlying Pinecone index.
         This method must be called before making any other calls to the knowledge base.
 
-        Note: If unerlying index is not provisioned yet, this method will raise an exception.
+        Note: If underlying index is not provisioned yet, an exception will be raised.
               To provision the index, use `create_resin_index()`.
 
         Returns:
@@ -241,25 +237,35 @@ class KnowledgeBase(BaseKnowledgeBase):
                            index_params: Optional[dict] = None
                            ):
         """
-        Create the underlying Pinecone index that will be used by the Resin KnowledgeBase.
-        This is a one time set-up operation, that only needs to be done once for every new Resin service. After the index was created, it will persist in Pinecone's servers until explicitly deleted. 
-        
-        Since Resin defines it's own data format, namely a few dedicated metadata fields -  you can not use a pre-existing Pinecone index with Resin's KnowledgeBase. The index must be created by using `knowledge_base.create_resin_index()`. 
-  Note: A `resin--` prefix would be added to the user-selected index name. You can retrieve the full index name `knowledge_base.index_name`
+        Create the underlying Pinecone index that will be used by the KnowledgeBase.
+        This is a one time set-up operation that only needs to be done once for every new Resin service.
+        After the index was created, it will persist in Pinecone until explicitly deleted.
+
+        Since Resin defines its own data format, namely a few dedicated metadata fields,
+        you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
+        The index must be created by using `knowledge_base.create_resin_index()`.
+
+        Note: Resin will add the prefix --resin to your selected index name.
+             You can retrieve the full index name knowledge_base.index_name at any time.
+             Or find it in the Pinecone console at https://app.pinecone.io/
 
         Note: This operation may take a few minutes to complete.
-
-        Once created, you can see the index in the Pinecone console at
-        https://app.pinecone.io/
+              Once created, you can see the index in the Pinecone console
 
         Args:
-            indexed_fields: A list of metadata fields that would be indexed, allowing them to be later used for metadata filtering. All other metadata fields are stored but not indexed. See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.  
-           Resin always indexes a built-in `document_id` field, which is added to every vector. By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
-            dimension (optional): The dimension of the vectors to index. If `dimension` isn't explicitly provided, Resin would try to infer the embedding's dimension based on the configured `Encoder`
-            index_params: A dictionary of parameters to pass to the index creation API.
-                          For example, you can set the index's number of replicas
-                            by passing {"replicas": 2}.
-                          see https://docs.pinecone.io/docs/python-client#create_index
+           indexed_fields: A list of metadata fields that would be indexed,
+                           allowing them to be later used for metadata filtering.
+                           All other metadata fields are stored but not indexed.
+                           See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.
+                           Resin always indexes a built-in `document_id` field, is added to every vector.
+                           By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
+           dimension: The dimension of the vectors to index.
+                       If `dimension` isn't explicitly provided,
+                       Resin would try to infer the embedding's dimension based on the configured `Encoder`
+           index_params: A dictionary of parameters to pass to the index creation API.
+                         For example, you can set the index's number of replicas
+                          by passing {"replicas": 2}.
+                         see https://docs.pinecone.io/docs/python-client#create_index
 
         Returns:
             None
@@ -345,10 +351,12 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Delete the underlying Pinecone index.
 
-        **Note: THIS OPERATION IS NOT REVERSABLE!!**  
+        **Note: THIS OPERATION IS NOT REVERSABLE!!**
         Once deleted, the index, together with any stored documents cannot be restored!
-        
-        After deletion - the `KnowledgeBase` would not be connected to a Pinecone index anymore, so you will not be able to insert documents or query. If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_resin_index()`
+
+        After deletion - the `KnowledgeBase` would not be connected to a Pinecone index anymore,
+                         so you will not be able to insert documents or query.
+                         If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_resin_index()`
         """
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
@@ -364,8 +372,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         This operation includes several steps:
         1. Encode the queries to vectors using the underlying encoder.
-        2. Query the underlying Pinecone index to retrieve the top-k chunks
-            for each query.
+        2. Query the underlying Pinecone index to retrieve the top-k chunks for each query.
         3. Rerank the results using the underlying reranker.
         4. Return the results for each query as a list of QueryResult objects.
 
@@ -453,8 +460,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Upsert documents into the knowledge base.
         Upsert operation stands for "update or insert".
-        It means that if a document with the same id already exists in the index,
-        it will be updated with the new document.
+        It means that if a document with the same id already exists in the index, it will be updated with the new document.
         Otherwise, a new document will be inserted.
 
         This operation includes several steps:
@@ -591,8 +597,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Args:
             config: A dictionary containing the configuration for the knowledge base.
             index_name: The name of the index to connect to (optional).
-                        If not provided, the index name will be read
-                        from the environment variable INDEX_NAME.
+                        If not provided, the index name will be read from the environment variable INDEX_NAME.
 
         Returns:
             A KnowledgeBase object.
