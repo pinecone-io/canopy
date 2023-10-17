@@ -105,7 +105,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Note: the KnowledgeBase is not connected to the index until connect() is called.
 
         Args:
-            index_name: The name of the index to connect to.
+            index_name: The name of the underlying Pinecone index. 
             record_encoder: An instance of RecordEncoder to use for encoding documents
                             and queries. Defaults to OpenAIRecordEncoder.
             chunker: An instance of Chunker to use for chunking documents.
