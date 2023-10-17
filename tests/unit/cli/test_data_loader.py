@@ -181,8 +181,10 @@ def test_df_to_documents(name, df_and_expected) -> None:
 def dict_rows_input():
     return [
         {"id": 1, "text": "foo"},
-        {"id": 2, "text": "bar", "source": "bar_source", "metadata": {"bar": "bar"}},
-        {"id": 3, "text": "baz", "metadata": {"baz": "baz"}},
+        {"id": 2, "text": "bar", "source": "bar_source",
+         "metadata": {"bar": "bar", "list": ["item1", "item2"]}},
+        {"id": 3, "text": "baz",
+         "metadata": {"baz": "baz", "null_val": None}},
         {"id": 4, "text": "qux", "source": "qux_source"},
     ]
 
@@ -191,7 +193,8 @@ def dict_rows_input():
 def expected_documents():
     return [
         Document(id=1, text="foo"),
-        Document(id=2, text="bar", source="bar_source", metadata={"bar": "bar"}),
+        Document(id=2, text="bar", source="bar_source",
+                 metadata={"bar": "bar", "list": ["item1", "item2"]}),
         Document(id=3, text="baz", metadata={"baz": "baz"}),
         Document(id=4, text="qux", source="qux_source"),
     ]
