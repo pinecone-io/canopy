@@ -27,8 +27,8 @@ class OpenAILLM(BaseLLM):
         self.available_models = [k["id"] for k in openai.Model.list().data]
         if model_name not in self.available_models:
             raise ValueError(
-                f"Model {model_name} not found. " +
-                " Available models: {self.available_models}"
+                f"Model {model_name} not found. "
+                f" Available models: {self.available_models}"
             )
 
     @retry(

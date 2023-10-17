@@ -1,5 +1,4 @@
 import os
-from textwrap import dedent
 
 import click
 import time
@@ -18,6 +17,7 @@ from resin.models.data_models import Document
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
+    CLIError,
     IDsNotUniqueError,
     DocumentsValidationError)
 
@@ -32,7 +32,6 @@ dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
 
 spinner = Spinner()
-format_multiline = lambda s: dedent(s).strip()
 
 
 def check_service_health(url: str):
@@ -44,17 +43,16 @@ def check_service_health(url: str):
     except requests.exceptions.ConnectionError:
         msg = f"""
         Resin service is not running on {url}. 
-        please run `resin start`"
+        please run `resin start`
         """
-        click.echo(click.style(format_multiline(msg), fg="red"), err=True)
-        sys.exit(1)
-    except Exception as e:
-        msg = (
-            f"Resin service on {url} is not healthy, failed with error: {e}"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+        raise CLIError(msg)
 
+    except requests.exceptions.HTTPError as e:
+        error = e.response.json().get("detail", None) or e.response.text
+        msg = (
+            f"Resin service on {url} is not healthy, failed with error: {error}"
+        )
+        raise CLIError(msg)
 
 @retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
