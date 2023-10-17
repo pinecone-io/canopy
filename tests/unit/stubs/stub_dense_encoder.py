@@ -26,6 +26,7 @@ class StubDenseEncoder(BaseDenseEncoder):
         for i in range(self.dimension):
             sha256_hash = hashlib.sha256(f"{text} {i}".encode()).hexdigest()
             int_value = int(sha256_hash, 16)
+            int_value = -int_value if int_value % 2 == 0 else int_value
             embedding.append(int_value / float(1 << 256))
 
         l2_norm = np.linalg.norm(embedding)
