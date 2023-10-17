@@ -367,8 +367,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     @classmethod
     def from_config(cls, config: Dict[str, Any], index_name: Optional[str] = None):
         # The same logical config can be used by multiple Resin service instances,
-        # differing only by the index name. That's why `index_name` is recommended to be
-        # passed explicitly or as environment variable, and not as part of the config.
+        # differing only by the index name. For that reason, `index_name` is recommended
+        # to be passed explicitly or as environment variable, not in the config file
         index_name = index_name or os.getenv("INDEX_NAME")
         if index_name is None:
             raise ValueError(
