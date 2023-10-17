@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 import json
 import pandas as pd
@@ -32,15 +33,17 @@ good_df_maximal = (
             {"id": 1, "text": "foo", "source": "foo_source",
              "metadata": {"foo": "foo"}},
             {"id": 2, "text": "bar", "source": "bar_source",
-             "metadata": {"bar": "bar"}},
+             "metadata": {"bar": "bar", "ndarray": np.array([1, 2, 3])}},
             {"id": 3, "text": "baz", "source": "baz_source",
-             "metadata": {"baz": "baz"}},
+             "metadata": {"baz": "baz", "list": ["item1", "item2"]}},
         ]
     ),
     [
         Document(id=1, text="foo", source="foo_source", metadata={"foo": "foo"}),
-        Document(id=2, text="bar", source="bar_source", metadata={"bar": "bar"}),
-        Document(id=3, text="baz", source="baz_source", metadata={"baz": "baz"}),
+        Document(id=2, text="bar", source="bar_source",
+                 metadata={"bar": "bar", "ndarray": [1, 2, 3]}),
+        Document(id=3, text="baz", source="baz_source",
+                 metadata={"baz": "baz", "list": ["item1", "item2"]}),
     ]
 )
 
