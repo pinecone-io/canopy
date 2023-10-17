@@ -324,7 +324,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def delete_index(self):
         """
-        Delete the index the knowledge base is connected to.
+        Delete the underlying Pinecone index.
 
         Note: Once deleted, the index cannot be recovered
               and all operations on this knowledge base object will not be available.
