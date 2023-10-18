@@ -133,6 +133,12 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-start.gif)
 
 
+> **_📝 NOTE:_**
+>
+> The resin start command will keep the terminal occupied. To proceed with the next steps, please open a new terminal window.
+> and make sure all the environment variables described in the [installation](#how-to-install) section are set.
+
+
 ### 4. Chat with your data
 
 Now that you have data in your index, you can chat with it using the CLI:
