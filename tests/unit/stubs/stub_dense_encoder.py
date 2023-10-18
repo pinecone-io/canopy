@@ -17,7 +17,7 @@ class StubDenseEncoder(BaseDenseEncoder):
 
     def __init__(self,
                  dimension: int = 128,
-                 vocab_size: int = 2 ** 20,
+                 vocab_size: int = 2 ** 18,
                  seed: int = 42):
         self.input_dim = vocab_size
         self.dimension = dimension
