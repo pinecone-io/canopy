@@ -1,24 +1,24 @@
 # Resin
 
-**Resin** is a Sofware Development Kit and a Framework for AI applications. Resin allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Resin** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
+**Resin** is a Sofware Development Kit (SDK) and a Framework for AI applications. Resin allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Resin** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
 
 * **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Resin** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
 
-* **Operational & Production ready** - Resin is built on top of **Pinecone** and can Scale to billions of vectors. Unlike other AI frameworks, **Resin** optimizes for production use cases it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Resin** can maximize context quality and relevance while controlling the cost of the AI system.
+* **Operational & Production ready** - Resin is built on top of **Pinecone** and can Scale to Billions of documents. Unlike other AI frameworks, **Resin** optimizes for production use cases it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Resin** can maximize context quality and relevance while controlling the cost of the AI system.
 
 * **Open source** - **Resin** is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
 
 
 ## What's inside the box?
 
-1. **Resin Core** - the core library. Resin has 3 high level classes that act as API level components:
-    * **ChatEngine** - is a complete RAG unit [TBD]
+1. **Resin Core Library** - Resin has 3 high level classes that act as API level components:
+    * **ChatEngine** - is a complete RAG unit that exposes a chat interface of LLM augmented with retrieval engine.
     * **ContextEngine** - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. 
     * **KnowledgeBase** - is the data managment interface, handles the processing, chunking and encoding (embedding) of the data, along with Upsert/Query and Delete operations
 
-2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. 
+2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. For the complete documentation please go to: [#TODO: LINK](link.link.com) 
 
-3. **Resin CLI** - [TBD]
+3. **Resin CLI** - Resin comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
 
 ## How to install
