@@ -1,8 +1,10 @@
 import json
 import os
 import glob
+from collections.abc import Iterable
 from typing import List
 
+import numpy as np
 import pandas as pd
 
 from pydantic import ValidationError
@@ -35,7 +37,9 @@ def _process_metadata(value):
     if not isinstance(value, dict):
         raise DocumentsValidationError("Metadata must be a dict or json string")
 
-    return {k: v for k, v in value.items() if not pd.isna(v)}
+    return {k: v.tolist() if isinstance(v, np.ndarray) else v
+            for k, v in value.items()
+            if isinstance(v, Iterable) or pd.notna(v)}
 
 
 def _df_to_documents(df: pd.DataFrame) -> List[Document]:
