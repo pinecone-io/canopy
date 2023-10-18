@@ -23,30 +23,21 @@
 
 ## How to install
 
-1. Set up the environment variables
+1. install the package
+```bash
+pip install pinecone-resin
+```
+
+2. Set up the environment variables
 
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export INDEX_NAME="test-index-1"
+export INDEX_NAME=<INDEX_NAME>
 ```
 
-2. install the package
-```bash
-pip install pinecone-resin
-```
-
-3. you are good to go! see the quickstart guide on how to run basic demo
-
-## Quickstart
-
-In this quickstart, we will show you how to use the **Resin** to build a simple question answering system using RAG (retrival augmented generation).
-
-### 0. Before we start
-
-Before we start, run the `resin` command alone to verify the connection to services in healthy:
-    
+3. Check that installation is successful and environment is set, run:
 ```bash
 resin
 ```
@@ -60,6 +51,9 @@ Usage: resin [OPTIONS] COMMAND [ARGS]...
 # rest of the help message
 ```
 
+## Quickstart
+
+In this quickstart, we will show you how to use the **Resin** to build a simple question answering system using RAG (retrival augmented generation).
 
 ### 1. Create a new **Resin** Index
 
@@ -80,16 +74,23 @@ And follow the CLI instructions. The index that will be created will have a pref
 You can load data into your **Resin** Index by simply using the CLI:
 
 ```bash
-resin upsert <PATH_TO_DATA>
+resin upsert /path/to/data_directory
+
+# or
+resin upsert /path/to/data_directory/file.parquet
+
+# or
+resin upsert /path/to/data_directory/file.jsonl
 ```
 
-The data should be in a parquet format where each row is a document. The documents should have the following schema:
+Resin support single or mulitple files in jsonl or praquet format. The documents should have the following schema:
 
 ```
 +----------+--------------+--------------+---------------+
-| id(str)  | text(str)    | source(str)  | metadata(dict)|
+| id(str)  | text(str)    | source       | metadata      |
+|          |              | Optional[str]| Optional[dict]|
 |----------+--------------+--------------+---------------|
-| "1"      | "some text"  | "some source"| {"key": "val"}|
+| "id1"    | "some text"  | "some source"| {"key": "val"}|
 +----------+--------------+--------------+---------------+
 ```
 
