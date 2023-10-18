@@ -545,9 +545,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         Since each document is chunked into multiple chunks, this operation will delete all chunks belonging to the given document ids.
         This operation not raise an exception if the document does not exist.
 
-        Note: Currently in starter env the delete by metadata operation is not supported.
-              Therefore, in starter env this method will simply delete the first 32 chunks of each document.
-
         Args:
             document_ids: A list of document ids to delete from the index.
             namespace: The namespace in the underlying index to delete documents from.
@@ -566,6 +563,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
+        # Currently starter env does not support delete by metadata filter
+        # So temporarily we delete the first DELETE_STARTER_CHUNKS_PER_DOC chunks
         if self._is_starter_env():
             for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
                 doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
