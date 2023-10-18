@@ -41,6 +41,7 @@ class StubDenseEncoder(BaseDenseEncoder):
     def _encode_text(self, text: str) -> List[float]:
         sparse_vector = self._text_to_sparse_vector(text)
         projected_embedding = sparse_vector.dot(self.random_matrix).flatten()
+        projected_embedding = projected_embedding.astype(np.float32)
         return list(projected_embedding / np.linalg.norm(projected_embedding))
 
     def encode_documents(self,
