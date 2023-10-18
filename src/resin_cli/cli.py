@@ -34,6 +34,7 @@ if os.getenv("OPENAI_API_KEY"):
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
 spinner = Spinner()
+CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def check_service_health(url: str):
@@ -68,7 +69,7 @@ def validate_connection():
         msg = (
             f"{str(e)}\n"
             "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
-            " envriorment variables. "
+            " environment variables. "
             "Please visit https://www.pinecone.io/docs/quick-start/ for more details."
         )
         raise CLIError(msg)
@@ -85,7 +86,15 @@ def validate_connection():
     click.echo(click.style("Ready\n", bold=True, fg="green"))
 
 
-@click.group(invoke_without_command=True)
+def _initialize_tokenizer():
+    try:
+        Tokenizer.initialize()
+    except Exception as e:
+        msg = f"Failed to initialize tokenizer. Reason:\n{e}"
+        raise CLIError(msg)
+
+
+@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__, "-v", "--version", prog_name="Resin")
 @click.pass_context
 def cli(ctx):
@@ -99,7 +108,7 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(help="Check if resin service is running by sending a health check request")
+@cli.command(help="Check if resin service is running and healthy.")
 @click.option("--host", default="0.0.0.0", help="Resin's service hostname")
 @click.option("--port", default=8000, help="The port of the resin service")
 @click.option("--ssl/--no-ssl", default=False, help="Whether to use ssl for the "
@@ -116,7 +125,7 @@ def health(host, port, ssl):
     help=(
         """Create a new Pinecone index that that will be used by Resin.
         
-        A Resin webapp can not be started without a Pinecone index which is configured
+        A Resin service can not be started without a Pinecone index which is configured
         to work with Resin.
         This command will create a new Pinecone index and configure it in the right
         schema for Resin. If the embedding's dimension is not explicitly configured by
@@ -127,7 +136,7 @@ def health(host, port, ssl):
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 def new(index_name):
-    Tokenizer.initialize()
+    _initialize_tokenizer()
     kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
@@ -145,47 +154,40 @@ def new(index_name):
 
 @cli.command(
     help=(
-        "Upsert allows you to load a loacal data file into a your Resin index."
-        + " The allowed formats are .jsonl and .parquet. The data will be validated"
+        """Upload local data files containing documents to the Resin service.
+        
+        Load all the documents from data file or a directory containing multiple data 
+        files. The allowed formats are .jsonl and .parquet.
+        """
     )
 )
 @click.argument("data-path", type=click.Path(exists=True))
 @click.option(
     "--index-name",
     default=os.environ.get("INDEX_NAME"),
-    help="Index name",
+    help="The name of the index to upload the data to. "
+         "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
-def upsert(index_name, data_path, tokenizer_model):
+def upsert(index_name, data_path):
     if index_name is None:
         msg = ("Index name is not provided, please provide it with" +
                ' --index-name or set it with env var + '
                '`export INDEX_NAME="MY_INDEX_NAME`')
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
-    try:
-        Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
-    except Exception:
-        msg = "Error: Failed to initialize tokenizer"
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
-    if data_path is None:
-        msg = ("Data path is not provided,"
-               " please provide it with --data-path or set it with env var")
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+        raise CLIError(msg)
+
+    _initialize_tokenizer()
 
     kb = KnowledgeBase(index_name=index_name)
     try:
         kb.connect()
-    except Exception:
-        msg = (
-            "Error: Failed to connect to Pinecone index, please make sure"
-            " you have set the right env vars"
-            " PINECONE_API_KEY, INDEX_NAME, PINECONE_ENVIRONMENT"
-        )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+    except RuntimeError as e:
+        # TODO: kb should throw a specific exception for each case
+        msg = str(e)
+        if "credentials" in msg:
+            msg += ("\nCredentials should be set by the PINECONE_API_KEY and "
+                    "PINECONE_ENVIRONMENT environment variables. Please visit "
+                    "https://www.pinecone.io/docs/quick-start/ for more details.")
+        raise CLIError(msg)
 
     click.echo("Resin is going to upsert data from ", nl=False)
     click.echo(click.style(f"{data_path}", fg="yellow"), nl=False)
@@ -196,43 +198,33 @@ def upsert(index_name, data_path, tokenizer_model):
             data = load_from_path(data_path)
         except IDsNotUniqueError:
             msg = (
-                "Error: the id field on the data is not unique"
-                + " this will cause records to override each other on upsert"
-                + " please make sure the id field is unique"
+                "The data contains duplicate IDs, please make sure that each document"
+                " has a unique ID, otherwise documents with the same ID will overwrite"
+                " each other"
             )
-            click.echo(click.style(msg, fg="red"), err=True)
-            sys.exit(1)
+            raise CLIError(msg)
         except DocumentsValidationError:
             msg = (
-                "Error: one or more rows have not passed validation"
-                + " data should agree with the Document Schema"
-                + f" on {Document.__annotations__}"
-                + " please make sure the data is valid"
+                f"One or more rows have failed data validation. The rows in the"
+                f"data file should be in the schema: {Document.__annotations__}."
             )
-            click.echo(click.style(msg, fg="red"), err=True)
-            sys.exit(1)
+            raise CLIError(msg)
         except Exception:
             msg = (
-                "Error: an unexpected error has occured in loading data from files"
-                + " it may be due to issue with the data format"
-                + " please make sure the data is valid, and can load with pandas"
+                f"A unexpected error while loading the data from files in {data_path}. "
+                "Please make sure the data is in valid `jsonl` or `parquet` format."
             )
-            click.echo(click.style(msg, fg="red"), err=True)
-            sys.exit(1)
+            raise CLIError(msg)
         pd.options.display.max_colwidth = 20
     click.echo(data[0].json(exclude_none=True, indent=2))
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     try:
         kb.upsert(data)
-    except Exception:
+    except Exception as e:
         msg = (
-            "Error: Failed to upsert data to index"
-            f" {kb.index_name}"
-            " this could be due to connection issues"
-            " please re-run `resin upsert`"
+            f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
         )
-        click.echo(click.style(msg, fg="red"), err=True)
-        sys.exit(1)
+        raise CLIError(msg)
     click.echo(click.style("Success!", fg="green"))
 
 
