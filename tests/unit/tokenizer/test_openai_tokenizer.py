@@ -33,3 +33,12 @@ class TestOpenAITokenizer(BaseTestTokenizer):
     @staticmethod
     def test_messages_token_count_empty_messages(tokenizer):
         assert tokenizer.messages_token_count([]) == 3
+
+    @staticmethod
+    def test_special_tokens_to_natural_text(tokenizer):
+        tokens = tokenizer.tokenize("<|endoftext|>")
+        assert tokens == ['<', '|', 'endo', 'ft', 'ext', '|', '>']
+
+        assert tokenizer.detokenize(tokens) == "<|endoftext|>"
+
+        assert tokenizer.token_count("<|endoftext|>") == 7
