@@ -30,6 +30,8 @@ from .api_models import ChatDebugInfo
 
 dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
 load_dotenv(dotenv_path)
+if os.getenv("OPENAI_API_KEY"):
+    openai.api_key = os.getenv("OPENAI_API_KEY")
 
 spinner = Spinner()
 
@@ -112,29 +114,31 @@ def health(host, port, ssl):
 
 @cli.command(
     help=(
-        "New command sets up a new index in Pinecone that is configured for Resin."
-        + " This will automatically tap the embedding model with a single toeken to "
-        + "assert for the dimensionality of the embedding space. This will also set up "
-        + "the index with the right schema for Resin."
+        """Create a new Pinecone index that that will be used by Resin.
+        
+        A Resin webapp can not be started without a Pinecone index which is configured
+        to work with Resin.
+        This command will create a new Pinecone index and configure it in the right
+        schema for Resin. If the embedding's dimension is not explicitly configured by
+        the config file - the embedding model will be tapped with a single token to 
+        infer the dimensionality of the embedding space.  
+        """
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
-@click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
-def new(index_name, tokenizer_model):
+def new(index_name):
+    Tokenizer.initialize()
     kb = KnowledgeBase(index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
-    Tokenizer.initialize(OpenAITokenizer, tokenizer_model)
     with spinner:
         try:
             kb.create_resin_index()
         # TODO: kb should throw a specific exception for each case
         except Exception as e:
-            msg = "Error: Failed to create a new index"
-            click.echo(click.style(msg, fg="red"), err=True, nl=False)
-            click.echo(f" Reason: {e}")
-            sys.exit(1)
+            msg = f"Failed to create a new index. Reason:\n{e}"
+            raise CLIError(msg)
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
 

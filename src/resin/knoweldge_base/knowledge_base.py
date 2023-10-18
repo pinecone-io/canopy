@@ -6,6 +6,7 @@ from typing import List, Optional, Dict, Any
 import pandas as pd
 from pinecone import list_indexes, delete_index, create_index, init \
     as pinecone_init, whoami as pinecone_whoami
+from pinecone import ApiException as PineconeApiException
 
 try:
     from pinecone import GRPCIndex as Index
@@ -160,8 +161,15 @@ class KnowledgeBase(BaseKnowledgeBase):
                              "Please remove it from indexed_fields")
 
         if dimension is None:
-            if self._encoder.dimension is not None:
-                dimension = self._encoder.dimension
+            try:
+                encoder_dimension = self._encoder.dimension
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to infer vectors' dimension from encoder due to error: "
+                    f"{e}. Please fix the error or provide the dimension manually"
+                ) from e
+            if encoder_dimension is not None:
+                dimension = encoder_dimension
             else:
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
@@ -185,10 +193,10 @@ class KnowledgeBase(BaseKnowledgeBase):
                          },
                          timeout=TIMEOUT_INDEX_CREATE,
                          **index_params)
-        except Exception as e:
+        except (Exception, PineconeApiException) as e:
             raise RuntimeError(
-                f"Unexpected error while creating index {self.index_name}."
-                f"Please try again."
+                f"Failed to create index {self.index_name} due to error: "
+                f"{e.body if isinstance(e, PineconeApiException) else e}"
             ) from e
 
         # wait for index to be provisioned
