@@ -254,7 +254,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                            allowing them to be later used for metadata filtering.
                            All other metadata fields are stored but not indexed.
                            See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.
-                           Resin always indexes a built-in `document_id` field, is added to every vector.
+                           Resin always indexes a built-in `document_id` field, which is added to every vector.
                            By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
            dimension: The dimension of the vectors to index.
                        If `dimension` isn't explicitly provided,
@@ -468,8 +468,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         Args:
             documents: A list of documents to upsert.
             namespace: The namespace in the underlying index to upsert documents into.
-            batch_size: The number of documents to upsert at once to the index,
-                        after chunking and encoding.
+            batch_size: Refers only to the actual upsert operation to the underlying index.
+                        The number of chunks (multiple piecies of text per document) to upsert in each batch.
 
         Returns:
             None
