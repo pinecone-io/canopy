@@ -39,35 +39,30 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
-    The `KnowledgeBase` is used to store and retrieve text documents,
-    using an underlying Pinecone index.
+    The `KnowledgeBase` is used to store and retrieve text documents, using an underlying Pinecone index.
     Every document is chunked into multiple text snippets based on the text structure (e.g. Markdown or HTML formatting)
     Then, each chunk is encoded into a vector using an embedding model, and the resulting vectors are inserted to the Pinecone index.
     After documents were inserted, the KnowledgeBase can be queried by sending a textual query, which will first encoded to a vector
     and then used to retrieve the closest top-k document chunks.
 
-    Note: Since Resin defines its own data format,
-          you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
-          The index must be created by using `knowledge_base.create_resin_index()`
-          or the CLI command `resin new`.
+    Note: Since Resin defines its own data format, you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
+          The index must be created by using `knowledge_base.create_resin_index()` or the CLI command `resin new`.
 
-    When creating a new Resin service,
-    the user must first create the underlying Pinecone index.
-    This is a one-time setup process -
-    the index will exist on Pinecone's managed service until it is deleted.
+    When creating a new Resin service, the user must first create the underlying Pinecone index.
+    This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
 
     Example:
+        >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+        >>> from tokenizer import Tokenizer
+        >>> Tokenizer.initialize()
         >>> kb = KnowledgeBase(index_name="my_index")
         >>> kb.create_resin_index()
 
-    In any future interactions, the user simply needs to connect:
+    In any future interactions, the user simply needs to connect to the existing index:
 
-    Example:
         >>> kb = KnowledgeBase(index_name="my_index")
         >>> kb.connect()
-
-    Note: the KnowledgeBase is not connected to the index until connect() is called.
-    """
+    """  # noqa: E501
 
     _DEFAULT_COMPONENTS = {
         'record_encoder': OpenAIRecordEncoder,
@@ -85,45 +80,41 @@ class KnowledgeBase(BaseKnowledgeBase):
                  index_params: Optional[dict] = None,
                  ):
         """
-        Init the knowledge base object.
+        Initilize the knowledge base object.
 
-        If the index does not exist, the user must first create it by calling `create_resin_index()`.
+        If the index does not exist, the user must first create it by calling `create_resin_index()` or the CLI command `resin new`.
 
         Note: Resin will add the prefix --resin to your selected index name.
-             You can retrieve the full index name knowledge_base.index_name at any time.
-             Or find it in the Pinecone console at https://app.pinecone.io/
+             You can retrieve the full index name knowledge_base.index_name at any time, or find it in the Pinecone console at https://app.pinecone.io/
 
         Example:
 
             create a new index:
-
+            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from tokenizer import Tokenizer
+            >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.create_resin_index()
 
         In any future interactions,
-        the user simply needs to connect to the existing service:
+        the user simply needs to connect to the existing index:
 
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
 
-        Note: the KnowledgeBase is not connected to the index until connect() is called.
-
         Args:
             index_name: The name of the underlying Pinecone index.
-            record_encoder: An instance of RecordEncoder to use for encoding documents
-                            and queries. Defaults to OpenAIRecordEncoder.
-            chunker: An instance of Chunker to use for chunking documents.
-                        Defaults to MarkdownChunker.
-            reranker: An instance of Reranker to use for reranking query results.
-                      Defaults to TransparentReranker.
-            default_top_k: The default number of document chunks to return per query.
-                            Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation API.
+            record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
+                                                      Defaults to OpenAIRecordEncoder.
+            chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
+            reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
+            default_top_k: The default number of document chunks to return per query. Defaults to 5.
+            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
                           see https://docs.pinecone.io/docs/python-client#create_index
 
         Returns:
             KnowledgeBase object.
-        """
+        """  # noqa: E501
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
@@ -205,22 +196,28 @@ class KnowledgeBase(BaseKnowledgeBase):
         This method must be called before making any other calls to the knowledge base.
 
         Note: If underlying index is not provisioned yet, an exception will be raised.
-              To provision the index, use `create_resin_index()`.
+              To provision the index, use `create_resin_index()` or the CLI command `resin new`.
 
         Returns:
-            None if successful, raises an exception otherwise.
-        """
+            None
+
+        Raises:
+            RuntimeError: If the knowledge base failed to connect to the underlying Pinecone index.
+        """  # noqa: E501
         if self._index is None:
             self._index = self._connect_index()
         self.verify_index_connection()
 
     def verify_index_connection(self) -> None:
         """
-        Verify that the knowledge base is connected to the index.
+        Verify that the knowledge base is connected to the underlying Pinecone index.
 
         Returns:
-            None if successful, raises an exception otherwise.
-        """
+            None
+
+        Raises:
+            RuntimeError: If the knowledge base is not connected properly to the underlying Pinecone index.
+        """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -237,20 +234,20 @@ class KnowledgeBase(BaseKnowledgeBase):
                            index_params: Optional[dict] = None
                            ):
         """
-        Create the underlying Pinecone index that will be used by the KnowledgeBase.
+        Creates the underlying Pinecone index that will be used by the KnowledgeBase.
         This is a one time set-up operation that only needs to be done once for every new Resin service.
         After the index was created, it will persist in Pinecone until explicitly deleted.
 
         Since Resin defines its own data format, namely a few dedicated metadata fields,
         you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
-        The index must be created by using `knowledge_base.create_resin_index()`.
+        The index must be created by using `knowledge_base.create_resin_index()` or the CLI command `resin new`.
+
+        Note: This operation may take a few minutes to complete.
+              Once created, you can see the index in the Pinecone console
 
         Note: Resin will add the prefix --resin to your selected index name.
              You can retrieve the full index name knowledge_base.index_name at any time.
              Or find it in the Pinecone console at https://app.pinecone.io/
-
-        Note: This operation may take a few minutes to complete.
-              Once created, you can see the index in the Pinecone console
 
         Args:
            indexed_fields: A list of metadata fields that would be indexed,
@@ -263,13 +260,12 @@ class KnowledgeBase(BaseKnowledgeBase):
                        If `dimension` isn't explicitly provided,
                        Resin would try to infer the embedding's dimension based on the configured `Encoder`
            index_params: A dictionary of parameters to pass to the index creation API.
-                         For example, you can set the index's number of replicas
-                          by passing {"replicas": 2}.
+                         For example, you can set the index's number of replicas by passing {"replicas": 2}.
                          see https://docs.pinecone.io/docs/python-client#create_index
 
         Returns:
             None
-        """
+        """  # noqa: E501
         # validate inputs
         if indexed_fields is None:
             indexed_fields = ['document_id']
@@ -351,13 +347,14 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Delete the underlying Pinecone index.
 
-        **Note: THIS OPERATION IS NOT REVERSABLE!!**
-        Once deleted, the index, together with any stored documents cannot be restored!
+        **Note: THIS OPERATION IS NOT REVERSIBLE!!**
+        Once deleted, the index together with any stored documents cannot be restored!
 
         After deletion - the `KnowledgeBase` would not be connected to a Pinecone index anymore,
                          so you will not be able to insert documents or query.
                          If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_resin_index()`
-        """
+                         Or use the CLI command `resin new`.
+        """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
         delete_index(self._index_name)
@@ -368,7 +365,7 @@ class KnowledgeBase(BaseKnowledgeBase):
               global_metadata_filter: Optional[dict] = None
               ) -> List[QueryResult]:
         """
-        Query the knowledge base to retrieve documents chunks.
+        Query the knowledge base to retrieve document chunks.
 
         This operation includes several steps:
         1. Encode the queries to vectors using the underlying encoder.
@@ -378,16 +375,16 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
             queries: A list of queries to run against the knowledge base.
-            global_metadata_filter: A metadata filter to apply to all queries.
-                                    in addition to any query-specific filters.
-                                    For example, the filter {"website": "wiki"}
-                                    will only return documents with the metadata
-                                    {"website": "wiki"} (in case provided in upsert)
+            global_metadata_filter: A metadata filter to apply to all queries, in addition to any query-specific filters.
+                                    For example, the filter {"website": "wiki"} will only return documents with the metadata {"website": "wiki"} (in case provided in upsert)
                                     see https://docs.pinecone.io/docs/metadata-filtering
         Returns:
             A list of QueryResult objects.
 
         Examples:
+            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from tokenizer import Tokenizer
+            >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
             >>> queries = [Query(text="How to make a cake"),
@@ -395,8 +392,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                 top_k=10,
                                 metadata_filter={"website": "wiki"})]
             >>> results = kb.query(queries)
-
-        """
+        """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -464,7 +460,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Otherwise, a new document will be inserted.
 
         This operation includes several steps:
-        1. Chunk the documents into smaller chunks.
+        1. Split the documents into smaller chunks.
         2. Encode the chunks to vectors.
         3. Delete any existing chunks belonging to the same documents.
         4. Upsert the chunks to the index.
@@ -479,7 +475,9 @@ class KnowledgeBase(BaseKnowledgeBase):
             None
 
         Example:
-
+            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from tokenizer import Tokenizer
+            >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
             >>> documents = [Document(id="doc1",
@@ -491,7 +489,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                      source="my_source",
                                      metadata={"website": "wiki"})]
             >>> kb.upsert(documents)
-        """
+        """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -544,13 +542,11 @@ class KnowledgeBase(BaseKnowledgeBase):
                namespace: str = "") -> None:
         """
         Delete documents from the underlying Pinecone index.
-        Since each document is chunked into multiple chunks,
-        this operation will delete all chunks belonging to the given document ids.
+        Since each document is chunked into multiple chunks, this operation will delete all chunks belonging to the given document ids.
         This operation not raise an exception if the document does not exist.
 
-        Note: Currently in starter env the delete by metadata
-              operation is not supported. Therefore, in starter env
-              this method will simply delete the first 32 chunks of each document.
+        Note: Currently in starter env the delete by metadata operation is not supported.
+              Therefore, in starter env this method will simply delete the first 32 chunks of each document.
 
         Args:
             document_ids: A list of document ids to delete from the index.
@@ -560,10 +556,13 @@ class KnowledgeBase(BaseKnowledgeBase):
             None
 
         Example:
+            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from tokenizer import Tokenizer
+            >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
             >>> kb.delete(document_ids=["doc1", "doc2"])
-        """
+        """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -601,7 +600,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Returns:
             A KnowledgeBase object.
-        """
+        """  # noqa: E501
         index_name = index_name or os.getenv("INDEX_NAME")
         if index_name is None:
             raise ValueError(
