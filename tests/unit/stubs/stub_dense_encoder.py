@@ -1,14 +1,12 @@
 import mmh3
 import numpy as np
 from collections import defaultdict
-from scipy.sparse import csr_matrix
 from typing import Union, List
 
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
 
 class StubDenseEncoder(BaseDenseEncoder):
-
     """
     Bag-of-words encoder that uses a random projection matrix to
     project sparse vectors to dense vectors.
@@ -16,31 +14,31 @@ class StubDenseEncoder(BaseDenseEncoder):
     """
 
     def __init__(self,
-                 dimension: int = 128,
-                 vocab_size: int = 2 ** 18,
-                 seed: int = 42):
+                 dimension: int = 8,
+                 vocab_size: int = 2 ** 12):
         self.input_dim = vocab_size
         self.dimension = dimension
-        rng = np.random.default_rng(seed)
-        self.random_matrix = rng.standard_normal((self.input_dim, self.dimension))
 
-    def _text_to_sparse_vector(self, text: str) -> csr_matrix:
+    def _text_to_word_counts(self, text: str) -> defaultdict:
         words = text.split()
         word_counts = defaultdict(int)
         for word in words:
             hashed_word = mmh3.hash(word) % self.input_dim
             word_counts[hashed_word] += 1
-
-        indices = list(word_counts.keys())
-        values = list(word_counts.values())
-        sparse_vector = csr_matrix((values, (np.zeros_like(indices), indices)),
-                                   shape=(1, self.input_dim))
-
-        return sparse_vector
+        return word_counts
 
     def _encode_text(self, text: str) -> List[float]:
-        sparse_vector = self._text_to_sparse_vector(text)
-        projected_embedding = sparse_vector.dot(self.random_matrix).flatten()
+        word_counts = self._text_to_word_counts(text)
+
+        # This will hold the result of word_counts * random_matrix
+        projected_embedding = np.zeros(self.dimension, dtype=np.float32)
+
+        for hashed_word, count in word_counts.items():
+            rng = np.random.default_rng(hashed_word)
+            # Seed the RNG with the hashed word index for consistency
+            random_vector = rng.standard_normal(self.dimension)
+            projected_embedding += count * random_vector
+
         projected_embedding = projected_embedding.astype(np.float32)
         return list(projected_embedding / np.linalg.norm(projected_embedding))
 
