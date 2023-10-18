@@ -77,7 +77,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 5,
-                 index_params: Optional[dict] = None,
                  ):
         """
         Initilize the knowledge base object.
@@ -149,8 +148,14 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
+        # Normally, index creation params are passed directly to the `.create_resin_index()` method.  # noqa: E501
+        # However, when KnowledgeBase is initialized from a config file, these params
+        # would be set by the `KnowledgeBase.from_config()` constructor.
+        self._index_params: Optional[Dict[str, Any]] = None
+
+        # The index object is initialized lazily, when the user calls `connect()` or
+        # `create_resin_index()`
         self._index: Optional[Index] = None
-        self._index_params = index_params
 
     @staticmethod
     def _connect_pinecone():
@@ -588,7 +593,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     @classmethod
     def from_config(cls,
                     config: Dict[str, Any],
-                    index_name: Optional[str] = None) -> "KnowledgeBase":
+                    index_name: Optional[str] = None) -> 'KnowledgeBase':
         """
         Create a KnowledgeBase object from a configuration dictionary.
 
@@ -608,8 +613,24 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
         config = deepcopy(config)
         config['params'] = config.get('params', {})
+
+        # Check if the config includes an 'index_name', which is not the same as the
+        # index_name passed as argument \ environment variable.
+        if config['params'].get('index_name', index_name) != index_name:
+            raise ValueError(
+                f"index_name in config ({config['params']['index_name']}), while "
+                f"INDEX_NAME environment variable is {index_name}. "
+                f"Please make sure they are the same or remove the 'index_name' key "
+                f"from the config."
+            )
         config['params']['index_name'] = index_name
-        return cls._from_config(config)
+
+        # If the config includes an 'index_params' key, they need to be saved until
+        # the index is created, and then passed to the index creation method.
+        index_params = config['params'].pop('index_params', {})
+        kb = cls._from_config(config)
+        kb._index_params = index_params
+        return kb
 
     @staticmethod
     def _is_starter_env():
