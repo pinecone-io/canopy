@@ -40,8 +40,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def check_service_health(url: str):
     try:
-        health_url = os.path.join(url, "health")
-        res = requests.get(health_url)
+        res = requests.get(url + "/health")
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -111,14 +110,10 @@ def cli(ctx):
 
 
 @cli.command(help="Check if resin service is running and healthy.")
-@click.option("--host", default="0.0.0.0", help="Resin's service hostname")
-@click.option("--port", default=8000, help="The port of the resin service")
-@click.option("--ssl/--no-ssl", default=False, help="Whether to use ssl for the "
-                                                    "connection to resin service")
-def health(host, port, ssl):
-    ssl_str = "s" if ssl else ""
-    service_url = f"http{ssl_str}://{host}:{port}"
-    check_service_health(service_url)
+@click.option("--url", default="http://0.0.0.0:8000",
+              help="Resin's service url. Defaults to http://0.0.0.0:8000")
+def health(url):
+    check_service_health(url)
     click.echo(click.style("Resin service is healthy!", fg="green"))
     return
 
