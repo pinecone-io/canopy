@@ -2,8 +2,6 @@ import os
 
 import click
 import time
-import sys
-import subprocess
 
 import requests
 from dotenv import load_dotenv
@@ -15,7 +13,7 @@ from openai.error import APIError as OpenAI_APIError
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.models.data_models import Document
-from resin.tokenizer import OpenAITokenizer, Tokenizer
+from resin.tokenizer import Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
     CLIError,
@@ -45,7 +43,7 @@ def check_service_health(url: str):
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Resin service is not running on {url}. 
+        Resin service is not running on {url}.
         please run `resin start`
         """
         raise CLIError(msg)
@@ -56,6 +54,7 @@ def check_service_health(url: str):
             f"Resin service on {url} is not healthy, failed with error: {error}"
         )
         raise CLIError(msg)
+
 
 @retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
@@ -121,14 +120,14 @@ def health(url):
 @cli.command(
     help=(
         """Create a new Pinecone index that that will be used by Resin.
-        
-        A Resin service can not be started without a Pinecone index which is configured
-        to work with Resin.
-        This command will create a new Pinecone index and configure it in the right
-        schema for Resin. If the embedding's dimension is not explicitly configured by
-        the config file - the embedding model will be tapped with a single token to 
-        infer the dimensionality of the embedding space.  
-        """
+        \b
+        A Resin service can not be started without a Pinecone index which is configured to work with Resin.
+        This command will create a new Pinecone index and configure it in the right schema.
+
+        If the embedding vectors' dimension is not explicitly configured in
+        the config file - the embedding model will be tapped with a single token to
+        infer the dimensionality of the embedding space.
+        """  # noqa: E501
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
@@ -151,11 +150,13 @@ def new(index_name):
 
 @cli.command(
     help=(
-        """Upload local data files containing documents to the Resin service.
-        
-        Load all the documents from data file or a directory containing multiple data 
-        files. The allowed formats are .jsonl and .parquet.
         """
+        \b
+        Upload local data files containing documents to the Resin service.
+
+        Load all the documents from data file or a directory containing multiple data files.
+        The allowed formats are .jsonl and .parquet.
+        """  # noqa: E501
     )
 )
 @click.argument("data-path", type=click.Path(exists=True))
@@ -287,12 +288,12 @@ def _chat(
     help=(
         """
         Debugging tool for chatting with the Resin RAG service.
-        
-        Run an interactive chat with the Resin RAG service, for debugging and demo 
-        purposes. A prompt is provided for the user to enter a message, and the 
+
+        Run an interactive chat with the Resin RAG service, for debugging and demo
+        purposes. A prompt is provided for the user to enter a message, and the
         RAG-infused ChatBot will respond. You can continue the conversation by entering
         more messages. Hit Ctrl+C to exit.
-        
+
         To compare RAG-infused ChatBot with the original LLM, run with the `--compare`
         flag, which would display both models' responses side by side.
         """
@@ -373,11 +374,11 @@ def chat(chat_service_url, compare, debug, stream):
     help=(
         """
         \b
-        Start the Resin service. 
+        Start the Resin service.
         This command will launch a uvicorn server that will serve the Resin API.
-        
-        If you like to try out the chatbot, run `resin chat` in a separate terminal 
-        window. 
+
+        If you like to try out the chatbot, run `resin chat` in a separate terminal
+        window.
         """
     )
 )
@@ -397,7 +398,7 @@ def start(host, port, reload, workers):
     help=(
         """
         \b
-        Stop the Resin service. 
+        Stop the Resin service.
         This command will send a shutdown request to the Resin service.
         """
     )
@@ -411,7 +412,7 @@ def stop(url):
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Could not find Resin service on {url}. 
+        Could not find Resin service on {url}.
         """
         raise CLIError(msg)
 

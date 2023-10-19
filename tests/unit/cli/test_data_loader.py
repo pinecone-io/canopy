@@ -133,7 +133,6 @@ bad_df_metadata_not_allowed_all_permutations = (
 )
 
 
-
 bad_df_has_excess_field = (
     pd.DataFrame(
         [
@@ -171,7 +170,7 @@ bad_df_missppelled_optional_field = (
             {"id": 3, "text": "baz", "sorce": "baz_source"},
         ]
     ),
-        DocumentsValidationError
+    DocumentsValidationError
 )
 
 bad_df_missing_mandatory_field = (

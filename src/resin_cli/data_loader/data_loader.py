@@ -20,12 +20,15 @@ class IDsNotUniqueError(ValueError):
 class DocumentsValidationError(ValueError):
     pass
 
-format_multiline = lambda s: dedent(s).strip()
+
+def format_multiline(msg):
+    return dedent(msg).strip()
 
 
 class CLIError(ClickException):
     def format_message(self) -> str:
         return click.style(format_multiline(self.message), fg='red')
+
 
 def _process_metadata(value):
     if pd.isna(value):
