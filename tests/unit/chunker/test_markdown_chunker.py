@@ -1,7 +1,7 @@
 import pytest
 
-from resin.knoweldge_base.chunker import MarkdownChunker
-from resin.knoweldge_base.models import KBDocChunk
+from resin.knowledge_base.chunker import MarkdownChunker
+from resin.knowledge_base.models import KBDocChunk
 from resin.models.data_models import Document
 from tests.unit.chunker.base_test_chunker import BaseTestChunker
 

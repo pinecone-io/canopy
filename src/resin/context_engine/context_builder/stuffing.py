@@ -3,7 +3,7 @@ from typing import List, Tuple
 
 from resin.context_engine.context_builder.base import ContextBuilder
 from resin.context_engine.models import ContextQueryResult, ContextSnippet
-from resin.knoweldge_base.models import QueryResult, DocumentWithScore
+from resin.knowledge_base.models import QueryResult, DocumentWithScore
 from resin.tokenizer import Tokenizer
 from resin.models.data_models import Context
 
