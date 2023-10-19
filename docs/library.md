@@ -8,7 +8,7 @@ Resin can act both as a library and as a service. This document describes how to
 The idea behind Resin library is to provide a framework to build AI applications on top of Pinecone as a long memory storage for you own data. Resin library designed with the following principles in mind:
 
 - **Easy to use**: Resin is designed to be easy to use. It is well packaged and can be installed with a single command.
-- **Modularity**: Resin is built as a collection of modules that can be used together or separately. For example, you can use the `chat_engine` module to build a chatbot on top of your data, or you can use the `knowledge_base` module to store and search your data.
+- **Modularity**: Resin is built as a collection of modules that can be used together or separately. For example, you can use the `chat_engine` module to build a chatbot on top of your data, or you can use the `knowledge_base` module to directly store and search your data.
 - **Extensibility**: Resin is designed to be extensible. You can easily add your own components and extend the functionality.
 - **Production ready**: Resin designed to be production ready, tested, well documented, maintained and supported.
 - **Open source**: Resin is open source and free to use. It built in partnership with the community and for the community.
@@ -81,14 +81,14 @@ By default, the global tokenizer is initialized with `OpenAITokenizer` that is b
 <summary>Go deeper</summary>
 The global tokenizer is holding an underlying tokenizer that implements `BaseTokenizer`.
 
-You can add a customized tokenizer of your own by implement a subclass of `BaseTokenizer` and pass the class in the `tokenizer` parameter.
+You can add a customized tokenizer of your own by implement a subclass of `BaseTokenizer` and pass the class in the `tokenizer_class` parameter.
 
 To use additional parameters to init the underlying tokenizer, you can simply pass them to the initialize method of the global tokenizer. For example:
 
 ```python
 from resin.tokenizer import Tokenizer
 from resin.tokenizer.openai import OpenAITokenizer
-Tokenizer.initialize(tokenizer=OpenAITokenizer, model_name="gpt2")
+Tokenizer.initialize(tokenizer_class=OpenAITokenizer, model_name="gpt2")
 ```
 
 Will initialize the global tokenizer with `OpenAITokenizer` and will pass the `model_name` parameter to the underlying tokenizer.
@@ -135,7 +135,7 @@ TBD
 
 ### Step 3: Upsert and query data
 
-To insert data into the knowledge base, you can create a list of documents and use the `insert` method:
+To insert data into the knowledge base, you can create a list of documents and use the `upsert` method:
 
 ```python
 from resin.models.data_models import Document
@@ -161,5 +161,69 @@ TBD
 
 ### Step 4: Create a context engine
 
-Context engine is an object that is responsible to retrieve the most relevant context for a given query and token budget. It uses the knowledge base to retrieve the most relevant documents and then constructs a context that does not exceed the token budget.
-This 
+Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget. It uses the knowledge base to retrieve the most relevant documents and then constructs a context that does not exceed the token budget.
+The output of the context engine designed to interact with LLMs and try to provide the LLM with the most relevant context for a given query, while ensuring that the context does not exceed the prompt boundary.
+
+
+To create a context engine using a knowledge base, you can use the following command:
+
+```python
+from resin.context_engine import ContextEngine
+context_engine = ContextEngine(kb)
+```
+
+Then, you can use the `query` method to retrieve the most relevant context for a given query and token budget:
+
+```python
+result = context_engine.query([Query("Arctic Monkeys music genre")], token_budget=100)
+
+print(result.content)
+# output: Arctic Monkeys are an English rock band formed in Sheffield in 2002.
+
+print(result.token_count)
+# output: 17
+```
+
+By default, to handle the token budget constraint, the context engine will use the `StuffingContextBuilder` that will stuff as many documents as possible into the context without exceeding the token budget, by the order they have been retrieved from the knowledge base.
+
+
+<details>
+<summary>Go deeper</summary>
+TBD
+</details>
+
+
+### Step 5: Create a chat engine
+
+Chat engine is an object that implements end to end chat API with [RAG](https://www.pinecone.io/learn/retrieval-augmented-generation/).
+Given chat history, the chat engine orchestrates its underlying context engine and LLM to run the following steps:
+
+1. Generate search queries from the chat history
+2. Retrieve the most relevant context for each query using the context engine
+3. Prompt the LLM with the chat history and the retrieved context to generate the next response
+
+To create a chat engine using a context, you can use the following command:
+
+```python
+from resin.chat_engine import ChatEngine
+chat_engine = ChatEngine(context_engine)
+```
+
+Then, you can start chatting!
+
+```python
+chat_engine.chat("what is the genre of Arctic Monkeys band?")
+# output: Arctic Monkeys is a rock band.
+```
+
+
+Resin designed to be production ready and handle any conversation length and context length. Therefore, the chat engine uses internal components to handle long conversations and long contexts.
+By default, long chat history is truncated to the latest messages that fits the token budget. It orchestrates the context engine to retrieve context that fits the token budget and then use the LLM to generate the next response.
+
+
+<details>
+<summary>Go deeper</summary>
+TBD
+</details>
+
+
