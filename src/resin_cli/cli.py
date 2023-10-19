@@ -387,69 +387,33 @@ def chat(chat_service_url, compare, debug, stream):
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-def start(host, port, reload):
+@click.option("--workers", default=1, help="Number of worker processes. Defaults to 1")
+def start(host, port, reload, workers):
     click.echo(f"Starting Resin service on {host}:{port}")
-    start_service(host, port, reload)
+    start_service(host, port=port, reload=reload, workers=workers)
 
 
 @cli.command(
     help=(
-        "Stop the Resin service, this will kill the uvicorn server"
-        + " that is serving the Resin API."
-        + " This method is not recommended,"
-        + " as it will kill the server by looking for the PID"
-        + " of the server, instead, we recommend using"
-        + " ctrl+c on the terminal where you started"
+        """
+        \b
+        Stop the Resin service. 
+        This command will send a shutdown request to the Resin service.
+        """
     )
 )
-@click.option("--host", default="0.0.0.0", help="Host")
-@click.option("--port", default=8000, help="Port")
-@click.option("--ssl/--no-ssl", default=False, help="SSL")
-def stop(host, port, ssl):
-    ssl_str = "s" if ssl else ""
-    service_url = f"http{ssl_str}://{host}:{port}"
-
-    check_service_health(service_url)
-
-    import subprocess
-
-    p1 = subprocess.Popen(["lsof", "-t", "-i", f"tcp:{port}"], stdout=subprocess.PIPE)
-    running_server_id = p1.stdout.read().decode("utf-8").strip()
-    if running_server_id == "":
-        click.echo(
-            click.style(
-                "Did not find active process for Resin service" + f" on {host}:{port}",
-                fg="red",
-            )
-        )
-        sys.exit(1)
-
-    msg = (
-        "Warning, this will invoke in process kill"
-        + " to the PID of the service, this method is not recommended!"
-        + " We recommend ctrl+c on the terminal where you started the service"
-        + " as this will allow the service to gracefully shutdown"
-    )
-    click.echo(click.style(msg, fg="yellow"))
-
-    click.confirm(
-        click.style(
-            f"Stopping Resin service on {host}:{port} with pid " f"{running_server_id}",
-            fg="red",
-        ),
-        abort=True,
-    )
-    p2 = subprocess.Popen(
-        ["kill", "-9", running_server_id],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    kill_result = p2.stderr.read().decode("utf-8").strip()
-    if kill_result == "":
-        click.echo(click.style("Success!", fg="green"))
-    else:
-        click.echo(click.style(kill_result, fg="red"))
-        click.echo(click.style("Failed!", fg="red"))
+@click.option("url", "--url", default="http://0.0.0.0:8000",
+              help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
+def stop(url):
+    try:
+        res = requests.get(url + "/shutdown")
+        res.raise_for_status()
+        return res.ok
+    except requests.exceptions.ConnectionError:
+        msg = f"""
+        Could not find Resin service on {url}. 
+        """
+        raise CLIError(msg)
 
 
 if __name__ == "__main__":
