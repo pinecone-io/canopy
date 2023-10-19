@@ -1,7 +1,7 @@
 import tiktoken
 from typing import List
 from .base import BaseTokenizer
-from ..models.data_models import Messages, MessageBase, Role
+from ..models.data_models import Messages
 
 
 class OpenAITokenizer(BaseTokenizer):
@@ -14,7 +14,7 @@ class OpenAITokenizer(BaseTokenizer):
 
     def tokenize(self, text: str) -> List[str]:
         return [self._encoder.decode([encoded_token])
-                for encoded_token in self._encoder.encode(text)]
+                for encoded_token in self._encode(text)]
 
     def detokenize(self, tokens: List[str]) -> str:
         if not isinstance(tokens, List):
@@ -22,7 +22,10 @@ class OpenAITokenizer(BaseTokenizer):
         return "".join(tokens)
 
     def token_count(self, text: str) -> int:
-        return len(self._encoder.encode(text))
+        return len(self._encode(text))
+
+    def _encode(self, text):
+        return self._encoder.encode(text, disallowed_special=())
 
     def messages_token_count(self, messages: Messages) -> int:
         # Adapted from: https://github.com/openai/openai-cookbook/.../How_to_format_inputs_to_ChatGPT_models.ipynb # noqa
@@ -33,13 +36,3 @@ class OpenAITokenizer(BaseTokenizer):
                 num_tokens += self.token_count(value)
         num_tokens += self.FIXED_PREFIX_TOKENS
         return num_tokens
-
-    @staticmethod
-    def test_messages_token_count(tokenizer):
-        messages = [MessageBase(role=Role.USER, content="hello"),
-                    MessageBase(role=Role.ASSISTANT, content="hi")]
-        assert tokenizer.messages_token_count(messages) == 11
-
-    @staticmethod
-    def test_messages_token_count_empty_messages(tokenizer):
-        assert tokenizer.messages_token_count([]) == 0

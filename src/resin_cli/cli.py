@@ -214,7 +214,8 @@ def upsert(index_name, data_path):
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
-    click.echo(data[0].json(exclude_none=True, indent=2))
+    click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
+    click.echo(click.style(f"\nTotal records: {len(data)}"))
     click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
     try:
         kb.upsert(data)
