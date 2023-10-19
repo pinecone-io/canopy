@@ -21,7 +21,7 @@
 3. **Resin CLI** - Resin comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
 
-## How to install
+## Setup
 
 1. install the package
 ```bash
@@ -38,7 +38,7 @@ export INDEX_NAME=<INDEX_NAME>
 ```
 
 <details>
-<summary>Click to view the Environment Variables Description</summary>
+<summary>CLICK HERE FOR MORE DETAILS</summary>
 
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -46,9 +46,7 @@ export INDEX_NAME=<INDEX_NAME>
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `INDEX_NAME`          | Name of the Pinecone index Resin will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
-
 </details>
-
 
 
 3. Check that installation is successful and environment is set, run:
