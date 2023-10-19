@@ -100,6 +100,7 @@ def _initialize_tokenizer():
 @click.pass_context
 def cli(ctx):
     """
+    \b
     CLI for Pinecone Resin. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
@@ -375,32 +376,23 @@ def chat(chat_service_url, compare, debug, stream):
 
 @cli.command(
     help=(
-        "Start the Resin service, this will start a uvicorn server"
-        + " that will serve the Resin API."
-        + " If you are are locally debugging, you can use the --debug flag"
-        + " to start a new terminal window with the right env vars for `resin chat`"
+        """
+        \b
+        Start the Resin service. 
+        This command will launch a uvicorn server that will serve the Resin API.
+        
+        If you like to try out the chatbot, run `resin chat` in a separate terminal 
+        window. 
+        """
     )
 )
-@click.option(
-    "--chat", is_flag=True, help="open a new terminal window for debugging"
-)
-@click.option("--host", default="0.0.0.0", help="Host")
-@click.option("--port", default=8000, help="Port")
-@click.option("--ssl/--no-ssl", default=False, help="SSL")
-@click.option("--reload/--no-reload", default=False, help="Reload")
-def start(chat, host, port, ssl, reload):
-    if chat:
-        command_to_run = "clear && echo Welcome to Pinecone Canopy,"
-        + " run *resin chat* to start chatting with your index"
-
-        script = f'''
-        tell application "Terminal"
-            activate
-            do script "{command_to_run}"
-        end tell
-        '''
-
-        subprocess.run(["osascript", "-e", script], env=os.environ.copy())
+@click.option("--host", default="0.0.0.0",
+              help="Hostname or ip address to bind the server to. Defaults to 0.0.0.0")
+@click.option("--port", default=8000,
+              help="TCP port to bind the server to. Defaults to 8000")
+@click.option("--reload/--no-reload", default=False,
+              help="Set the server to reload on code changes. Defaults to False")
+def start(host, port, reload):
     click.echo(f"Starting Resin service on {host}:{port}")
     start_service(host, port, reload)
 
