@@ -11,6 +11,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 
 import pandas as pd
 import openai
+from openai.error import APIError as OpenAI_APIError
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.models.data_models import Document
@@ -245,11 +246,10 @@ def _chat(
         openai_response = openai.ChatCompletion.create(
             model=model, messages=history, stream=stream, api_base=api_base
         )
-    except Exception as e:
-        msg = "Oops... something went wrong with the LLM" + " the error I got is: "
-        click.echo(click.style(msg, fg="red"), err=True, nl=False)
-        click.echo(f"{e}")
-        sys.exit(1)
+    except (Exception, OpenAI_APIError) as e:
+        err = e.http_body if isinstance(e, OpenAI_APIError) else str(e)
+        msg = f"Oops... something went wrong. The error I got is: {err}"
+        raise CLIError(msg)
     end = time.time()
     duration_in_sec = end - start
     click.echo(click.style(f"\n> AI {speaker}:\n", fg=speaker_color))
@@ -289,39 +289,44 @@ def _chat(
 
 @cli.command(
     help=(
-        "Chat allows you to chat with your Resin index, "
-        + "Chat is a debugging tool, it is not meant to be used for production"
+        """
+        Debugging tool for chatting with the Resin RAG service.
+        
+        Run an interactive chat with the Resin RAG service, for debugging and demo 
+        purposes. A prompt is provided for the user to enter a message, and the 
+        RAG-infused ChatBot will respond. You can continue the conversation by entering
+        more messages. Hit Ctrl+C to exit.
+        
+        To compare RAG-infused ChatBot with the original LLM, run with the `--compare`
+        flag, which would display both models' responses side by side.
+        """
+
     )
 )
-@click.option("--stream/--no-stream", default=True, help="Stream")
-@click.option("--debug/--no-debug", default=False, help="Print debug info")
-@click.option(
-    "--rag/--no-rag",
-    default=True,
-    help="Direct chat with the model",
-)
-@click.option("--chat-service-url", default="http://0.0.0.0:8000")
-@click.option(
-    "--index-name",
-    default=os.environ.get("INDEX_NAME"),
-    help="Index name suffix",
-)
-def chat(index_name, chat_service_url, rag, debug, stream):
+@click.option("--stream/--no-stream", default=True,
+              help="Stream the response from the RAG chatbot word by word")
+@click.option("--debug/--no-debug", default=False,
+              help="Print additional debugging information")
+@click.option("--compare/--no-compare", default=False,
+              help="Compare RAG-infused Chatbot with native LLM",)
+@click.option("--chat-service-url", default="http://0.0.0.0:8000",
+              help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
+def chat(chat_service_url, compare, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
-        + "Chat is a debugging tool, it is not meant to be used for production!"
+        "Chat is a debugging tool, it is not meant to be used for production!"
     )
     for c in note_msg:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
     note_white_message = (
-        "This method should be used by developers to test the model and the data"
-        + " in development time, in local environment. "
-        + "For production use cases, we recommend using the"
-        + " Resin Service or Resin Library directly \n\n"
-        + "Let's Chat!"
+        "This method should be used by developers to test the RAG data and model"
+        "during development. "
+        "When you are ready to deploy, run the Resin service as a REST API "
+        "backend for your chatbot UI. \n\n"
+        "Let's Chat!"
     )
     for c in note_white_message:
         click.echo(click.style(c, fg="white"), nl=False)
@@ -346,7 +351,7 @@ def chat(index_name, chat_service_url, rag, debug, stream):
             print_debug_info=debug,
         )
 
-        if not rag:
+        if compare:
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
