@@ -83,7 +83,7 @@ By default, the global tokenizer is initialized with `OpenAITokenizer` that is b
 
 <details>
 <summary>Go deeper</summary>
-The global tokenizer is holding an underlying tokenizer that implements `BaseTokenizer`.
+The `Tokenizer` singleton is holding an inner `Tokenizer` object that implements `BaseTokenizer`.
 
 You can add a customized tokenizer of your own by implement a subclass of `BaseTokenizer` and pass the class in the `tokenizer_class` parameter.
 
