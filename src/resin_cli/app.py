@@ -6,6 +6,8 @@ import uuid
 
 import openai
 from multiprocessing import current_process
+
+import yaml
 from dotenv import load_dotenv
 
 from resin.llm import BaseLLM
@@ -28,6 +30,7 @@ from resin_cli.api_models import \
     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
 from resin.llm.openai import OpenAILLM
+from resin_cli.errors import ConfigError
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -198,24 +201,65 @@ def _init_logging():
 
 
 def _init_engines():
-    global kb, context_engine, chat_engine, llm
-    Tokenizer.initialize(OpenAITokenizer, model_name='gpt-3.5-turbo-0613')
+    global kb, context_engine, chat_engine, llm, logger
 
-    INDEX_NAME = os.getenv("INDEX_NAME")
-    if not INDEX_NAME:
+    index_name = os.getenv("INDEX_NAME")
+    if not index_name:
         raise ValueError("INDEX_NAME environment variable must be set")
 
-    kb = KnowledgeBase(index_name=INDEX_NAME)
-    context_engine = ContextEngine(knowledge_base=kb)
-    llm = OpenAILLM()
-    chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
+    config_file = os.getenv("RESIN_CONFIG_FILE")
+    if config_file:
+        _load_config(config_file)
+
+    else:
+        print("Initializing default engines")
+        Tokenizer.initialize()
+        kb = KnowledgeBase(index_name=index_name)
+        context_engine = ContextEngine(knowledge_base=kb)
+        llm = OpenAILLM()
+        chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
 
     kb.connect()
 
 
-def start(host="0.0.0.0", port=8000, reload=False, workers=1):
-    uvicorn.run("resin_cli.app:app",
-                host=host, port=port, reload=reload, workers=workers)
+def _load_config(config_file):
+    global chat_engine, llm, context_engine, kb
+    try:
+        with open(config_file, "r") as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        logger.exception(f"Failed to load config file {config_file}")
+        raise ConfigError(
+            f"Failed to load config file {config_file}. Error: {str(e)}"
+        )
+    print(config)
+    tokenizer_config = config.get("tokenizer", {})
+    Tokenizer.initialize_from_config(tokenizer_config)
+    if "chat_engine" not in config:
+        raise ConfigError(
+            f"Config file {config_file} must contain a 'chat_engine' section"
+        )
+    chat_engine_config = config["chat_engine"]
+    try:
+        chat_engine = ChatEngine.from_config(chat_engine_config)
+    except Exception as e:
+        logger.exception(
+            f"Failed to initialize chat engine from config file {config_file}"
+        )
+        raise ConfigError(
+            f"Failed to initialize chat engine from config file {config_file}."
+            f" Error: {str(e)}"
+        )
+    llm = chat_engine.llm
+    context_engine = chat_engine.context_engine
+    kb = context_engine.knowledge_base
+
+
+def start(host="0.0.0.0", port=8000, reload=False, config_file=None):
+    if config_file:
+        os.environ["RESIN_CONFIG_FILE"] = config_file
+
+    uvicorn.run("resin_cli.app:app", host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

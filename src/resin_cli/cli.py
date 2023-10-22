@@ -17,9 +17,9 @@ from resin.models.data_models import Document
 from resin.tokenizer import Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
-    CLIError,
     IDsNotUniqueError,
     DocumentsValidationError)
+from resin_cli.errors import CLIError
 
 from resin import __version__
 
@@ -391,10 +391,12 @@ def chat(chat_service_url, compare, debug, stream):
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-@click.option("--workers", default=1, help="Number of worker processes. Defaults to 1")
-def start(host, port, reload, workers):
+@click.option("--config", "-c", default=None,
+              help="Path to a resin config file. Optional, otherwise configuration "
+                   "defaults will be used.")
+def start(host, port, reload, config):
     click.echo(f"Starting Resin service on {host}:{port}")
-    start_service(host, port=port, reload=reload, workers=workers)
+    start_service(host, port=port, reload=reload, config_file=config)
 
 
 @cli.command(
