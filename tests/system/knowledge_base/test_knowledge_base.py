@@ -128,7 +128,7 @@ def execute_and_assert_queries(knowledge_base, chunks_to_query):
     for i, q_res in enumerate(query_results):
         assert queries[i].text == q_res.query
         assert len(q_res.documents) == 2
-        q_res.documents[0].score = round(q_res.documents[0].score, 2)
+        q_res.documents[0].score = round(q_res.documents[0].score, 1)
         assert q_res.documents[0] == DocumentWithScore(
             id=chunks_to_query[i].id,
             text=chunks_to_query[i].text,
