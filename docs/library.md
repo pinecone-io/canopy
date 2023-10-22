@@ -16,7 +16,7 @@ The idea behind Resin library is to provide a framework to build AI applications
 
 ## High level architecture
 
-TBD
+![class architecture](https://github.com/pinecone-io/context-engine/blob/main/.readme-content/class_architecture.png)
 
 ## Installation
 
@@ -40,6 +40,16 @@ export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
 ```
+
+or you can directly set them in your python code:
+
+```python
+import os
+os.environ["PINECONE_API_KEY"] = "<PINECONE_API_KEY>"
+os.environ["PINECONE_ENVIRONMENT"] = "<PINECONE_ENVIRONMENT>"
+os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
+```
+
 
 <details>
 <summary>CLICK HERE FOR MORE DETAILS</summary>
@@ -74,6 +84,8 @@ tokenizer = Tokenizer()
 tokenizer.tokenize("Hello world!")
 # output: ['Hello', 'world', '!']
 ```
+
+Since the `tokenizer` object created here would be the same instance that you have initialized at the beginning of this subsection.
 
 By default, the global tokenizer is initialized with `OpenAITokenizer` that is based on OpenAI's tiktoken library and aligned with GPT 3 and 4 models tokenization.
 
