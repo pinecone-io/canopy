@@ -173,7 +173,8 @@ TBD
 
 ### Step 4: Create a context engine
 
-Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget. It uses the knowledge base to retrieve the most relevant documents and then constructs a context that does not exceed the token budget.
+Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget.  
+The context engine first uses the knowledge base to retrieve the most relevant documents. Then, it  formalizes the textual context that will be presented to the LLM. This textual context might be structured or unstructured, depending on the use case and configuration. 
 The output of the context engine designed to interact with LLMs and try to provide the LLM with the most relevant context for a given query, while ensuring that the context does not exceed the prompt boundary.
 
 
