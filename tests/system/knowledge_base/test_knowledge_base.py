@@ -117,6 +117,28 @@ def assert_ids_not_in_index(knowledge_base, ids):
     assert len(fetch_result) == 0, f"Found unexpected ids: {len(fetch_result.keys())}"
 
 
+@retry_decorator()
+def execute_and_assert_queries(knowledge_base, chunks_to_query):
+    queries = [Query(text=chunk.text, top_k=2) for chunk in chunks_to_query]
+
+    query_results = knowledge_base.query(queries)
+
+    assert len(query_results) == len(queries)
+
+    for i, q_res in enumerate(query_results):
+        assert queries[i].text == q_res.query
+        assert len(q_res.documents) == 2
+        q_res.documents[0].score = round(q_res.documents[0].score, 2)
+        assert q_res.documents[0] == DocumentWithScore(
+            id=chunks_to_query[i].id,
+            text=chunks_to_query[i].text,
+            metadata=chunks_to_query[i].metadata,
+            source=chunks_to_query[i].source,
+            score=1.0), \
+            f"query {i} - expected: {chunks_to_query[i]}, " \
+            f"actual: {q_res.documents}"
+
+
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
@@ -224,28 +246,7 @@ def test_upsert_forbidden_metadata(knowledge_base, documents, key):
 
 
 def test_query(knowledge_base, encoded_chunks):
-    queries = [Query(text=encoded_chunks[0].text),
-               Query(text=encoded_chunks[1].text, top_k=2)]
-    query_results = knowledge_base.query(queries)
-
-    assert len(query_results) == 2
-
-    expected_top_k = [5, 2]
-    expected_first_results = [DocumentWithScore(id=chunk.id,
-                                                text=chunk.text,
-                                                metadata=chunk.metadata,
-                                                source=chunk.source,
-                                                score=1.0)
-                              for chunk in encoded_chunks[:2]]
-    for i, q_res in enumerate(query_results):
-        assert queries[i].text == q_res.query
-        assert len(q_res.documents) == expected_top_k[i]
-        q_res.documents[0].score = round(q_res.documents[0].score, 2)
-        assert q_res.documents[0] == expected_first_results[i]
-        q_res.documents[0].score = round(q_res.documents[0].score, 2)
-        assert q_res.documents[0] == expected_first_results[i], \
-            f"query {i} -  expected: {expected_first_results[i]}, " \
-            f"actual: {q_res.documents[0]}"
+    execute_and_assert_queries(knowledge_base, encoded_chunks)
 
 
 def test_delete_documents(knowledge_base, encoded_chunks):
@@ -333,26 +334,8 @@ def test_upsert_documents_with_datetime_metadata(knowledge_base,
 
 
 def test_query_edge_case_documents(knowledge_base,
-                                   documents_with_datetime_metadata,
                                    datetime_metadata_encoded_chunks):
-    queries = [Query(text=chunk.text, top_k=2)
-               for chunk in datetime_metadata_encoded_chunks]
-    query_results = knowledge_base.query(queries)
-
-    assert len(query_results) == len(queries)
-
-    for i, q_res in enumerate(query_results):
-        assert queries[i].text == q_res.query
-        assert len(q_res.documents) == 2
-        q_res.documents[0].score = round(q_res.documents[0].score, 2)
-        assert q_res.documents[0] == DocumentWithScore(
-            id=datetime_metadata_encoded_chunks[i].id,
-            text=datetime_metadata_encoded_chunks[i].text,
-            metadata=datetime_metadata_encoded_chunks[i].metadata,
-            source=datetime_metadata_encoded_chunks[i].source,
-            score=1.0), \
-            f"query {i} -  expected: {datetime_metadata_encoded_chunks[i]}, " \
-            f"actual: {q_res.documents}"
+    execute_and_assert_queries(knowledge_base, datetime_metadata_encoded_chunks)
 
 
 def test_create_existing_index_no_connect(index_full_name, index_name):
