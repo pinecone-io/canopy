@@ -212,7 +212,7 @@ def _init_engines():
         _load_config(config_file)
 
     else:
-        print("Initializing default engines")
+        logger.info("Did not find config file. Initializing engines with default config")
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
@@ -224,6 +224,7 @@ def _init_engines():
 
 def _load_config(config_file):
     global chat_engine, llm, context_engine, kb
+    logger.info(f"Initializing engines with config file {config_file}")
     try:
         with open(config_file, "r") as f:
             config = yaml.safe_load(f)
@@ -232,7 +233,6 @@ def _load_config(config_file):
         raise ConfigError(
             f"Failed to load config file {config_file}. Error: {str(e)}"
         )
-    print(config)
     tokenizer_config = config.get("tokenizer", {})
     Tokenizer.initialize_from_config(tokenizer_config)
     if "chat_engine" not in config:
@@ -259,7 +259,7 @@ def start(host="0.0.0.0", port=8000, reload=False, config_file=None):
     if config_file:
         os.environ["RESIN_CONFIG_FILE"] = config_file
 
-    uvicorn.run("resin_cli.app:app", host=host, port=port, reload=reload)
+    uvicorn.run("resin_cli.app:app", host=host, port=port, reload=reload, workers=0)
 
 
 if __name__ == "__main__":

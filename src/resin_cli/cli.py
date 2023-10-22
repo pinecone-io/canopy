@@ -395,6 +395,17 @@ def chat(chat_service_url, compare, debug, stream):
               help="Path to a resin config file. Optional, otherwise configuration "
                    "defaults will be used.")
 def start(host, port, reload, config):
+    note_msg = (
+        "🚨 Note 🚨\n"
+        "For debugging only. To run the Resin service in production, run the command:\n"
+        "gunicorn resin_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
+        f"--bind {host}:{port} --workers <num_workers>"
+    )
+    for c in note_msg:
+        click.echo(click.style(c, fg="red"), nl=False)
+        time.sleep(0.01)
+    click.echo()
+
     click.echo(f"Starting Resin service on {host}:{port}")
     start_service(host, port=port, reload=reload, config_file=config)
 
