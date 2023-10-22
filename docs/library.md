@@ -85,7 +85,15 @@ By default, the global tokenizer is initialized with `OpenAITokenizer` that is b
 <summary>Go deeper</summary>
 The `Tokenizer` singleton is holding an inner `Tokenizer` object that implements `BaseTokenizer`.
 
-You can add a customized tokenizer of your own by implement a subclass of `BaseTokenizer` and pass the class in the `tokenizer_class` parameter.
+You can create your own customized tokenizer by implementing a new class that derives from `BaseTokenizer`, then passing this class to the `Tokenizer` singleton during initialization. Example:
+```python
+from resin.tokenizer import Tokenizer, BaseTokenizer
+
+class CustomTokenizer(BaseTokenizer):
+    # Implement BaseToknizer's abstract methods, like `def tokenize()` etc.
+    # ....
+    
+Tokenizer.initialize(tokenizer_class=CustomTokenizer)
 
 To use additional parameters to init the underlying tokenizer, you can simply pass them to the initialize method of the global tokenizer. For example:
 
