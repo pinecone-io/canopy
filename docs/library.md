@@ -175,7 +175,7 @@ TBD
 
 Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget.  
 The context engine first uses the knowledge base to retrieve the most relevant documents. Then, it  formalizes the textual context that will be presented to the LLM. This textual context might be structured or unstructured, depending on the use case and configuration. 
-The output of the context engine designed to interact with LLMs and try to provide the LLM with the most relevant context for a given query, while ensuring that the context does not exceed the prompt boundary.
+The output of the context engine is designed to provide the LLM the most relevant context for a given query. 
 
 
 To create a context engine using a knowledge base, you can use the following command:
