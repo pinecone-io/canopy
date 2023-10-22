@@ -440,13 +440,16 @@ class KnowledgeBase(BaseKnowledgeBase):
             metadata_filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
 
+        query_params = deepcopy(query.query_params)
+        _check_return_type = query.query_params.pop('_check_return_type', False)
         result = self._index.query(vector=query.values,
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
                                    metadata_filter=metadata_filter,
                                    include_metadata=True,
-                                   **query.query_params)
+                                   _check_return_type=_check_return_type,
+                                   **query_params)
         documents: List[KBDocChunkWithScore] = []
         for match in result['matches']:
             metadata = match['metadata']
