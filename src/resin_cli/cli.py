@@ -311,7 +311,7 @@ def _chat(
               help="Compare RAG-infused Chatbot with baseline LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
-def chat(chat_service_url, compare, debug, stream):
+def chat(chat_service_url, baseline, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
