@@ -67,7 +67,7 @@ from resin.tokenizer import Tokenizer
 Tokenizer.initialize()
 ```
 
-Then, each time you want to use the tokenizer, you can simply initialize it with the following command:
+Then, each time you want to use the tokenizer, you can simply instantiate a local object:
 
 ```python
 from resin.tokenizer import Tokenizer
