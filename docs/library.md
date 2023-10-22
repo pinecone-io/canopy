@@ -56,9 +56,11 @@ export OPENAI_API_KEY="<OPENAI_API_KEY>"
 
 ### Step 1: Initialize global Tokenizer
 
-Tokenizer is an object that is responsible for splitting text into tokens, which are the basic units of text that are used for processing.
+The `Tokenizer` object is used for converting text into tokens, which is the basic data represntation that is used for processing.
 
-Resin uses a global tokenizer for chunking, token counting and more. You can initialize it with the following command:
+Since manny different classes rely on a tokenizer,  Resin uses a singleton `Tokenizer` object which needs to be initialized once. 
+
+Before instantiating any other resin core objects, please initialize the `Tokenizer` singleton:
 
 ```python
 from resin.tokenizer import Tokenizer
