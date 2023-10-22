@@ -10,6 +10,7 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 import pandas as pd
 import openai
 from openai.error import APIError as OpenAI_APIError
+from urllib.parse import urljoin
 
 from resin.knoweldge_base import KnowledgeBase
 from resin.models.data_models import Document
@@ -38,7 +39,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def check_service_health(url: str):
     try:
-        res = requests.get(url + "/health")
+        res = requests.get(urljoin(url, "/health"))
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -168,9 +169,10 @@ def new(index_name):
 )
 def upsert(index_name, data_path):
     if index_name is None:
-        msg = ("Index name is not provided, please provide it with" +
-               ' --index-name or set it with env var + '
-               '`export INDEX_NAME="MY_INDEX_NAME`')
+        msg = (
+            "No index name provided. Please set --index-name or INDEX_NAME environment "
+            "variable."
+        )
         raise CLIError(msg)
 
     _initialize_tokenizer()
@@ -295,7 +297,7 @@ def _chat(
         RAG-infused ChatBot will respond. You can continue the conversation by entering
         more messages. Hit Ctrl+C to exit.
 
-        To compare RAG-infused ChatBot with the original LLM, run with the `--compare`
+        To compare RAG-infused ChatBot with the original LLM, run with the `--baseline`
         flag, which would display both models' responses side by side.
         """
 
@@ -305,8 +307,8 @@ def _chat(
               help="Stream the response from the RAG chatbot word by word")
 @click.option("--debug/--no-debug", default=False,
               help="Print additional debugging information")
-@click.option("--compare/--no-compare", default=False,
-              help="Compare RAG-infused Chatbot with native LLM",)
+@click.option("--baseline/--no-baseline", default=False,
+              help="Compare RAG-infused Chatbot with baseline LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
 def chat(chat_service_url, compare, debug, stream):
@@ -408,7 +410,7 @@ def start(host, port, reload, workers):
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
     try:
-        res = requests.get(url + "/shutdown")
+        res = requests.get(urljoin(url, "/shutdown"))
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
