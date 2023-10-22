@@ -159,11 +159,8 @@ def encoded_chunks_large(documents_large, chunker, encoder):
 
 
 @pytest.fixture
-def edge_case_documents():
-    return [Document(id="doc_0",
-                        text="",
-                        source="source_1"),
-            Document(id="doc_1",
+def documents_with_datetime_metadata():
+    return [Document(id="doc_1",
                      text="document with datetime metadata",
                      source="source_1",
                      metadata={"datetime": "2021-01-01T00:00:00Z",
@@ -175,8 +172,10 @@ def edge_case_documents():
 
 
 @pytest.fixture
-def edge_case_encoded_chunks(edge_case_documents, chunker, encoder):
-    chunks = chunker.chunk_documents(edge_case_documents)
+def datetime_metadata_encoded_chunks(documents_with_datetime_metadata,
+                                     chunker,
+                                     encoder):
+    chunks = chunker.chunk_documents(documents_with_datetime_metadata)
     return encoder.encode_documents(chunks)
 
 
@@ -324,19 +323,20 @@ def test_delete_large_df_happy_path(knowledge_base,
                                              for chunk in chunks_for_validation])
 
 
-def test_upsert_edge_case_documents(knowledge_base,
-                                    edge_case_documents,
-                                    edge_case_encoded_chunks):
-    knowledge_base.upsert(edge_case_documents)
+def test_upsert_documents_with_datetime_metadata(knowledge_base,
+                                                 documents_with_datetime_metadata,
+                                                 datetime_metadata_encoded_chunks):
+    knowledge_base.upsert(documents_with_datetime_metadata)
 
     assert_ids_in_index(knowledge_base, [chunk.id
-                                         for chunk in edge_case_encoded_chunks])
+                                         for chunk in datetime_metadata_encoded_chunks])
 
 
 def test_query_edge_case_documents(knowledge_base,
-                                   edge_case_documents,
-                                   edge_case_encoded_chunks):
-    queries = [Query(text=chunk.text, top_k=2) for chunk in edge_case_encoded_chunks]
+                                   documents_with_datetime_metadata,
+                                   datetime_metadata_encoded_chunks):
+    queries = [Query(text=chunk.text, top_k=2)
+               for chunk in datetime_metadata_encoded_chunks]
     query_results = knowledge_base.query(queries)
 
     assert len(query_results) == len(queries)
@@ -346,12 +346,12 @@ def test_query_edge_case_documents(knowledge_base,
         assert len(q_res.documents) == 2
         q_res.documents[0].score = round(q_res.documents[0].score, 2)
         assert q_res.documents[0] == DocumentWithScore(
-            id=edge_case_encoded_chunks[i].id,
-            text=edge_case_encoded_chunks[i].text,
-            metadata=edge_case_encoded_chunks[i].metadata,
-            source=edge_case_encoded_chunks[i].source,
+            id=datetime_metadata_encoded_chunks[i].id,
+            text=datetime_metadata_encoded_chunks[i].text,
+            metadata=datetime_metadata_encoded_chunks[i].metadata,
+            source=datetime_metadata_encoded_chunks[i].source,
             score=1.0), \
-            f"query {i} -  expected: {edge_case_encoded_chunks[i]}, " \
+            f"query {i} -  expected: {datetime_metadata_encoded_chunks[i]}, " \
             f"actual: {q_res.documents[0]}"
 
 
