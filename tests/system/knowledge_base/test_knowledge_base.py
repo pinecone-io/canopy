@@ -59,7 +59,7 @@ def chunker():
 @pytest.fixture(scope="module")
 def encoder():
     return StubRecordEncoder(
-        StubDenseEncoder(dimension=3))
+        StubDenseEncoder())
 
 
 @pytest.fixture(scope="module", autouse=True)
