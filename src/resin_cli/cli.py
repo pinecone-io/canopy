@@ -6,6 +6,7 @@ import sys
 
 import requests
 from dotenv import load_dotenv
+from tqdm import tqdm
 
 import pandas as pd
 import openai
@@ -119,7 +120,8 @@ def new(index_name, tokenizer_model):
     help="Index name",
 )
 @click.option("--tokenizer-model", default="gpt-3.5-turbo", help="Tokenizer model")
-def upsert(index_name, data_path, tokenizer_model):
+@click.option("--batch-size", default=10, help="Batch size for upsert")
+def upsert(index_name, data_path, tokenizer_model, batch_size):
     if index_name is None:
         msg = ("Index name is not provided, please provide it with" +
                ' --index-name or set it with env var + '
@@ -178,7 +180,13 @@ def upsert(index_name, data_path, tokenizer_model):
     click.echo(click.style(f"\nTotal records: {len(data)}"))
     click.confirm(click.style("\nDoes this data look right?", fg="red"),
                   abort=True)
-    kb.upsert(data)
+
+    pbar = tqdm(total=len(data), desc="Upserting documents")
+    for i in range(0, len(data), batch_size):
+        batch = data[i:i + batch_size]
+        kb.upsert(batch)
+        pbar.update(len(batch))
+
     click.echo(click.style("Success!", fg="green"))
 
 
