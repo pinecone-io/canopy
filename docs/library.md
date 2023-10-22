@@ -1,6 +1,8 @@
 # Resin Library
 
-Resin can act both as a library and as a service. This document describes how to use Resin as a library. To read more about Resin project in general and also how to use it as a service, please refer to the [main README](../README.md).
+For most common use cases, users can simply deploy the fully-configurable [Resin service](add README chapter link here), which provides a REST API backend for your own RAG-infused Chatbot.  
+
+For advanced users, this page describes how to use `resin` core library directly to implement their own custom applications. 
 
 
 > 💡 You can find notebooks with examples of how to use Resin library [here](../examples).
@@ -64,16 +66,18 @@ os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
 
 ### Step 1: Initialize global Tokenizer
 
-Tokenizer is an object that is responsible for splitting text into tokens, which are the basic units of text that are used for processing.
+The `Tokenizer` object is used for converting text into tokens, which is the basic data represntation that is used for processing.
 
-Resin uses a global tokenizer for chunking, token counting and more. You can initialize it with the following command:
+Since manny different classes rely on a tokenizer,  Resin uses a singleton `Tokenizer` object which needs to be initialized once. 
+
+Before instantiating any other resin core objects, please initialize the `Tokenizer` singleton:
 
 ```python
 from resin.tokenizer import Tokenizer
 Tokenizer.initialize()
 ```
 
-Then, each time you want to use the tokenizer, you can simply initialize it with the following command:
+Then, each time you want to use the tokenizer, you can simply instantiate a local object:
 
 ```python
 from resin.tokenizer import Tokenizer
@@ -91,11 +95,19 @@ By default, the global tokenizer is initialized with `OpenAITokenizer` that is b
 
 <details>
 <summary>Go deeper</summary>
-The global tokenizer is holding an underlying tokenizer that implements `BaseTokenizer`.
+The `Tokenizer` singleton is holding an inner `Tokenizer` object that implements `BaseTokenizer`.
 
-You can add a customized tokenizer of your own by implement a subclass of `BaseTokenizer` and pass the class in the `tokenizer_class` parameter.
+You can create your own customized tokenizer by implementing a new class that derives from `BaseTokenizer`, then passing this class to the `Tokenizer` singleton during initialization. Example:
+```python
+from resin.tokenizer import Tokenizer, BaseTokenizer
 
-To use additional parameters to init the underlying tokenizer, you can simply pass them to the initialize method of the global tokenizer. For example:
+class CustomTokenizer(BaseTokenizer):
+    # Implement BaseToknizer's abstract methods, like `def tokenize()` etc.
+    # ....
+    
+Tokenizer.initialize(tokenizer_class=CustomTokenizer)
+
+When you initialize the `Tokenizer` singleton, you can pass init arguments to the underlying Tokenizer class. Any init argument that is expected by the underlying class's constructor, can be passed as `kwarg` directly to `Tokenizer.initalize()`. For example:
 
 ```python
 from resin.tokenizer import Tokenizer
@@ -173,8 +185,9 @@ TBD
 
 ### Step 4: Create a context engine
 
-Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget. It uses the knowledge base to retrieve the most relevant documents and then constructs a context that does not exceed the token budget.
-The output of the context engine designed to interact with LLMs and try to provide the LLM with the most relevant context for a given query, while ensuring that the context does not exceed the prompt boundary.
+Context engine is an object that responsible to retrieve the most relevant context for a given query and token budget.  
+The context engine first uses the knowledge base to retrieve the most relevant documents. Then, it  formalizes the textual context that will be presented to the LLM. This textual context might be structured or unstructured, depending on the use case and configuration. 
+The output of the context engine is designed to provide the LLM the most relevant context for a given query. 
 
 
 To create a context engine using a knowledge base, you can use the following command:
