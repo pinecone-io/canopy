@@ -159,6 +159,28 @@ def encoded_chunks_large(documents_large, chunker, encoder):
 
 
 @pytest.fixture
+def edge_case_documents():
+    return [Document(id="doc_0",
+                        text="",
+                        source="source_1"),
+            Document(id="doc_1",
+                     text="document with datetime metadata",
+                     source="source_1",
+                     metadata={"datetime": "2021-01-01T00:00:00Z",
+                               "datetime_other_format": "January 1, 2021 00:00:00",
+                               "datetime_other_format_2": "2210.03945"}),
+            Document(id="2021-01-01T00:00:00Z",
+                     text="id is datetime",
+                     source="source_1")]
+
+
+@pytest.fixture
+def edge_case_encoded_chunks(edge_case_documents, chunker, encoder):
+    chunks = chunker.chunk_documents(edge_case_documents)
+    return encoder.encode_documents(chunks)
+
+
+@pytest.fixture
 def encoded_chunks(documents, chunker, encoder):
     chunks = chunker.chunk_documents(documents)
     return encoder.encode_documents(chunks)
@@ -300,6 +322,37 @@ def test_delete_large_df_happy_path(knowledge_base,
     chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
     assert_ids_not_in_index(knowledge_base, [chunk.id
                                              for chunk in chunks_for_validation])
+
+
+def test_upsert_edge_case_documents(knowledge_base,
+                                    edge_case_documents,
+                                    edge_case_encoded_chunks):
+    knowledge_base.upsert(edge_case_documents)
+
+    assert_ids_in_index(knowledge_base, [chunk.id
+                                         for chunk in edge_case_encoded_chunks])
+
+
+def test_query_edge_case_documents(knowledge_base,
+                                   edge_case_documents,
+                                   edge_case_encoded_chunks):
+    queries = [Query(text=chunk.text, top_k=2) for chunk in edge_case_encoded_chunks]
+    query_results = knowledge_base.query(queries)
+
+    assert len(query_results) == len(queries)
+
+    for i, q_res in enumerate(query_results):
+        assert queries[i].text == q_res.query
+        assert len(q_res.documents) == 2
+        q_res.documents[0].score = round(q_res.documents[0].score, 2)
+        assert q_res.documents[0] == DocumentWithScore(
+            id=edge_case_encoded_chunks[i].id,
+            text=edge_case_encoded_chunks[i].text,
+            metadata=edge_case_encoded_chunks[i].metadata,
+            source=edge_case_encoded_chunks[i].source,
+            score=1.0), \
+            f"query {i} -  expected: {edge_case_encoded_chunks[i]}, " \
+            f"actual: {q_res.documents[0]}"
 
 
 def test_create_existing_index_no_connect(index_full_name, index_name):
