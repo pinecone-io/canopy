@@ -1,6 +1,8 @@
 # Resin Library
 
-Resin can act both as a library and as a service. This document describes how to use Resin as a library. To read more about Resin project in general and also how to use it as a service, please refer to the [main README](../README.md).
+For most common use cases, users can simply deploy the fully-configurable [Resin service](add README chapter link here), which provides a REST API backend for your own RAG-infused Chatbot.  
+
+For advanced users, this page describes how to use `resin` core library directly to implement their own custom applications. 
 
 
 > 💡 You can find notebooks with examples of how to use Resin library [here](../examples).
