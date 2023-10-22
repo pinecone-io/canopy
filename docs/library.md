@@ -95,7 +95,7 @@ class CustomTokenizer(BaseTokenizer):
     
 Tokenizer.initialize(tokenizer_class=CustomTokenizer)
 
-To use additional parameters to init the underlying tokenizer, you can simply pass them to the initialize method of the global tokenizer. For example:
+When you initialize the `Tokenizer` singleton, you can pass init arguments to the underlying Tokenizer class. Any init argument that is expected by the underlying class's constructor, can be passed as `kwarg` directly to `Tokenizer.initalize()`. For example:
 
 ```python
 from resin.tokenizer import Tokenizer
