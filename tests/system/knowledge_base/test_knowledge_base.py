@@ -160,7 +160,7 @@ def encoded_chunks_large(documents_large, chunker, encoder):
 
 @pytest.fixture
 def documents_with_datetime_metadata():
-    return [Document(id="doc_1",
+    return [Document(id="doc_1_metadata",
                      text="document with datetime metadata",
                      source="source_1",
                      metadata={"datetime": "2021-01-01T00:00:00Z",
@@ -352,7 +352,7 @@ def test_query_edge_case_documents(knowledge_base,
             source=datetime_metadata_encoded_chunks[i].source,
             score=1.0), \
             f"query {i} -  expected: {datetime_metadata_encoded_chunks[i]}, " \
-            f"actual: {q_res.documents[0]}"
+            f"actual: {q_res.documents}"
 
 
 def test_create_existing_index_no_connect(index_full_name, index_name):
