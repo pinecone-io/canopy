@@ -1,4 +1,6 @@
 import os
+import signal
+import subprocess
 
 import click
 import time
@@ -422,6 +424,28 @@ def start(host, port, reload, config):
 @click.option("url", "--url", default="http://0.0.0.0:8000",
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
+    # Check if the service was started using Gunicorn
+    res = subprocess.run(["pgrep", "-f", "gunicorn resin_cli.app:app"],
+                         capture_output=True)
+    output = res.stdout.decode("utf-8").split()
+
+    # If Gunicorn was used, kill all Gunicorn processes
+    if output:
+        msg = ("It seems that Resin service was launched using Gunicorn.\n"
+               "Do you want to kill all Gunicorn processes?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        try:
+            subprocess.run(["pkill", "-f", "gunicorn resin_cli.app:app"], check=True)
+        except subprocess.CalledProcessError:
+            try:
+                [os.kill(int(pid), signal.SIGINT) for pid in output]
+            except OSError:
+                msg = (
+                    "Could not kill Gunicorn processes. Please kill them manually."
+                    f"Found process ids: {output}"
+                )
+                raise CLIError(msg)
+
     try:
         res = requests.get(urljoin(url, "/shutdown"))
         res.raise_for_status()
