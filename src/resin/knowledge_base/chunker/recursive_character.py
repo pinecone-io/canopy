@@ -3,8 +3,8 @@ from typing import List, Optional
 
 from .langchain_text_splitter import RecursiveCharacterTextSplitter
 
-from resin.knoweldge_base.chunker.base import Chunker
-from resin.knoweldge_base.models import KBDocChunk
+from resin.knowledge_base.chunker.base import Chunker
+from resin.knowledge_base.models import KBDocChunk
 from resin.tokenizer import Tokenizer
 from resin.models.data_models import Document
 

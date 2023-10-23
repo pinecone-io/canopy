@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from resin.knoweldge_base.models import QueryResult
+from resin.knowledge_base.models import QueryResult
 from resin.models.data_models import Context
 from resin.utils.config import ConfigurableMixin
 

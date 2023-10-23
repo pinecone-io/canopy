@@ -8,13 +8,14 @@ import time
 import requests
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
+from tqdm import tqdm
 
 import pandas as pd
 import openai
 from openai.error import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
-from resin.knoweldge_base import KnowledgeBase
+from resin.knowledge_base import KnowledgeBase
 from resin.models.data_models import Document
 from resin.tokenizer import Tokenizer
 from resin_cli.data_loader import (
@@ -169,7 +170,11 @@ def new(index_name):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-def upsert(index_name, data_path):
+@click.option("--batch-size", default=10,
+              help="Number of documents to upload in each batch. Defaults to 10.")
+@click.option("--stop-on-error/--no-stop-on-error", default=True,
+              help="Whether to stop when the first error arises. Defaults to True.")
+def upsert(index_name: str, data_path: str, batch_size: int, stop_on_error: bool):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -220,14 +225,34 @@ def upsert(index_name, data_path):
         pd.options.display.max_colwidth = 20
     click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
     click.echo(click.style(f"\nTotal records: {len(data)}"))
-    click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
-    try:
-        kb.upsert(data)
-    except Exception as e:
+    click.confirm(click.style("\nDoes this data look right?", fg="red"),
+                  abort=True)
+
+    pbar = tqdm(total=len(data), desc="Upserting documents")
+    failed_docs = []
+    for i in range(0, len(data), batch_size):
+        batch = data[i:i + batch_size]
+        try:
+            kb.upsert(data)
+        except Exception as e:
+            if stop_on_error or len(failed_docs) > len(data) // 10:
+                msg = (
+                    f"Failed to upsert data to index {kb.index_name}. "
+                    f"Underlying error: {e}"
+                )
+                raise CLIError(msg)
+            else:
+                failed_docs.extend([_.id for _ in batch])
+
+        pbar.update(len(batch))
+
+    if failed_docs:
         msg = (
-            f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
+            f"Failed to upsert the following documents to index {kb.index_name}: "
+            f"{failed_docs}"
         )
         raise CLIError(msg)
+
     click.echo(click.style("Success!", fg="green"))
 
 
@@ -313,7 +338,7 @@ def _chat(
               help="Compare RAG-infused Chatbot with baseline LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
-def chat(chat_service_url, compare, debug, stream):
+def chat(chat_service_url, baseline, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
@@ -353,7 +378,7 @@ def chat(chat_service_url, compare, debug, stream):
             print_debug_info=debug,
         )
 
-        if compare:
+        if baseline:
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
