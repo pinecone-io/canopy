@@ -6,6 +6,7 @@ import time
 import requests
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
+from tqdm import tqdm
 
 import pandas as pd
 import openai
@@ -167,7 +168,8 @@ def new(index_name):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-def upsert(index_name, data_path):
+@click.option("--batch-size", default=10, help="Batch size for upsert")
+def upsert(index_name, data_path, batch_size):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -218,14 +220,22 @@ def upsert(index_name, data_path):
         pd.options.display.max_colwidth = 20
     click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
     click.echo(click.style(f"\nTotal records: {len(data)}"))
-    click.confirm(click.style("\nDoes this data look right?", fg="red"), abort=True)
-    try:
-        kb.upsert(data)
-    except Exception as e:
-        msg = (
-            f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
-        )
-        raise CLIError(msg)
+    click.confirm(click.style("\nDoes this data look right?", fg="red"),
+                  abort=True)
+
+    pbar = tqdm(total=len(data), desc="Upserting documents")
+    for i in range(0, len(data), batch_size):
+        batch = data[i:i + batch_size]
+        try:
+            kb.upsert(data)
+        except Exception as e:
+            msg = (
+                f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
+            )
+            raise CLIError(msg)
+
+        pbar.update(len(batch))
+
     click.echo(click.style("Success!", fg="green"))
 
 
