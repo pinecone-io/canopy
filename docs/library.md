@@ -150,12 +150,7 @@ You can always verify the connection to the Pinecone index with the `verify_inde
 kb.verify_index_connection()
 ```
 
-
-<details>
-<summary>Go deeper</summary>
-TBD
-</details>
-
+To learn more about customizing the KnowledgeBase and its inner components, see [here](#customizing_knowledgebase).
 
 ### Step 3: Upsert and query data
 
@@ -180,7 +175,7 @@ print(results[0].documents[0].text)
 
 <details>
 <summary>Go deeper</summary>
-TBD
+The knowledge base orchestrates the following components to handle the data:
 </details>
 
 ### Step 4: Create a context engine
@@ -252,3 +247,6 @@ TBD
 </details>
 
 
+<a id="customizing_knowledgebase"></a>
+## Customizing KnowledgeBase
+ TBD
