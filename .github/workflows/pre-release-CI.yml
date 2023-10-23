@@ -38,6 +38,10 @@ jobs:
         run: |
           pip install dist/*.whl
 
+      - name: Install pytest
+        run: |
+          poetry install pytest
+
       - name: Run tests
         run: pytest --html=report.html --self-contained-html tests/unit
 
