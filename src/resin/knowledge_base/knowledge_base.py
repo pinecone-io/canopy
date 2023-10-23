@@ -180,13 +180,12 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         try:
-            index = Index(index_name=self.index_name)
+            self._index = Index(index_name=self.index_name)
         except Exception as e:
             raise RuntimeError(
                 f"Unexpected error while connecting to index {self.index_name}. "
                 f"Please check your credentials and try again."
             ) from e
-        self._index = index
 
         try:
             self.verify_index_connection()
