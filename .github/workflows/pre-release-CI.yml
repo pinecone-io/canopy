@@ -1,0 +1,47 @@
+name: Pre Release CI
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.2
+
+      - name: Build wheel
+        run: |
+          poetry build
+
+      - name: Install the wheel
+        run: |
+          pip install dist/*.whl
+
+      - name: Run tests
+        run: pytest --html=report.html --self-contained-html tests/unit
+
+      - name: Upload pytest reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: pytest-report-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: .pytest_cache
