@@ -51,7 +51,7 @@ def check_service_health(url: str):
         raise CLIError(msg)
 
     except requests.exceptions.HTTPError as e:
-        error = e.response.json().get("detail", None) or e.response.text
+        error = e.response.json().get("detail", "") or e.response.text
         msg = (
             f"Resin service on {url} is not healthy, failed with error: {error}"
         )
