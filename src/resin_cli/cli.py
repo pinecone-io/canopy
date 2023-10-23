@@ -33,8 +33,7 @@ from .cli_spinner import Spinner
 from .api_models import ChatDebugInfo
 
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path)
+load_dotenv()
 if os.getenv("OPENAI_API_KEY"):
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
