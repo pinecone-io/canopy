@@ -181,17 +181,13 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         try:
             self._index = Index(index_name=self.index_name)
+            self.verify_index_connection()
         except Exception as e:
+            self._index = None
             raise RuntimeError(
                 f"Unexpected error while connecting to index {self.index_name}. "
                 f"Please check your credentials and try again."
             ) from e
-
-        try:
-            self.verify_index_connection()
-        except Exception as e:
-            self._index = None
-            raise e
 
     @property
     def _connection_error_msg(self) -> str:
