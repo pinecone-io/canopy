@@ -1,11 +1,13 @@
 import os
 import signal
 import subprocess
+from typing import Dict, Any
 
 import click
 import time
 
 import requests
+import yaml
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
 from tqdm import tqdm
@@ -97,6 +99,31 @@ def _initialize_tokenizer():
         raise CLIError(msg)
 
 
+def _load_kb_config(config_file: str) -> Dict[str, Any]:
+    try:
+        with open(os.path.join("config", config_file), 'r') as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        msg = f"Failed to load config file {config_file}. Reason:\n{e}"
+        raise CLIError(msg)
+
+    if "knowledge_base" in config:
+        kb_config = config.get("knowledge_base", None)
+    elif "chat_engine" in config:
+        kb_config = config["chat_engine"]\
+            .get("context_engine", {})\
+            .get("knowledge_base", None)
+    else:
+        kb_config = None
+
+    if kb_config is None:
+        msg = (f"Did not find a `knowledge_base` configuration in {config_file}",
+               "Would you like to use the default configuration?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        kb_config = {}
+    return kb_config
+
+
 @click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__, "-v", "--version", prog_name="Resin")
 @click.pass_context
@@ -135,9 +162,13 @@ def health(url):
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
-def new(index_name):
+@click.option("--config", "-c", default="config.yaml",
+              help="Name of the resin config file. The file needs to be in the"
+                   "`config/` directory. Defaults to `config.yaml`")
+def new(index_name, config):
     _initialize_tokenizer()
-    kb = KnowledgeBase(index_name=index_name)
+    kb_config = _load_kb_config(config)
+    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
@@ -174,7 +205,14 @@ def new(index_name):
               help="Number of documents to upload in each batch. Defaults to 10.")
 @click.option("--stop-on-error/--no-stop-on-error", default=True,
               help="Whether to stop when the first error arises. Defaults to True.")
-def upsert(index_name: str, data_path: str, batch_size: int, stop_on_error: bool):
+@click.option("--config", "-c", default="config.yaml",
+              help="Name of the resin config file. The file needs to be in the"
+                   "`config/` directory. Defaults to `config.yaml`")
+def upsert(index_name: str,
+           data_path: str,
+           batch_size: int,
+           stop_on_error: bool,
+           config: str):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -184,7 +222,8 @@ def upsert(index_name: str, data_path: str, batch_size: int, stop_on_error: bool
 
     _initialize_tokenizer()
 
-    kb = KnowledgeBase(index_name=index_name)
+    kb_config = _load_kb_config(config)
+    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     try:
         kb.connect()
     except RuntimeError as e:
@@ -418,9 +457,9 @@ def chat(chat_service_url, baseline, debug, stream):
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-@click.option("--config", "-c", default=None,
-              help="Path to a resin config file. Optional, otherwise configuration "
-                   "defaults will be used.")
+@click.option("--config", "-c", default="config.yaml",
+              help="Name of the resin config file. The file needs to be in the"
+                   "`config/` directory. Defaults to `config.yaml`")
 def start(host, port, reload, config):
     note_msg = (
         "🚨 Note 🚨\n"
@@ -434,7 +473,8 @@ def start(host, port, reload, config):
     click.echo()
 
     click.echo(f"Starting Resin service on {host}:{port}")
-    start_service(host, port=port, reload=reload, config_file=config)
+    config_file = os.path.join("config", config)
+    start_service(host, port=port, reload=reload, config_file=config_file)
 
 
 @cli.command(
