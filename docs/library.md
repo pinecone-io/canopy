@@ -54,7 +54,7 @@ os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
 
 
 <details>
-<summary>CLICK HERE FOR MORE DETAILS</summary>
+<summary> 👉 click here for more details</summary>
 
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -94,7 +94,7 @@ Since the `tokenizer` object created here would be the same instance that you ha
 By default, the global tokenizer is initialized with `OpenAITokenizer` that is based on OpenAI's tiktoken library and aligned with GPT 3 and 4 models tokenization.
 
 <details>
-<summary>Go deeper</summary>
+<summary>👉 Click here to understand how you can configure and customize the tokenizer</summary>
 The `Tokenizer` singleton is holding an inner `Tokenizer` object that implements `BaseTokenizer`.
 
 You can create your own customized tokenizer by implementing a new class that derives from `BaseTokenizer`, then passing this class to the `Tokenizer` singleton during initialization. Example:
@@ -106,6 +106,7 @@ class CustomTokenizer(BaseTokenizer):
     # ....
     
 Tokenizer.initialize(tokenizer_class=CustomTokenizer)
+```
 
 When you initialize the `Tokenizer` singleton, you can pass init arguments to the underlying Tokenizer class. Any init argument that is expected by the underlying class's constructor, can be passed as `kwarg` directly to `Tokenizer.initalize()`. For example:
 
@@ -150,7 +151,7 @@ You can always verify the connection to the Pinecone index with the `verify_inde
 kb.verify_index_connection()
 ```
 
-To learn more about customizing the KnowledgeBase and its inner components, see [here](#customizing_knowledgebase).
+To learn more about customizing the KnowledgeBase and its inner components, see [understanding knowledgebase workings section](#understanding_knowledgebase).
 
 ### Step 3: Upsert and query data
 
@@ -167,16 +168,14 @@ Now you can query the knowledge base with the `query` method to find the most si
 
 ```python
 from resin.models.query_models import Query
-results = kb.query([Query("Arctic Monkeys music genre")])
+results = kb.query([Query("Arctic Monkeys music genre"),
+                    Query(text="U2 music genre",
+                          top_k=10,
+                          metadata_filter={"my-key": "my-value"})])
 
 print(results[0].documents[0].text)
 # output: Arctic Monkeys are an English rock band formed in Sheffield in 2002.
 ```
-
-<details>
-<summary>Go deeper</summary>
-The knowledge base orchestrates the following components to handle the data:
-</details>
 
 ### Step 4: Create a context engine
 
@@ -247,6 +246,38 @@ TBD
 </details>
 
 
-<a id="customizing_knowledgebase"></a>
-## Customizing KnowledgeBase
- TBD
+<a id="understanding_knowledgebase"></a>
+## Understanding KnowledgeBase workings
+ 
+The knowledge base is an object that is responsible for storing and query your data. It holds a connection to a single Pinecone index and provides a simple API to insert, delete and search textual documents.
+
+### Upsert workflow
+The `upsert` method is used to insert of update textual documents of any size into the knowledge base. For each document, the following steps are performed:
+
+1. The document is chunked into smaller pieces of text, each piece is called a `Chunk`.
+2. Each chunk is encoded into a vector representation.
+3. The vector representation is inserted into the Pinecone index along with the document text and metadata.
+
+### Query workflow
+
+The `query` method is used to retrieve the most similar documents to a given query. For each query, the following steps are performed:
+1. The query is encoded into a vector representation.
+2. The vector representation is used to search the Pinecone index for the most similar vectors.
+3. The retrieved vectors are decoded into `DocumentWithScore` objects and returned inside a `QueryResult` object.
+
+In the future, we intend to introduce a re-ranking phase to enhance the initial query outcomes.
+
+### KnowledgeBase components
+
+The knowledge base is composed of the following components:
+
+- **Index**: A Pinecone index that holds the vector representations of the documents.
+- **Chunker**: A `Chunker` object that is used to chunk the documents into smaller pieces of text.
+- **Encoder**: An `RecordEncoder` object that is used to encode the chunks and queries into vector representations.
+
+By default the knowledge base is initialized with `OpenAIRecordEncoder` which uses OpenAI embedding API to encode the text into vector representations, and `MarkdownChunker` which is based on a cloned version of Langchain's `MarkdownTextSplitter` [chunker](https://github.com/langchain-ai/langchain/blob/95a1b598fefbdb4c28db53e493d5f3242129a5f2/libs/langchain/langchain/text_splitter.py#L1374C7-L1374C27).
+
+
+You can customize each component by passing any instance of `Chunker` or `RecordEncoder` to the `KnowledgeBase` constructor.
+To read more about these classes please refer to the docstrings of `Chunker` and `RecordEncoder`.
+
