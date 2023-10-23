@@ -6,8 +6,8 @@ from tenacity import (
     retry_if_exception_type,
 )
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
-from resin.knoweldge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
-from resin.knoweldge_base.record_encoder.dense import DenseRecordEncoder
+from resin.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
+from resin.knowledge_base.record_encoder.dense import DenseRecordEncoder
 from resin.models.data_models import Query
 from resin.utils.openai_exceptions import OPEN_AI_TRANSIENT_EXCEPTIONS
 

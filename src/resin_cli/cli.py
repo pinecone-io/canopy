@@ -13,7 +13,7 @@ import openai
 from openai.error import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
-from resin.knoweldge_base import KnowledgeBase
+from resin.knowledge_base import KnowledgeBase
 from resin.models.data_models import Document
 from resin.tokenizer import Tokenizer
 from resin_cli.data_loader import (

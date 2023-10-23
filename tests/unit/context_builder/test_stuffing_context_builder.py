@@ -2,7 +2,7 @@ from resin.context_engine.models import \
     ContextSnippet, ContextQueryResult
 from resin.models.data_models import Context
 from ..stubs.stub_tokenizer import StubTokenizer
-from resin.knoweldge_base.models import \
+from resin.knowledge_base.models import \
     QueryResult, DocumentWithScore
 from resin.context_engine.context_builder import StuffingContextBuilder
 
