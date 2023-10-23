@@ -168,7 +168,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def _connect_index(self,
                        connect_pinecone: bool = True
-                       ) -> Index:
+                       ) -> None:
         if connect_pinecone:
             self._connect_pinecone()
 
@@ -180,13 +180,14 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         try:
-            index = Index(index_name=self.index_name)
+            self._index = Index(index_name=self.index_name)
+            self.verify_index_connection()
         except Exception as e:
+            self._index = None
             raise RuntimeError(
                 f"Unexpected error while connecting to index {self.index_name}. "
                 f"Please check your credentials and try again."
             ) from e
-        return index
 
     @property
     def _connection_error_msg(self) -> str:
@@ -210,8 +211,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             RuntimeError: If the knowledge base failed to connect to the underlying Pinecone index.
         """  # noqa: E501
         if self._index is None:
-            self._index = self._connect_index()
-        self.verify_index_connection()
+            self._connect_index()
 
     def verify_index_connection(self) -> None:
         """
@@ -320,7 +320,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         start_time = time.time()
         while True:
             try:
-                self._index = self._connect_index(connect_pinecone=False)
+                self._connect_index(connect_pinecone=False)
                 break
             except RuntimeError:
                 pass
