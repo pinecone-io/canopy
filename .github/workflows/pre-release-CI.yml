@@ -7,7 +7,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-test:
@@ -40,7 +40,7 @@ jobs:
 
       - name: Install tests dependencies
         run: |
-          pip install pytest pytest-html asyncio pytest-asyncio pytest-xdist
+          pip install pytest pytest-html asyncio pytest-asyncio pytest-xdist pytest-mock
 
       - name: Run tests
         run: pytest --html=report.html --self-contained-html tests/unit
