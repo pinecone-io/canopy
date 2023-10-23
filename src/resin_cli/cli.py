@@ -351,7 +351,7 @@ def chat(chat_service_url, baseline, debug, stream):
             print_debug_info=debug,
         )
 
-        if compare:
+        if baseline:
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
