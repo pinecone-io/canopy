@@ -38,9 +38,9 @@ jobs:
         run: |
           pip install dist/*.whl
 
-      - name: Install pytest
+      - name: Install tests dependencies
         run: |
-          poetry install pytest
+          pip install pytest pytest-html asyncio pytest-asyncio pytest-xdist
 
       - name: Run tests
         run: pytest --html=report.html --self-contained-html tests/unit
