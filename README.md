@@ -1,6 +1,16 @@
 # Resin
 
-**Resin** is a Sofware Development Kit (SDK) and a Framework for AI applications. Resin allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Resin** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. 
+**Resin** is a Sofware Development Kit (SDK) for AI applications. Resin allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Resin** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. **Resin** ships with a developer friendly CLI, to help you kickoff and test your application quickly.
+
+## RAG with Resin
+
+**Pinecone + LLM = ❤️** 
+
+By enhancing language models with access to unlearned knowledge and inifinite memory we can build AI applications that can answer questions and assist humans without the risk of hallucinating or generating fake content. Let's learn how Resin executes RAG pipeline.
+
+![](https://github.com/pinecone-io/resin/blob/readme-v0.1-canopy/.readme-content/rag_flow.png)
+
+## Why Resin? [TODO: TBD]
 
 * **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Resin** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
 
@@ -23,6 +33,13 @@
 
 ## Setup
 
+0. set up a virtual environment (optional)
+```bash
+python3 -m venv resin-env
+source resin-env/bin/activate
+```
+more about virtual environments [here](https://docs.python.org/3/tutorial/venv.html)
+
 1. install the package
 ```bash
 pip install pinecone-resin
@@ -38,7 +55,7 @@ export INDEX_NAME=<INDEX_NAME>
 ```
 
 <details>
-<summary>CLICK HERE FOR MORE DETAILS
+<summary><b><u>CLICK HERE</u></b> for more information about the environment variables
 
 .
 </summary>
