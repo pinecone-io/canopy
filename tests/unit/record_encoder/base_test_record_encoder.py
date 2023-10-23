@@ -2,7 +2,7 @@ import pytest
 import math
 from abc import ABC, abstractmethod
 
-from resin.knoweldge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
+from resin.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
 from resin.models.data_models import Query
 
 
