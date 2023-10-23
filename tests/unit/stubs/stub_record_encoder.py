@@ -1,7 +1,7 @@
 from typing import List
 
-from resin.knoweldge_base.record_encoder import RecordEncoder
-from resin.knoweldge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
+from resin.knowledge_base.record_encoder import RecordEncoder
+from resin.knowledge_base.models import KBQuery, KBDocChunk, KBEncodedDocChunk
 from resin.models.data_models import Query
 from .stub_dense_encoder import StubDenseEncoder
 

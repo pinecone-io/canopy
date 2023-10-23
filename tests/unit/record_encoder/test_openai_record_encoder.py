@@ -1,7 +1,7 @@
 import pytest
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
 
-from resin.knoweldge_base.record_encoder.openai import OpenAIRecordEncoder
+from resin.knowledge_base.record_encoder.openai import OpenAIRecordEncoder
 from .base_test_record_encoder import BaseTestRecordEncoder
 from unittest.mock import Mock
 

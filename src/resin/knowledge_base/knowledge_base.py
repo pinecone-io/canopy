@@ -15,13 +15,13 @@ except ImportError:
 from pinecone_datasets import Dataset
 from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 
-from resin.knoweldge_base.base import BaseKnowledgeBase
-from resin.knoweldge_base.chunker import Chunker, MarkdownChunker
-from resin.knoweldge_base.record_encoder import (RecordEncoder,
+from resin.knowledge_base.base import BaseKnowledgeBase
+from resin.knowledge_base.chunker import Chunker, MarkdownChunker
+from resin.knowledge_base.record_encoder import (RecordEncoder,
                                                  OpenAIRecordEncoder)
-from resin.knoweldge_base.models import (KBQueryResult, KBQuery, QueryResult,
+from resin.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                          KBDocChunkWithScore, DocumentWithScore)
-from resin.knoweldge_base.reranker import Reranker, TransparentReranker
+from resin.knowledge_base.reranker import Reranker, TransparentReranker
 from resin.models.data_models import Query, Document
 
 
@@ -52,7 +52,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
 
     Example:
-        >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+        >>> from resin.knowledge_base.knowledge_base import KnowledgeBase
         >>> from tokenizer import Tokenizer
         >>> Tokenizer.initialize()
         >>> kb = KnowledgeBase(index_name="my_index")
@@ -89,7 +89,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Example:
 
             create a new index:
-            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from resin.knowledge_base.knowledge_base import KnowledgeBase
             >>> from tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
@@ -387,7 +387,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             A list of QueryResult objects.
 
         Examples:
-            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from resin.knowledge_base.knowledge_base import KnowledgeBase
             >>> from tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
@@ -483,7 +483,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             None
 
         Example:
-            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from resin.knowledge_base.knowledge_base import KnowledgeBase
             >>> from tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
@@ -561,7 +561,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             None
 
         Example:
-            >>> from resin.knoweldge_base.knowledge_base import KnowledgeBase
+            >>> from resin.knowledge_base.knowledge_base import KnowledgeBase
             >>> from tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")

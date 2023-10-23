@@ -11,7 +11,7 @@ from tqdm import tqdm
 import pandas as pd
 import openai
 
-from resin.knoweldge_base import KnowledgeBase
+from resin.knowledge_base import KnowledgeBase
 from resin.models.data_models import Document
 from resin.tokenizer import OpenAITokenizer, Tokenizer
 from resin_cli.data_loader import (

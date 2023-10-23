@@ -2,7 +2,7 @@ from typing import List
 
 from .langchain_text_splitter import Language, RecursiveCharacterTextSplitter
 from .recursive_character import RecursiveCharacterChunker
-from resin.knoweldge_base.models import KBDocChunk
+from resin.knowledge_base.models import KBDocChunk
 from resin.models.data_models import Document
 
 
