@@ -1,7 +1,9 @@
 name: Pre Release CI
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - "pre-release-CI"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
