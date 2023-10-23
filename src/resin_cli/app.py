@@ -1,7 +1,11 @@
 import os
 import logging
+import signal
 import sys
 import uuid
+
+import openai
+from multiprocessing import current_process
 from dotenv import load_dotenv
 
 from resin.llm import BaseLLM
@@ -23,9 +27,10 @@ from resin_cli.api_models import \
     ChatRequest, ContextQueryRequest, \
     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
-load_dotenv()  # load env vars before import of openai
-from resin.llm.openai import OpenAILLM  # noqa: E402
+from resin.llm.openai import OpenAILLM
 
+load_dotenv()  # load env vars before import of openai
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 app = FastAPI()
 
@@ -157,6 +162,17 @@ async def health_check():
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
+@app.get(
+    "/shutdown"
+)
+async def shutdown():
+    logger.info("Shutting down")
+    proc = current_process()
+    pid = proc._parent_pid if "SpawnProcess" in proc.name else proc.pid
+    os.kill(pid, signal.SIGINT)
+    return {"message": "Shutting down"}
+
+
 @app.on_event("startup")
 async def startup():
     _init_logging()
@@ -197,9 +213,9 @@ def _init_engines():
     kb.connect()
 
 
-def start(host="0.0.0.0", port=8000, reload=False):
+def start(host="0.0.0.0", port=8000, reload=False, workers=1):
     uvicorn.run("resin_cli.app:app",
-                host=host, port=port, reload=reload)
+                host=host, port=port, reload=reload, workers=workers)
 
 
 if __name__ == "__main__":
