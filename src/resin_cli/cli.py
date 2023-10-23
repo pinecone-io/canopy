@@ -233,7 +233,7 @@ def upsert(index_name: str, data_path: str, batch_size: int, stop_on_error: bool
         try:
             kb.upsert(data)
         except Exception as e:
-            if stop_on_error:
+            if stop_on_error or len(failed_docs) > len(data) // 10:
                 msg = (
                     f"Failed to upsert data to index {kb.index_name}. "
                     f"Underlying error: {e}"
