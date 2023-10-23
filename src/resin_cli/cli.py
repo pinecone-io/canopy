@@ -168,8 +168,11 @@ def new(index_name):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=10, help="Batch size for upsert")
-def upsert(index_name, data_path, batch_size):
+@click.option("--batch-size", default=10,
+              help="Number of documents to upload in each batch. Defaults to 10.")
+@click.option("--stop-on-error/--no-stop-on-error", default=True,
+              help="Whether to stop when the first error arises. Defaults to True.")
+def upsert(index_name: str, data_path: str, batch_size: int, stop_on_error: bool):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -224,17 +227,29 @@ def upsert(index_name, data_path, batch_size):
                   abort=True)
 
     pbar = tqdm(total=len(data), desc="Upserting documents")
+    failed_docs = []
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
             kb.upsert(data)
         except Exception as e:
-            msg = (
-                f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
-            )
-            raise CLIError(msg)
+            if stop_on_error:
+                msg = (
+                    f"Failed to upsert data to index {kb.index_name}. "
+                    f"Underlying error: {e}"
+                )
+                raise CLIError(msg)
+            else:
+                failed_docs.extend([_.id for _ in batch])
 
         pbar.update(len(batch))
+
+    if failed_docs:
+        msg = (
+            f"Failed to upsert the following documents to index {kb.index_name}: "
+            f"{failed_docs}"
+        )
+        raise CLIError(msg)
 
     click.echo(click.style("Success!", fg="green"))
 
