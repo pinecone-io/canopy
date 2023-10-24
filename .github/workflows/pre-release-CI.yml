@@ -7,9 +7,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-jobs:
+jobs:git
   build-and-test:
-    name: Build & Test on ${{ matrix.os }}
+    name: Build & Test on ${{ matrix.os }}-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
