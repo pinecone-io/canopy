@@ -27,6 +27,25 @@ good_df_minimal = (
     ]
 )
 
+
+good_df_all_good_metadata_permutations = (
+    pd.DataFrame(
+        [
+            {"id": 1, "text": "foo", "metadata": {"string": "string"}},
+            {"id": 2, "text": "bar", "metadata": {"int": 1}},
+            {"id": 3, "text": "baz", "metadata": {"float": 1.0}},
+            {"id": 4, "text": "foo", "metadata": {"list": ["list", "another"]}},
+        ]
+    ),
+    [
+        Document(id=1, text="foo", metadata={"string": "string"}),
+        Document(id=2, text="bar", metadata={"int": 1}),
+        Document(id=3, text="baz", metadata={"float": 1.0}),
+        Document(id=4, text="foo", metadata={"list": ["list", "another"]}),
+    ]
+)
+
+
 good_df_maximal = (
     pd.DataFrame(
         [
@@ -144,6 +163,17 @@ bad_df_has_excess_field = (
         ]
     ),
     DocumentsValidationError,
+)
+
+bad_df_missppelled_optional_field = (
+    pd.DataFrame(
+        [
+            {"id": 1, "text": "foo", "sorce": "foo_source"},
+            {"id": 2, "text": "bar", "metdata": {"key": "value"}},
+            {"id": 3, "text": "baz", "sorce": "baz_source"},
+        ]
+    ),
+    DocumentsValidationError
 )
 
 bad_df_missing_mandatory_field = (
