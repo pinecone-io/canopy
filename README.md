@@ -52,11 +52,15 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 ## What's inside the box?
 
 1. **Resin Core Library** - Resin has 3 high level classes that act as API level components:
-    * **ChatEngine** - is a complete RAG unit that exposes a chat interface of LLM augmented with retrieval engine.
-    * **ContextEngine** - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. 
-    * **KnowledgeBase** - is the data managment interface, handles the processing, chunking and encoding (embedding) of the data, along with Upsert/Query and Delete operations
+    * **ChatEngine** _`/chat/completions`_  - is a complete RAG unit that exposes a chat interface of LLM augmented with retrieval engine.
+    * **ContextEngine** _`/context/query`_ - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. 
+    * **KnowledgeBase** _`/context/{upsert, delete}` -  is the data managment interface, handles the processing, chunking and encoding (embedding) of the data, along with Upsert and Delete operations
 
-2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. For the complete documentation please go to: [#TODO: LINK](link.link.com) 
+> more information about the Core Library usage can be found in the [Library Documentation](https://github.com/pinecone-io/resin/blob/readme-v0.1-canopy/docs/library.md)
+
+2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. 
+
+> For the complete documentation please go to: [#TODO: LINK](link.link.com) 
 
 3. **Resin CLI** - Resin comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
@@ -85,9 +89,9 @@ export INDEX_NAME=<INDEX_NAME>
 ```
 
 <details>
-<summary><b><u>CLICK HERE</u></b> for more information about the environment variables
+<summary><b><u>CLICK HERE</u></b> for more information about the environment variables 
 
-.
+<br /> 
 </summary>
 
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
@@ -125,9 +129,9 @@ In this quickstart, we will show you how to use the **Resin** to build a simple 
 resin new
 ```
 
-And follow the CLI instructions. The index that will be created will have a prefix `resin--<INDEX_NAME>`.
+And follow the CLI instructions. The index that will be created will have a prefix `resin--<INDEX_NAME>`. This will have to be done only once per index.
 
-> Note, this will have to be done only once per index.
+> To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
 ![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-new.gif)
 
@@ -185,6 +189,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 >
 > The resin start command will keep the terminal occupied. To proceed with the next steps, please open a new terminal window.
 > and make sure all the environment variables described in the [installation](#how-to-install) section are set.
+> If you want to run the service in the background, you can use the following command - **```nohup resin start &```**
 
 
 ### 4. Chat with your data
@@ -199,10 +204,10 @@ This will open a chat interface in your terminal. You can ask questions and the 
 
 ![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-chat.gif)
 
-To compare the chat response with and without RAG use the `--no-rag` flag
+To compare the chat response with and without RAG use the `--baseline` flag
 
 ```bash
-resin chat --no-rag
+resin chat --baseline
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
@@ -222,7 +227,7 @@ resin stop
 
 ## Advanced usage
 
-### 1. Migrating existing OpenAI application to **Resin**
+### Migrating existing OpenAI application to **Resin**
 
 If you already have an application that uses the OpenAI API, you can migrate it to **Resin** by simply changing the API endpoint to `http://host:port/context` as follows:
 
