@@ -53,7 +53,7 @@ def check_service_health(url: str):
     except requests.exceptions.HTTPError as e:
         res = e.response
         if res:
-            error = e.response.json().get("detail", None) or e.response.text
+            error = res.json().get("detail", None) or res.text
         else:
             error = str(e)
         msg = (
