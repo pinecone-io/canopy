@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pinecone-resin"
+name = "pinecone-canopy"
 version = "0.1.0"
 description = "Resin is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
