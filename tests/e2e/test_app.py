@@ -8,7 +8,7 @@ import pytest
 from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
-from resin.knoweldge_base import KnowledgeBase
+from resin.knowledge_base import KnowledgeBase
 
 from resin_cli.app import app
 from resin_cli.api_models import HealthStatus, ContextUpsertRequest, ContextQueryRequest
