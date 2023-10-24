@@ -64,7 +64,6 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 3. **Resin CLI** - Resin comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
-
 ## Setup
 
 0. set up a virtual environment (optional)
