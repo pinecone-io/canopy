@@ -7,9 +7,6 @@ import yaml
 from resin.chat_engine import ChatEngine
 from resin.context_engine import ContextEngine
 from resin.knowledge_base import KnowledgeBase
-# from resin.tokenizer import Tokenizer
-from resin.utils.config import ConfigurableMixin
-# from tests import StubTokenizer
 from ._stub_classes import (BaseStubChunker, StubChunker, StubKB,
                             BaseStubContextEngine, StubOtherChunker, StubContextBuilder,
                             StubContextEngine, BaseStubKB)
