@@ -3,9 +3,12 @@ import os
 import glob
 from collections.abc import Iterable
 from typing import List
+from textwrap import dedent
 
+import click
 import numpy as np
 import pandas as pd
+from click import ClickException
 
 from pydantic import ValidationError
 
@@ -13,13 +16,20 @@ from resin.models.data_models import Document
 
 
 class IDsNotUniqueError(ValueError):
-    def __init__(self, message):
-        super().__init__(message)
+    pass
 
 
 class DocumentsValidationError(ValueError):
-    def __init__(self, message):
-        super().__init__(message)
+    pass
+
+
+def format_multiline(msg):
+    return dedent(msg).strip()
+
+
+class CLIError(ClickException):
+    def format_message(self) -> str:
+        return click.style(format_multiline(self.message), fg='red')
 
 
 def _process_metadata(value):

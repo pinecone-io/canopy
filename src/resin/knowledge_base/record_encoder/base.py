@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from resin.knoweldge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
+from resin.knowledge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
 from resin.models.data_models import Query
 from resin.utils.config import ConfigurableMixin
 

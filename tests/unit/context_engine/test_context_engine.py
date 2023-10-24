@@ -3,8 +3,8 @@ from unittest.mock import create_autospec
 
 from resin.context_engine import ContextEngine
 from resin.context_engine.context_builder.base import ContextBuilder
-from resin.knoweldge_base.base import BaseKnowledgeBase
-from resin.knoweldge_base.models import QueryResult, DocumentWithScore
+from resin.knowledge_base.base import BaseKnowledgeBase
+from resin.knowledge_base.models import QueryResult, DocumentWithScore
 from resin.models.data_models import Query, Context, ContextContent
 
 
