@@ -554,7 +554,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         dataset.to_pinecone_index(self._index_name,
                                   namespace=namespace,
                                   should_create_index=False,
-                                  batch_size=batch_size, 
+                                  batch_size=batch_size,
                                   show_progress=show_progress_bar)
 
     def delete(self,
