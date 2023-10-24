@@ -56,7 +56,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
     * **ContextEngine** _`/context/query`_ - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. 
     * **KnowledgeBase** _`/context/{upsert, delete}` -  is the data managment interface, handles the processing, chunking and encoding (embedding) of the data, along with Upsert and Delete operations
 
-> more information about the Core Library usage can be found in the [Library Documentation](https://github.com/pinecone-io/resin/blob/readme-v0.1-canopy/docs/library.md)
+> more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
 2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. 
 
@@ -133,7 +133,7 @@ And follow the CLI instructions. The index that will be created will have a pref
 
 > To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
-![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-new.gif)
+![](.readme-content/resin-new.gif)
 
 ### 2. Uploading data
 
@@ -162,7 +162,7 @@ Resin support single or mulitple files in jsonl or praquet format. The documents
 
 Follow the instructions in the CLI to upload your data.
 
-![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-upsert.gif)
+![](.readme-content/resin-upsert.gif)
 
 ### 3. Start the **Resin** service
 
@@ -182,7 +182,7 @@ INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 
-![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-start.gif)
+![](.readme-content/resin-start.gif)
 
 
 > **_📝 NOTE:_**
@@ -202,7 +202,7 @@ resin chat
 
 This will open a chat interface in your terminal. You can ask questions and the **Resin** will try to answer them using the data you uploaded.
 
-![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-chat.gif)
+![](.readme-content/resin-chat.gif)
 
 To compare the chat response with and without RAG use the `--baseline` flag
 
@@ -212,7 +212,7 @@ resin chat --baseline
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
 
-![](https://github.com/pinecone-io/context-engine/blob/change-readme-cli-names/.readme-content/resin-chat-no-rag.gif)
+![](.readme-content/resin-chat-no-rag.gif)
 
 
 ### 5. Stop the **Resin** service
