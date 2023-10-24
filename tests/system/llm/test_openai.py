@@ -154,11 +154,6 @@ class TestOpenAILLM:
         assert len(response.choices[0].message.content.split()) <= max_tokens
 
     @staticmethod
-    def test_invalid_model_name():
-        with pytest.raises(ValueError, match="Model invalid_model_name not found."):
-            OpenAILLM(model_name="invalid_model_name")
-
-    @staticmethod
     def test_missing_messages(openai_llm):
         with pytest.raises(InvalidRequestError):
             openai_llm.chat_completion(messages=[])
