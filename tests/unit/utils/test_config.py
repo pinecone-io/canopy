@@ -14,6 +14,7 @@ from ._stub_classes import (BaseStubChunker, StubChunker, StubKB,
 
 DEFAULT_COFIG_PATH = 'config/config.yaml'
 
+
 def test_list_supported_classes():
     supported_chunkers = BaseStubChunker.list_supported_types()
     assert len(supported_chunkers) == 2
@@ -362,7 +363,7 @@ def test_default_config_matches_code_defaults(temp_index_name):
     default_chat_engine = ChatEngine(default_context_engine)
 
     def assert_identical_components(loaded_component, default_component):
-        assert type(loaded_component) == type(default_component)
+        assert type(loaded_component) == type(default_component)  # noqa: E721
         if not loaded_component.__module__.startswith("resin"):
             return
 
@@ -376,6 +377,6 @@ def test_default_config_matches_code_defaults(temp_index_name):
                 assert getattr(loaded_component, key) == value, (
                     f"Attribute {key} in {type(loaded_component)} is {value} in code "
                     f"but {getattr(loaded_component, key)} in config"
-            )
+                )
 
     assert_identical_components(loaded_chat_engine, default_chat_engine)
