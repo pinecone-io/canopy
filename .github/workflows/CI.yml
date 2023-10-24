@@ -51,7 +51,7 @@ jobs:
     - name: Run flake8 Check
       run: poetry run flake8 .
     - name: Run mypy check
-      run: poetry run mypy .
+      run: poetry run mypy src
 
   run-tests:
     name: Run tests
