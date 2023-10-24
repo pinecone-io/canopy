@@ -1,7 +1,7 @@
 import os
 import signal
 import subprocess
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 
 import click
 import time
@@ -205,15 +205,18 @@ def new(index_name: str, config: Optional[str]):
 )
 @click.option("--batch-size", default=10,
               help="Number of documents to upload in each batch. Defaults to 10.")
-@click.option("--stop-on-error/--no-stop-on-error", default=True,
-              help="Whether to stop when the first error arises. Defaults to True.")
+@click.option("--allow-failures/--dont-allow-failures", default=False,
+              help="On default, the upsert process will stop if any document fails to "
+                   "be uploaded. "
+                   "When set to True, the upsert process will continue on failure, as "
+                   "long as less than 10% of the documents have failed to be uploaded.")
 @click.option("--config", "-c", default=None,
               help="Path to a resin config file. Optional, otherwise configuration "
                    "defaults will be used.")
 def upsert(index_name: str,
            data_path: str,
            batch_size: int,
-           stop_on_error: bool,
+           allow_failures: bool,
            config: Optional[str]):
     if index_name is None:
         msg = (
@@ -270,27 +273,31 @@ def upsert(index_name: str,
                   abort=True)
 
     pbar = tqdm(total=len(data), desc="Upserting documents")
-    failed_docs = []
+    failed_docs: List[str] = []
+    first_error: Optional[str] = None
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
             kb.upsert(data)
         except Exception as e:
-            if stop_on_error or len(failed_docs) > len(data) // 10:
+            if allow_failures and len(failed_docs) < len(data) // 10:
+                failed_docs.extend([_.id for _ in batch])
+                if first_error is None:
+                    first_error = str(e)
+            else:
                 msg = (
                     f"Failed to upsert data to index {kb.index_name}. "
-                    f"Underlying error: {e}"
+                    f"Underlying error: {e}\n"
+                    f"You can allow partial failures by setting --allow-failures. "
                 )
                 raise CLIError(msg)
-            else:
-                failed_docs.extend([_.id for _ in batch])
 
         pbar.update(len(batch))
 
     if failed_docs:
         msg = (
             f"Failed to upsert the following documents to index {kb.index_name}: "
-            f"{failed_docs}"
+            f"{failed_docs}. The first encountered error was: {first_error}"
         )
         raise CLIError(msg)
 
