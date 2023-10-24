@@ -14,7 +14,7 @@ pinecone-client = "^2.2.2"
 python-dotenv = "^1.0.0"
 openai = "^0.27.5"
 tiktoken = "^0.3.3"
-pinecone-datasets = "^0.6.1"
+pinecone-datasets = "^0.6.2"
 pydantic = "^1.10.7"
 pinecone-text = { version = "^0.6.0", extras = ["openai"] }
 pandas-stubs = "^2.0.3.230814"
@@ -49,7 +49,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 allow_redefinition = true
-exclude = ['tests']
+exclude = ['tests', '.venv']
 
 [[tool.mypy.overrides]]
 module = [
@@ -64,6 +64,7 @@ ignore_missing_imports = true
 per-file-ignores = [
     '*/__init__.py:F401',
 ]
+exclude = ['.venv']
 max-line-length = 88
 
 [tool.poetry.scripts]

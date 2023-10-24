@@ -152,7 +152,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # Normally, index creation params are passed directly to the `.create_resin_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
         # would be set by the `KnowledgeBase.from_config()` constructor.
-        self._index_params: Optional[Dict[str, Any]] = None
+        self._index_params: Dict[str, Any] = {}
 
         # The index object is initialized lazily, when the user calls `connect()` or
         # `create_resin_index()`
@@ -306,7 +306,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         # create index
-        index_params = index_params or self._index_params or {}
+        index_params = index_params or self._index_params
         try:
             create_index(name=self.index_name,
                          dimension=dimension,
@@ -468,7 +468,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def upsert(self,
                documents: List[Document],
                namespace: str = "",
-               batch_size: int = 100):
+               batch_size: int = 100,
+               show_progress_bar: bool = False):
         """
         Upsert documents into the knowledge base.
         Upsert operation stands for "update or insert".
@@ -486,6 +487,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             namespace: The namespace in the underlying index to upsert documents into.
             batch_size: Refers only to the actual upsert operation to the underlying index.
                         The number of chunks (multiple piecies of text per document) to upsert in each batch.
+                        Defaults to 100.
+            show_progress_bar: Whether to show a progress bar while upserting the documents.
 
         Returns:
             None
@@ -551,7 +554,8 @@ class KnowledgeBase(BaseKnowledgeBase):
         dataset.to_pinecone_index(self._index_name,
                                   namespace=namespace,
                                   should_create_index=False,
-                                  batch_size=batch_size)
+                                  batch_size=batch_size,
+                                  show_progress=show_progress_bar)
 
     def delete(self,
                document_ids: List[str],
