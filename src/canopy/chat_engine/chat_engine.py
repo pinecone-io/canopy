@@ -5,13 +5,13 @@ from typing import Iterable, Union, Optional, cast
 from canopy.chat_engine.models import HistoryPruningMethod
 from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import (QueryGenerator,
-                                               FunctionCallingQueryGenerator, )
+                                                FunctionCallingQueryGenerator, )
 from canopy.context_engine import ContextEngine
 from canopy.tokenizer import Tokenizer
 from canopy.llm import BaseLLM, OpenAILLM
 from canopy.llm.models import ModelParams, SystemMessage
 from canopy.models.api_models import (StreamingChatChunk, ChatResponse,
-                                     StreamingChatResponse, )
+                                      StreamingChatResponse, )
 from canopy.models.data_models import Context, Messages
 from canopy.utils.config import ConfigurableMixin
 

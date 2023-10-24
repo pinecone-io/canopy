@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 from canopy.chat_engine.exceptions import InvalidRequestError
 from canopy.chat_engine.history_pruner import (RaisingHistoryPruner,
-                                              RecentHistoryPruner, )
+                                               RecentHistoryPruner, )
 from canopy.chat_engine.history_pruner.base import HistoryPruner
 from canopy.chat_engine.models import HistoryPruningMethod
 from canopy.tokenizer import Tokenizer

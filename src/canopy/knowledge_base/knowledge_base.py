@@ -19,9 +19,9 @@ from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
-                                                 OpenAIRecordEncoder)
+                                                  OpenAIRecordEncoder)
 from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                         KBDocChunkWithScore, DocumentWithScore)
+                                          KBDocChunkWithScore, DocumentWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
 from canopy.models.data_models import Query, Document
 
@@ -40,25 +40,17 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
-    The `KnowledgeBase` is used to store and retrieve text documents, using an 
-    underlying Pinecone index.
-    Every document is chunked into multiple text snippets based on the text structure 
-    (e.g. Markdown or HTML formatting)
-    Then, each chunk is encoded into a vector using an embedding model, and the 
-    resulting vectors are inserted to the Pinecone index.
-    After documents were inserted, the KnowledgeBase can be queried by sending a 
-    textual query, which will first encoded to a vector
+    The `KnowledgeBase` is used to store and retrieve text documents, using an underlying Pinecone index.
+    Every document is chunked into multiple text snippets based on the text structure (e.g. Markdown or HTML formatting)
+    Then, each chunk is encoded into a vector using an embedding model, and the resulting vectors are inserted to the Pinecone index.
+    After documents were inserted, the KnowledgeBase can be queried by sending a textual query, which will first encoded to a vector
     and then used to retrieve the closest top-k document chunks.
 
-    Note: Since Canopy defines its own data format, you can not use a pre-existing 
-    Pinecone index with Canopy's KnowledgeBase.
-          The index must be created by using `knowledge_base.create_canopy_index()` or 
-          the CLI command `canopy new`.
+    Note: Since Canopy defines its own data format, you can not use a pre-existing Pinecone index with Canopy's KnowledgeBase.
+          The index must be created by using `knowledge_base.create_canopy_index()` or the CLI command `canopy new`.
 
-    When creating a new Canopy service, the user must first create the underlying 
-    Pinecone index.
-    This is a one-time setup process - the index will exist on Pinecone's managed 
-    service until it is deleted.
+    When creating a new Canopy service, the user must first create the underlying Pinecone index.
+    This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
 
     Example:
         >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
@@ -90,12 +82,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Initilize the knowledge base object.
 
-        If the index does not exist, the user must first create it by calling 
-        `create_canopy_index()` or the CLI command `canopy new`.
+        If the index does not exist, the user must first create it by calling `create_canopy_index()` or the CLI command `canopy new`.
 
         Note: Canopy will add the prefix --canopy to your selected index name.
-             You can retrieve the full index name knowledge_base.index_name at any 
-             time, or find it in the Pinecone console at https://app.pinecone.io/
+             You can retrieve the full index name knowledge_base.index_name at any time, or find it in the Pinecone console at https://app.pinecone.io/
 
         Example:
 
@@ -114,17 +104,12 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
             index_name: The name of the underlying Pinecone index.
-            record_encoder: An instance of RecordEncoder to use for encoding 
-            documents and queries.
+            record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
                                                       Defaults to OpenAIRecordEncoder.
-            chunker: An instance of Chunker to use for chunking documents. Defaults 
-            to MarkdownChunker.
-            reranker: An instance of Reranker to use for reranking query results. 
-            Defaults to TransparentReranker.
-            default_top_k: The default number of document chunks to return per query. 
-            Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation 
-            API. Defaults to None.
+            chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
+            reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
+            default_top_k: The default number of document chunks to return per query. Defaults to 5.
+            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
                           see https://docs.pinecone.io/docs/python-client#create_index
 
         Returns:

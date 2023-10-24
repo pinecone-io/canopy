@@ -5,7 +5,7 @@ from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.llm import BaseLLM, OpenAILLM
 from canopy.llm.models import (Function, FunctionParameters,
-                              FunctionArrayProperty)
+                               FunctionArrayProperty)
 from canopy.models.data_models import Messages, Query
 
 DEFAULT_SYSTEM_PROMPT = """Your task is to formulate search queries for a search engine, to assist in responding to the user's question.

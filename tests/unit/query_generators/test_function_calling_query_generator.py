@@ -9,8 +9,8 @@ from canopy.chat_engine.query_generator.function_calling \
             DEFAULT_SYSTEM_PROMPT, )
 from canopy.llm import BaseLLM
 from canopy.llm.models import (ModelParams, Function,
-                              FunctionParameters, FunctionArrayProperty,
-                              UserMessage, )
+                               FunctionParameters, FunctionArrayProperty,
+                               UserMessage, )
 from canopy.models.data_models import Query
 
 

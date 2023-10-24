@@ -476,7 +476,8 @@ def chat(chat_service_url, baseline, debug, stream):
 def start(host: str, port: str, reload: bool, config: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy service in production, run the command:\n"
+        "For debugging only. To run the Canopy service in production, run the command:"
+        "\n"
         "gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     )
