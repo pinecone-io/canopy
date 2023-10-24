@@ -8,7 +8,7 @@
 
 By enhancing language models with access to unlearned knowledge and inifinite memory we can build AI applications that can answer questions and assist humans without the risk of hallucinating or generating fake content. Let's learn how Resin executes RAG pipeline.
 
-![](https://github.com/pinecone-io/resin/blob/readme-v0.1-canopy/.readme-content/rag_flow.png)
+![](.readme-content/rag_flow.png)
 
 <details>
 <summary><b>Chat Flow</b> (click to expand)
