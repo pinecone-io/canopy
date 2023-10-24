@@ -9,7 +9,8 @@ from resin.llm.models import (Function, FunctionParameters,
 from resin.models.data_models import Messages, Query
 
 DEFAULT_SYSTEM_PROMPT = """Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
-You should break down complex questions into sub-queries if needed."""  # noqa: E501
+You should break down complex questions into sub-queries if needed.
+"""  # noqa: E501
 
 DEFAULT_FUNCTION_DESCRIPTION = """Query search engine for relevant information"""
 

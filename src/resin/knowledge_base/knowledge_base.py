@@ -152,7 +152,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # Normally, index creation params are passed directly to the `.create_resin_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
         # would be set by the `KnowledgeBase.from_config()` constructor.
-        self._index_params: Optional[Dict[str, Any]] = None
+        self._index_params: Dict[str, Any] = {}
 
         # The index object is initialized lazily, when the user calls `connect()` or
         # `create_resin_index()`
@@ -306,7 +306,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         # create index
-        index_params = index_params or self._index_params or {}
+        index_params = index_params or self._index_params
         try:
             create_index(name=self.index_name,
                          dimension=dimension,
