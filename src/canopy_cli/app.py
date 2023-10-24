@@ -25,12 +25,12 @@ from typing import cast
 
 from canopy.models.api_models import StreamingChatResponse, ChatResponse
 from canopy.models.data_models import Context
-from resin_cli.api_models import \
+from canopy_cli.api_models import \
     ChatRequest, ContextQueryRequest, \
     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
 from canopy.llm.openai import OpenAILLM
-from resin_cli.errors import ConfigError
+from canopy_cli.errors import ConfigError
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -260,7 +260,7 @@ def start(host="0.0.0.0", port=8000, reload=False, config_file=None):
     if config_file:
         os.environ["RESIN_CONFIG_FILE"] = config_file
 
-    uvicorn.run("resin_cli.app:app", host=host, port=port, reload=reload, workers=0)
+    uvicorn.run("canopy_cli.app:app", host=host, port=port, reload=reload, workers=0)
 
 
 if __name__ == "__main__":

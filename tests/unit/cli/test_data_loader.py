@@ -4,7 +4,7 @@ import json
 import pandas as pd
 
 from canopy.models.data_models import Document
-from resin_cli.data_loader.data_loader import (
+from canopy_cli.data_loader.data_loader import (
     IDsNotUniqueError,
     DocumentsValidationError,
     load_from_path,

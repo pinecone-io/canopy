@@ -254,5 +254,5 @@ Resin is using FastAPI as the web framework and Uvicorn as the ASGI server. It i
 To run the resin service for production, please run:
 
 ```bash
-gunicorn resin_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
+gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
