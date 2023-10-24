@@ -1,4 +1,5 @@
 import os
+from typing import List, Optional
 
 import click
 import time
@@ -230,8 +231,8 @@ def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: boo
                   abort=True)
 
     pbar = tqdm(total=len(data), desc="Upserting documents")
-    failed_docs = []
-    first_error = None
+    failed_docs: List[str] = []
+    first_error: Optional[str] = None
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
@@ -244,7 +245,8 @@ def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: boo
             else:
                 msg = (
                     f"Failed to upsert data to index {kb.index_name}. "
-                    f"Underlying error: {e}"
+                    f"Underlying error: {e}\n"
+                    f"You can allow partial failures by setting --allow-failures. "
                 )
                 raise CLIError(msg)
 
