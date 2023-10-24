@@ -24,6 +24,8 @@ tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
 types-tqdm = "^4.61.0"
 tqdm = "^4.66.1"
+gunicorn = "^21.2.0"
+types-pyyaml = "^6.0.12.12"
 
 
 [tool.poetry.group.dev.dependencies]
