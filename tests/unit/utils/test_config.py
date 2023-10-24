@@ -1,5 +1,4 @@
 # noqa: F405
-import os
 
 import pytest
 
