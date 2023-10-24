@@ -58,7 +58,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
-2. **Resin Service** - a service that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI and Uvicorn and can be easily deployed in production. 
+2. **Resin Service** - a webservice that wraps the **Resin Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. 
 
 > For the complete documentation please go to: [#TODO: LINK](link.link.com) 
 
@@ -100,6 +100,7 @@ export INDEX_NAME=<INDEX_NAME>
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `INDEX_NAME`          | Name of the Pinecone index Resin will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
+| `RESIN_CONFIG_FILE` | The path of a configuration yaml file to be used by the Resin service. | Optional - if not provided, default configuration would be used |
 </details>
 
 
@@ -245,4 +246,14 @@ or without global state change:
 import openai
 
 openai_response = openai.Completion.create(..., api_base="http://host:port/context")
+```
+
+### Running Resin service in production
+
+Resin is using FastAPI as the web framework and Uvicorn as the ASGI server. It is recommended to use Gunicorn as the production server, mainly because it supports multiple worker processes and can handle multiple requests in parallel, more details can be found [here](https://www.uvicorn.org/deployment/#using-a-process-manager).
+
+To run the resin service for production, please run:
+
+```bash
+gunicorn resin_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
