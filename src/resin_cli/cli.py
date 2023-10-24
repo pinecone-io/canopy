@@ -142,6 +142,7 @@ def cli(ctx):
     if ctx.invoked_subcommand is None:
         validate_connection()
         click.echo(ctx.get_help())
+        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if resin service is running and healthy.")
@@ -244,7 +245,7 @@ def upsert(index_name: str,
         raise CLIError(msg)
 
     click.echo("Resin is going to upsert data from ", nl=False)
-    click.echo(click.style(f"{data_path}", fg="yellow"), nl=False)
+    click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
     click.echo(click.style(f'{kb.index_name} \n', fg='green'))
     with spinner:
@@ -330,7 +331,7 @@ def _chat(
         raise CLIError(msg)
     end = time.time()
     duration_in_sec = end - start
-    click.echo(click.style(f"\n> AI {speaker}:\n", fg=speaker_color))
+    click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
     if stream:
         for chunk in openai_response:
             openai_response_id = chunk.id
