@@ -1,11 +1,8 @@
 # Resin Library
 
-For most common use cases, users can simply deploy the fully-configurable [Resin service](add README chapter link here), which provides a REST API backend for your own RAG-infused Chatbot.  
+For most common use cases, users can simply deploy the fully-configurable [Resin service](../README.md), which provides a REST API backend for your own RAG-infused Chatbot.  
 
 For advanced users, this page describes how to use `resin` core library directly to implement their own custom applications. 
-
-
-> 💡 You can find notebooks with examples of how to use Resin library [here](../examples).
 
 The idea behind Resin library is to provide a framework to build AI applications on top of Pinecone as a long memory storage for you own data. Resin library designed with the following principles in mind:
 
@@ -18,7 +15,7 @@ The idea behind Resin library is to provide a framework to build AI applications
 
 ## High level architecture
 
-![class architecture](https://github.com/pinecone-io/context-engine/blob/main/.readme-content/class_architecture.png)
+![class architecture](../.readme-content/class_architecture.png)
 
 ## Installation
 
