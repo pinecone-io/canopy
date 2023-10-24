@@ -1,6 +1,6 @@
 import pytest
 
-from resin.knowledge_base.record_encoder import DenseRecordEncoder
+from canopy.knowledge_base.record_encoder import DenseRecordEncoder
 from .base_test_record_encoder import BaseTestRecordEncoder
 from ..stubs.stub_dense_encoder import StubDenseEncoder
 

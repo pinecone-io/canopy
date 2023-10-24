@@ -10,12 +10,12 @@ from multiprocessing import current_process
 import yaml
 from dotenv import load_dotenv
 
-from resin.llm import BaseLLM
-from resin.llm.models import UserMessage
-from resin.tokenizer import Tokenizer
-from resin.knowledge_base import KnowledgeBase
-from resin.context_engine import ContextEngine
-from resin.chat_engine import ChatEngine
+from canopy.llm import BaseLLM
+from canopy.llm.models import UserMessage
+from canopy.tokenizer import Tokenizer
+from canopy.knowledge_base import KnowledgeBase
+from canopy.context_engine import ContextEngine
+from canopy.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
@@ -23,13 +23,13 @@ from fastapi import FastAPI, HTTPException, Body
 import uvicorn
 from typing import cast
 
-from resin.models.api_models import StreamingChatResponse, ChatResponse
-from resin.models.data_models import Context
+from canopy.models.api_models import StreamingChatResponse, ChatResponse
+from canopy.models.data_models import Context
 from resin_cli.api_models import \
     ChatRequest, ContextQueryRequest, \
     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
-from resin.llm.openai import OpenAILLM
+from canopy.llm.openai import OpenAILLM
 from resin_cli.errors import ConfigError
 
 load_dotenv()  # load env vars before import of openai
@@ -186,7 +186,7 @@ def _init_logging():
     global logger
 
     file_handler = logging.FileHandler(
-        filename=os.getenv("CE_LOG_FILENAME", "resin.log")
+        filename=os.getenv("CE_LOG_FILENAME", "canopy.log")
     )
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]

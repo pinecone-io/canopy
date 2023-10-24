@@ -3,15 +3,15 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from resin.chat_engine.prompt_builder import PromptBuilder
-from resin.chat_engine.query_generator.function_calling \
+from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.chat_engine.query_generator.function_calling \
     import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
             DEFAULT_SYSTEM_PROMPT, )
-from resin.llm import BaseLLM
-from resin.llm.models import (ModelParams, Function,
+from canopy.llm import BaseLLM
+from canopy.llm.models import (ModelParams, Function,
                               FunctionParameters, FunctionArrayProperty,
                               UserMessage, )
-from resin.models.data_models import Query
+from canopy.models.data_models import Query
 
 
 class TestFunctionCallingQueryGenerator:

@@ -1,4 +1,4 @@
 from .unit.stubs.stub_tokenizer import StubTokenizer
-from resin.tokenizer import Tokenizer
+from canopy.tokenizer import Tokenizer
 
 Tokenizer.initialize(StubTokenizer)

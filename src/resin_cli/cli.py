@@ -17,9 +17,9 @@ import openai
 from openai.error import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
-from resin.knowledge_base import KnowledgeBase
-from resin.models.data_models import Document
-from resin.tokenizer import Tokenizer
+from canopy.knowledge_base import KnowledgeBase
+from canopy.models.data_models import Document
+from canopy.tokenizer import Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
     IDsNotUniqueError,
@@ -49,7 +49,7 @@ def check_service_health(url: str):
     except requests.exceptions.ConnectionError:
         msg = f"""
         Resin service is not running on {url}.
-        please run `resin start`
+        please run `canopy start`
         """
         raise CLIError(msg)
 
@@ -145,7 +145,7 @@ def cli(ctx):
         # click.echo(command.get_help(ctx))
 
 
-@cli.command(help="Check if resin service is running and healthy.")
+@cli.command(help="Check if canopy service is running and healthy.")
 @click.option("--url", default="http://0.0.0.0:8000",
               help="Resin's service url. Defaults to http://0.0.0.0:8000")
 def health(url):
@@ -169,7 +169,7 @@ def health(url):
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--config", "-c", default=None,
-              help="Path to a resin config file. Optional, otherwise configuration "
+              help="Path to a canopy config file. Optional, otherwise configuration "
                    "defaults will be used.")
 def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
@@ -215,7 +215,7 @@ def new(index_name: str, config: Optional[str]):
                    "When set to True, the upsert process will continue on failure, as "
                    "long as less than 10% of the documents have failed to be uploaded.")
 @click.option("--config", "-c", default=None,
-              help="Path to a resin config file. Optional, otherwise configuration "
+              help="Path to a canopy config file. Optional, otherwise configuration "
                    "defaults will be used.")
 def upsert(index_name: str,
            data_path: str,
@@ -459,7 +459,7 @@ def chat(chat_service_url, baseline, debug, stream):
         Start the Resin service.
         This command will launch a uvicorn server that will serve the Resin API.
 
-        If you like to try out the chatbot, run `resin chat` in a separate terminal
+        If you like to try out the chatbot, run `canopy chat` in a separate terminal
         window.
         """
     )
@@ -471,7 +471,7 @@ def chat(chat_service_url, baseline, debug, stream):
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
 @click.option("--config", "-c", default=None,
-              help="Path to a resin config file. Optional, otherwise configuration "
+              help="Path to a canopy config file. Optional, otherwise configuration "
                    "defaults will be used.")
 def start(host: str, port: str, reload: bool, config: Optional[str]):
     note_msg = (

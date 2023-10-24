@@ -10,7 +10,7 @@ import pandas as pd
 
 from pydantic import ValidationError
 
-from resin.models.data_models import Document
+from canopy.models.data_models import Document
 
 
 class IDsNotUniqueError(ValueError):

@@ -1,7 +1,7 @@
 import abc
 from typing import Optional
 
-from resin.utils.config import ConfigurableMixin
+from canopy.utils.config import ConfigurableMixin
 
 
 # A base class that inherits from ConfigurableMixin, with multiple derived classes

@@ -3,9 +3,9 @@ import os
 import pytest
 import yaml
 
-from resin.chat_engine import ChatEngine
-from resin.context_engine import ContextEngine
-from resin.knowledge_base import KnowledgeBase
+from canopy.chat_engine import ChatEngine
+from canopy.context_engine import ContextEngine
+from canopy.knowledge_base import KnowledgeBase
 
 DEFAULT_COFIG_PATH = 'config/config.yaml'
 
@@ -35,7 +35,7 @@ def test_default_config_matches_code_defaults(temp_index_name):
 
     def assert_identical_components(loaded_component, default_component):
         assert type(loaded_component) == type(default_component)  # noqa: E721
-        if not loaded_component.__module__.startswith("resin"):
+        if not loaded_component.__module__.startswith("canopy"):
             return
 
         for key, value in default_component.__dict__.items():

@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Resin is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
-packages = [{include = "resin", from = "src"},
+packages = [{include = "canopy", from = "src"},
             {include = "resin_cli", from = "src"},]
 
 

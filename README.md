@@ -68,14 +68,14 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 0. set up a virtual environment (optional)
 ```bash
-python3 -m venv resin-env
-source resin-env/bin/activate
+python3 -m venv canopy-env
+source canopy-env/bin/activate
 ```
 more about virtual environments [here](https://docs.python.org/3/tutorial/venv.html)
 
 1. install the package
 ```bash
-pip install pinecone-resin
+pip install pinecone-canopy
 ```
 
 2. Set up the environment variables
@@ -105,7 +105,7 @@ export INDEX_NAME=<INDEX_NAME>
 
 3. Check that installation is successful and environment is set, run:
 ```bash
-resin
+canopy
 ```
 
 output should be similar to this:
@@ -113,7 +113,7 @@ output should be similar to this:
 ```bash
 Resin: Ready
 
-Usage: resin [OPTIONS] COMMAND [ARGS]...
+Usage: canopy [OPTIONS] COMMAND [ARGS]...
 # rest of the help message
 ```
 
@@ -126,7 +126,7 @@ In this quickstart, we will show you how to use the **Resin** to build a simple 
 **Resin** will create and configure a new Pinecone index on your behalf. Just run:
 
 ```bash
-resin new
+canopy new
 ```
 
 And follow the CLI instructions. The index that will be created will have a prefix `resin--<INDEX_NAME>`. This will have to be done only once per index.
@@ -140,13 +140,13 @@ And follow the CLI instructions. The index that will be created will have a pref
 You can load data into your **Resin** Index by simply using the CLI:
 
 ```bash
-resin upsert /path/to/data_directory
+canopy upsert /path/to/data_directory
 
 # or
-resin upsert /path/to/data_directory/file.parquet
+canopy upsert /path/to/data_directory/file.parquet
 
 # or
-resin upsert /path/to/data_directory/file.jsonl
+canopy upsert /path/to/data_directory/file.jsonl
 ```
 
 Resin support single or mulitple files in jsonl or praquet format. The documents should have the following schema:
@@ -169,7 +169,7 @@ Follow the instructions in the CLI to upload your data.
 **Resin** service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
 
 ```bash
-resin start
+canopy start
 ```
 
 Now, you should be prompted with standard Uvicorn logs:
@@ -197,7 +197,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 Now that you have data in your index, you can chat with it using the CLI:
 
 ```bash
-resin chat
+canopy chat
 ```
 
 This will open a chat interface in your terminal. You can ask questions and the **Resin** will try to answer them using the data you uploaded.
@@ -207,7 +207,7 @@ This will open a chat interface in your terminal. You can ask questions and the 
 To compare the chat response with and without RAG use the `--baseline` flag
 
 ```bash
-resin chat --baseline
+canopy chat --baseline
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
@@ -222,7 +222,7 @@ To stop the service, simply press `CTRL+C` in the terminal where you started it.
 If you have started the service in the background, you can stop it by running:
 
 ```bash
-resin stop
+canopy stop
 ```
 
 ## Advanced usage

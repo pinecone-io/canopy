@@ -1,7 +1,7 @@
 from typing import List
-from resin.knowledge_base.chunker.base import Chunker
-from resin.knowledge_base.models import KBDocChunk
-from resin.models.data_models import Document
+from canopy.knowledge_base.chunker.base import Chunker
+from canopy.knowledge_base.models import KBDocChunk
+from canopy.models.data_models import Document
 
 
 class StubChunker(Chunker):

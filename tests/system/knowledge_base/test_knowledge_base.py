@@ -12,13 +12,13 @@ from tenacity import (
 )
 from dotenv import load_dotenv
 from datetime import datetime
-from resin.knowledge_base import KnowledgeBase
-from resin.knowledge_base.chunker import Chunker
-from resin.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
-from resin.knowledge_base.models import DocumentWithScore
-from resin.knowledge_base.record_encoder import RecordEncoder
-from resin.knowledge_base.reranker import Reranker
-from resin.models.data_models import Document, Query
+from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base.chunker import Chunker
+from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
+from canopy.knowledge_base.models import DocumentWithScore
+from canopy.knowledge_base.record_encoder import RecordEncoder
+from canopy.knowledge_base.reranker import Reranker
+from canopy.models.data_models import Document, Query
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker

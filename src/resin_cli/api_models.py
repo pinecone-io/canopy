@@ -2,7 +2,7 @@ from typing import Optional, List
 
 from pydantic import BaseModel
 
-from resin.models.data_models import Messages, Query, Document
+from canopy.models.data_models import Messages, Query, Document
 
 
 class ChatRequest(BaseModel):
