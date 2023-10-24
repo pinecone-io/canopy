@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 
 from resin.llm import BaseLLM
 from resin.llm.models import UserMessage
-from resin.tokenizer import OpenAITokenizer, Tokenizer
+from resin.tokenizer import Tokenizer
 from resin.knowledge_base import KnowledgeBase
 from resin.context_engine import ContextEngine
 from resin.chat_engine import ChatEngine
@@ -212,7 +212,8 @@ def _init_engines():
         _load_config(config_file)
 
     else:
-        logger.info("Did not find config file. Initializing engines with default config")
+        logger.info("Did not find config file. Initializing engines with default "
+                    "configuration")
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
@@ -223,7 +224,7 @@ def _init_engines():
 
 
 def _load_config(config_file):
-    global chat_engine, llm, context_engine, kb
+    global chat_engine, llm, context_engine, kb, logger
     logger.info(f"Initializing engines with config file {config_file}")
     try:
         with open(config_file, "r") as f:

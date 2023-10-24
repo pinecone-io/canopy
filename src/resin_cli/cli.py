@@ -119,7 +119,7 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
         kb_config = None
 
     if kb_config is None:
-        msg = (f"Did not find a `knowledge_base` configuration in {config_file}",
+        msg = (f"Did not find a `knowledge_base` configuration in {config_file}, "
                "Would you like to use the default configuration?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         kb_config = {}
