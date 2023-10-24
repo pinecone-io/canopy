@@ -4,8 +4,8 @@ from typing import List, Optional
 
 from resin.context_engine.context_builder import StuffingContextBuilder
 from resin.context_engine.context_builder.base import ContextBuilder
-from resin.knoweldge_base import KnowledgeBase
-from resin.knoweldge_base.base import BaseKnowledgeBase
+from resin.knowledge_base import KnowledgeBase
+from resin.knowledge_base.base import BaseKnowledgeBase
 from resin.models.data_models import Context, Query
 from resin.utils.config import ConfigurableMixin
 
