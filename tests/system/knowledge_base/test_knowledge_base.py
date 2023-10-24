@@ -71,7 +71,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
-    kb.create_resin_index()
+    kb.create_canopy_index()
 
     return kb
 
@@ -344,7 +344,7 @@ def test_create_existing_index_no_connect(index_full_name, index_name):
         record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
         chunker=StubChunker(num_chunks_per_doc=2))
     with pytest.raises(RuntimeError) as e:
-        kb.create_resin_index()
+        kb.create_canopy_index()
 
     assert f"Index {index_full_name} already exists" in str(e.value)
 
@@ -447,7 +447,7 @@ def test_create_with_text_in_indexed_field_raise(index_name,
         kb = KnowledgeBase(index_name=index_name,
                            record_encoder=encoder,
                            chunker=chunker)
-        kb.create_resin_index(indexed_fields=["id", "text", "metadata"])
+        kb.create_canopy_index(indexed_fields=["id", "text", "metadata"])
 
     assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
@@ -459,7 +459,7 @@ def test_create_with_index_encoder_dimension_none(index_name, chunker):
         kb = KnowledgeBase(index_name=index_name,
                            record_encoder=encoder,
                            chunker=chunker)
-        kb.create_resin_index()
+        kb.create_canopy_index()
 
     assert "Could not infer dimension from encoder" in str(e.value)
 
@@ -481,7 +481,7 @@ def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encode
                        record_encoder=encoder,
                        chunker=chunker)
     with pytest.raises(RuntimeError) as e:
-        kb.create_resin_index()
+        kb.create_canopy_index()
 
     assert "Please check your credentials" in str(e.value)
 

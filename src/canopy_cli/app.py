@@ -207,7 +207,7 @@ def _init_engines():
     if not index_name:
         raise ValueError("INDEX_NAME environment variable must be set")
 
-    config_file = os.getenv("RESIN_CONFIG_FILE")
+    config_file = os.getenv("CANOPY_CONFIG_FILE")
     if config_file:
         _load_config(config_file)
 
@@ -258,7 +258,7 @@ def _load_config(config_file):
 
 def start(host="0.0.0.0", port=8000, reload=False, config_file=None):
     if config_file:
-        os.environ["RESIN_CONFIG_FILE"] = config_file
+        os.environ["CANOPY_CONFIG_FILE"] = config_file
 
     uvicorn.run("canopy_cli.app:app", host=host, port=port, reload=reload, workers=0)
 

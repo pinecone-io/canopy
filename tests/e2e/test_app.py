@@ -50,7 +50,7 @@ def index_name(testrun_uid):
 def knowledge_base(index_name):
     pinecone.init()
     kb = KnowledgeBase(index_name=index_name)
-    kb.create_resin_index()
+    kb.create_canopy_index()
 
     return kb
 

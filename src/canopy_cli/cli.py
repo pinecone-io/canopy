@@ -48,7 +48,7 @@ def check_service_health(url: str):
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Resin service is not running on {url}.
+        Canopy service is not running on {url}.
         please run `canopy start`
         """
         raise CLIError(msg)
@@ -59,7 +59,7 @@ def check_service_health(url: str):
         else:
             error = str(e)
         msg = (
-            f"Resin service on {url} is not healthy, failed with error: {error}"
+            f"Canopy service on {url} is not healthy, failed with error: {error}"
         )
         raise CLIError(msg)
 
@@ -89,7 +89,7 @@ def validate_connection():
             "Please visit https://platform.openai.com/account/api-keys for more details"
         )
         raise CLIError(msg)
-    click.echo("Resin: ", nl=False)
+    click.echo("Canopy: ", nl=False)
     click.echo(click.style("Ready\n", bold=True, fg="green"))
 
 
@@ -130,12 +130,12 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
 
 
 @click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
-@click.version_option(__version__, "-v", "--version", prog_name="Resin")
+@click.version_option(__version__, "-v", "--version", prog_name="Canopy")
 @click.pass_context
 def cli(ctx):
     """
     \b
-    CLI for Pinecone Resin. Actively developed by Pinecone.
+    CLI for Pinecone Canopy. Actively developed by Pinecone.
     To use the CLI, you need to have a Pinecone account.
     Visit https://www.pinecone.io/ to sign up for free.
     """
@@ -147,18 +147,18 @@ def cli(ctx):
 
 @cli.command(help="Check if canopy service is running and healthy.")
 @click.option("--url", default="http://0.0.0.0:8000",
-              help="Resin's service url. Defaults to http://0.0.0.0:8000")
+              help="Canopy's service url. Defaults to http://0.0.0.0:8000")
 def health(url):
     check_service_health(url)
-    click.echo(click.style("Resin service is healthy!", fg="green"))
+    click.echo(click.style("Canopy service is healthy!", fg="green"))
     return
 
 
 @cli.command(
     help=(
-        """Create a new Pinecone index that that will be used by Resin.
+        """Create a new Pinecone index that that will be used by Canopy.
         \b
-        A Resin service can not be started without a Pinecone index which is configured to work with Resin.
+        A Canopy service can not be started without a Pinecone index which is configured to work with Canopy.
         This command will create a new Pinecone index and configure it in the right schema.
 
         If the embedding vectors' dimension is not explicitly configured in
@@ -175,12 +175,12 @@ def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
     kb_config = _load_kb_config(config)
     kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
-    click.echo("Resin is going to create a new index: ", nl=False)
+    click.echo("Canopy is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     with spinner:
         try:
-            kb.create_resin_index()
+            kb.create_canopy_index()
         # TODO: kb should throw a specific exception for each case
         except Exception as e:
             msg = f"Failed to create a new index. Reason:\n{e}"
@@ -193,7 +193,7 @@ def new(index_name: str, config: Optional[str]):
     help=(
         """
         \b
-        Upload local data files containing documents to the Resin service.
+        Upload local data files containing documents to the Canopy service.
 
         Load all the documents from data file or a directory containing multiple data files.
         The allowed formats are .jsonl and .parquet.
@@ -244,7 +244,7 @@ def upsert(index_name: str,
                     "https://www.pinecone.io/docs/quick-start/ for more details.")
         raise CLIError(msg)
 
-    click.echo("Resin is going to upsert data from ", nl=False)
+    click.echo("Canopy is going to upsert data from ", nl=False)
     click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
     click.echo(click.style(f'{kb.index_name} \n', fg='green'))
@@ -369,9 +369,9 @@ def _chat(
 @cli.command(
     help=(
         """
-        Debugging tool for chatting with the Resin RAG service.
+        Debugging tool for chatting with the Canopy RAG service.
 
-        Run an interactive chat with the Resin RAG service, for debugging and demo
+        Run an interactive chat with the Canopy RAG service, for debugging and demo
         purposes. A prompt is provided for the user to enter a message, and the
         RAG-infused ChatBot will respond. You can continue the conversation by entering
         more messages. Hit Ctrl+C to exit.
@@ -389,7 +389,7 @@ def _chat(
 @click.option("--baseline/--no-baseline", default=False,
               help="Compare RAG-infused Chatbot with baseline LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
-              help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
+              help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
 def chat(chat_service_url, baseline, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
@@ -403,7 +403,7 @@ def chat(chat_service_url, baseline, debug, stream):
     note_white_message = (
         "This method should be used by developers to test the RAG data and model"
         "during development. "
-        "When you are ready to deploy, run the Resin service as a REST API "
+        "When you are ready to deploy, run the Canopy service as a REST API "
         "backend for your chatbot UI. \n\n"
         "Let's Chat!"
     )
@@ -456,8 +456,8 @@ def chat(chat_service_url, baseline, debug, stream):
     help=(
         """
         \b
-        Start the Resin service.
-        This command will launch a uvicorn server that will serve the Resin API.
+        Start the Canopy service.
+        This command will launch a uvicorn server that will serve the Canopy API.
 
         If you like to try out the chatbot, run `canopy chat` in a separate terminal
         window.
@@ -476,7 +476,7 @@ def chat(chat_service_url, baseline, debug, stream):
 def start(host: str, port: str, reload: bool, config: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Resin service in production, run the command:\n"
+        "For debugging only. To run the Canopy service in production, run the command:\n"
         "gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     )
@@ -485,7 +485,7 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
         time.sleep(0.01)
     click.echo()
 
-    click.echo(f"Starting Resin service on {host}:{port}")
+    click.echo(f"Starting Canopy service on {host}:{port}")
     start_service(host, port=port, reload=reload, config_file=config)
 
 
@@ -493,13 +493,13 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
     help=(
         """
         \b
-        Stop the Resin service.
-        This command will send a shutdown request to the Resin service.
+        Stop the Canopy service.
+        This command will send a shutdown request to the Canopy service.
         """
     )
 )
 @click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
+              help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
     # Check if the service was started using Gunicorn
     res = subprocess.run(["pgrep", "-f", "gunicorn canopy_cli.app:app"],
@@ -508,7 +508,7 @@ def stop(url):
 
     # If Gunicorn was used, kill all Gunicorn processes
     if output:
-        msg = ("It seems that Resin service was launched using Gunicorn.\n"
+        msg = ("It seems that Canopy service was launched using Gunicorn.\n"
                "Do you want to kill all Gunicorn processes?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         try:
@@ -529,7 +529,7 @@ def stop(url):
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Could not find Resin service on {url}.
+        Could not find Canopy service on {url}.
         """
         raise CLIError(msg)
 

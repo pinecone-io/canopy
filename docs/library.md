@@ -1,16 +1,16 @@
-# Resin Library
+# Canopy Library
 
-For most common use cases, users can simply deploy the fully-configurable [Resin service](../README.md), which provides a REST API backend for your own RAG-infused Chatbot.  
+For most common use cases, users can simply deploy the fully-configurable [Canopy service](../README.md), which provides a REST API backend for your own RAG-infused Chatbot.  
 
-For advanced users, this page describes how to use `resin` core library directly to implement their own custom applications. 
+For advanced users, this page describes how to use `canopy` core library directly to implement their own custom applications. 
 
-The idea behind Resin library is to provide a framework to build AI applications on top of Pinecone as a long memory storage for you own data. Resin library designed with the following principles in mind:
+The idea behind Canopy library is to provide a framework to build AI applications on top of Pinecone as a long memory storage for you own data. Canopy library designed with the following principles in mind:
 
-- **Easy to use**: Resin is designed to be easy to use. It is well packaged and can be installed with a single command.
-- **Modularity**: Resin is built as a collection of modules that can be used together or separately. For example, you can use the `chat_engine` module to build a chatbot on top of your data, or you can use the `knowledge_base` module to directly store and search your data.
-- **Extensibility**: Resin is designed to be extensible. You can easily add your own components and extend the functionality.
-- **Production ready**: Resin designed to be production ready, tested, well documented, maintained and supported.
-- **Open source**: Resin is open source and free to use. It built in partnership with the community and for the community.
+- **Easy to use**: Canopy is designed to be easy to use. It is well packaged and can be installed with a single command.
+- **Modularity**: Canopy is built as a collection of modules that can be used together or separately. For example, you can use the `chat_engine` module to build a chatbot on top of your data, or you can use the `knowledge_base` module to directly store and search your data.
+- **Extensibility**: Canopy is designed to be extensible. You can easily add your own components and extend the functionality.
+- **Production ready**: Canopy designed to be production ready, tested, well documented, maintained and supported.
+- **Open source**: Canopy is open source and free to use. It built in partnership with the community and for the community.
 
 
 ## High level architecture
@@ -19,7 +19,7 @@ The idea behind Resin library is to provide a framework to build AI applications
 
 ## Setup
 
-To setup resin, please follow the instructions [here](../README.md#setup).
+To setup canopy, please follow the instructions [here](../README.md#setup).
 
 ## Quickstart
 
@@ -27,19 +27,19 @@ To setup resin, please follow the instructions [here](../README.md#setup).
 
 The `Tokenizer` object is used for converting text into tokens, which is the basic data represntation that is used for processing.
 
-Since manny different classes rely on a tokenizer,  Resin uses a singleton `Tokenizer` object which needs to be initialized once. 
+Since manny different classes rely on a tokenizer,  Canopy uses a singleton `Tokenizer` object which needs to be initialized once. 
 
-Before instantiating any other resin core objects, please initialize the `Tokenizer` singleton:
+Before instantiating any other canopy core objects, please initialize the `Tokenizer` singleton:
 
 ```python
-from resin.tokenizer import Tokenizer
+from canopy.tokenizer import Tokenizer
 Tokenizer.initialize()
 ```
 
 Then, each time you want to use the tokenizer, you can simply instantiate a local object:
 
 ```python
-from resin.tokenizer import Tokenizer
+from canopy.tokenizer import Tokenizer
 
 # no need to pass any parameters, the global tokenizer will be used
 tokenizer = Tokenizer()
@@ -58,7 +58,7 @@ The `Tokenizer` singleton is holding an inner `Tokenizer` object that implements
 
 You can create your own customized tokenizer by implementing a new class that derives from `BaseTokenizer`, then passing this class to the `Tokenizer` singleton during initialization. Example:
 ```python
-from resin.tokenizer import Tokenizer, BaseTokenizer
+from canopy.tokenizer import Tokenizer, BaseTokenizer
 
 class CustomTokenizer(BaseTokenizer):
     # Implement BaseToknizer's abstract methods, like `def tokenize()` etc.
@@ -70,8 +70,8 @@ Tokenizer.initialize(tokenizer_class=CustomTokenizer)
 When you initialize the `Tokenizer` singleton, you can pass init arguments to the underlying Tokenizer class. Any init argument that is expected by the underlying class's constructor, can be passed as `kwarg` directly to `Tokenizer.initalize()`. For example:
 
 ```python
-from resin.tokenizer import Tokenizer
-from resin.tokenizer.openai import OpenAITokenizer
+from canopy.tokenizer import Tokenizer
+from canopy.tokenizer.openai import OpenAITokenizer
 Tokenizer.initialize(tokenizer_class=OpenAITokenizer, model_name="gpt2")
 ```
 
@@ -85,15 +85,15 @@ Knowledge base is an object that is responsible for storing and query your data.
 To create a knowledge base, you can use the following command:
 
 ```python
-from resin.knowledge_base import KnowledgeBase
+from canopy.knowledge_base import KnowledgeBase
 
 kb = KnowledgeBase(index_name="my-index")
 ```
 
-To create a new Pinecone index and connect it to the knowledge base, you can use the `create_resin_index` method:
+To create a new Pinecone index and connect it to the knowledge base, you can use the `create_canopy_index` method:
 
 ```python
-kb.create_resin_index()
+kb.create_canopy_index()
 ```
 
 Then, you will be able to mange the index in Pinecone [console](https://app.pinecone.io/).
@@ -117,7 +117,7 @@ To learn more about customizing the KnowledgeBase and its inner components, see 
 To insert data into the knowledge base, you can create a list of documents and use the `upsert` method:
 
 ```python
-from resin.models.data_models import Document
+from canopy.models.data_models import Document
 documents = [Document(id="1", text="U2 are an Irish rock band from Dublin, formed in 1976.", source="https://url.com"),
              Document(id="2", text="Arctic Monkeys are an English rock band formed in Sheffield in 2002.", source="https://another-url.com", metadata={"my-key": "my-value"})]
 kb.upsert(documents)
@@ -126,7 +126,7 @@ kb.upsert(documents)
 Now you can query the knowledge base with the `query` method to find the most similar documents to a given text:
 
 ```python
-from resin.models.query_models import Query
+from canopy.models.query_models import Query
 results = kb.query([Query("Arctic Monkeys music genre"),
                     Query(text="U2 music genre",
                           top_k=10,
@@ -146,7 +146,7 @@ The output of the context engine is designed to provide the LLM the most relevan
 To create a context engine using a knowledge base, you can use the following command:
 
 ```python
-from resin.context_engine import ContextEngine
+from canopy.context_engine import ContextEngine
 context_engine = ContextEngine(kb)
 ```
 
@@ -183,7 +183,7 @@ Given chat history, the chat engine orchestrates its underlying context engine a
 To create a chat engine using a context, you can use the following command:
 
 ```python
-from resin.chat_engine import ChatEngine
+from canopy.chat_engine import ChatEngine
 chat_engine = ChatEngine(context_engine)
 ```
 
@@ -195,7 +195,7 @@ chat_engine.chat("what is the genre of Arctic Monkeys band?")
 ```
 
 
-Resin designed to be production ready and handle any conversation length and context length. Therefore, the chat engine uses internal components to handle long conversations and long contexts.
+Canopy designed to be production ready and handle any conversation length and context length. Therefore, the chat engine uses internal components to handle long conversations and long contexts.
 By default, long chat history is truncated to the latest messages that fits the token budget. It orchestrates the context engine to retrieve context that fits the token budget and then use the LLM to generate the next response.
 
 

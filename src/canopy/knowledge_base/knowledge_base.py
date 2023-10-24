@@ -40,24 +40,32 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
-    The `KnowledgeBase` is used to store and retrieve text documents, using an underlying Pinecone index.
-    Every document is chunked into multiple text snippets based on the text structure (e.g. Markdown or HTML formatting)
-    Then, each chunk is encoded into a vector using an embedding model, and the resulting vectors are inserted to the Pinecone index.
-    After documents were inserted, the KnowledgeBase can be queried by sending a textual query, which will first encoded to a vector
+    The `KnowledgeBase` is used to store and retrieve text documents, using an 
+    underlying Pinecone index.
+    Every document is chunked into multiple text snippets based on the text structure 
+    (e.g. Markdown or HTML formatting)
+    Then, each chunk is encoded into a vector using an embedding model, and the 
+    resulting vectors are inserted to the Pinecone index.
+    After documents were inserted, the KnowledgeBase can be queried by sending a 
+    textual query, which will first encoded to a vector
     and then used to retrieve the closest top-k document chunks.
 
-    Note: Since Resin defines its own data format, you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
-          The index must be created by using `knowledge_base.create_resin_index()` or the CLI command `canopy new`.
+    Note: Since Canopy defines its own data format, you can not use a pre-existing 
+    Pinecone index with Canopy's KnowledgeBase.
+          The index must be created by using `knowledge_base.create_canopy_index()` or 
+          the CLI command `canopy new`.
 
-    When creating a new Resin service, the user must first create the underlying Pinecone index.
-    This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
+    When creating a new Canopy service, the user must first create the underlying 
+    Pinecone index.
+    This is a one-time setup process - the index will exist on Pinecone's managed 
+    service until it is deleted.
 
     Example:
         >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
         >>> from tokenizer import Tokenizer
         >>> Tokenizer.initialize()
         >>> kb = KnowledgeBase(index_name="my_index")
-        >>> kb.create_resin_index()
+        >>> kb.create_canopy_index()
 
     In any future interactions, the user simply needs to connect to the existing index:
 
@@ -82,10 +90,12 @@ class KnowledgeBase(BaseKnowledgeBase):
         """
         Initilize the knowledge base object.
 
-        If the index does not exist, the user must first create it by calling `create_resin_index()` or the CLI command `canopy new`.
+        If the index does not exist, the user must first create it by calling 
+        `create_canopy_index()` or the CLI command `canopy new`.
 
-        Note: Resin will add the prefix --canopy to your selected index name.
-             You can retrieve the full index name knowledge_base.index_name at any time, or find it in the Pinecone console at https://app.pinecone.io/
+        Note: Canopy will add the prefix --canopy to your selected index name.
+             You can retrieve the full index name knowledge_base.index_name at any 
+             time, or find it in the Pinecone console at https://app.pinecone.io/
 
         Example:
 
@@ -94,7 +104,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             >>> from tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
-            >>> kb.create_resin_index()
+            >>> kb.create_canopy_index()
 
         In any future interactions,
         the user simply needs to connect to the existing index:
@@ -104,12 +114,17 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
             index_name: The name of the underlying Pinecone index.
-            record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
+            record_encoder: An instance of RecordEncoder to use for encoding 
+            documents and queries.
                                                       Defaults to OpenAIRecordEncoder.
-            chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
-            reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
-            default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
+            chunker: An instance of Chunker to use for chunking documents. Defaults 
+            to MarkdownChunker.
+            reranker: An instance of Reranker to use for reranking query results. 
+            Defaults to TransparentReranker.
+            default_top_k: The default number of document chunks to return per query. 
+            Defaults to 5.
+            index_params: A dictionary of parameters to pass to the index creation 
+            API. Defaults to None.
                           see https://docs.pinecone.io/docs/python-client#create_index
 
         Returns:
@@ -149,13 +164,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
-        # Normally, index creation params are passed directly to the `.create_resin_index()` method.  # noqa: E501
+        # Normally, index creation params are passed directly to the `.create_canopy_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
         # would be set by the `KnowledgeBase.from_config()` constructor.
         self._index_params: Dict[str, Any] = {}
 
         # The index object is initialized lazily, when the user calls `connect()` or
-        # `create_resin_index()`
+        # `create_canopy_index()`
         self._index: Optional[Index] = None
 
     @staticmethod
@@ -176,7 +191,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self.index_name not in list_indexes():
             raise RuntimeError(
                 f"The index {self.index_name} does not exist or was deleted. "
-                "Please create it by calling knowledge_base.create_resin_index() or "
+                "Please create it by calling knowledge_base.create_canopy_index() or "
                 "running the `canopy new` command"
             )
 
@@ -203,7 +218,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         This method must be called before making any other calls to the knowledge base.
 
         Note: If underlying index is not provisioned yet, an exception will be raised.
-              To provision the index, use `create_resin_index()` or the CLI command `canopy new`.
+              To provision the index, use `create_canopy_index()` or the CLI command `canopy new`.
 
         Returns:
             None
@@ -234,24 +249,24 @@ class KnowledgeBase(BaseKnowledgeBase):
                 "The index did not respond. Please check your credentials and try again"
             ) from e
 
-    def create_resin_index(self,
-                           indexed_fields: Optional[List[str]] = None,
-                           dimension: Optional[int] = None,
-                           index_params: Optional[dict] = None
-                           ):
+    def create_canopy_index(self,
+                            indexed_fields: Optional[List[str]] = None,
+                            dimension: Optional[int] = None,
+                            index_params: Optional[dict] = None
+                            ):
         """
         Creates the underlying Pinecone index that will be used by the KnowledgeBase.
-        This is a one time set-up operation that only needs to be done once for every new Resin service.
+        This is a one time set-up operation that only needs to be done once for every new Canopy service.
         After the index was created, it will persist in Pinecone until explicitly deleted.
 
-        Since Resin defines its own data format, namely a few dedicated metadata fields,
-        you can not use a pre-existing Pinecone index with Resin's KnowledgeBase.
-        The index must be created by using `knowledge_base.create_resin_index()` or the CLI command `canopy new`.
+        Since Canopy defines its own data format, namely a few dedicated metadata fields,
+        you can not use a pre-existing Pinecone index with Canopy's KnowledgeBase.
+        The index must be created by using `knowledge_base.create_canopy_index()` or the CLI command `canopy new`.
 
         Note: This operation may take a few minutes to complete.
               Once created, you can see the index in the Pinecone console
 
-        Note: Resin will add the prefix --canopy to your selected index name.
+        Note: Canopy will add the prefix --canopy to your selected index name.
              You can retrieve the full index name knowledge_base.index_name at any time.
              Or find it in the Pinecone console at https://app.pinecone.io/
 
@@ -260,11 +275,11 @@ class KnowledgeBase(BaseKnowledgeBase):
                            allowing them to be later used for metadata filtering.
                            All other metadata fields are stored but not indexed.
                            See: https://docs.pinecone.io/docs/manage-indexes#selective-metadata-indexing.
-                           Resin always indexes a built-in `document_id` field, which is added to every vector.
+                           Canopy always indexes a built-in `document_id` field, which is added to every vector.
                            By default - all other metadata fields are **not** indexed, unless explicitly defined in this list.
            dimension: The dimension of the vectors to index.
                        If `dimension` isn't explicitly provided,
-                       Resin would try to infer the embedding's dimension based on the configured `Encoder`
+                       Canopy would try to infer the embedding's dimension based on the configured `Encoder`
            index_params: A dictionary of parameters to pass to the index creation API.
                          For example, you can set the index's number of replicas by passing {"replicas": 2}.
                          see https://docs.pinecone.io/docs/python-client#create_index
@@ -365,7 +380,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         After deletion - the `KnowledgeBase` would not be connected to a Pinecone index anymore,
                          so you will not be able to insert documents or query.
-                         If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_resin_index()`
+                         If you'd wish to re-create an index with the same name, simply call `knowledge_base.create_canopy_index()`
                          Or use the CLI command `canopy new`.
         """  # noqa: E501
         if self._index is None:

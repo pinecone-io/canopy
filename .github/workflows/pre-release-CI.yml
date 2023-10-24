@@ -38,7 +38,7 @@ jobs:git
 
       - name: Install the wheel
         run: |
-          pip install dist/pinecone_resin*.whl
+          pip install dist/pinecone_canopy*.whl
 
       - name: Create dev requirements file
         run: |
