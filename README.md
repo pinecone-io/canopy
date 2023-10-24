@@ -10,6 +10,10 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 ![](https://github.com/pinecone-io/resin/blob/readme-v0.1-canopy/.readme-content/rag_flow.png)
 
+<details>
+<summary><b>Chat Flow</b> (click to expand)
+</summary>
+
 1. User will promt a question to Resin /chat/completions endpoint. 
 2. resin will use a language model to break down the questions into queries, sometimes, a single user ask may result in multiple knowledge queries. 
 3. Resin will encode and embed each query seperateley.
@@ -17,6 +21,24 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 5. Now resin has all the external knowledge needed to answer the original question, Resin will perform a _context building_ step to create an on-bugdet optimal context.
 6. Resin will generate a prompt combining general task information and the system message and sent the prompt+context to the language model. 
 7. Resin will decode the response from the language model and will return the response in the API response (or in streaming).
+
+</details>
+
+<details>
+<summary><b>Context Flow</b> (click to expand)
+</summary>
+
+<ol type="I">
+<li> User will call /context/upsert with Documents - each document with id, text, and optinally source and metadata </li>
+
+<li> Resin KnowledgeBase will process the documents and chunk ecah document in a structural and semantic way </li>
+
+<li> Resin KnowledgeBase will encode each chunk using one or more embedding models</li>
+
+<li> Resin KnowledgeBase will upsert the encoded chunks into Pinecone Index</li>
+
+</ol>
+</details>
 
 ## Why Resin? [TODO: TBD]
 
