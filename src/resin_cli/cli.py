@@ -1,4 +1,5 @@
 import os
+from typing import List, Optional
 
 import click
 import time
@@ -171,8 +172,14 @@ def new(index_name):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=10, help="Batch size for upsert")
-def upsert(index_name, data_path, batch_size):
+@click.option("--batch-size", default=10,
+              help="Number of documents to upload in each batch. Defaults to 10.")
+@click.option("--allow-failures/--dont-allow-failures", default=False,
+              help="On default, the upsert process will stop if any document fails to "
+                   "be uploaded. "
+                   "When set to True, the upsert process will continue on failure, as "
+                   "long as less than 10% of the documents have failed to be uploaded.")
+def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: bool):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -227,17 +234,33 @@ def upsert(index_name, data_path, batch_size):
                   abort=True)
 
     pbar = tqdm(total=len(data), desc="Upserting documents")
+    failed_docs: List[str] = []
+    first_error: Optional[str] = None
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
             kb.upsert(data)
         except Exception as e:
-            msg = (
-                f"Failed to upsert data to index {kb.index_name}. Underlying error: {e}"
-            )
-            raise CLIError(msg)
+            if allow_failures and len(failed_docs) < len(data) // 10:
+                failed_docs.extend([_.id for _ in batch])
+                if first_error is None:
+                    first_error = str(e)
+            else:
+                msg = (
+                    f"Failed to upsert data to index {kb.index_name}. "
+                    f"Underlying error: {e}\n"
+                    f"You can allow partial failures by setting --allow-failures. "
+                )
+                raise CLIError(msg)
 
         pbar.update(len(batch))
+
+    if failed_docs:
+        msg = (
+            f"Failed to upsert the following documents to index {kb.index_name}: "
+            f"{failed_docs}. The first encountered error was: {first_error}"
+        )
+        raise CLIError(msg)
 
     click.echo(click.style("Success!", fg="green"))
 
