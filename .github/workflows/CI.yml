@@ -73,6 +73,9 @@ jobs:
       uses: snok/install-poetry@v1
       with:
         version: 1.3.2
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+        installer-parallel: true
     #----------------------------------------------
     #       load cached venv if cache exists
     #----------------------------------------------
