@@ -239,7 +239,7 @@ def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: boo
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
-            kb.upsert(data)
+            kb.upsert(batch)
         except Exception as e:
             if allow_failures and len(failed_docs) < len(data) // 10:
                 failed_docs.extend([_.id for _ in batch])
