@@ -19,7 +19,7 @@ MAX_PROMPT_TOKENS = 100
 
 class TestChatEngine:
 
-    def setup(self):
+    def setup_method(self):
         self.mock_llm = create_autospec(BaseLLM)
         self.mock_query_builder = create_autospec(QueryGenerator)
         self.mock_context_engine = create_autospec(ContextEngine)

@@ -24,12 +24,10 @@ class OpenAILLM(BaseLLM):
                  ):
         super().__init__(model_name,
                          model_params=model_params)
-        self.available_models = [k["id"] for k in openai.Model.list().data]
-        if model_name not in self.available_models:
-            raise ValueError(
-                f"Model {model_name} not found. "
-                f" Available models: {self.available_models}"
-            )
+
+    @property
+    def available_models(self):
+        return [k["id"] for k in openai.Model.list().data]
 
     @retry(
         wait=wait_random_exponential(min=1, max=10),

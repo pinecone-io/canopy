@@ -1,4 +1,5 @@
 # noqa: F405
+
 import pytest
 
 from ._stub_classes import (BaseStubChunker, StubChunker, StubKB,
