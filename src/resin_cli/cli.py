@@ -1,10 +1,13 @@
 import os
-from typing import List, Optional
+import signal
+import subprocess
+from typing import Dict, Any, Optional, List
 
 import click
 import time
 
 import requests
+import yaml
 from dotenv import load_dotenv
 from tenacity import retry, stop_after_attempt, wait_fixed
 from tqdm import tqdm
@@ -19,9 +22,9 @@ from resin.models.data_models import Document
 from resin.tokenizer import Tokenizer
 from resin_cli.data_loader import (
     load_from_path,
-    CLIError,
     IDsNotUniqueError,
     DocumentsValidationError)
+from resin_cli.errors import CLIError
 
 from resin import __version__
 
@@ -30,8 +33,7 @@ from .cli_spinner import Spinner
 from .api_models import ChatDebugInfo
 
 
-dotenv_path = os.path.join(os.path.dirname(__file__), ".env")
-load_dotenv(dotenv_path)
+load_dotenv()
 if os.getenv("OPENAI_API_KEY"):
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -99,6 +101,34 @@ def _initialize_tokenizer():
         raise CLIError(msg)
 
 
+def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
+    if config_file is None:
+        return {}
+
+    try:
+        with open(os.path.join("config", config_file), 'r') as f:
+            config = yaml.safe_load(f)
+    except Exception as e:
+        msg = f"Failed to load config file {config_file}. Reason:\n{e}"
+        raise CLIError(msg)
+
+    if "knowledge_base" in config:
+        kb_config = config.get("knowledge_base", None)
+    elif "chat_engine" in config:
+        kb_config = config["chat_engine"]\
+            .get("context_engine", {})\
+            .get("knowledge_base", None)
+    else:
+        kb_config = None
+
+    if kb_config is None:
+        msg = (f"Did not find a `knowledge_base` configuration in {config_file}, "
+               "Would you like to use the default configuration?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        kb_config = {}
+    return kb_config
+
+
 @click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
 @click.version_option(__version__, "-v", "--version", prog_name="Resin")
 @click.pass_context
@@ -137,9 +167,13 @@ def health(url):
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
-def new(index_name):
+@click.option("--config", "-c", default=None,
+              help="Path to a resin config file. Optional, otherwise configuration "
+                   "defaults will be used.")
+def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
-    kb = KnowledgeBase(index_name=index_name)
+    kb_config = _load_kb_config(config)
+    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     click.echo("Resin is going to create a new index: ", nl=False)
     click.echo(click.style(f"{kb.index_name}", fg="green"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
@@ -172,14 +206,21 @@ def new(index_name):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=10,
+@click.option("--batch-size", default=50,
               help="Number of documents to upload in each batch. Defaults to 10.")
 @click.option("--allow-failures/--dont-allow-failures", default=False,
               help="On default, the upsert process will stop if any document fails to "
                    "be uploaded. "
                    "When set to True, the upsert process will continue on failure, as "
                    "long as less than 10% of the documents have failed to be uploaded.")
-def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: bool):
+@click.option("--config", "-c", default=None,
+              help="Path to a resin config file. Optional, otherwise configuration "
+                   "defaults will be used.")
+def upsert(index_name: str,
+           data_path: str,
+           batch_size: int,
+           allow_failures: bool,
+           config: Optional[str]):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -189,7 +230,8 @@ def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: boo
 
     _initialize_tokenizer()
 
-    kb = KnowledgeBase(index_name=index_name)
+    kb_config = _load_kb_config(config)
+    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     try:
         kb.connect()
     except RuntimeError as e:
@@ -239,7 +281,7 @@ def upsert(index_name: str, data_path: str, batch_size: int, allow_failures: boo
     for i in range(0, len(data), batch_size):
         batch = data[i:i + batch_size]
         try:
-            kb.upsert(data)
+            kb.upsert(batch)
         except Exception as e:
             if allow_failures and len(failed_docs) < len(data) // 10:
                 failed_docs.extend([_.id for _ in batch])
@@ -427,10 +469,23 @@ def chat(chat_service_url, baseline, debug, stream):
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-@click.option("--workers", default=1, help="Number of worker processes. Defaults to 1")
-def start(host, port, reload, workers):
+@click.option("--config", "-c", default=None,
+              help="Path to a resin config file. Optional, otherwise configuration "
+                   "defaults will be used.")
+def start(host: str, port: str, reload: bool, config: Optional[str]):
+    note_msg = (
+        "🚨 Note 🚨\n"
+        "For debugging only. To run the Resin service in production, run the command:\n"
+        "gunicorn resin_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
+        f"--bind {host}:{port} --workers <num_workers>"
+    )
+    for c in note_msg:
+        click.echo(click.style(c, fg="red"), nl=False)
+        time.sleep(0.01)
+    click.echo()
+
     click.echo(f"Starting Resin service on {host}:{port}")
-    start_service(host, port=port, reload=reload, workers=workers)
+    start_service(host, port=port, reload=reload, config_file=config)
 
 
 @cli.command(
@@ -445,6 +500,28 @@ def start(host, port, reload, workers):
 @click.option("url", "--url", default="http://0.0.0.0:8000",
               help="URL of the Resin service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
+    # Check if the service was started using Gunicorn
+    res = subprocess.run(["pgrep", "-f", "gunicorn resin_cli.app:app"],
+                         capture_output=True)
+    output = res.stdout.decode("utf-8").split()
+
+    # If Gunicorn was used, kill all Gunicorn processes
+    if output:
+        msg = ("It seems that Resin service was launched using Gunicorn.\n"
+               "Do you want to kill all Gunicorn processes?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        try:
+            subprocess.run(["pkill", "-f", "gunicorn resin_cli.app:app"], check=True)
+        except subprocess.CalledProcessError:
+            try:
+                [os.kill(int(pid), signal.SIGINT) for pid in output]
+            except OSError:
+                msg = (
+                    "Could not kill Gunicorn processes. Please kill them manually."
+                    f"Found process ids: {output}"
+                )
+                raise CLIError(msg)
+
     try:
         res = requests.get(urljoin(url, "/shutdown"))
         res.raise_for_status()

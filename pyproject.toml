@@ -23,6 +23,8 @@ uvicorn = "^0.20.0"
 tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
 types-tqdm = "^4.61.0"
+gunicorn = "^21.2.0"
+types-pyyaml = "^6.0.12.12"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -46,7 +48,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.mypy]
 allow_redefinition = true
-exclude = ['tests']
+exclude = ['tests', '.venv']
 
 [[tool.mypy.overrides]]
 module = [
@@ -61,6 +63,7 @@ ignore_missing_imports = true
 per-file-ignores = [
     '*/__init__.py:F401',
 ]
+exclude = ['.venv']
 max-line-length = 88
 
 [tool.poetry.scripts]
