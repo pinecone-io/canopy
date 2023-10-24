@@ -42,9 +42,13 @@ jobs:
         run: |
           pip install dist/pinecone_resin*.whl
 
-      - name: Install tests dependencies
+      - name: Create dev requirements file
         run: |
-          poetry install --no-root --only dev
+          poetry export -f requirements.txt --without-hashes --only dev -o only-dev.txt
+
+      - name: Install dev requirements
+        run: |
+          pip install -r only-dev.txt
 
       - name: Run tests
         run: pytest --html=report.html --self-contained-html tests/unit
