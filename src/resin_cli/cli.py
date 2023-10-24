@@ -206,7 +206,7 @@ def new(index_name: str, config: Optional[str]):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=10,
+@click.option("--batch-size", default=50,
               help="Number of documents to upload in each batch. Defaults to 10.")
 @click.option("--allow-failures/--dont-allow-failures", default=False,
               help="On default, the upsert process will stop if any document fails to "
