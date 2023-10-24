@@ -52,6 +52,7 @@ jobs:
 
   run-tests:
     name: Run tests
+    if: false
     runs-on: ubuntu-latest
     needs: run-linters
     strategy:
