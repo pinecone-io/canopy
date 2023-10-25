@@ -297,6 +297,7 @@ def upsert(index_name: str,
                 raise CLIError(msg)
 
         pbar.update(len(batch))
+    pbar.close()
 
     if failed_docs:
         msg = (
