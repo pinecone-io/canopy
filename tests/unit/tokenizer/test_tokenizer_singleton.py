@@ -1,5 +1,5 @@
 import pytest
-from resin.tokenizer import Tokenizer
+from canopy.tokenizer import Tokenizer
 from ..stubs.stub_tokenizer import StubTokenizer
 
 

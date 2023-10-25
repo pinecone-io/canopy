@@ -1,6 +1,6 @@
 import pytest
 
-from resin.models.data_models import MessageBase, Role
+from canopy.models.data_models import MessageBase, Role
 from .base_test_tokenizer import BaseTestTokenizer
 from ..stubs.stub_tokenizer import StubTokenizer
 

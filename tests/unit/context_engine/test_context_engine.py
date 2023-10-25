@@ -1,11 +1,11 @@
 import pytest
 from unittest.mock import create_autospec
 
-from resin.context_engine import ContextEngine
-from resin.context_engine.context_builder.base import ContextBuilder
-from resin.knowledge_base.base import BaseKnowledgeBase
-from resin.knowledge_base.models import QueryResult, DocumentWithScore
-from resin.models.data_models import Query, Context, ContextContent
+from canopy.context_engine import ContextEngine
+from canopy.context_engine.context_builder.base import ContextBuilder
+from canopy.knowledge_base.base import BaseKnowledgeBase
+from canopy.knowledge_base.models import QueryResult, DocumentWithScore
+from canopy.models.data_models import Query, Context, ContextContent
 
 
 class TestContextEngine:

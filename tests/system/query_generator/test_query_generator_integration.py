@@ -2,10 +2,10 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from resin.llm.openai import OpenAILLM # noqa
-from resin.models.data_models import MessageBase, Query # noqa
-from resin.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
-from resin.chat_engine.prompt_builder import PromptBuilder # noqa
+from canopy.llm.openai import OpenAILLM # noqa
+from canopy.models.data_models import MessageBase, Query # noqa
+from canopy.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
+from canopy.chat_engine.prompt_builder import PromptBuilder # noqa
 from typing import List # noqa
 
 
