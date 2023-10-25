@@ -19,7 +19,41 @@ The idea behind Canopy library is to provide a framework to build AI application
 
 ## Setup
 
-To setup canopy, please follow the instructions [here](../README.md#setup).
+0. set up a virtual environment (optional)
+```bash
+python3 -m venv canopy-env
+source canopy-env/bin/activate
+```
+more about virtual environments [here](https://docs.python.org/3/tutorial/venv.html)
+
+1. install the package
+```bash
+pip install pinecone-canopy
+```
+
+2. Set up the environment variables
+
+```python
+import os
+
+os.environ["PINECONE_API_KEY"] = "<PINECONE_API_KEY>"
+os.environ["PINECONE_ENVIRONMENT"] = "<PINECONE_ENVIRONMENT>"
+os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
+```
+
+<details>
+<summary><b><u>CLICK HERE</u></b> for more information about the environment variables 
+
+<br /> 
+</summary>
+
+| Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
+| `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
+| `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
+</details>
+
 
 ## Quickstart
 
@@ -118,22 +152,30 @@ To insert data into the knowledge base, you can create a list of documents and u
 
 ```python
 from canopy.models.data_models import Document
-documents = [Document(id="1", text="U2 are an Irish rock band from Dublin, formed in 1976.", source="https://url.com"),
-             Document(id="2", text="Arctic Monkeys are an English rock band formed in Sheffield in 2002.", source="https://another-url.com", metadata={"my-key": "my-value"})]
+documents = [Document(id="1",
+                      text="U2 are an Irish rock band from Dublin, formed in 1976.",
+                      source="https://en.wikipedia.org/wiki/U2"),
+             Document(id="2",
+                      text="Arctic Monkeys are an English rock band formed in Sheffield in 2002.",
+                      source="https://en.wikipedia.org/wiki/Arctic_Monkeys",
+                      metadata={"my-key": "my-value"})]
 kb.upsert(documents)
 ```
 
 Now you can query the knowledge base with the `query` method to find the most similar documents to a given text:
 
 ```python
-from canopy.models.query_models import Query
-results = kb.query([Query("Arctic Monkeys music genre"),
+from canopy.models.data_models import Query
+results = kb.query([Query(text="Arctic Monkeys music genre"),
                     Query(text="U2 music genre",
                           top_k=10,
                           metadata_filter={"my-key": "my-value"})])
 
 print(results[0].documents[0].text)
 # output: Arctic Monkeys are an English rock band formed in Sheffield in 2002.
+
+print(f"score - {results[0].documents[0].score:.4f}")
+# output: score - 0.8942
 ```
 
 ### Step 4: Create a context engine
@@ -153,14 +195,32 @@ context_engine = ContextEngine(kb)
 Then, you can use the `query` method to retrieve the most relevant context for a given query and token budget:
 
 ```python
-result = context_engine.query([Query("Arctic Monkeys music genre")], token_budget=100)
+import json
 
-print(result.content)
-# output: Arctic Monkeys are an English rock band formed in Sheffield in 2002.
+result = context_engine.query([Query(text="Arctic Monkeys music genre")], max_context_tokens=100)
 
-print(result.token_count)
-# output: 17
+print(json.dumps(json.loads(result.to_text()), indent=2, ensure_ascii=False))
+print(f"\n# tokens in context returned: {result.num_tokens}")
 ```
+output:
+```json
+{
+  "query": "Arctic Monkeys music genre",
+  "snippets": [
+    {
+      "source": "https://en.wikipedia.org/wiki/Arctic_Monkeys",
+      "text": "Arctic Monkeys are an English rock band formed in Sheffield in 2002."
+    },
+    {
+      "source": "https://en.wikipedia.org/wiki/U2",
+      "text": "U2 are an Irish rock band from Dublin, formed in 1976."
+    }
+  ]
+}
+
+# tokens in context returned: 89
+```
+
 
 By default, to handle the token budget constraint, the context engine will use the `StuffingContextBuilder` that will stuff as many documents as possible into the context without exceeding the token budget, by the order they have been retrieved from the knowledge base.
 
@@ -190,8 +250,13 @@ chat_engine = ChatEngine(context_engine)
 Then, you can start chatting!
 
 ```python
-chat_engine.chat("what is the genre of Arctic Monkeys band?")
-# output: Arctic Monkeys is a rock band.
+from canopy.models.data_models import MessageBase
+
+response = chat_engine.chat(messages=[MessageBase(role="user", content="what is the genre of Arctic Monkeys band?")], stream=False)
+
+print(response.choices[0].message.content)
+
+# output: The genre of the Arctic Monkeys band is rock. Source: [Wikipedia](https://en.wikipedia.org/wiki/Arctic_Monkeys)
 ```
 
 
