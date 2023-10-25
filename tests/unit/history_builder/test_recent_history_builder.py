@@ -1,7 +1,7 @@
 import pytest
 
-from resin.chat_engine.history_pruner import RecentHistoryPruner
-from resin.llm.models import UserMessage, AssistantMessage
+from canopy.chat_engine.history_pruner import RecentHistoryPruner
+from canopy.llm.models import UserMessage, AssistantMessage
 
 
 @pytest.fixture

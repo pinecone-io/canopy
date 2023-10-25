@@ -1,8 +1,8 @@
 import pytest
 
-from resin.knowledge_base.chunker import MarkdownChunker
-from resin.knowledge_base.models import KBDocChunk
-from resin.models.data_models import Document
+from canopy.knowledge_base.chunker import MarkdownChunker
+from canopy.knowledge_base.models import KBDocChunk
+from canopy.models.data_models import Document
 from tests.unit.chunker.base_test_chunker import BaseTestChunker
 
 

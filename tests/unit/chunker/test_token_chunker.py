@@ -1,9 +1,9 @@
 import pytest
 
-from resin.knowledge_base.models import KBDocChunk
-from resin.models.data_models import Document
+from canopy.knowledge_base.models import KBDocChunk
+from canopy.models.data_models import Document
 from .base_test_chunker import BaseTestChunker
-from resin.knowledge_base.chunker.token_chunker import TokenChunker
+from canopy.knowledge_base.chunker.token_chunker import TokenChunker
 
 
 class TestTokenChunker(BaseTestChunker):

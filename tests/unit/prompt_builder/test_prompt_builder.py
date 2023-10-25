@@ -2,11 +2,11 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from resin.chat_engine.exceptions import InvalidRequestError
-from resin.chat_engine.history_pruner.base import HistoryPruner
-from resin.chat_engine.models import HistoryPruningMethod
-from resin.chat_engine.prompt_builder import PromptBuilder
-from resin.models.data_models import MessageBase, Role
+from canopy.chat_engine.exceptions import InvalidRequestError
+from canopy.chat_engine.history_pruner.base import HistoryPruner
+from canopy.chat_engine.models import HistoryPruningMethod
+from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.models.data_models import MessageBase, Role
 
 
 @pytest.fixture

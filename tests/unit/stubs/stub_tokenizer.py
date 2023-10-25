@@ -1,6 +1,6 @@
 from typing import List
-from resin.tokenizer.base import BaseTokenizer
-from resin.models.data_models import Messages
+from canopy.tokenizer.base import BaseTokenizer
+from canopy.models.data_models import Messages
 
 
 class StubTokenizer(BaseTokenizer):
