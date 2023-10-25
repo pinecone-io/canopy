@@ -387,7 +387,7 @@ def _chat(
 @click.option("--debug/--no-debug", default=False,
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
-              help="Compare RAG-infused Chatbot with rag LLM",)
+              help="Compare RAG-infused Chatbot with vanilla LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
 def chat(chat_service_url, rag, debug, stream):
