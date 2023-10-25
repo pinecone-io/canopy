@@ -19,7 +19,41 @@ The idea behind Canopy library is to provide a framework to build AI application
 
 ## Setup
 
-To setup canopy, please follow the instructions [here](../README.md#setup).
+0. set up a virtual environment (optional)
+```bash
+python3 -m venv canopy-env
+source canopy-env/bin/activate
+```
+more about virtual environments [here](https://docs.python.org/3/tutorial/venv.html)
+
+1. install the package
+```bash
+pip install pinecone-canopy
+```
+
+2. Set up the environment variables
+
+```python
+import os
+
+os.environ["PINECONE_API_KEY"] = "<PINECONE_API_KEY>"
+os.environ["PINECONE_ENVIRONMENT"] = "<PINECONE_ENVIRONMENT>"
+os.environ["OPENAI_API_KEY"] = "<OPENAI_API_KEY>"
+```
+
+<details>
+<summary><b><u>CLICK HERE</u></b> for more information about the environment variables 
+
+<br /> 
+</summary>
+
+| Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
+| `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
+| `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
+</details>
+
 
 ## Quickstart
 
@@ -118,8 +152,13 @@ To insert data into the knowledge base, you can create a list of documents and u
 
 ```python
 from canopy.models.data_models import Document
-documents = [Document(id="1", text="U2 are an Irish rock band from Dublin, formed in 1976.", source="https://en.wikipedia.org/wiki/U2"),
-             Document(id="2", text="Arctic Monkeys are an English rock band formed in Sheffield in 2002.", source="https://en.wikipedia.org/wiki/Arctic_Monkeys", metadata={"my-key": "my-value"})]
+documents = [Document(id="1",
+                      text="U2 are an Irish rock band from Dublin, formed in 1976.",
+                      source="https://en.wikipedia.org/wiki/U2"),
+             Document(id="2",
+                      text="Arctic Monkeys are an English rock band formed in Sheffield in 2002.",
+                      source="https://en.wikipedia.org/wiki/Arctic_Monkeys",
+                      metadata={"my-key": "my-value"})]
 kb.upsert(documents)
 ```
 
