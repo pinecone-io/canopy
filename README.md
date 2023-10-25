@@ -188,8 +188,8 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 > **_📝 NOTE:_**
 >
 > The canopy start command will keep the terminal occupied. To proceed with the next steps, please open a new terminal window.
-> and make sure all the environment variables described in the [installation](#how-to-install) section are set.
 > If you want to run the service in the background, you can use the following command - **```nohup canopy start &```**
+> However, this is not recommended.
 
 
 ### 4. Chat with your data
