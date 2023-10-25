@@ -4,9 +4,9 @@ version = "0.1.0"
 description = "Canopy is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
+license = "Apache-2.0"
 packages = [{include = "canopy", from = "src"},
             {include = "canopy_cli", from = "src"},]
-
 
 [tool.poetry.dependencies]
 python = "^3.9"
