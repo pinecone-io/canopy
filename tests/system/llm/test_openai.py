@@ -2,10 +2,10 @@ from unittest.mock import patch
 import pytest
 
 
-from resin.models.data_models import Role, MessageBase # noqa
-from resin.models.api_models import ChatResponse, StreamingChatChunk # noqa
-from resin.llm.openai import OpenAILLM # noqa
-from resin.llm.models import \
+from canopy.models.data_models import Role, MessageBase # noqa
+from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
+from canopy.llm.openai import OpenAILLM # noqa
+from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty, ModelParams # noqa
 from openai import InvalidRequestError # noqa
 

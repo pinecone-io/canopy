@@ -1,7 +1,7 @@
 import pytest
-from resin.knowledge_base.chunker.recursive_character \
+from canopy.knowledge_base.chunker.recursive_character \
     import RecursiveCharacterChunker
-from resin.knowledge_base.models import KBDocChunk
+from canopy.knowledge_base.models import KBDocChunk
 from tests.unit.chunker.base_test_chunker import BaseTestChunker
 
 
