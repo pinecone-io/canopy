@@ -10,6 +10,17 @@ from canopy.models.data_models import Document
 
 
 class RecursiveCharacterChunker(Chunker):
+    """
+    A chunker that splits a document into chunks of a given size, using a recursive character splitter.
+    A RecursiveCharacterChunker is a derived class of Chunker, which means that it can be referenced by a name
+    and configured in a config file.
+
+    Args:
+        chunk_size (int): size of the chunks
+        chunk_overlap (int): overlap between chunks
+        separators (Optional[List[str]]): list of separators to use for splitting the text
+        keep_separator (bool): whether to keep the separator in the chunk or not
+    """
 
     def __init__(self,
                  chunk_size: int = 256,
@@ -17,6 +28,16 @@ class RecursiveCharacterChunker(Chunker):
                  separators: Optional[List[str]] = None,
                  keep_separator: bool = True,
                  ):
+        """
+        RecursiveCharacterTextSplitter is a text splitter from the langchain library.
+        It splits a text into chunks of a given size, using a recursive character splitter.
+
+        Args:
+            chunk_size (int): size of the chunks
+            chunk_overlap (int): overlap between chunks
+            separators (Optional[List[str]]): list of separators to use for splitting the text
+            keep_separator (bool): whether to keep the separator in the chunk or not
+        """
         self._tokenizer = Tokenizer()
         self._chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -26,6 +47,15 @@ class RecursiveCharacterChunker(Chunker):
             keep_separator=keep_separator)
 
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
+        """
+        using the RecursiveCharacterTextSplitter, this method takes a document and returns a list of KBDocChunks
+        Args:
+            document (Document): document to be chunked
+
+        Returns:
+            List[KBDocChunk]: list of chunks KBDocChunks from the document, where text is splitted
+                              evenly using the RecursiveCharacterTextSplitter
+        """
         text_chunks = self._chunker.split_text(document.text)
         return [KBDocChunk(id=f"{document.id}_{i}",
                            document_id=document.id,
