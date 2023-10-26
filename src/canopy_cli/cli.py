@@ -514,7 +514,8 @@ def stop(url):
                "Do you want to kill all Gunicorn processes?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"], check=True)
+            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                           check=True)
         except subprocess.CalledProcessError:
             try:
                 [os.kill(int(pid), signal.SIGINT) for pid in output]
