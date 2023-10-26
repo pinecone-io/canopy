@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, List, Union, Dict, Sequence
+from typing import Optional, List, Union, Dict, Sequence, Literal
 
 from pydantic import BaseModel, Field, validator, Extra
 
@@ -79,3 +79,18 @@ class MessageBase(BaseModel):
 
 
 Messages = List[MessageBase]
+
+
+class UserMessage(MessageBase):
+    role: Literal[Role.USER] = Role.USER
+    content: str
+
+
+class SystemMessage(MessageBase):
+    role: Literal[Role.SYSTEM] = Role.SYSTEM
+    content: str
+
+
+class AssistantMessage(MessageBase):
+    role: Literal[Role.ASSISTANT] = Role.ASSISTANT
+    content: str

@@ -1,23 +1,6 @@
-from typing import Literal, Optional, List, Union
+from typing import Optional, List, Union
 
 from pydantic import BaseModel
-
-from canopy.models.data_models import MessageBase, Role
-
-
-class UserMessage(MessageBase):
-    role: Literal[Role.USER] = Role.USER
-    content: str
-
-
-class SystemMessage(MessageBase):
-    role: Literal[Role.SYSTEM] = Role.SYSTEM
-    content: str
-
-
-class AssistantMessage(MessageBase):
-    role: Literal[Role.ASSISTANT] = Role.ASSISTANT
-    content: str
 
 
 class ModelParams(BaseModel):
