@@ -38,7 +38,17 @@ def _split_text_with_regex(
 
 
 class TextSplitter(ABC):
-    """Interface for splitting text into chunks."""
+    """Interface for splitting text into chunks.
+
+        Args:
+        chunk_size: Maximum size of chunks to return
+        chunk_overlap: Overlap in characters between chunks
+        length_function: Function that measures the length of given chunks
+        keep_separator: Whether to keep the separator in the chunks
+        add_start_index: If `True`, includes chunk's start index in metadata
+        strip_whitespace: If `True`, strips whitespace from the start and end of
+                          every document
+    """
 
     def __init__(
         self,
@@ -49,17 +59,6 @@ class TextSplitter(ABC):
         add_start_index: bool = False,
         strip_whitespace: bool = True,
     ) -> None:
-        """Create a new TextSplitter.
-
-        Args:
-            chunk_size: Maximum size of chunks to return
-            chunk_overlap: Overlap in characters between chunks
-            length_function: Function that measures the length of given chunks
-            keep_separator: Whether to keep the separator in the chunks
-            add_start_index: If `True`, includes chunk's start index in metadata
-            strip_whitespace: If `True`, strips whitespace from the start and end of
-                              every document
-        """
         if chunk_overlap > chunk_size:
             raise ValueError(
                 f"Got a larger chunk overlap ({chunk_overlap}) than chunk size "
@@ -164,7 +163,6 @@ class RecursiveCharacterTextSplitter(TextSplitter):
         is_separator_regex: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Create a new TextSplitter."""
         super().__init__(keep_separator=keep_separator, **kwargs)
         self._separators = separators or ["\n\n", "\n", " ", ""]
         self._is_separator_regex = is_separator_regex

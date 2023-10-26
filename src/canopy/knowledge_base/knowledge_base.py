@@ -52,6 +52,16 @@ class KnowledgeBase(BaseKnowledgeBase):
     When creating a new Canopy service, the user must first create the underlying Pinecone index.
     This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
 
+    Args:
+        index_name: The name of the underlying Pinecone index.
+        record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
+                                                  Defaults to OpenAIRecordEncoder.
+        chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
+        reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
+        default_top_k: The default number of document chunks to return per query. Defaults to 5.
+        index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
+                      see https://docs.pinecone.io/docs/python-client#create_index
+
     Example:
         >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
         >>> from tokenizer import Tokenizer
@@ -79,42 +89,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                  reranker: Optional[Reranker] = None,
                  default_top_k: int = 5,
                  ):
-        """
-        Initilize the knowledge base object.
-
-        If the index does not exist, the user must first create it by calling `create_canopy_index()` or the CLI command `canopy new`.
-
-        Note: Canopy will add the prefix --canopy to your selected index name.
-             You can retrieve the full index name knowledge_base.index_name at any time, or find it in the Pinecone console at https://app.pinecone.io/
-
-        Example:
-
-            create a new index:
-            >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
-            >>> Tokenizer.initialize()
-            >>> kb = KnowledgeBase(index_name="my_index")
-            >>> kb.create_canopy_index()
-
-        In any future interactions,
-        the user simply needs to connect to the existing index:
-
-            >>> kb = KnowledgeBase(index_name="my_index")
-            >>> kb.connect()
-
-        Args:
-            index_name: The name of the underlying Pinecone index.
-            record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
-                                                      Defaults to OpenAIRecordEncoder.
-            chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
-            reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
-            default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
-                          see https://docs.pinecone.io/docs/python-client#create_index
-
-        Returns:
-            KnowledgeBase object.
-        """  # noqa: E501
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
