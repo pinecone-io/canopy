@@ -71,7 +71,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
-    kb.create_canopy_index()
+    kb.create_canopy_index(indexed_fields=["my-key"])
 
     return kb
 
@@ -139,6 +139,18 @@ def execute_and_assert_queries(knowledge_base, chunks_to_query):
             f"actual: {q_res.documents}"
 
 
+def assert_query_metadata_filter(knowledge_base: KnowledgeBase,
+                                 metadata_filter: dict,
+                                 num_vectors_expected: int,
+                                 top_k: int = 100):
+    assert top_k > num_vectors_expected, \
+        "the test might return false positive if top_k is not > num_vectors_expected"
+    query = Query(text="test", top_k=top_k, metadata_filter=metadata_filter)
+    query_results = knowledge_base.query([query])
+    assert len(query_results) == 1
+    assert len(query_results[0].documents) == num_vectors_expected
+
+
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
@@ -162,7 +174,7 @@ def documents(random_texts):
     return [Document(id=f"doc_{i}",
                      text=random_texts[i],
                      source=f"source_{i}",
-                     metadata={"test": i})
+                     metadata={"my-key": f"value-{i}"})
             for i in range(5)]
 
 
@@ -170,7 +182,7 @@ def documents(random_texts):
 def documents_large():
     return [Document(id=f"doc_{i}_large",
                      text=f"Sample document {i}",
-                     metadata={"test": i})
+                     metadata={"my-key-large": f"value-{i}"})
             for i in range(1000)]
 
 
@@ -247,6 +259,10 @@ def test_upsert_forbidden_metadata(knowledge_base, documents, key):
 
 def test_query(knowledge_base, encoded_chunks):
     execute_and_assert_queries(knowledge_base, encoded_chunks)
+
+
+def test_query_with_metadata_filter(knowledge_base, encoded_chunks):
+    assert_query_metadata_filter(knowledge_base, {"my-key": "value-1"}, 2)
 
 
 def test_delete_documents(knowledge_base, encoded_chunks):
