@@ -14,5 +14,5 @@ class ContextQueryResult(ContextContent):
     query: str
     snippets: List[ContextSnippet]
 
-    def to_text(self):
-        return self.json()
+    def to_text(self, **kwargs):
+        return self.json(**kwargs)
