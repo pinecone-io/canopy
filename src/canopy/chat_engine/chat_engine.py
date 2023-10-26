@@ -9,10 +9,10 @@ from canopy.chat_engine.query_generator import (QueryGenerator,
 from canopy.context_engine import ContextEngine
 from canopy.tokenizer import Tokenizer
 from canopy.llm import BaseLLM, OpenAILLM
-from canopy.llm.models import ModelParams, SystemMessage
+from canopy.llm.models import ModelParams
 from canopy.models.api_models import (StreamingChatChunk, ChatResponse,
                                       StreamingChatResponse, )
-from canopy.models.data_models import Context, Messages
+from canopy.models.data_models import Context, Messages, SystemMessage
 from canopy.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"

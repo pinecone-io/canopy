@@ -8,7 +8,7 @@ from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.context_engine import ContextEngine
 from canopy.context_engine.models import ContextQueryResult, ContextSnippet
 from canopy.llm import BaseLLM
-from canopy.llm.models import SystemMessage
+from canopy.models.data_models import SystemMessage
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
