@@ -133,8 +133,6 @@ And follow the CLI instructions. The index that will be created will have a pref
 
 > To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
-![](.readme-content/canopy-new.gif)
-
 ### 2. Uploading data
 
 You can load data into your **Canopy** Index by simply using the CLI:
@@ -162,8 +160,6 @@ Canopy support single or mulitple files in jsonl or praquet format. The document
 
 Follow the instructions in the CLI to upload your data.
 
-![](.readme-content/canopy-upsert.gif)
-
 ### 3. Start the **Canopy** service
 
 **Canopy** service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
@@ -172,18 +168,13 @@ Follow the instructions in the CLI to upload your data.
 canopy start
 ```
 
-Now, you should be prompted with standard Uvicorn logs:
+Now, you should be prompted with the following standard Uvicorn message:
 
 ```
-Starting Canopy service on 0.0.0.0:8000
-INFO:     Started server process [24431]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+...
+
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
-
-![](.readme-content/canopy-start.gif)
-
 
 > **_📝 NOTE:_**
 >
@@ -202,8 +193,6 @@ canopy chat
 
 This will open a chat interface in your terminal. You can ask questions and the **Canopy** will try to answer them using the data you uploaded.
 
-![](.readme-content/canopy-chat.gif)
-
 To compare the chat response with and without RAG use the `--baseline` flag
 
 ```bash
@@ -211,9 +200,6 @@ canopy chat --baseline
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
-
-![](.readme-content/canopy-chat-no-rag.gif)
-
 
 ### 5. Stop the **Canopy** service
 
