@@ -40,7 +40,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 </ol>
 </details>
 
-## Why Canopy? [TODO: TBD]
+## Why Canopy?
 
 * **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
 
@@ -58,9 +58,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
-2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. 
-
-> For the complete documentation please go to: [#TODO: LINK](link.link.com) 
+2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. The service also comes with a built in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-service), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
 
 3. **Canopy CLI** - Canopy comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
