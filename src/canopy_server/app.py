@@ -25,9 +25,9 @@ from typing import cast
 
 from canopy.models.api_models import StreamingChatResponse, ChatResponse
 from canopy.models.data_models import Context
-from canopy_cli.api_models import \
-    ChatRequest, ContextQueryRequest, \
-    ContextUpsertRequest, HealthStatus, ContextDeleteRequest
+from .api_models import \
+     ChatRequest, ContextQueryRequest, \
+     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
 
 from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
@@ -260,7 +260,7 @@ def start(host="0.0.0.0", port=8000, reload=False, config_file=None):
     if config_file:
         os.environ["CANOPY_CONFIG_FILE"] = config_file
 
-    uvicorn.run("canopy_cli.app:app", host=host, port=port, reload=reload, workers=0)
+    uvicorn.run("canopy_server.app:app", host=host, port=port, reload=reload, workers=0)
 
 
 if __name__ == "__main__":
