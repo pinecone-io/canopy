@@ -68,5 +68,13 @@ per-file-ignores = [
 exclude = ['.venv']
 max-line-length = 88
 
+# PyDocLint configuration
+style = 'google'
+arg-type-hints-in-docstring = false
+require-return-section-when-returning-nothing = false
+allow-init-docstring = true
+check-return-types = false
+skip-checking-raises = true
+
 [tool.poetry.scripts]
 canopy = "canopy_cli.cli:cli"

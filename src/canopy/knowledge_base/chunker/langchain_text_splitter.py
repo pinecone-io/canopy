@@ -38,17 +38,7 @@ def _split_text_with_regex(
 
 
 class TextSplitter(ABC):
-    """Interface for splitting text into chunks.
-
-        Args:
-        chunk_size: Maximum size of chunks to return
-        chunk_overlap: Overlap in characters between chunks
-        length_function: Function that measures the length of given chunks
-        keep_separator: Whether to keep the separator in the chunks
-        add_start_index: If `True`, includes chunk's start index in metadata
-        strip_whitespace: If `True`, strips whitespace from the start and end of
-                          every document
-    """
+    """Interface for splitting text into chunks."""
 
     def __init__(
         self,
@@ -59,6 +49,17 @@ class TextSplitter(ABC):
         add_start_index: bool = False,
         strip_whitespace: bool = True,
     ) -> None:
+        """Create a new TextSplitter.
+
+        Args:
+            chunk_size: Maximum size of chunks to return
+            chunk_overlap: Overlap in characters between chunks
+            length_function: Function that measures the length of given chunks
+            keep_separator: Whether to keep the separator in the chunks
+            add_start_index: If `True`, includes chunk's start index in metadata
+            strip_whitespace: If `True`, strips whitespace from the start and end of
+                              every document
+        """
         if chunk_overlap > chunk_size:
             raise ValueError(
                 f"Got a larger chunk overlap ({chunk_overlap}) than chunk size "
