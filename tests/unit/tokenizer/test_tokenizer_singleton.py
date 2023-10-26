@@ -19,9 +19,10 @@ def test_tokenizer_init(reset_tokenizer_singleton):
 
 
 def test_tokenizer_init_already_initialized(reset_tokenizer_singleton):
-    Tokenizer.initialize(StubTokenizer)
-    with pytest.raises(ValueError):
-        Tokenizer.initialize(StubTokenizer)
+    Tokenizer.initialize(StubTokenizer, message_overhead=10)
+    assert isinstance(Tokenizer._tokenizer_instance, StubTokenizer)
+    assert Tokenizer._initialized is True
+    assert Tokenizer._tokenizer_instance._message_overhead == 10
 
 
 def test_tokenizer_init_invalid_same_class(reset_tokenizer_singleton):
