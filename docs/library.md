@@ -250,9 +250,9 @@ chat_engine = ChatEngine(context_engine)
 Then, you can start chatting!
 
 ```python
-from canopy.models.data_models import MessageBase
+from canopy.models.data_models import UserMessage
 
-response = chat_engine.chat(messages=[MessageBase(role="user", content="what is the genre of Arctic Monkeys band?")], stream=False)
+response = chat_engine.chat(messages=[UserMessage(content="what is the genre of Arctic Monkeys band?")], stream=False)
 
 print(response.choices[0].message.content)
 

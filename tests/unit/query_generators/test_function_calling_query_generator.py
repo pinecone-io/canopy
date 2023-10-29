@@ -10,8 +10,8 @@ from canopy.chat_engine.query_generator.function_calling \
 from canopy.llm import BaseLLM
 from canopy.llm.models import (ModelParams, Function,
                                FunctionParameters, FunctionArrayProperty,
-                               UserMessage, )
-from canopy.models.data_models import Query
+                               )
+from canopy.models.data_models import Query, UserMessage
 
 
 class TestFunctionCallingQueryGenerator:

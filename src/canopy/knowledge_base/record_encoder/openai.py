@@ -23,6 +23,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         super().__init__(dense_encoder=encoder, batch_size=batch_size, **kwargs)
 
     @retry(
+        reraise=True,
         wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(OPEN_AI_TRANSIENT_EXCEPTIONS),

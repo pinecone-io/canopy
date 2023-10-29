@@ -64,7 +64,7 @@ def check_service_health(url: str):
         raise CLIError(msg)
 
 
-@retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
+@retry(reraise=True, wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
     check_service_health(chat_service_url)
 
@@ -193,7 +193,7 @@ def new(index_name: str, config: Optional[str]):
     help=(
         """
         \b
-        Upload local data files containing documents to the Canopy service.
+        Upload local data files to the Canopy service.
 
         Load all the documents from data file or a directory containing multiple data files.
         The allowed formats are .jsonl and .parquet.
@@ -377,7 +377,7 @@ def _chat(
         RAG-infused ChatBot will respond. You can continue the conversation by entering
         more messages. Hit Ctrl+C to exit.
 
-        To compare RAG-infused ChatBot with the original LLM, run with the `--baseline`
+        To compare RAG-infused ChatBot with the original LLM, run with the `--no-rag`
         flag, which would display both models' responses side by side.
         """
 
@@ -387,11 +387,11 @@ def _chat(
               help="Stream the response from the RAG chatbot word by word")
 @click.option("--debug/--no-debug", default=False,
               help="Print additional debugging information")
-@click.option("--baseline/--no-baseline", default=False,
-              help="Compare RAG-infused Chatbot with baseline LLM",)
+@click.option("--rag/--no-rag", default=True,
+              help="Compare RAG-infused Chatbot with vanilla LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
-def chat(chat_service_url, baseline, debug, stream):
+def chat(chat_service_url, rag, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
@@ -431,7 +431,7 @@ def chat(chat_service_url, baseline, debug, stream):
             print_debug_info=debug,
         )
 
-        if baseline:
+        if not rag:
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
