@@ -39,7 +39,7 @@ jobs:
     - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
       run: poetry install --no-interaction --no-root --with dev
-
+    - name: Run flake8 Check
       run: poetry run flake8 .
     - name: Run mypy check
       run: poetry run mypy src
