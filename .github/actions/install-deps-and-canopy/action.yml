@@ -38,6 +38,6 @@ runs:
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
     run: poetry install --no-interaction --no-root --with dev
   - name: Install project
+    if: {{ inputs.install-canopy == 'true' }}
     shell: bash
-    if: {{ inputs.install-canopy }} == "true"
     run: poetry install --no-interaction
