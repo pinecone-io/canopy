@@ -1,4 +1,5 @@
 name: Install dependencies and canopy
+description: "Installs Poetry, dependencies and optionally canopy library"
 inputs:
   python-version:
     description: "Python version"
@@ -38,6 +39,6 @@ runs:
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
     run: poetry install --no-interaction --no-root --with dev
   - name: Install project
-    if: {{ inputs.install-canopy == 'true' }}
+    if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
     run: poetry install --no-interaction
