@@ -33,7 +33,7 @@ class RecursiveCharacterChunker(Chunker):
         It splits a text into chunks of a given size, using a recursive character splitter.
 
         Args:
-            chunk_size (int): size of the chunks
+            chunk_size (int): size of the chunks, in tokens
             chunk_overlap (int): overlap between chunks
             separators (Optional[List[str]]): list of separators to use for splitting the text
             keep_separator (bool): whether to keep the separator in the chunk or not
