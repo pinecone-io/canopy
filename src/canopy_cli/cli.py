@@ -28,9 +28,9 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from .app import start as start_service
+from canopy_server.app import start as start_service
 from .cli_spinner import Spinner
-from .api_models import ChatDebugInfo
+from canopy_server.api_models import ChatDebugInfo
 
 
 load_dotenv()
@@ -479,7 +479,7 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
         "🚨 Note 🚨\n"
         "For debugging only. To run the Canopy service in production, run the command:"
         "\n"
-        "gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
+        "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     )
     for c in note_msg:
@@ -504,7 +504,7 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
               help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
     # Check if the service was started using Gunicorn
-    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_cli.app:app"],
+    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
                          capture_output=True)
     output = res.stdout.decode("utf-8").split()
 
@@ -514,7 +514,8 @@ def stop(url):
                "Do you want to kill all Gunicorn processes?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_cli.app:app"], check=True)
+            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                           check=True)
         except subprocess.CalledProcessError:
             try:
                 [os.kill(int(pid), signal.SIGINT) for pid in output]

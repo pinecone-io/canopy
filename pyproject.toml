@@ -6,7 +6,8 @@ authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
 license = "Apache-2.0"
 packages = [{include = "canopy", from = "src"},
-            {include = "canopy_cli", from = "src"},]
+            {include = "canopy_cli", from = "src"},
+            {include = "canopy_server", from = "src"},]
 
 [tool.poetry.dependencies]
 python = "^3.9"
