@@ -1,8 +1,11 @@
+import json
+
 import pytest
 from unittest.mock import create_autospec
 
 from canopy.context_engine import ContextEngine
 from canopy.context_engine.context_builder.base import ContextBuilder
+from canopy.context_engine.models import ContextQueryResult, ContextSnippet
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.models.data_models import Query, Context, ContextContent
@@ -174,6 +177,16 @@ class TestContextEngine:
         result = context_engine.query(queries, max_context_tokens)
 
         assert result == mock_context
+
+    @staticmethod
+    def test_context_query_result_to_text():
+        query_result = ContextQueryResult(query="How does photosynthesis work?",
+                                          snippets=[ContextSnippet(text="42",
+                                                                   source="ref")])
+        context = Context(content=query_result, num_tokens=1)
+
+        assert context.to_text() == json.dumps(query_result.dict())
+        assert context.to_text(indent=2) == json.dumps(query_result.dict(), indent=2)
 
     @staticmethod
     @pytest.mark.asyncio
