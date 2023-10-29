@@ -29,9 +29,11 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
     def __init__(self, batch_size: int = 1):
         """
+        Initialize the encoder.
+
         Args:
             batch_size: The number of documents or queries to encode at once.
-            Defaults to 1.
+                        Defaults to 1.
         """
         self.batch_size = batch_size
 
