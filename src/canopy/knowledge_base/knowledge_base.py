@@ -37,6 +37,18 @@ DELETE_STARTER_BATCH_SIZE = 30
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
+def list_canopy_indexes() -> List[str]:
+
+    try:
+        pinecone_init()
+        pinecone_whoami()
+    except Exception as e:
+        raise RuntimeError("Failed to connect to Pinecone. "
+                           "Please check your credentials and try again") from e
+
+    return [index for index in list_indexes() if index.startswith(INDEX_NAME_PREFIX)]
+
+
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
