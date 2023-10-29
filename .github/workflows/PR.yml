@@ -34,18 +34,18 @@ jobs:
     #----------------------------------------------
     #       load cached venv if cache exists
     #----------------------------------------------
-    - name: Load cached venv - dev dependencies only
+    - name: Load cached venv
       id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
         path: .venv
-        key: venv-dev-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+        key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
     #----------------------------------------------
     # install dependencies if cache does not exist
     #----------------------------------------------
-    - name: Install dev dependencies
+    - name: Install dependencies
       if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-      run: poetry install --no-interaction --no-root --only dev
+      run: poetry install --no-interaction --no-root --with dev
     - name: Run flake8 Check
       run: poetry run flake8 .
     - name: Run mypy check
