@@ -1,6 +1,6 @@
 name: Run system and e2e tests
 
-on: merge_queue
+on: merge_group
 
 # Cancel previous runs on the same branch \ PR number if they are still running
 # From: https://stackoverflow.com/a/72408109
