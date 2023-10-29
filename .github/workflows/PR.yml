@@ -38,7 +38,9 @@ jobs:
       id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
-        path: .venv
+        path: |
+          .venv
+          poetry.lock
         key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
     #----------------------------------------------
     # install dependencies if cache does not exist
@@ -81,7 +83,9 @@ jobs:
       id: cached-poetry-dependencies
       uses: actions/cache@v3
       with:
-        path: .venv
+        path: |
+          .venv
+          poetry.lock
         key: venv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
     #----------------------------------------------
     # install dependencies if cache does not exist
