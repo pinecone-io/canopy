@@ -474,7 +474,10 @@ def chat(chat_service_url, rag, debug, stream):
 @click.option("--config", "-c", default=None,
               help="Path to a canopy config file. Optional, otherwise configuration "
                    "defaults will be used.")
-def start(host: str, port: str, reload: bool, config: Optional[str]):
+@click.option("--index-name", default=None,
+              help="Index name, if not provided already in as an environment variable")
+def start(host: str, port: str, reload: bool,
+          config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
         "For debugging only. To run the Canopy service in production, run the command:"
@@ -486,6 +489,16 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
+
+    if index_name:
+        env_index_name = os.getenv("INDEX_NAME")
+        if env_index_name and index_name != env_index_name:
+            raise CLIError(
+                f"Index name provided via --index-name '{index_name}' does not match "
+                f"the index name provided via the INDEX_NAME environment variable "
+                f"'{env_index_name}'"
+            )
+        os.environ["INDEX_NAME"] = index_name
 
     click.echo(f"Starting Canopy service on {host}:{port}")
     start_service(host, port=port, reload=reload, config_file=config)
