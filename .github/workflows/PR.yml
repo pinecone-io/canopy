@@ -24,7 +24,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      uses: .github/actions/install-deps-and-canopy
+      uses: ./.github/actions/install-deps-and-canopy
       with:
         python-version: ${{ matrix.python-version }}
         install-canopy: false
@@ -49,7 +49,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      uses: .github/actions/install-deps-and-canopy
+      uses: ./.github/actions/install-deps-and-canopy
       with:
         python-version: ${{ matrix.python-version }}
     - name: Run unit tests
