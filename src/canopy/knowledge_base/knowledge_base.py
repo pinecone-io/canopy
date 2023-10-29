@@ -38,6 +38,17 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 def list_canopy_indexes() -> List[str]:
+    """
+    List all Canopy indexes in the current Pinecone account.
+
+    Example:
+        >>> from canopy.knowledge_base import list_canopy_indexes
+        >>> list_canopy_indexes()
+            ['canopy--my_index', 'canopy--my_index2']
+
+    Returns:
+        A list of Canopy index names.
+    """
 
     try:
         pinecone_init()
