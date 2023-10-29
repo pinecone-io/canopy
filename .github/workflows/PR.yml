@@ -1,0 +1,63 @@
+name: Run unit tests and linters
+
+on: pull_request
+
+# Cancel previous runs on the same branch \ PR number if they are still running
+# From: https://stackoverflow.com/a/72408109
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+
+jobs:
+  run-linters:
+    name: Run linters
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', 3.11]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      uses: ./.github/actions/install-deps-and-canopy
+      with:
+        python-version: ${{ matrix.python-version }}
+        install-canopy: false
+    - name: Run flake8 Check
+      run: poetry run flake8 .
+    - name: Run mypy check
+      run: poetry run mypy src
+
+  run-tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+    needs: run-linters
+    strategy:
+      matrix:
+        python-version: [3.9, '3.10', 3.11]
+        pinecone-plan: ["paid", "starter"]
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      uses: ./.github/actions/install-deps-and-canopy
+      with:
+        python-version: ${{ matrix.python-version }}
+        install-canopy: true
+    - name: Run unit tests
+      run: poetry run pytest --html=report.html --self-contained-html tests/unit
+    - name: upload pytest report.html
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: pytest-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        path: report*.html

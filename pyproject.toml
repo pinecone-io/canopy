@@ -79,3 +79,4 @@ skip-checking-raises = true
 
 [tool.poetry.scripts]
 canopy = "canopy_cli.cli:cli"
+
