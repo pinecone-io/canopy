@@ -164,7 +164,6 @@ class RecursiveCharacterTextSplitter(TextSplitter):
         is_separator_regex: bool = False,
         **kwargs: Any,
     ) -> None:
-        """Create a new TextSplitter."""
         super().__init__(keep_separator=keep_separator, **kwargs)
         self._separators = separators or ["\n\n", "\n", " ", ""]
         self._is_separator_regex = is_separator_regex

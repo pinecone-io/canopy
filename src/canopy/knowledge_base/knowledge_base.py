@@ -109,11 +109,13 @@ class KnowledgeBase(BaseKnowledgeBase):
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
-                          see https://docs.pinecone.io/docs/python-client#create_index
 
-        Returns:
-            KnowledgeBase object.
+        Raises:
+            ValueError: If default_top_k is not a positive integer.
+            TypeError: If record_encoder is not an instance of RecordEncoder.
+            TypeError: If chunker is not an instance of Chunker.
+            TypeError: If reranker is not an instance of Reranker.
+
         """  # noqa: E501
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
@@ -269,8 +271,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                          For example, you can set the index's number of replicas by passing {"replicas": 2}.
                          see https://docs.pinecone.io/docs/python-client#create_index
 
-        Returns:
-            None
         """  # noqa: E501
         # validate inputs
         if indexed_fields is None:
@@ -490,8 +490,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                         Defaults to 100.
             show_progress_bar: Whether to show a progress bar while upserting the documents.
 
-        Returns:
-            None
 
         Example:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
