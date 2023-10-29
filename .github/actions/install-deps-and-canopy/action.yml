@@ -34,8 +34,10 @@ runs:
   # install dependencies if cache does not exist
   #----------------------------------------------
   - name: Install dependencies
+    shell: bash
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
     run: poetry install --no-interaction --no-root --with dev
   - name: Install project
+    shell: bash
     if: {{ inputs.install-canopy }} == "true"
     run: poetry install --no-interaction

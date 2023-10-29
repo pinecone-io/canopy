@@ -45,6 +45,7 @@ jobs:
       uses: ./.github/actions/install-deps-and-canopy
       with:
         python-version: ${{ matrix.python-version }}
+        install-canopy: true
     - name: Run unit tests
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
     - name: Set Index Name for System / E2E
