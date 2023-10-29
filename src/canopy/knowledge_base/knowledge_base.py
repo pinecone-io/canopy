@@ -433,11 +433,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
-        metadata_filter = deepcopy(query.metadata_filter)
+        filter = deepcopy(query.metadata_filter)
         if global_metadata_filter is not None:
-            if metadata_filter is None:
-                metadata_filter = {}
-            metadata_filter.update(global_metadata_filter)
+            if filter is None:
+                filter = {}
+            filter.update(global_metadata_filter)
         top_k = query.top_k if query.top_k else self._default_top_k
 
         query_params = deepcopy(query.query_params)
@@ -446,7 +446,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
-                                   metadata_filter=metadata_filter,
+                                   metadata_filter=filter,
                                    include_metadata=True,
                                    _check_return_type=_check_return_type,
                                    **query_params)
