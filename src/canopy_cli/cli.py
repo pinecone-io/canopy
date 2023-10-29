@@ -64,7 +64,7 @@ def check_service_health(url: str):
         raise CLIError(msg)
 
 
-@retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
+@retry(reraise=True, wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
     check_service_health(chat_service_url)
 
@@ -193,7 +193,7 @@ def new(index_name: str, config: Optional[str]):
     help=(
         """
         \b
-        Upload local data files containing documents to the Canopy service.
+        Upload local data files to the Canopy service.
 
         Load all the documents from data file or a directory containing multiple data files.
         The allowed formats are .jsonl and .parquet.
@@ -297,6 +297,7 @@ def upsert(index_name: str,
                 raise CLIError(msg)
 
         pbar.update(len(batch))
+    pbar.close()
 
     if failed_docs:
         msg = (
