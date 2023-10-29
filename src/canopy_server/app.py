@@ -11,7 +11,6 @@ import yaml
 from dotenv import load_dotenv
 
 from canopy.llm import BaseLLM
-from canopy.llm.models import UserMessage
 from canopy.tokenizer import Tokenizer
 from canopy.knowledge_base import KnowledgeBase
 from canopy.context_engine import ContextEngine
@@ -24,7 +23,7 @@ import uvicorn
 from typing import cast
 
 from canopy.models.api_models import StreamingChatResponse, ChatResponse
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, UserMessage
 from .api_models import \
      ChatRequest, ContextQueryRequest, \
      ContextUpsertRequest, HealthStatus, ContextDeleteRequest

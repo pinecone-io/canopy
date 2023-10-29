@@ -446,7 +446,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
-                                   metadata_filter=metadata_filter,
+                                   filter=metadata_filter,
                                    include_metadata=True,
                                    _check_return_type=_check_return_type,
                                    **query_params)

@@ -21,8 +21,6 @@ class Tokenizer:
 
     @classmethod
     def initialize(cls, tokenizer_class=DEFAULT_TOKENIZER_CLASS, **kwargs):
-        if cls._initialized:
-            raise ValueError("Tokenizer has already been initialized")
         if not issubclass(tokenizer_class, BaseTokenizer):
             raise ValueError("Invalid tokenizer class provided")
         if issubclass(tokenizer_class, Tokenizer):
