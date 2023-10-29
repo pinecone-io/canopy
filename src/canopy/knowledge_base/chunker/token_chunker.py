@@ -31,6 +31,8 @@ class TokenChunker(Chunker):
             max_chunk_size (int): size of the chunks, in tokens
             overlap (int): overlap between chunks, in tokens
         """
+
+        # TODO: should add check for overlap not bigger than max_chunk_size
         if overlap < 0:
             cls_name = self.__class__.__name__
             raise ValueError(
