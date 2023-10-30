@@ -14,12 +14,6 @@ class RecursiveCharacterChunker(Chunker):
     A chunker that splits a document into chunks of a given size, using a recursive character splitter.
     A RecursiveCharacterChunker is a derived class of Chunker, which means that it can be referenced by a name
     and configured in a config file.
-
-    Args:
-        chunk_size (int): size of the chunks
-        chunk_overlap (int): overlap between chunks
-        separators (Optional[List[str]]): list of separators to use for splitting the text
-        keep_separator (bool): whether to keep the separator in the chunk or not
     """  # noqa: E501
 
     def __init__(self,
@@ -33,10 +27,10 @@ class RecursiveCharacterChunker(Chunker):
         It splits a text into chunks of a given size, using a recursive character splitter.
 
         Args:
-            chunk_size (int): size of the chunks, in tokens
-            chunk_overlap (int): overlap between chunks
-            separators (Optional[List[str]]): list of separators to use for splitting the text
-            keep_separator (bool): whether to keep the separator in the chunk or not
+            chunk_size: size of the chunks, in tokens
+            chunk_overlap: overlap between chunks
+            separators: list of separators to use for splitting the text
+            keep_separator: whether to keep the separator in the chunk or not
         """  # noqa: E501
         self._tokenizer = Tokenizer()
         self._chunker = RecursiveCharacterTextSplitter(
@@ -50,10 +44,10 @@ class RecursiveCharacterChunker(Chunker):
         """
         using the RecursiveCharacterTextSplitter, this method takes a document and returns a list of KBDocChunks
         Args:
-            document (Document): document to be chunked
+            document: document to be chunked
 
         Returns:
-            List[KBDocChunk]: list of chunks KBDocChunks from the document, where text is splitted
+            chunks: list of chunks KBDocChunks from the document, where text is splitted
                               evenly using the RecursiveCharacterTextSplitter
         """  # noqa: E501
         # TODO: check overlap not bigger than max_chunk_size

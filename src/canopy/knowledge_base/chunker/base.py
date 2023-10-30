@@ -23,10 +23,10 @@ class Chunker(ABC, ConfigurableMixin):
         used to chunk a list of documents.
 
         Args:
-            documents (List[Document]): list of documents
+            documents: list of documents
 
         Returns:
-            List[KBDocChunk]: list of chunks KBDocChunks
+            chunks: list of chunks of type KBDocChunks
         """
         chunks: List[KBDocChunk] = []
         for doc in documents:
@@ -47,10 +47,10 @@ class Chunker(ABC, ConfigurableMixin):
         that must be implemented by every subclass of Chunker
 
         Args:
-            documents (List[Document]): list of documents
+            document: list of documents
 
         Returns:
-            List[KBDocChunk]: list of chunks KBDocChunks
+            chunks: list of chunks KBDocChunks
         """
         pass
 

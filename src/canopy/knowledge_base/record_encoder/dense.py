@@ -9,14 +9,9 @@ from canopy.models.data_models import Query
 
 class DenseRecordEncoder(RecordEncoder):
     """
-
     DenseRecordEncoder is a subclass of RecordEncoder that encode text as a dense vector (list of floats).
     DenseRecordEncoder uses a BaseDenseEncoder from the Pinecone Text library to encode the text.
     for more information about the BaseDenseEncoder see: https://github.com/pinecone-io/pinecone-text
-
-    Args:
-        dense_encoder: A BaseDenseEncoder to encode the text.
-        kwargs: Additional arguments to pass to the RecordEncoder.
     """  # noqa: E501
 
     def __init__(self,
@@ -27,7 +22,7 @@ class DenseRecordEncoder(RecordEncoder):
 
         Args:
             dense_encoder: A BaseDenseEncoder to encode the text.
-            kwargs: Additional arguments to pass to the RecordEncoder.
+            **kwargs: Additional arguments to pass to the RecordEncoder.
         """  # noqa: E501
         super().__init__(**kwargs)
         self._dense_encoder = dense_encoder

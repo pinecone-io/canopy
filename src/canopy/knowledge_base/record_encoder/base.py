@@ -20,10 +20,6 @@ class RecordEncoder(ABC, ConfigurableMixin):
     - _encode_queries_batch
 
     Async encoders are still not supported, but will be added in the future.
-
-    Args:
-        batch_size: The number of documents or queries to encode at once.
-        Defaults to 1.
     """   # noqa: E501
 
     def __init__(self, batch_size: int = 1):

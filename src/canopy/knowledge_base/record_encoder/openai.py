@@ -19,12 +19,6 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
     for more information about the Pinecone Text library see: https://github.com/pinecone-io/pinecone-text
 
     Note: this implementation is perfroming the same encoding for documents and queries.
-
-    Args:
-        model_name: The name of the model to use for encoding.
-        batch_size: The number of documents or queries to encode at once.
-        Defaults to 1.
-        kwargs: Additional arguments to pass to the RecordEncoder.
     """  # noqa: E501
 
     def __init__(self,
@@ -39,8 +33,8 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         Args:
             model_name: The name of the model to use for encoding.
             batch_size: The number of documents or queries to encode at once.
-            Defaults to 1.
-            kwargs: Additional arguments to pass to the RecordEncoder.
+                        Defaults to 1.
+            **kwargs: Additional arguments to pass to the RecordEncoder.
         """  # noqa: E501
         encoder = OpenAIEncoder(model_name)
         super().__init__(dense_encoder=encoder, batch_size=batch_size, **kwargs)

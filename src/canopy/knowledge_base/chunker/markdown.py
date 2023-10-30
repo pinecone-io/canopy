@@ -12,11 +12,6 @@ class MarkdownChunker(RecursiveCharacterChunker):
     to chunk markdown documents. It uses RecursiveCharacterTextSplitter to split
     the text of the document into chunks, by providing the separators for markdown documents
     (also from LangChainTextSplitter, with modifications)
-
-    Args:
-        chunk_size (int, optional): size of the chunks. Defaults to 256 tokens.
-        chunk_overlap (int, optional): overlap between chunks. Defaults to 0.
-        keep_separator (bool, optional): whether to keep the separator in the chunk. Defaults to True.
     """  # noqa: E501
 
     def __init__(self,
@@ -28,9 +23,9 @@ class MarkdownChunker(RecursiveCharacterChunker):
         Iniitalizes RecursiveCharacterChunker with the separators for markdown documents.
 
         Args:
-            chunk_size (int, optional): size of the chunks. Defaults to 256 tokens.
-            chunk_overlap (int, optional): overlap between chunks. Defaults to 0.
-            keep_separator (bool, optional): whether to keep the separator in the chunk. Defaults to True.
+            chunk_size: size of the chunks. Defaults to 256 tokens.
+            chunk_overlap: overlap between chunks. Defaults to 0.
+            keep_separator: whether to keep the separator in the chunk. Defaults to True.
 
         """  # noqa: E501
         separators = RecursiveCharacterTextSplitter.get_separators_for_language(
