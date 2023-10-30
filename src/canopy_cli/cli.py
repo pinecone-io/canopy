@@ -18,6 +18,7 @@ from openai.error import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
 from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base import connect_to_pinecone
 from canopy.models.data_models import Document
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
@@ -71,7 +72,7 @@ def wait_for_service(chat_service_url: str):
 
 def validate_connection():
     try:
-        KnowledgeBase._connect_pinecone()
+        connect_to_pinecone()
     except RuntimeError as e:
         msg = (
             f"{str(e)}\n"
