@@ -2,10 +2,11 @@
 #            Configuration file for Canopy Server
 # ===========================================================
 
-# -------------------------------------------------------------------------------
+# ---------------------------------------------------------------------------------
 # LLM prompts
 # Defined here for convenience, then referenced in the chat engine configuration
-# -------------------------------------------------------------------------------
+# Note: line breaks in the prompts are important, and may affect the LLM's behavior
+# ---------------------------------------------------------------------------------
 system_prompt: &system_prompt |
   Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
   If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context.
@@ -20,7 +21,7 @@ query_builder_prompt: &query_builder_prompt |
 # A Tokenizer singleton instance must be initialized before initializing any other components
 # -------------------------------------------------------------------------------------------
 tokenizer:
-  type: OpenAITokenizer  # Options: [OpenAITokenizer]
+  type: OpenAITokenizer                 # Options: [OpenAITokenizer]
   params:
     model_name: gpt-3.5-turbo
 
@@ -89,7 +90,7 @@ chat_engine:
     knowledge_base:
       params:
         default_top_k: 5                # The default number of document chunks to retrieve for each query
-#        index_params:                  # Optional - index creation parameters for `create_canopy_index` or `canopy new`
+#        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
 #          metric: cosine
 #          pod_type: p1
 
