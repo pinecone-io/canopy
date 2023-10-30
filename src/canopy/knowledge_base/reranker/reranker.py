@@ -34,7 +34,7 @@ class TransparentReranker(Reranker):
 
         Args:
             results: A list of KBQueryResult to rerank.
-        
+
         Returns:
             results: A list of KBQueryResult, same as the input.
         """  # noqa: E501
