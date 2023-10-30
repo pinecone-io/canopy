@@ -12,7 +12,7 @@ from tenacity import (
 )
 from dotenv import load_dotenv
 from datetime import datetime
-from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
 from canopy.knowledge_base.chunker import Chunker
 from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
 from canopy.knowledge_base.models import DocumentWithScore
@@ -224,6 +224,15 @@ def test_create_index(index_full_name, knowledge_base):
     assert index_full_name in pinecone.list_indexes()
     assert index_full_name == index_full_name
     assert knowledge_base._index.describe_index_stats()
+
+
+def test_list_indexes(index_full_name):
+    actual = list_canopy_indexes()
+    expected = [index for index in pinecone.list_indexes()
+                if index.startswith(INDEX_NAME_PREFIX)]
+
+    assert index_full_name in actual
+    assert sorted(actual) == sorted(expected)
 
 
 def test_is_verify_index_connection_happy_path(knowledge_base):
