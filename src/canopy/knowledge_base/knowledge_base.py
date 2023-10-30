@@ -37,6 +37,20 @@ DELETE_STARTER_BATCH_SIZE = 30
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
+def connect_to_pinecone():
+    """
+    Connect to Pinecone.
+    This method is called automatically when creating a new KnowledgeBase object.
+    Or when calling `list_canopy_indexes()`.
+    """
+    try:
+        pinecone_init()
+        pinecone_whoami()
+    except Exception as e:
+        raise RuntimeError("Failed to connect to Pinecone. "
+                           "Please check your credentials and try again") from e
+
+
 def list_canopy_indexes() -> List[str]:
     """
     List all Canopy indexes in the current Pinecone account.
@@ -50,13 +64,7 @@ def list_canopy_indexes() -> List[str]:
         A list of Canopy index names.
     """
 
-    try:
-        pinecone_init()
-        pinecone_whoami()
-    except Exception as e:
-        raise RuntimeError("Failed to connect to Pinecone. "
-                           "Please check your credentials and try again") from e
-
+    connect_to_pinecone()
     return [index for index in list_indexes() if index.startswith(INDEX_NAME_PREFIX)]
 
 
@@ -183,20 +191,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-    @staticmethod
-    def _connect_pinecone():
-        try:
-            pinecone_init()
-            pinecone_whoami()
-        except Exception as e:
-            raise RuntimeError("Failed to connect to Pinecone. "
-                               "Please check your credentials and try again") from e
-
     def _connect_index(self,
                        connect_pinecone: bool = True
                        ) -> None:
         if connect_pinecone:
-            self._connect_pinecone()
+            connect_to_pinecone()
 
         if self.index_name not in list_indexes():
             raise RuntimeError(
@@ -320,7 +319,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                  "Please provide the vectors' dimension")
 
         # connect to pinecone and create index
-        self._connect_pinecone()
+        connect_to_pinecone()
 
         if self.index_name in list_indexes():
             raise RuntimeError(
