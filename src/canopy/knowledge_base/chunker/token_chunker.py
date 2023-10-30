@@ -17,7 +17,7 @@ class TokenChunker(Chunker):
     Args:
         max_chunk_size (int): size of the chunks, in tokens
         overlap (int): overlap between chunks, in tokens
-    """ # noqa
+    """ # noqa: E501
 
     def __init__(self,
                  max_chunk_size: int = 256,
@@ -30,7 +30,7 @@ class TokenChunker(Chunker):
         Args:
             max_chunk_size (int): size of the chunks, in tokens
             overlap (int): overlap between chunks, in tokens
-        """ # noqa
+        """ # noqa: E501
 
         # TODO: should add check for overlap not bigger than max_chunk_size
         if overlap < 0:
@@ -61,7 +61,7 @@ class TokenChunker(Chunker):
         
         Returns:
             text_chunks (List[KBDocChunk]): list of chunks KBDocChunks from the document
-        """ # noqa
+        """ # noqa: E501
         tokens = self._tokenizer.tokenize(document.text)
         token_chunks = [tokens[i:i + self._chunk_size]
                         for i in range(0, len(tokens),

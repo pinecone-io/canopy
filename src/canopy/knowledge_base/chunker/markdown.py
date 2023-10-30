@@ -17,7 +17,7 @@ class MarkdownChunker(RecursiveCharacterChunker):
         chunk_size (int, optional): size of the chunks. Defaults to 256 tokens.
         chunk_overlap (int, optional): overlap between chunks. Defaults to 0.
         keep_separator (bool, optional): whether to keep the separator in the chunk. Defaults to True.
-    """ # noqa
+    """ # noqa: E501
 
     def __init__(self,
                  chunk_size: int = 256,
@@ -32,7 +32,7 @@ class MarkdownChunker(RecursiveCharacterChunker):
             chunk_overlap (int, optional): overlap between chunks. Defaults to 0.
             keep_separator (bool, optional): whether to keep the separator in the chunk. Defaults to True.
 
-        """ # noqa
+        """ # noqa: E501
         separators = RecursiveCharacterTextSplitter.get_separators_for_language(
             Language.MARKDOWN
         )

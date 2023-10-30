@@ -24,7 +24,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
     Args:
         batch_size: The number of documents or queries to encode at once.
         Defaults to 1.
-    """ # noqa
+    """ # noqa: E501
 
     def __init__(self, batch_size: int = 1):
         """
@@ -33,12 +33,12 @@ class RecordEncoder(ABC, ConfigurableMixin):
         Args:
             batch_size: The number of documents or queries to encode at once.
                         Defaults to 1.
-        """ # noqa
+        """ # noqa: E501
         self.batch_size = batch_size
 
     @abstractmethod
     def _encode_documents_batch(self,
-                                documents: List[KBDocChunk] # TODO: rename documents to doc_chunks or chunks  # noqa
+                                documents: List[KBDocChunk] # TODO: rename documents to doc_chunks or chunks  # noqa: E501
                                 ) -> List[KBEncodedDocChunk]:
         """
         Abstract method for encoding a batch of documents, takes a list of KBDocChunk and returns a list of KBEncodedDocChunk.
@@ -49,7 +49,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         Returns:
             encoded chunks: A list of KBEncodedDocChunk.
-        """ # noqa
+        """ # noqa: E501
         pass
 
     @abstractmethod
@@ -63,7 +63,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         Returns:
             encoded queries: A list of KBQuery.
-        """ # noqa
+        """ # noqa: E501
         pass
 
     @abstractmethod
@@ -85,7 +85,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         """
         Returns:
             The dimension of the dense vectors produced by the encoder, if applicable.
-        """ # noqa
+        """ # noqa: E501
         return None
 
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
@@ -99,7 +99,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         Returns:
             encoded chunks: A list of KBEncodedDocChunk.
 
-        """ # noqa
+        """ # noqa: E501
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
             encoded_docs.extend(self._encode_documents_batch(batch))
@@ -116,7 +116,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         
         Returns:
             encoded queries: A list of KBQuery.
-        """ # noqa
+        """ # noqa: E501
 
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):

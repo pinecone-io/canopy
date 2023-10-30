@@ -20,7 +20,7 @@ class RecursiveCharacterChunker(Chunker):
         chunk_overlap (int): overlap between chunks
         separators (Optional[List[str]]): list of separators to use for splitting the text
         keep_separator (bool): whether to keep the separator in the chunk or not
-    """ # noqa
+    """ # noqa: E501
 
     def __init__(self,
                  chunk_size: int = 256,
@@ -37,7 +37,7 @@ class RecursiveCharacterChunker(Chunker):
             chunk_overlap (int): overlap between chunks
             separators (Optional[List[str]]): list of separators to use for splitting the text
             keep_separator (bool): whether to keep the separator in the chunk or not
-        """ # noqa
+        """ # noqa: E501
         self._tokenizer = Tokenizer()
         self._chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -55,7 +55,7 @@ class RecursiveCharacterChunker(Chunker):
         Returns:
             List[KBDocChunk]: list of chunks KBDocChunks from the document, where text is splitted
                               evenly using the RecursiveCharacterTextSplitter
-        """ # noqa
+        """ # noqa: E501
         # TODO: check overlap not bigger than max_chunk_size
         text_chunks = self._chunker.split_text(document.text)
         return [KBDocChunk(id=f"{document.id}_{i}",
