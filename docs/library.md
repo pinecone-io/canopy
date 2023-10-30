@@ -4,6 +4,8 @@ For most common use cases, users can simply deploy the fully-configurable [Canop
 
 For advanced users, this page describes how to use `canopy` core library directly to implement their own custom applications. 
 
+> **_💡 NOTE:_** You can also follow the quickstart Jupyter [notebook](../examples/canopy-lib-quickstart.ipynb)
+
 The idea behind Canopy library is to provide a framework to build AI applications on top of Pinecone as a long memory storage for you own data. Canopy library designed with the following principles in mind:
 
 - **Easy to use**: Canopy is designed to be easy to use. It is well packaged and can be installed with a single command.
