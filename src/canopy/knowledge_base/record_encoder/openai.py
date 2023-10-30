@@ -17,7 +17,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
     def __init__(self,
                  *,
                  model_name: str = "text-embedding-ada-002",
-                 batch_size: int = 100,
+                 batch_size: int = 400,
                  **kwargs):
         encoder = OpenAIEncoder(model_name)
         super().__init__(dense_encoder=encoder, batch_size=batch_size, **kwargs)
