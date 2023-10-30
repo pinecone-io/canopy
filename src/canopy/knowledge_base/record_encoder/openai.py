@@ -24,7 +24,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
     def __init__(self,
                  *,
                  model_name: str = "text-embedding-ada-002",
-                 batch_size: int = 100,
+                 batch_size: int = 400,
                  **kwargs):
         """
         create an instance of OpenAIEncoder with the given model name.
