@@ -9,17 +9,18 @@ from canopy.utils.config import ConfigurableMixin
 class Chunker(ABC, ConfigurableMixin):
 
     """
-    Base class for chunkers. Chunkers take a document (id, text, ...) 
+    Base class for chunkers. Chunkers take a document (id, text, ...)
     and return a list of KBDocChunks  (id, text, document_id, ...)
-
-    Chunker is an abstract class that must be subclassed to be used, also, it extends ConfigurableMixin
-    which means that every subclass of Chunker could be referenced by a name and configured in a config file.
+    Chunker is an abstract class that must be subclassed to be used,
+    also, it extends ConfigurableMixin which means that every subclass of
+    Chunker could be referenced by a name and configured in a config file.
     """
 
     def chunk_documents(self, documents: List[Document]) -> List[KBDocChunk]:
         """
         chunk_documents takes a list of documents and returns a list of KBDocChunks
-        this method is just a wrapper around chunk_single_document that can be used to chunk a list of documents.
+        this method is just a wrapper around chunk_single_document that can be
+        used to chunk a list of documents.
 
         Args:
             documents (List[Document]): list of documents
@@ -41,7 +42,8 @@ class Chunker(ABC, ConfigurableMixin):
     @abstractmethod
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
         """
-        chunk_single_document takes a document and returns a list of KBDocChunks, this is the main method
+        chunk_single_document takes a document and returns a
+        list of KBDocChunks, this is the main method
         that must be implemented by every subclass of Chunker
 
         Args:

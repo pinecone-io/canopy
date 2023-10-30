@@ -20,7 +20,7 @@ class RecursiveCharacterChunker(Chunker):
         chunk_overlap (int): overlap between chunks
         separators (Optional[List[str]]): list of separators to use for splitting the text
         keep_separator (bool): whether to keep the separator in the chunk or not
-    """
+    """ # noqa
 
     def __init__(self,
                  chunk_size: int = 256,
@@ -37,7 +37,7 @@ class RecursiveCharacterChunker(Chunker):
             chunk_overlap (int): overlap between chunks
             separators (Optional[List[str]]): list of separators to use for splitting the text
             keep_separator (bool): whether to keep the separator in the chunk or not
-        """
+        """ # noqa
         self._tokenizer = Tokenizer()
         self._chunker = RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,

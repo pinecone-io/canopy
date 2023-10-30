@@ -17,7 +17,7 @@ class TokenChunker(Chunker):
     Args:
         max_chunk_size (int): size of the chunks, in tokens
         overlap (int): overlap between chunks, in tokens
-    """
+    """ # noqa
 
     def __init__(self,
                  max_chunk_size: int = 256,
@@ -30,7 +30,7 @@ class TokenChunker(Chunker):
         Args:
             max_chunk_size (int): size of the chunks, in tokens
             overlap (int): overlap between chunks, in tokens
-        """
+        """ # noqa
 
         # TODO: should add check for overlap not bigger than max_chunk_size
         if overlap < 0:
