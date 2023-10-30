@@ -490,7 +490,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def upsert(self,
                documents: List[Document],
                namespace: str = "",
-               batch_size: int = 100,
+               batch_size: int = 200,
                show_progress_bar: bool = False):
         """
         Upsert documents into the knowledge base.
