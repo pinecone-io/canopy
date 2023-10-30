@@ -51,7 +51,6 @@ class TokenChunker(Chunker):
 
     def chunk_single_document(self, document: Document) -> List[KBDocChunk]:
         """
-
         This methods takes a document and returns a list of KBDocChunks, where text is splitted
         evenly using the tokenizer. Firts the text is tokenized, then the tokens are splitted into chunks
         of a given size, with overlap between chunks.
@@ -62,8 +61,7 @@ class TokenChunker(Chunker):
         
         Returns:
             text_chunks (List[KBDocChunk]): list of chunks KBDocChunks from the document
-
-        """
+        """ # noqa
         tokens = self._tokenizer.tokenize(document.text)
         token_chunks = [tokens[i:i + self._chunk_size]
                         for i in range(0, len(tokens),

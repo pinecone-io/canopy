@@ -38,7 +38,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
     @abstractmethod
     def _encode_documents_batch(self,
-                                documents: List[KBDocChunk] # TODO: rename documents to doc_chunks or chunks
+                                documents: List[KBDocChunk] # TODO: rename documents to doc_chunks or chunks  # noqa
                                 ) -> List[KBEncodedDocChunk]:
         """
         Abstract method for encoding a batch of documents, takes a list of KBDocChunk and returns a list of KBEncodedDocChunk.
@@ -104,7 +104,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         for batch in self._batch_iterator(documents, self.batch_size):
             encoded_docs.extend(self._encode_documents_batch(batch))
 
-        return encoded_docs # TODO: consider yielding a generator
+        return encoded_docs  # TODO: consider yielding a generator
 
     def encode_queries(self, queries: List[Query]) -> List[KBQuery]:
         """
@@ -116,8 +116,8 @@ class RecordEncoder(ABC, ConfigurableMixin):
         
         Returns:
             encoded queries: A list of KBQuery.
-        """
-        
+        """ # noqa
+
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
             kb_queries.extend(self._encode_queries_batch(batch))

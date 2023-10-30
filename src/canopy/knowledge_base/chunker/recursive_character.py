@@ -55,7 +55,7 @@ class RecursiveCharacterChunker(Chunker):
         Returns:
             List[KBDocChunk]: list of chunks KBDocChunks from the document, where text is splitted
                               evenly using the RecursiveCharacterTextSplitter
-        """
+        """ # noqa
         # TODO: check overlap not bigger than max_chunk_size
         text_chunks = self._chunker.split_text(document.text)
         return [KBDocChunk(id=f"{document.id}_{i}",
