@@ -31,8 +31,7 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.3.2
-          virtualenvs-create: true
-          virtualenvs-in-project: true
+          virtualenvs-create: false
           installer-parallel: true
 
       - name: Build wheel
@@ -46,7 +45,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels
+          name: wheels-${{ matrix.os }}-py${{ matrix.python-version }}
           path: ./dist/
 
       - name: Install dev dependencies
