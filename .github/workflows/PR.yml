@@ -1,6 +1,8 @@
-name: Run unit tests and linters
+name: Run linters and tests
 
-on: pull_request
+on:
+  - pull_request
+  - merge_group
 
 # Cancel previous runs on the same branch \ PR number if they are still running
 # From: https://stackoverflow.com/a/72408109
@@ -48,16 +50,47 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install dependencies and canopy
       uses: ./.github/actions/install-deps-and-canopy
       with:
         python-version: ${{ matrix.python-version }}
         install-canopy: true
     - name: Run unit tests
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
+    - name: Set Index Name for System / E2E
+      if: github.event_name == 'merge_group'
+      id: gen_suffix
+      run: |
+        RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
+        SUFFIX="${RAW_SUFFIX//./-}"
+        echo "${SUFFIX}"
+        echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
+    - name: Run system tests
+      if: github.event_name == 'merge_group'
+      env:
+        INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
+        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
+        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
+    - name: Run e2e tests
+      if: github.event_name == 'merge_group'
+      env:
+        INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
+        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
+        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        CE_LOG_FILENAME: e2e.log
+      run: poetry run pytest -n 3 --dist loadscope --html=report_e2e.html --self-contained-html tests/e2e
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
       with:
         name: pytest-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
         path: report*.html
+    - name: upload e2e test log
+      uses: actions/upload-artifact@v3
+      if: failure() && github.event_name == 'merge_group'
+      with:
+        name: e2e-log-failure-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        path: e2e.log
