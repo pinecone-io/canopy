@@ -40,7 +40,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 </ol>
 </details>
 
-## Why Canopy? [TODO: TBD]
+## Why Canopy?
 
 * **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
 
@@ -58,9 +58,7 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
-2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. 
-
-> For the complete documentation please go to: [#TODO: LINK](link.link.com) 
+2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. The service also comes with a built in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-service), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
 
 3. **Canopy CLI** - Canopy comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
 
@@ -133,8 +131,6 @@ And follow the CLI instructions. The index that will be created will have a pref
 
 > To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
-![](.readme-content/canopy-new.gif)
-
 ### 2. Uploading data
 
 You can load data into your **Canopy** Index by simply using the CLI:
@@ -162,8 +158,6 @@ Canopy support single or mulitple files in jsonl or praquet format. The document
 
 Follow the instructions in the CLI to upload your data.
 
-![](.readme-content/canopy-upsert.gif)
-
 ### 3. Start the **Canopy** service
 
 **Canopy** service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
@@ -172,18 +166,13 @@ Follow the instructions in the CLI to upload your data.
 canopy start
 ```
 
-Now, you should be prompted with standard Uvicorn logs:
+Now, you should be prompted with the following standard Uvicorn message:
 
 ```
-Starting Canopy service on 0.0.0.0:8000
-INFO:     Started server process [24431]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
+...
+
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
-
-![](.readme-content/canopy-start.gif)
-
 
 > **_📝 NOTE:_**
 >
@@ -202,8 +191,6 @@ canopy chat
 
 This will open a chat interface in your terminal. You can ask questions and the **Canopy** will try to answer them using the data you uploaded.
 
-![](.readme-content/canopy-chat.gif)
-
 To compare the chat response with and without RAG use the `--baseline` flag
 
 ```bash
@@ -211,9 +198,6 @@ canopy chat --baseline
 ```
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
-
-![](.readme-content/canopy-chat-no-rag.gif)
-
 
 ### 5. Stop the **Canopy** service
 
