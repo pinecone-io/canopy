@@ -1,4 +1,4 @@
-name: Pre Release CI
+name: Build and Test installation
 
 on:
   workflow_dispatch:
@@ -31,6 +31,9 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.3.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
       - name: Build wheel
         run: |
@@ -40,15 +43,17 @@ jobs:
         run: |
           pip install dist/pinecone_canopy*.whl
 
-      - name: Create dev requirements file
-        run: |
-          poetry export -f requirements.txt --without-hashes --only dev -o only-dev.txt
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./dist/
 
-      - name: Install dev requirements
+      - name: Install dev dependencies
         run: |
-          pip install -r only-dev.txt
+          poetry install --no-root --only dev --no-interaction
 
-      - name: Run tests
+      - name: Run unit tests
         run: pytest --html=report.html --self-contained-html tests/unit
 
       - name: Upload pytest reports
