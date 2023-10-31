@@ -187,7 +187,7 @@ class TestChatEngine:
     def test_get_context(self):
         chat_engine = self._init_chat_engine()
         messages, expected = self._get_inputs_and_expected(5, 10, MOCK_SYSTEM_PROMPT)
-        context = chat_engine.get_context(messages)
+        context = chat_engine._get_context(messages)
 
         self.mock_query_builder.generate.assert_called_once_with(
             messages,

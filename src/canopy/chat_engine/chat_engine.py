@@ -35,9 +35,6 @@ class BaseChatEngine(ABC, ConfigurableMixin):
         pass
 
     # TODO: Decide if we want it for first release in the API
-    @abstractmethod
-    def get_context(self, messages: Messages) -> Context:
-        pass
 
     @abstractmethod
     async def achat(self,
@@ -54,6 +51,31 @@ class BaseChatEngine(ABC, ConfigurableMixin):
 
 
 class ChatEngine(BaseChatEngine):
+
+    """
+    Chat engine is an object that implements end to end chat API with [RAG](https://www.pinecone.io/learn/retrieval-augmented-generation/).
+    Given chat history, the chat engine orchestrates its underlying context engine and LLM to run the following steps:
+
+    1. Generate search queries from the chat history
+    2. Retrieve the most relevant context for each query using the context engine
+    3. Prompt the LLM with the chat history and the retrieved context to generate the next response
+
+    To use the chat engine, you need to provide it with a context engine, and optionally you can configure all its other components such as the LLM, the query generator, and the prompt builder and more.
+
+    Example:
+
+        >>> from canopy.chat_engine import ChatEngine
+        >>> chat_engine = ChatEngine(context_engine)
+               
+    Where you can follow the instructions in the [context engine](../context_engine/context_engine) to create a context engine.
+    Then you can use the chat engine to chat with a user:
+
+        >>> from canopy.models.data_models import UserMessage
+        >>> messages = [UserMessage(content="Hello! what is the capital of France?")]
+        >>> response = chat_engine.chat(messages)
+        >>> print(response.choices[0].message.content)
+        Paris is the capital of France. Source: https://en.wikipedia.org/wiki/Paris
+    """  # noqa: E501, W293
 
     _DEFAULT_COMPONENTS = {
         'context_engine': ContextEngine,
@@ -73,6 +95,20 @@ class ChatEngine(BaseChatEngine):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1
                  ):
+        """
+        Initialize a chat engine.
+            
+        Args:
+            context_engine: An instance of a context engine to use for retrieving context to prompt the LLM along with the chat history.
+            llm: An instance of a LLM to use for generating the next response. Defaults to OpenAILLM.
+            max_prompt_tokens: The maximum number of tokens to use for the prompt to the LLM. Defaults to 4096.
+            max_generated_tokens: The maximum number of tokens to generate from the LLM. Defaults to None, which means the LLM will use its default behavior.
+            max_context_tokens: The maximum number of tokens to use for the context to prompt the LLM. Defaults to be 70% of the max_prompt_tokens.
+            query_builder: An instance of a query generator to use for generating queries from the chat history. Defaults to FunctionCallingQueryGenerator.
+            system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
+            history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
+            min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
+        """  # noqa: E501, W293
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
                 f"context_engine must be an instance of ContextEngine, "
@@ -128,7 +164,36 @@ class ChatEngine(BaseChatEngine):
              stream: bool = False,
              model_params: Optional[ModelParams] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
-        context = self.get_context(messages)
+        """
+        Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
+
+        While calling the chat method, behind the scenes the chat engine will do the following:
+        1. Generate search queries from the chat history
+        2. Retrieve the most relevant context for each query using the context engine
+        3. Prompt the LLM with the chat history and the retrieved context to generate the next response
+        4. Return the response
+
+        Args:
+            messages: A list of messages (history) to generate the next response from.
+            stream: A boolean flag to indicate if the chat should be streamed or not. Defaults to False.
+            model_params: A dictionary of model parameters to use for the LLM. Defaults to None, which means the LLM will use its default values.
+
+        Returns:
+            A ChatResponse object if stream is False, or a StreamingChatResponse object if stream is True.
+
+        Examples:
+
+            >>> from canopy.models.data_models import UserMessage
+            >>> messages = [UserMessage(content="Hello! what is the capital of France?")]
+            >>> response = chat_engine.chat(messages)
+            >>> print(response.choices[0].message.content)
+
+            Or you can stream the response:
+            >>> response = chat_engine.chat(messages, stream=True)
+            >>> for chunk in response.chunks:
+            ...     print(chunk.json())
+        """  # noqa: E501, W293
+        context = self._get_context(messages)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
             system_prompt,
@@ -154,9 +219,9 @@ class ChatEngine(BaseChatEngine):
             response.debug_info = debug_info
             return response
 
-    def get_context(self,
-                    messages: Messages,
-                    ) -> Context:
+    def _get_context(self,
+                     messages: Messages,
+                     ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
         context = self.context_engine.query(queries, self.max_context_tokens)
         return context
