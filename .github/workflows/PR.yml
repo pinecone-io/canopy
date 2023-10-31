@@ -58,6 +58,7 @@ jobs:
     - name: Run unit tests
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
     - name: Set Index Name for System / E2E
+      if: github.event_name == 'merge_group'
       id: gen_suffix
       run: |
         RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
