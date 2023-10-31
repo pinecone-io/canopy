@@ -34,8 +34,6 @@ class BaseChatEngine(ABC, ConfigurableMixin):
              ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
-    # TODO: Decide if we want it for first release in the API
-
     @abstractmethod
     async def achat(self,
                     messages: Messages,
