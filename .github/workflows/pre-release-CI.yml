@@ -84,10 +84,13 @@ jobs:
 
       - name: Debug print canopy
         run: |
+          source $VENV
           python -c "import canopy; print(canopy.__file__)"
 
       - name: Run unit tests
-        run: pytest --html=report.html --self-contained-html tests/unit
+        run: |
+          source $VENV
+          pytest --html=report.html --self-contained-html tests/unit
 
       - name: Upload pytest reports
         if: always()
