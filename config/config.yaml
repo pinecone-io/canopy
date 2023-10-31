@@ -80,7 +80,7 @@ chat_engine:
     # The context builder is responsible for formulating a textual context given query results.
     # -------------------------------------------------------------------------
     context_builder:
-      type: StuffingContextBuilder
+      type: StuffingContextBuilder      # Options: [StuffingContextBuilder]
 
 
     # -----------------------------------------------------------------------------------------------------------
