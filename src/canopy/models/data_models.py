@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, List, Union, Dict, Sequence
+from typing import Optional, List, Union, Dict, Sequence, Literal
 
 from pydantic import BaseModel, Field, validator, Extra
 
@@ -43,7 +43,7 @@ class ContextContent(BaseModel, ABC):
     # Any context should be able to be represented as well formatted text.
     # In the most minimal case, that could simply be a call to `.json()`.
     @abstractmethod
-    def to_text(self) -> str:
+    def to_text(self, **kwargs) -> str:
         pass
 
 
@@ -52,11 +52,11 @@ class Context(BaseModel):
     num_tokens: int = Field(exclude=True)
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
-    def to_text(self) -> str:
+    def to_text(self, **kwargs) -> str:
         if isinstance(self.content, ContextContent):
-            return self.content.to_text()
+            return self.content.to_text(**kwargs)
         else:
-            return "\n".join([c.to_text() for c in self.content])
+            return "\n".join([c.to_text(**kwargs) for c in self.content])
 
 
 # --------------------- LLM models ------------------------
@@ -79,3 +79,18 @@ class MessageBase(BaseModel):
 
 
 Messages = List[MessageBase]
+
+
+class UserMessage(MessageBase):
+    role: Literal[Role.USER] = Role.USER
+    content: str
+
+
+class SystemMessage(MessageBase):
+    role: Literal[Role.SYSTEM] = Role.SYSTEM
+    content: str
+
+
+class AssistantMessage(MessageBase):
+    role: Literal[Role.ASSISTANT] = Role.ASSISTANT
+    content: str

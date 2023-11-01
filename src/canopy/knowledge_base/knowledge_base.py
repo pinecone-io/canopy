@@ -37,6 +37,37 @@ DELETE_STARTER_BATCH_SIZE = 30
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
+def connect_to_pinecone():
+    """
+    Connect to Pinecone.
+    This method is called automatically when creating a new KnowledgeBase object.
+    Or when calling `list_canopy_indexes()`.
+    """
+    try:
+        pinecone_init()
+        pinecone_whoami()
+    except Exception as e:
+        raise RuntimeError("Failed to connect to Pinecone. "
+                           "Please check your credentials and try again") from e
+
+
+def list_canopy_indexes() -> List[str]:
+    """
+    List all Canopy indexes in the current Pinecone account.
+
+    Example:
+        >>> from canopy.knowledge_base import list_canopy_indexes
+        >>> list_canopy_indexes()
+            ['canopy--my_index', 'canopy--my_index2']
+
+    Returns:
+        A list of Canopy index names.
+    """
+
+    connect_to_pinecone()
+    return [index for index in list_indexes() if index.startswith(INDEX_NAME_PREFIX)]
+
+
 class KnowledgeBase(BaseKnowledgeBase):
 
     """
@@ -109,11 +140,13 @@ class KnowledgeBase(BaseKnowledgeBase):
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            index_params: A dictionary of parameters to pass to the index creation API. Defaults to None.
-                          see https://docs.pinecone.io/docs/python-client#create_index
 
-        Returns:
-            KnowledgeBase object.
+        Raises:
+            ValueError: If default_top_k is not a positive integer.
+            TypeError: If record_encoder is not an instance of RecordEncoder.
+            TypeError: If chunker is not an instance of Chunker.
+            TypeError: If reranker is not an instance of Reranker.
+
         """  # noqa: E501
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
@@ -158,20 +191,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-    @staticmethod
-    def _connect_pinecone():
-        try:
-            pinecone_init()
-            pinecone_whoami()
-        except Exception as e:
-            raise RuntimeError("Failed to connect to Pinecone. "
-                               "Please check your credentials and try again") from e
-
     def _connect_index(self,
                        connect_pinecone: bool = True
                        ) -> None:
         if connect_pinecone:
-            self._connect_pinecone()
+            connect_to_pinecone()
 
         if self.index_name not in list_indexes():
             raise RuntimeError(
@@ -269,8 +293,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                          For example, you can set the index's number of replicas by passing {"replicas": 2}.
                          see https://docs.pinecone.io/docs/python-client#create_index
 
-        Returns:
-            None
         """  # noqa: E501
         # validate inputs
         if indexed_fields is None:
@@ -297,7 +319,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                  "Please provide the vectors' dimension")
 
         # connect to pinecone and create index
-        self._connect_pinecone()
+        connect_to_pinecone()
 
         if self.index_name in list_indexes():
             raise RuntimeError(
@@ -446,7 +468,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
                                    namespace=query.namespace,
-                                   metadata_filter=metadata_filter,
+                                   filter=metadata_filter,
                                    include_metadata=True,
                                    _check_return_type=_check_return_type,
                                    **query_params)
@@ -468,7 +490,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def upsert(self,
                documents: List[Document],
                namespace: str = "",
-               batch_size: int = 100,
+               batch_size: int = 200,
                show_progress_bar: bool = False):
         """
         Upsert documents into the knowledge base.
@@ -490,8 +512,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                         Defaults to 100.
             show_progress_bar: Whether to show a progress bar while upserting the documents.
 
-        Returns:
-            None
 
         Example:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase

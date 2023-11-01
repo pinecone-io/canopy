@@ -19,7 +19,7 @@ class ContextQueryRequest(BaseModel):
 
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
-    batch_size: int = 100
+    batch_size: int = 200
 
 
 class ContextDeleteRequest(BaseModel):

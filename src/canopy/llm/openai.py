@@ -30,6 +30,7 @@ class OpenAILLM(BaseLLM):
         return [k["id"] for k in openai.Model.list().data]
 
     @retry(
+        reraise=True,
         wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(OPEN_AI_TRANSIENT_EXCEPTIONS),
@@ -66,6 +67,7 @@ class OpenAILLM(BaseLLM):
         return ChatResponse(**response)
 
     @retry(
+        reraise=True,
         wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(

@@ -1,7 +1,7 @@
 import os
 import signal
 import subprocess
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Iterable
 
 import click
 import time
@@ -18,6 +18,8 @@ from openai.error import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
 from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base import connect_to_pinecone
+from canopy.knowledge_base.chunker import Chunker
 from canopy.models.data_models import Document
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
@@ -28,9 +30,9 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from .app import start as start_service
+from canopy_server.app import start as start_service
 from .cli_spinner import Spinner
-from .api_models import ChatDebugInfo
+from canopy_server.api_models import ChatDebugInfo
 
 
 load_dotenv()
@@ -64,14 +66,14 @@ def check_service_health(url: str):
         raise CLIError(msg)
 
 
-@retry(wait=wait_fixed(5), stop=stop_after_attempt(6))
+@retry(reraise=True, wait=wait_fixed(5), stop=stop_after_attempt(6))
 def wait_for_service(chat_service_url: str):
     check_service_health(chat_service_url)
 
 
 def validate_connection():
     try:
-        KnowledgeBase._connect_pinecone()
+        connect_to_pinecone()
     except RuntimeError as e:
         msg = (
             f"{str(e)}\n"
@@ -189,11 +191,32 @@ def new(index_name: str, config: Optional[str]):
     os.environ["INDEX_NAME"] = index_name
 
 
+def _batch_documents_by_chunks(chunker: Chunker,
+                               documents: List[Document],
+                               batch_size: int = 400) -> Iterable[List[Document]]:
+    """
+    Note: this is a temporary solution until we improve the upsert pipeline.
+          using the chunker directly is not recommended, especially since the knowledge base also going to use it internally on the same documents.
+    """  # noqa: E501
+    num_chunks_in_batch = 0
+    batch: List[Document] = []
+    for doc in documents:
+        cur_num_chunks = len(chunker.chunk_single_document(doc))
+        if num_chunks_in_batch + cur_num_chunks >= batch_size:
+            yield batch
+            batch = []
+            num_chunks_in_batch = 0
+        num_chunks_in_batch += cur_num_chunks
+        batch.append(doc)
+    if batch:
+        yield batch
+
+
 @cli.command(
     help=(
         """
         \b
-        Upload local data files containing documents to the Canopy service.
+        Upload local data files to the Canopy service.
 
         Load all the documents from data file or a directory containing multiple data files.
         The allowed formats are .jsonl and .parquet.
@@ -207,8 +230,6 @@ def new(index_name: str, config: Optional[str]):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=50,
-              help="Number of documents to upload in each batch. Defaults to 10.")
 @click.option("--allow-failures/--dont-allow-failures", default=False,
               help="On default, the upsert process will stop if any document fails to "
                    "be uploaded. "
@@ -219,7 +240,6 @@ def new(index_name: str, config: Optional[str]):
                    "defaults will be used.")
 def upsert(index_name: str,
            data_path: str,
-           batch_size: int,
            allow_failures: bool,
            config: Optional[str]):
     if index_name is None:
@@ -279,8 +299,7 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for i in range(0, len(data), batch_size):
-        batch = data[i:i + batch_size]
+    for batch in _batch_documents_by_chunks(kb._chunker, data):
         try:
             kb.upsert(batch)
         except Exception as e:
@@ -377,7 +396,7 @@ def _chat(
         RAG-infused ChatBot will respond. You can continue the conversation by entering
         more messages. Hit Ctrl+C to exit.
 
-        To compare RAG-infused ChatBot with the original LLM, run with the `--baseline`
+        To compare RAG-infused ChatBot with the original LLM, run with the `--no-rag`
         flag, which would display both models' responses side by side.
         """
 
@@ -387,11 +406,11 @@ def _chat(
               help="Stream the response from the RAG chatbot word by word")
 @click.option("--debug/--no-debug", default=False,
               help="Print additional debugging information")
-@click.option("--baseline/--no-baseline", default=False,
-              help="Compare RAG-infused Chatbot with baseline LLM",)
+@click.option("--rag/--no-rag", default=True,
+              help="Compare RAG-infused Chatbot with vanilla LLM",)
 @click.option("--chat-service-url", default="http://0.0.0.0:8000",
               help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
-def chat(chat_service_url, baseline, debug, stream):
+def chat(chat_service_url, rag, debug, stream):
     check_service_health(chat_service_url)
     note_msg = (
         "🚨 Note 🚨\n"
@@ -431,7 +450,7 @@ def chat(chat_service_url, baseline, debug, stream):
             print_debug_info=debug,
         )
 
-        if baseline:
+        if not rag:
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
@@ -474,18 +493,31 @@ def chat(chat_service_url, baseline, debug, stream):
 @click.option("--config", "-c", default=None,
               help="Path to a canopy config file. Optional, otherwise configuration "
                    "defaults will be used.")
-def start(host: str, port: str, reload: bool, config: Optional[str]):
+@click.option("--index-name", default=None,
+              help="Index name, if not provided already in as an environment variable")
+def start(host: str, port: str, reload: bool,
+          config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
         "For debugging only. To run the Canopy service in production, run the command:"
         "\n"
-        "gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker "
+        "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     )
     for c in note_msg:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
+
+    if index_name:
+        env_index_name = os.getenv("INDEX_NAME")
+        if env_index_name and index_name != env_index_name:
+            raise CLIError(
+                f"Index name provided via --index-name '{index_name}' does not match "
+                f"the index name provided via the INDEX_NAME environment variable "
+                f"'{env_index_name}'"
+            )
+        os.environ["INDEX_NAME"] = index_name
 
     click.echo(f"Starting Canopy service on {host}:{port}")
     start_service(host, port=port, reload=reload, config_file=config)
@@ -504,7 +536,7 @@ def start(host: str, port: str, reload: bool, config: Optional[str]):
               help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
     # Check if the service was started using Gunicorn
-    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_cli.app:app"],
+    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
                          capture_output=True)
     output = res.stdout.decode("utf-8").split()
 
@@ -514,7 +546,8 @@ def stop(url):
                "Do you want to kill all Gunicorn processes?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_cli.app:app"], check=True)
+            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                           check=True)
         except subprocess.CalledProcessError:
             try:
                 [os.kill(int(pid), signal.SIGINT) for pid in output]
