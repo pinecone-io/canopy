@@ -57,7 +57,7 @@ jobs:
           pytest --html=report.html --self-contained-html tests/unit
 
       - name: Upload pytest reports
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: pytest-report-${{ matrix.os }}-py${{ matrix.python-version }}

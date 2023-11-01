@@ -1,4 +1,4 @@
-name: 'PyPI Release: Production (pinecone-client)'
+name: Release
 
 on:
   workflow_dispatch:
@@ -31,24 +31,25 @@ env:
 
 jobs:
   build:
-    name: Build python${{ matrix.python-version }}
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [ 3.9, '3.10', 3.11 ]
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set up Python ${{ matrix.python-version }}
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: 3.9  # The lowest we support
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
           version: 1.3.2
+
+      - name: Bump version
+      - run: |
+          poetry version ${{ inputs.releaseLevel }}
 
       - name: Build wheel
         run: |
@@ -57,22 +58,37 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
-          name: wheels-py${{ matrix.python-version }}
+          name: wheels
           path: ./dist/
 
   test-all-OSes:
     needs: build
     uses: ./.github/workflows/pre-release-CI.yml
 
-#  publish:
-#    needs: build
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: download wheels
-#        uses: actions/download-artifact@v2
-#        with:
-#          path: wheels
-#
-#      - name: debug print wheels
-#        run: |
-#          ls -lah wheels/
+  publish:
+    needs: test-all-OSes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.2
+
+      - name: download wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: ./dist/
+
+      - name: Commit version update
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "relevance@pinecone.io"
+          git add pyproject.toml
+          git commit -m "Bump version to $(poetry version -s)"
