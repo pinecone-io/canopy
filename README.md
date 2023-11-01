@@ -53,14 +53,14 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
     * **ContextEngine**  - Performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant document chunks, then formulates a coherent textual context to be used as a prompt for the LLM. 
     * **ChatEngine** - Exposes a chat interface to interact with your data. Given chat messages history, the `ChatEngine` uses the `ContextEngine` to generate a prompt and send it to an underlying LLM, returning a knowledge-augmented response.
 
-    * **KnowledgeBase** _`/context/{upsert, delete}` -  prepares your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings before upserting them into the Pinecone vector database. It also handles Delete operations.
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
-2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. The service also comes with a built in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-service), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
+2. **Canopy Server** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The server is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. 
+3. The server also comes with a built-in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-server), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
 
  3. **Canopy CLI** - A built-in development tool that allows users to swiftly set up their own Canopy server and test its configuration.  
-With just three CLI commands, you can create a new Canopy service, upload your documents to it, and then interact with the Chatbot using a built-in chat application directly from the terminal. The built-in chatbot also enables comparison of RAG-infused responses against a native LLM chatbot.
+With just three CLI commands, you can create a new Canopy server, upload your documents to it, and then interact with the Chatbot using a built-in chat application directly from the terminal. The built-in chatbot also enables comparison of RAG-infused responses against a native LLM chatbot.
 
 ## Considerations
 
@@ -102,7 +102,7 @@ export INDEX_NAME=<INDEX_NAME>
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
-| `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy service. | Optional - if not provided, default configuration would be used |
+| `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
 </details>
 
 
@@ -163,9 +163,10 @@ Canopy support single or mulitple files in jsonl or praquet format. The document
 
 Follow the instructions in the CLI to upload your data.
 
-### 3. Start the **Canopy** service
+### 3. Start the **Canopy** server
 
-**Canopy** service serve as a proxy between your application and Pinecone. It will also handle the RAG part of the application. To start the service, run:
+**Canopy** The canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
+To start the server, run:
 
 ```bash
 canopy start
@@ -182,7 +183,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 > **_📝 NOTE:_**
 >
 > The canopy start command will keep the terminal occupied. To proceed with the next steps, please open a new terminal window.
-> If you want to run the service in the background, you can use the following command - **```nohup canopy start &```**
+> If you want to run the server in the background, you can use the following command - **```nohup canopy start &```**
 > However, this is not recommended.
 
 
@@ -204,11 +205,11 @@ canopy chat --baseline
 
 This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
 
-### 5. Stop the **Canopy** service
+### 5. Stop the **Canopy** server
 
-To stop the service, simply press `CTRL+C` in the terminal where you started it.
+To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
-If you have started the service in the background, you can stop it by running:
+If you have started the server in the background, you can stop it by running:
 
 ```bash
 canopy stop
@@ -223,7 +224,7 @@ If you already have an application that uses the OpenAI API, you can migrate it 
 ```python
 import openai
 
-openai.api_base = "http://host:port/context"
+openai.api_base = "http://host:port/"
 
 # now you can use the OpenAI API as usual
 ```
@@ -233,14 +234,14 @@ or without global state change:
 ```python
 import openai
 
-openai_response = openai.Completion.create(..., api_base="http://host:port/context")
+openai_response = openai.Completion.create(..., api_base="http://host:port/")
 ```
 
-### Running Canopy service in production
+### Running Canopy server in production
 
 Canopy is using FastAPI as the web framework and Uvicorn as the ASGI server. It is recommended to use Gunicorn as the production server, mainly because it supports multiple worker processes and can handle multiple requests in parallel, more details can be found [here](https://www.uvicorn.org/deployment/#using-a-process-manager).
 
-To run the canopy service for production, please run:
+To run the canopy server for production, please run:
 
 ```bash
 gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
