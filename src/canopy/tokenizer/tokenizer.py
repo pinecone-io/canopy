@@ -2,6 +2,7 @@ from typing import List, Optional, Type
 
 from .openai import OpenAITokenizer
 from .base import BaseTokenizer
+from ..models.data_models import Messages
 
 
 class Tokenizer:
@@ -9,13 +10,13 @@ class Tokenizer:
     """
     Singleton class for tokenization.
     The singleton behavior unify tokenization across the system.
-    
+
     Usage:
-    
+
     To initialize the tokenizer, call Tokenizer.initialize(tokenizer_class, *args, **kwargs)
     >>> from canopy.tokenizer import Tokenizer
     >>> Tokenizer.initialize()
-    
+
     Then, you can init a tokenizer instance by calling Tokenizer() from anywhere in the code and use it:
     >>> tokenizer = Tokenizer()
     >>> tokenizer.tokenize("Hello world!")
@@ -48,9 +49,6 @@ class Tokenizer:
         Args:
             tokenizer_class: The tokenizer class to use. Must be a subclass of BaseTokenizer. Defaults to OpenAITokenizer.
             **kwargs: Keyword arguments to pass to the tokenizer class constructor.
-
-        Returns:
-            None
 
         Examples:
             Initialize the tokenizer with the default tokenizer class:
@@ -97,7 +95,7 @@ class Tokenizer:
         """
         Initialize the tokenizer singleton from a config dictionary.
         Used by the config module to initialize the tokenizer from a config file.
-        
+
         Args:
             config: A dictionary containing the tokenizer configuration. Must contain a "type" key with the tokenizer class name.
         """  # noqa: E501
@@ -128,7 +126,7 @@ class Tokenizer:
 
         Returns:
             The joined text as a string.
-        """
+        """  # noqa: E501
         return self._tokenizer_instance.detokenize(tokens)   # type: ignore[union-attr]
 
     def token_count(self, text: str) -> int:
@@ -143,16 +141,16 @@ class Tokenizer:
         """
         return self._tokenizer_instance.token_count(text)   # type: ignore[union-attr]
 
-    def messages_token_count(self, messages) -> int:
+    def messages_token_count(self, messages: Messages) -> int:
         """
         Counts the number of tokens in a Messages object.
         Behind the scenes, for each LLM provider there might be a different overhead for each message in the prompt,
         which is not necessarily the same as the number of tokens in the message text.
         This method takes care of that overhead and returns the total number of tokens in the prompt, as counted by the LLM provider.
-        
+
         Args:
             messages: The Messages object to count.
-        
+
         Returns:
             The number of tokens in the Messages object.
         """  # noqa: E501

@@ -7,12 +7,12 @@ from ..models.data_models import Messages
 class OpenAITokenizer(BaseTokenizer):
     """
     Tokenizer for OpenAI models, based on the tiktoken library.
-    
+
     Usage:
     Initialize the singleton tokenizer with the OpenAITokenizer class:
     >>> from canopy.tokenizer import Tokenizer
     >>> Tokenizer.initialize(tokenizer_class=OpenAITokenizer, model_name="gpt-3.5-turbo")
-    
+
     You can then use the tokenizer instance from anywhere in the code:
     >>> from canopy.tokenizer import Tokenizer
     >>> tokenizer = Tokenizer()
@@ -25,6 +25,8 @@ class OpenAITokenizer(BaseTokenizer):
 
     def __init__(self, model_name: str = "gpt-3.5-turbo"):
         """
+        Initialize the tokenizer.
+
         Args:
             model_name: The name of the model to use. Defaults to "gpt-3.5-turbo".
                         You can find the list of available models here: https://github.com/openai/tiktoken/blob/39f29cecdb6fc38d9a3434e5dd15e4de58cf3c80/tiktoken/model.py#L19C1-L19C18
@@ -79,10 +81,10 @@ class OpenAITokenizer(BaseTokenizer):
         Count the number of tokens in a list of messages as expected to be counted by OpenAI models.
         Account for the overhead of the messages structure.
         Taken from: https://github.com/openai/openai-cookbook/.../How_to_format_inputs_to_ChatGPT_models.ipynb
-        
+
         Args:
             messages: The list of messages to count the tokens of.
-        
+
         Returns:
             The number of tokens in the messages, as expected to be counted by OpenAI models.
         """  # noqa: E501
