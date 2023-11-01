@@ -1,7 +1,7 @@
 import os
 import signal
 import subprocess
-from typing import Dict, Any, Optional, List, Iterator
+from typing import Dict, Any, Optional, List, Iterable
 
 import click
 import time
@@ -193,7 +193,7 @@ def new(index_name: str, config: Optional[str]):
 
 def _batch_documents_by_chunks(chunker: Chunker,
                                documents: List[Document],
-                               batch_size: int = 400) -> Iterator[List[Document]]:
+                               batch_size: int = 400) -> Iterable[List[Document]]:
     """
     Note: this is a temporary solution until we improve the upsert pipeline.
           using the chunker directly is not recommended, especially since the knowledge base also going to use it internally on the same documents.
