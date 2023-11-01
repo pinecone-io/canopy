@@ -39,7 +39,7 @@ jobs:
       - name: Download wheels
         uses: actions/download-artifact@v2
         with:
-          name: wheels-py${{ matrix.python-version }}
+          name: wheels
           path: ./dist/
 
       - name: Install dev dependencies
