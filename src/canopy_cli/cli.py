@@ -1,7 +1,7 @@
 import os
 import signal
 import subprocess
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Iterator
 
 import click
 import time
@@ -19,6 +19,7 @@ from urllib.parse import urljoin
 
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base import connect_to_pinecone
+from canopy.knowledge_base.chunker import Chunker
 from canopy.models.data_models import Document
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
@@ -190,6 +191,27 @@ def new(index_name: str, config: Optional[str]):
     os.environ["INDEX_NAME"] = index_name
 
 
+def _batch_documents_by_chunks(chunker: Chunker,
+                               documents: List[Document],
+                               batch_size: int) -> Iterator[List[Document]]:
+    """
+    Note: this is a temporary solution until we improve the upsert pipeline.
+          using the chunker directly is not recommended, especially since the knowledge base also going to use it internally on the same documents.
+    """  # noqa: E501
+    num_chunks_in_batch = 0
+    batch: List[Document] = []
+    for doc in documents:
+        cur_num_chunks = len(chunker.chunk_single_document(doc))
+        if num_chunks_in_batch + cur_num_chunks >= batch_size:
+            yield batch
+            batch = []
+            num_chunks_in_batch = 0
+        num_chunks_in_batch += cur_num_chunks
+        batch.append(doc)
+    if batch:
+        yield batch
+
+
 @cli.command(
     help=(
         """
@@ -208,8 +230,8 @@ def new(index_name: str, config: Optional[str]):
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=50,
-              help="Number of documents to upload in each batch. Defaults to 10.")
+@click.option("--batch-size", default=400,
+              help="Number of chunks to upload in each batch. Defaults to 400.")
 @click.option("--allow-failures/--dont-allow-failures", default=False,
               help="On default, the upsert process will stop if any document fails to "
                    "be uploaded. "
@@ -280,8 +302,7 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for i in range(0, len(data), batch_size):
-        batch = data[i:i + batch_size]
+    for batch in _batch_documents_by_chunks(kb._chunker, data, batch_size):
         try:
             kb.upsert(batch)
         except Exception as e:
