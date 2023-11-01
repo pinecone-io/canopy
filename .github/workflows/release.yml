@@ -31,7 +31,7 @@ env:
 
 jobs:
   build:
-    uses: ./github/workflows/pre-release-CI.yml@v1
+    uses: ./.github/workflows/pre-release-CI.yml
 
   publish:
     requires: build
