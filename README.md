@@ -48,9 +48,10 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
 
 ## What's inside the box?
 
-1. **Canopy Core Library** - Canopy has 3 API level components that are responsible for different parts of the RAG workflow:
-    * **ChatEngine** _`/chat/completions`_  - implements the full RAG workflow and exposes a chat interface to interact with your data. It acts as a wrapper around the Knowledge Base and Context Engine.
-    * **ContextEngine**  - performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant document chunks, then formulates a coherent textual context to be used as a prompt for the LLM. 
+1. **Canopy Core Library** - Canopy includes 3 main components that are responsible for different parts of the RAG workflow:
+    * **KnowledgeBase** - Manages your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings, storing them in a Pinecone vector database. Given a new textual query - the `KnowledgeBase` will retrieve the most relevant document chunks from the database. 
+    * **ContextEngine**  - Performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant document chunks, then formulates a coherent textual context to be used as a prompt for the LLM. 
+    * **ChatEngine** - Exposes a chat interface to interact with your data. Given chat messages history, the `ChatEngine` uses the `ContextEngine` to generate a prompt and send it to an underlying LLM, returning a knowledge-augmented response.
 
     * **KnowledgeBase** _`/context/{upsert, delete}` -  prepares your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings before upserting them into the Pinecone vector database. It also handles Delete operations.
 
