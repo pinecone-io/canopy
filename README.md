@@ -1,12 +1,18 @@
 # Canopy
 
-**Canopy** is a Sofware Development Kit (SDK) for AI applications. Canopy allows you to test, build and package Retrieval Augmented Applications with Pinecone Vector Database. **Canopy** is desinged to be well packaged and easy to use. It can be used as-a-library or as-a-service and designed to be modular, so you can use only the parts that you need. **Canopy** ships with a developer friendly CLI, to help you kickoff and test your application quickly.
+**Canopy** is an open-source Retrieval Augmented Generation (RAG) framework built on top of the Pinecone vector database. Canopy enables developers to quickly and easily experiment with and build applications using Retrieval Augmented Generation (RAG).
+Canopy provides a configurable built-in server that allows users to effortlessly deploy a RAG-infused Chatbot web app using their own documents as a knowledge base.
+For advanced use cases, the canopy core library enables building your own custom retrieval-powered AI applications.
+
+Canopy is desinged to be: 
+* **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy makes it easy to incorporate RAG into your OpenAI chat applications. 
+* **Reliable at scale:** Build fast, highly accurate GenAI applications that are production-ready and backed by Pinecone’s vector database. Seamlessly scale to billions of items with transarent, resource-based pricing. 
+* **Open and flexible:** Fully open-source, Canopy is both modular and extensible. You can configure to choose the components you need, or extend any component with your own custom implementation. Easily incorporate it into existing OpenAI applications and connect Canopy to your preferred UI. 
+* **Interactive and iterative:** Evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the augmented results before scaling to production. 
 
 ## RAG with Canopy
 
-**Pinecone + LLM = ❤️** 
-
-By enhancing language models with access to unlearned knowledge and inifinite memory we can build AI applications that can answer questions and assist humans without the risk of hallucinating or generating fake content. Let's learn how Canopy executes RAG pipeline.
+Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and augment you LLM (via an OpenAI endpoint) with your own text data. 
 
 ![](.readme-content/rag_flow.png)
 
@@ -40,27 +46,25 @@ By enhancing language models with access to unlearned knowledge and inifinite me
 </ol>
 </details>
 
-## Why Canopy?
-
-* **Ease of use** - Installed with a single command and can deploy an AI application in minutes. **Canopy** is designed to be easy to use and easy to integrate with your existing applications and compatible with OpenAI /chat/completions API. 
-
-* **Operational & Production ready** - Canopy is built on top of **Pinecone** and can Scale to Billions of documents. Unlike other AI frameworks, **Canopy** optimizes for production use cases it allows developers to set up operating point to have better control over token consumption in prompt or in generation. **Canopy** can maximize context quality and relevance while controlling the cost of the AI system.
-
-* **Open source** - **Canopy** is open source and free to use. It is also designed to be open and extensible, so you can easily add your own components and extend the functionality.
-
-
 ## What's inside the box?
 
-1. **Canopy Core Library** - Canopy has 3 high level classes that act as API level components:
-    * **ChatEngine** _`/chat/completions`_  - is a complete RAG unit that exposes a chat interface of LLM augmented with retrieval engine.
-    * **ContextEngine** _`/context/query`_ - is a proxy between your application and Pinecone. It will handle the R in the RAG pipeline and will return the snippet of context along with the respected source. 
-    * **KnowledgeBase** _`/context/{upsert, delete}` -  is the data managment interface, handles the processing, chunking and encoding (embedding) of the data, along with Upsert and Delete operations
+1. **Canopy Core Library** - Canopy has 3 API level components that are responsible for different parts of the RAG workflow:
+    * **ChatEngine** _`/chat/completions`_  - implements the full RAG workflow and exposes a chat interface to interact with your data. It acts as a wrapper around the Knowledge Base and Context Engine.
+    * **ContextEngine**  - performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant document chunks, then formulates a coherent textual context to be used as a prompt for the LLM. 
+
+    * **KnowledgeBase** _`/context/{upsert, delete}` -  prepares your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings before upserting them into the Pinecone vector database. It also handles Delete operations.
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
 2. **Canopy Service** - a webservice that wraps the **Canopy Core** and exposes it as a REST API. The service is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. The service also comes with a built in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-service), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
 
-3. **Canopy CLI** - Canopy comes with a fully functional CLI that is purposley built to allow users to quickly test their configuration and application before shipping, the CLI also comes with managment operations that allow you to create indexes and load data quickly
+ 3. **Canopy CLI** - A built-in development tool that allows users to swiftly set up their own Canopy server and test its configuration.  
+With just three CLI commands, you can create a new Canopy service, upload your documents to it, and then interact with the Chatbot using a built-in chat application directly from the terminal. The built-in chatbot also enables comparison of RAG-infused responses against a native LLM chatbot.
+
+## Considerations
+
+* Canopy is currently only compatiable with OpenAI API endpoints for both the embedding model and the LLM.  Rate limits and pricing set by OpenAI will apply. 
+
 
 ## Setup
 
