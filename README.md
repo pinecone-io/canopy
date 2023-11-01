@@ -8,7 +8,7 @@ Canopy is desinged to be:
 * **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy makes it easy to incorporate RAG into your OpenAI chat applications. 
 * **Reliable at scale:** Build fast, highly accurate GenAI applications that are production-ready and backed by Pinecone’s vector database. Seamlessly scale to billions of items with transarent, resource-based pricing. 
 * **Open and flexible:** Fully open-source, Canopy is both modular and extensible. You can configure to choose the components you need, or extend any component with your own custom implementation. Easily incorporate it into existing OpenAI applications and connect Canopy to your preferred UI. 
-* **Interactive and iterative:** Evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the augmented results before scaling to production. 
+* **Interactive and iterative:** Evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the results before scaling to production. 
 
 ## RAG with Canopy
 
@@ -126,19 +126,20 @@ In this quickstart, we will show you how to use the **Canopy** to build a simple
 
 ### 1. Create a new **Canopy** Index
 
-**Canopy** will create and configure a new Pinecone index on your behalf. Just run:
+As a one-time setup, Canopy needs to create and configure a new Pinecone index configured to work with Canopy. Just run:
 
 ```bash
 canopy new
 ```
 
-And follow the CLI instructions. The index that will be created will have a prefix `canopy--<INDEX_NAME>`. This will have to be done only once per index.
+And follow the CLI instructions. The index that will be created will have a prefix `canopy--<INDEX_NAME>`.   
+You only have to do this process once for every Canopy index you want to create.
 
 > To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
 ### 2. Uploading data
 
-You can load data into your **Canopy** Index by simply using the CLI:
+You can load data into your Canopy Index using the command:
 
 ```bash
 canopy upsert /path/to/data_directory
@@ -150,7 +151,7 @@ canopy upsert /path/to/data_directory/file.parquet
 canopy upsert /path/to/data_directory/file.jsonl
 ```
 
-Canopy support single or mulitple files in jsonl or praquet format. The documents should have the following schema:
+Canopy supports files in `jsonl` or `parquet` format. The documents should have the following schema:
 
 ```
 +----------+--------------+--------------+---------------+
@@ -163,50 +164,30 @@ Canopy support single or mulitple files in jsonl or praquet format. The document
 
 Follow the instructions in the CLI to upload your data.
 
-### 3. Start the **Canopy** server
+### 3. Start the Canopy server
 
-**Canopy** The canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
+The canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
 To start the server, run:
 
 ```bash
 canopy start
 ```
-
 Now, you should be prompted with the following standard Uvicorn message:
-
 ```
 ...
 
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
+**That's it!** you can now start using the **Canopy** server with any chat application that supports a `/chat.completion` endpoint.
 
-> **_📝 NOTE:_**
+> _📝 NOTE:_
 >
-> The canopy start command will keep the terminal occupied. To proceed with the next steps, please open a new terminal window.
+> The canopy start command will keep the terminal occupied. 
 > If you want to run the server in the background, you can use the following command - **```nohup canopy start &```**
 > However, this is not recommended.
 
 
-### 4. Chat with your data
-
-Now that you have data in your index, you can chat with it using the CLI:
-
-```bash
-canopy chat
-```
-
-This will open a chat interface in your terminal. You can ask questions and the **Canopy** will try to answer them using the data you uploaded.
-
-To compare the chat response with and without RAG use the `--baseline` flag
-
-```bash
-canopy chat --baseline
-```
-
-This will open a similar chat interface window, but will send your question directly to the LLM without the RAG pipeline.
-
-### 5. Stop the **Canopy** server
-
+### Stopping the server 
 To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
 If you have started the server in the background, you can stop it by running:
@@ -214,6 +195,29 @@ If you have started the server in the background, you can stop it by running:
 ```bash
 canopy stop
 ```
+
+## Evaluation chat tool
+
+Canopy's CLI comes with a built-in chat app that allows you to interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the results
+
+In a new terminal window, set the [required environment variables](#setup) then run:
+
+```bash 
+
+```bash
+canopy chat
+```
+
+This will open a chat interface in your terminal. You can ask questions and the RAG-infused chatbot will try to answer them using the data you uploaded.
+
+To compare the chat response with and without RAG use the `--no-rag` flag
+
+```bash
+canopy chat --no-rag
+```
+
+This will open a similar chat interface window, but will show both the RAG and non-RAG responses side-by-side.
+
 
 ## Advanced usage
 
