@@ -1,0 +1,46 @@
+name: 'PyPI Release: Production (pinecone-client)'
+
+on:
+  workflow_dispatch:
+    inputs:
+      releaseLevel:
+        description: 'Release level'
+        required: true
+        type: choice
+        default: 'patch'
+        options:
+          - 'patch' # bug fixes
+          - 'minor' # new features, backwards compatible
+          - 'major' # breaking changes
+      generateBranch:
+        description: 'Whether to generate a release branch'
+        required: true
+        type: boolean
+        default: false
+      generateTag:
+        description: 'Whether to generate a release tag'
+        required: true
+        type: boolean
+        default: true
+
+env:
+  PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }}
+  PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+
+
+jobs:
+  build:
+    uses: ./github/workflows/pre-release-CI.yml
+
+  publish:
+    requires: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: download wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: wheels
+
+      - name: debug print wheels
+        run: |
+          ls -lah wheels/
