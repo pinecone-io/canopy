@@ -48,7 +48,7 @@ jobs:
           version: 1.3.2
 
       - name: Bump version
-      - run: |
+        run: |
           poetry version ${{ inputs.releaseLevel || 'patch' }}
 
       - name: Build wheel
