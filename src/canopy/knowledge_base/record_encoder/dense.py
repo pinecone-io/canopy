@@ -33,7 +33,7 @@ class DenseRecordEncoder(RecordEncoder):
                                 ) -> List[KBEncodedDocChunk]:
         """
         Encode a batch of documents, takes a list of KBDocChunk and returns a list of KBEncodedDocChunk.
-       
+
         Args:
             documents: A list of KBDocChunk to encode.
         Returns:
