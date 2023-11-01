@@ -18,7 +18,6 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
     The implementation uses the `OpenAIEncoder` class from the `pinecone-text` library.
     For more information about see: https://github.com/pinecone-io/pinecone-text
 
-    Note: this implementation is perfroming the same encoding for documents and queries.
     """  # noqa: E501
 
     def __init__(self,
@@ -27,14 +26,13 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                  batch_size: int = 400,
                  **kwargs):
         """
-        create an instance of OpenAIEncoder with the given model name.
-        initialize the dense encoder.
+        Initialize the OpenAIRecordEncoder
 
         Args:
-            model_name: The name of the model to use for encoding.
+            model_name: The name of the OpenAI embeddings model to use for encoding. See https://platform.openai.com/docs/models/embeddings
             batch_size: The number of documents or queries to encode at once.
-                        Defaults to 1.
-            **kwargs: Additional arguments to pass to the RecordEncoder.
+                        Defaults to 400.
+            **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
         """  # noqa: E501
         encoder = OpenAIEncoder(model_name)
         super().__init__(dense_encoder=encoder, batch_size=batch_size, **kwargs)
@@ -53,7 +51,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
             documents: A list of KBDocChunk to encode.
 
         Returns:
-            encoded chunks: A list of KBEncodedDocChunk, where only the values field is populated (and sparse_values is None)
+            encoded chunks: A list of KBEncodedDocChunk, with the `values` field populated by the generated embeddings vector.
         """  # noqa: E501
         return super().encode_documents(documents)
 
