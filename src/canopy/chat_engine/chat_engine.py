@@ -64,7 +64,7 @@ class ChatEngine(BaseChatEngine):
 
         >>> from canopy.chat_engine import ChatEngine
         >>> chat_engine = ChatEngine(context_engine)
-               
+
     Where you can follow the instructions in the [context engine](../context_engine/context_engine) to create a context engine.
     Then you can use the chat engine to chat with a user:
 
@@ -73,7 +73,7 @@ class ChatEngine(BaseChatEngine):
         >>> response = chat_engine.chat(messages)
         >>> print(response.choices[0].message.content)
         Paris is the capital of France. Source: https://en.wikipedia.org/wiki/Paris
-    """  # noqa: E501, W293
+    """  # noqa: E501
 
     _DEFAULT_COMPONENTS = {
         'context_engine': ContextEngine,
@@ -95,7 +95,7 @@ class ChatEngine(BaseChatEngine):
                  ):
         """
         Initialize a chat engine.
-            
+
         Args:
             context_engine: An instance of a context engine to use for retrieving context to prompt the LLM along with the chat history.
             llm: An instance of a LLM to use for generating the next response. Defaults to OpenAILLM.
@@ -106,7 +106,7 @@ class ChatEngine(BaseChatEngine):
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
             history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
             min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
-        """  # noqa: E501, W293
+        """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
                 f"context_engine must be an instance of ContextEngine, "
@@ -190,7 +190,7 @@ class ChatEngine(BaseChatEngine):
             >>> response = chat_engine.chat(messages, stream=True)
             >>> for chunk in response.chunks:
             ...     print(chunk.json())
-        """  # noqa: E501, W293
+        """  # noqa: E501
         context = self._get_context(messages)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
