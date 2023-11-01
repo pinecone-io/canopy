@@ -9,40 +9,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Build python${{ matrix.python-version }}
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.9, '3.10', 3.11]
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.3.2
-
-      - name: Build wheel
-        run: |
-          poetry build
-
-      - name: Upload wheels
-        uses: actions/upload-artifact@v3
-        with:
-          name: wheels-py${{ matrix.python-version }}
-          path: ./dist/
-
-
-  build-and-test:
+  test-installation:
     name: Test on ${{ matrix.os }}-py${{ matrix.python-version }}
-    needs: build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
