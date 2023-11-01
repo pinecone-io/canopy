@@ -203,8 +203,6 @@ Canopy's CLI comes with a built-in chat app that allows you to interactively cha
 In a new terminal window, set the [required environment variables](#setup) then run:
 
 ```bash 
-
-```bash
 canopy chat
 ```
 
