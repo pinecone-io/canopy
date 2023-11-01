@@ -1,12 +1,14 @@
 # Canopy
 
-**Canopy** is an open-source Retrieval Augmented Generation (RAG) framework built on top of the Pinecone vector database. Canopy enables developers to quickly and easily experiment with and build applications using RAG. It can be deployed as-a-library or as-a-service and is designed to be modular, so you can use only the parts that you need. The Canopy CLI lets you evaluate your RAG workflow in real-time. 
+**Canopy** is an open-source Retrieval Augmented Generation (RAG) framework built on top of the Pinecone vector database. Canopy enables developers to quickly and easily experiment with and build applications using Retrieval Augmented Generation (RAG).
+Canopy provides a configurable built-in server that allows users to effortlessly deploy a RAG-infused Chatbot web app using their own documents as a knowledge base.
+For advanced use cases, the canopy core library enables building your own custom retrieval-powered AI applications.
 
 Canopy is desinged to be: 
-* **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy is currently compatible with any OpenAI API endpoint. 
+* **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy makes it easy to incorporate RAG into your OpenAI chat applications. 
 * **Reliable at scale:** Build fast, highly accurate GenAI applications that are production-ready and backed by Pinecone’s vector database. Seamlessly scale to billions of items with transarent, resource-based pricing. 
-* **Open and flexible:** Fully open-source, Canopy is both modular and extensible. Deploy as a service or a library, and choose the components you need. Easily incorporate it into existing OpenAI applications and connect Canopy to your preferred UI. 
-* **Interactive and iterative:** Chat with your text data using a simple command in the Canopy CLI. Easily compare RAG vs. non-RAG workflows side-by-side to interactively evaluate the augmented results before scaling to production. 
+* **Open and flexible:** Fully open-source, Canopy is both modular and extensible. You can configure to choose the components you need, or extend any component with your own custom implementation. Easily incorporate it into existing OpenAI applications and connect Canopy to your preferred UI. 
+* **Interactive and iterative:** Evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the augmented results before scaling to production. 
 
 ## RAG with Canopy
 
@@ -58,7 +60,8 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
 
 > For the complete documentation please go to: [#TODO: LINK](link.link.com) 
 
-3. **Canopy CLI** - Use the CLI to quickly test your configuration and application by comparing RAG vs. non-RAG results side-by-side. The CLI also lets you create indexes and load data quickly
+ 3. **Canopy CLI** - A built-in development tool that allows users to swiftly set up their own Canopy server and test its configuration.  
+With just three CLI commands, you can create a new Canopy service, upload your documents to it, and then interact with the Chatbot using a built-in chat application directly from the terminal. The built-in chatbot also enables comparison of RAG-infused responses against a native LLM chatbot.
 
 ## Considerations
 
