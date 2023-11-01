@@ -6,9 +6,9 @@ from pydantic import BaseModel, Field
 
 from canopy.models.data_models import Document, Query
 
-# TODO 1: consider moving this to pinecone-text
-# TODO 2: consider renaming to "Vector" or "DenseVector"
-# TODO 3: consider supporting `np.ndarray`
+# TODO: (1) consider moving this to pinecone-text
+# TODO: (2) consider renaming to "Vector" or "DenseVector"
+# TODO: (3) consider supporting `np.ndarray`
 VectorValues = List[float]
 
 
