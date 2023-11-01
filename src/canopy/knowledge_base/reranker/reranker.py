@@ -10,8 +10,6 @@ class Reranker(ABC, ConfigurableMixin):
     Abstract class for rerankers. Rerankers take a list of KBQueryResult and return a list of KBQueryResult,
     where the results are reranked according to the reranker logic.
     Reranker is an abstract class that must be subclassed to be used,
-    also, it extends ConfigurableMixin which means that every subclass of Reranker could be referenced by a name
-    and configured in a config file.
     """  # noqa: E501
 
     @abstractmethod

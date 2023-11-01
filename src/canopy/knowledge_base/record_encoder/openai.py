@@ -14,9 +14,9 @@ from canopy.utils.openai_exceptions import OPEN_AI_TRANSIENT_EXCEPTIONS
 
 class OpenAIRecordEncoder(DenseRecordEncoder):
     """
-    OpenAIRecordEncoder is a type DenseRecordEncoder that uses the OpenAI Embeddings endpoints.
-    The implementation is based on the Pinecone Text library and the OpenAIEncoder class.
-    for more information about the Pinecone Text library see: https://github.com/pinecone-io/pinecone-text
+    OpenAIRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
+    The implementation uses the `OpenAIEncoder` class from the `pinecone-text` library.
+    For more information about see: https://github.com/pinecone-io/pinecone-text
 
     Note: this implementation is perfroming the same encoding for documents and queries.
     """  # noqa: E501
