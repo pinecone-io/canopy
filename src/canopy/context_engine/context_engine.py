@@ -60,7 +60,7 @@ class ContextEngine(BaseContextEngine):
 
         Args:
             knowledge_base: The knowledge base to query for retrieving documents
-            context_builder: The context builder to use for building the context from the retrieved documents
+            context_builder: The context builder to use for building the context from the retrieved documents. Defaults to `StuffingContextBuilder`
             global_metadata_filter: A metadata filter to apply to all queries. See: https://docs.pinecone.io/docs/metadata-filtering
         """  # noqa: E501
 
