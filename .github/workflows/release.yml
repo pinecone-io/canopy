@@ -47,9 +47,9 @@ jobs:
         with:
           version: 1.3.2
 
-#      - name: Bump version
-#      - run: |
-#          poetry version ${{ inputs.releaseLevel }}
+      - name: Bump version
+      - run: |
+          poetry version ${{ inputs.releaseLevel || 'patch' }}
 
       - name: Build wheel
         run: |
@@ -65,30 +65,30 @@ jobs:
     needs: build
     uses: ./.github/workflows/pre-release-CI.yml
 
-#  publish:
-#    needs: test-all-OSes
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v3
-#
-#      - name: Set up Python
-#        uses: actions/setup-python@v4
-#        with:
-#          python-version: 3.9
-#
-#      - name: Install Poetry
-#        uses: snok/install-poetry@v1
-#        with:
-#          version: 1.3.2
-#
-#      - name: download wheels
-#        uses: actions/download-artifact@v2
-#        with:
-#          path: ./dist/
-#
-#      - name: Commit version update
-#        run: |
-#          git config --global user.name "GitHub Action"
-#          git config --global user.email "relevance@pinecone.io"
-#          git add pyproject.toml
-#          git commit -m "Bump version to $(poetry version -s)"
+  publish:
+    needs: test-all-OSes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.2
+
+      - name: download wheels
+        uses: actions/download-artifact@v2
+        with:
+          path: ./dist/
+
+      - name: Commit version update
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "relevance@pinecone.io"
+          git add pyproject.toml
+          git commit -m "Bump version to $(poetry version -s)"
