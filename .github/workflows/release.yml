@@ -22,6 +22,7 @@ on:
         required: true
         type: boolean
         default: true
+  push:
 
 env:
   PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }}
