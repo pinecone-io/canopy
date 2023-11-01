@@ -34,7 +34,7 @@ jobs:
     uses: ./.github/workflows/pre-release-CI.yml
 
   publish:
-    requires: build
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: download wheels
