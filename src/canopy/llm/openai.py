@@ -52,7 +52,7 @@ class OpenAILLM(BaseLLM):
                         ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         """
         Chat completion using the OpenAI API.
-        
+
         Note: this function is wrapped in a retry decorator to handle transient errors.
 
         Args:
@@ -63,7 +63,7 @@ class OpenAILLM(BaseLLM):
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
             ChatResponse or StreamingChatChunk
-        
+
         Usage:
             >>> from canopy.llm import OpenAILLM
             >>> from canopy.models.data_models import UserMessage
@@ -149,7 +149,7 @@ class OpenAILLM(BaseLLM):
             ... )
             >>> llm.enforced_function_call(messages, function)
             {'queries': ['capital of France']}
-        """
+        """  # noqa: E501
         # this enforces the model to call the function
         function_call = {"name": function.name}
 
