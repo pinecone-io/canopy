@@ -193,7 +193,7 @@ def new(index_name: str, config: Optional[str]):
 
 def _batch_documents_by_chunks(chunker: Chunker,
                                documents: List[Document],
-                               batch_size: int) -> Iterator[List[Document]]:
+                               batch_size: int = 400) -> Iterator[List[Document]]:
     """
     Note: this is a temporary solution until we improve the upsert pipeline.
           using the chunker directly is not recommended, especially since the knowledge base also going to use it internally on the same documents.
@@ -230,8 +230,6 @@ def _batch_documents_by_chunks(chunker: Chunker,
     help="The name of the index to upload the data to. "
          "Inferred from INDEX_NAME env var if not provided."
 )
-@click.option("--batch-size", default=400,
-              help="Number of chunks to upload in each batch. Defaults to 400.")
 @click.option("--allow-failures/--dont-allow-failures", default=False,
               help="On default, the upsert process will stop if any document fails to "
                    "be uploaded. "
@@ -242,7 +240,6 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "defaults will be used.")
 def upsert(index_name: str,
            data_path: str,
-           batch_size: int,
            allow_failures: bool,
            config: Optional[str]):
     if index_name is None:
@@ -302,7 +299,7 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for batch in _batch_documents_by_chunks(kb._chunker, data, batch_size):
+    for batch in _batch_documents_by_chunks(kb._chunker, data):
         try:
             kb.upsert(batch)
         except Exception as e:
