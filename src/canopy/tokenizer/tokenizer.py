@@ -48,7 +48,7 @@ class Tokenizer:
 
         Args:
             tokenizer_class: The tokenizer class to use. Must be a subclass of BaseTokenizer. Defaults to OpenAITokenizer.
-            **kwargs: Keyword arguments to pass to the tokenizer class constructor.
+            **kwargs: Keyword arguments to pass to the underlying `Tokenizer` class constructor.
 
         Examples:
             Initialize the tokenizer with the default tokenizer class:
