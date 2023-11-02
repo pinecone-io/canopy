@@ -67,12 +67,13 @@ jobs:
           path: ./dist/
 
   test-all-OSes:
-    if: never()
+    if: false
     needs: build
     uses: ./.github/workflows/pre-release-CI.yml
 
   publish:
-    needs: test-all-OSes
+#    needs: [build, test-all-OSes]
+    needs: [build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -94,8 +95,8 @@ jobs:
 
       - name: Set version
         run: |
-          echo ${{ jobs.build.outputs.get_version }}
-          poetry version ${{ jobs.build.outputs.get_version }}
+          echo ${{ needs.jobs.build.outputs.get_version }}
+          poetry version ${{ needs.jobs.build.outputs.get_version }}
 
       - name: Commit version update
         run: |
