@@ -77,7 +77,7 @@ more about virtual environments [here](https://docs.python.org/3/tutorial/venv.h
 
 1. install the package
 ```bash
-pip install pinecone-canopy
+pip install canopy-sdk
 ```
 
 2. Set up the environment variables
