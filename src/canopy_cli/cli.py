@@ -559,7 +559,7 @@ def stop(url):
         """
     )
 )
-def docs():
+def api_docs():
     import json
     from canopy_cli import HTML_TEMPLATE
     from canopy_server.app import app

@@ -20,7 +20,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-from typing import cast
+from typing import cast, Union
 
 from canopy.models.api_models import (
     StreamingChatResponse,
@@ -42,6 +42,9 @@ from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
 from canopy_server import description
 from canopy import __version__
+
+
+APIChatResponse = Union[ChatResponse, EventSourceResponse]
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -65,12 +68,12 @@ logger: logging.Logger
 
 @app.post(
     "/context/chat/completions",
-    response_model=ChatResponse,
+    response_model=APIChatResponse,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
     request: ChatRequest = Body(...),
-) -> ChatResponse:
+) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
 
