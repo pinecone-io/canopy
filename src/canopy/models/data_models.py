@@ -22,7 +22,7 @@ class Query(BaseModel):
     )
     top_k: Optional[int] = Field(
         default=None,
-        description="[soon deprecated] The number of results to return."
+        description="The number of results to return."
     )
     query_params: dict = Field(
         default_factory=dict,
