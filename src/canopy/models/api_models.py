@@ -28,7 +28,7 @@ class TokenCounts(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    id: str
+    id: str = Field(description="Canopy session Id.")
     object: str
     created: int
     model: str

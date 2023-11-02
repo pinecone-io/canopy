@@ -22,19 +22,39 @@ from fastapi import FastAPI, HTTPException, Body
 import uvicorn
 from typing import cast
 
-from canopy.models.api_models import StreamingChatResponse, ChatResponse
-from canopy.models.data_models import Context, UserMessage
-from .api_models import \
-     ChatRequest, ContextQueryRequest, \
-     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
+from canopy.models.api_models import (
+    StreamingChatResponse,
+    ChatResponse,
+)
+from canopy.models.data_models import Context, UserMessage, ContextContentResponse
+from .api_models import (
+    ChatRequest,
+    ContextQueryRequest,
+    ContextUpsertRequest,
+    HealthStatus,
+    ContextDeleteRequest,
+    ShutdownResponse,
+    SuccessUpsertResponse,
+    SuccessDeleteResponse,
+)
 
 from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
+from canopy_server import description
+from canopy import __version__
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-app = FastAPI()
+app = FastAPI(
+    title="Canopy API",
+    description=description,
+    version=__version__,
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
 
 context_engine: ContextEngine
 chat_engine: ChatEngine
@@ -45,19 +65,29 @@ logger: logging.Logger
 
 @app.post(
     "/context/chat/completions",
+    response_model=ChatResponse,
+    responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
     request: ChatRequest = Body(...),
-):
+) -> ChatResponse:
+    """
+    Chat with Canopy, using the LLM and context engine, and return a response.
+
+    The request schema is following OpenAI's chat completion API schema, but removes the need to configure
+    anything, other than the messages field: for more imformation see: https://platform.openai.com/docs/api-reference/chat/create
+
+    """  # noqa: E501
     try:
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
-        answer = await run_in_threadpool(chat_engine.chat,
-                                         messages=request.messages,
-                                         stream=request.stream)
+        answer = await run_in_threadpool(
+            chat_engine.chat, messages=request.messages, stream=request.stream
+        )
 
         if request.stream:
+
             def stringify_content(response: StreamingChatResponse):
                 for chunk in response.chunks:
                     chunk.id = question_id
@@ -65,7 +95,7 @@ async def chat(
                     yield data
 
             content_stream = stringify_content(cast(StreamingChatResponse, answer))
-            return EventSourceResponse(content_stream, media_type='text/event-stream')
+            return EventSourceResponse(content_stream, media_type="text/event-stream")
 
         else:
             chat_response = cast(ChatResponse, answer)
@@ -74,105 +104,134 @@ async def chat(
 
     except Exception as e:
         logger.exception(f"Chat with question_id {question_id} failed")
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/query",
+    response_model=ContextContentResponse,
+    responses={
+        500: {"description": "Failed to query the knowledgebase or Build the context"}
+    },
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-):
+) -> ContextContentResponse:
+    """
+    Query the knowledgebase and return a context. Context is a collections of text snippets, each with a source.
+    Query enables tuning the context length (in tokens) such that you can cap the cost of the generation.
+    This method can be used with or without a LLM.
+    """  # noqa: E501
     try:
         context: Context = await run_in_threadpool(
             context_engine.query,
             queries=request.queries,
-            max_context_tokens=request.max_tokens)
+            max_context_tokens=request.max_tokens,
+        )
 
         return context.content
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/upsert",
+    response_model=SuccessUpsertResponse,
+    responses={500: {"description": "Failed to upsert documents"}},
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
-):
+) -> SuccessUpsertResponse:
+    """
+    Upsert documents into the knowledgebase. Upserting is a way to add new documents or update existing ones.
+    Each document has a unique ID. If a document with the same ID already exists, it will be updated.
+
+    This method will run the processing, chunking and endocing of the data in parallel, and then send the
+    encoded data to the Pinecone Index in batches.
+    """  # noqa: E501
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
-        upsert_results = await run_in_threadpool(
-            kb.upsert,
-            documents=request.documents,
-            batch_size=request.batch_size)
+        await run_in_threadpool(
+            kb.upsert, documents=request.documents, batch_size=request.batch_size
+        )
 
-        return upsert_results
+        return SuccessUpsertResponse()
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/delete",
+    response_model=SuccessDeleteResponse,
+    responses={500: {"description": "Failed to delete documents"}},
 )
 async def delete(
     request: ContextDeleteRequest = Body(...),
-):
+) -> SuccessDeleteResponse:
+    """
+    Delete documents from the knowledgebase. Deleting documents is done by their unique ID.
+    """  # noqa: E501
     try:
         logger.info(f"Delete {len(request.document_ids)} documents")
-        await run_in_threadpool(
-            kb.delete,
-            document_ids=request.document_ids)
-        return {"message": "success"}
+        await run_in_threadpool(kb.delete, document_ids=request.document_ids)
+        return SuccessDeleteResponse()
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.get(
     "/health",
+    response_model=HealthStatus,
+    responses={500: {"description": "Failed to connect to Pinecone or LLM"}},
 )
-async def health_check():
+@app.exception_handler(Exception)
+async def health_check() -> HealthStatus:
+    """
+    Health check for the Canopy server. This endpoint checks the connection to Pinecone and the LLM.
+    """  # noqa: E501
     try:
         await run_in_threadpool(kb.verify_index_connection)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
         raise HTTPException(
-            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}"
+        ) from e
 
     try:
         msg = UserMessage(content="This is a health check. Are you alive? Be concise")
-        await run_in_threadpool(llm.chat_completion,
-                                messages=[msg],
-                                max_tokens=50)
+        await run_in_threadpool(llm.chat_completion, messages=[msg], max_tokens=50)
     except Exception as e:
         err_msg = f"Failed to communicate with {llm.__class__.__name__}"
         logger.exception(err_msg)
         raise HTTPException(
-            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}"
+        ) from e
 
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
-@app.get(
-    "/shutdown"
-)
-async def shutdown():
+@app.get("/shutdown")
+async def shutdown() -> ShutdownResponse:
+    """
+    __WARNING__: Experimental method.
+
+
+    This method will shutdown the server. It is used for testing purposes, and not recommended to be used
+    in production.
+    This method will locate the parent process and send a SIGINT signal to it.
+    """  # noqa: E501
     logger.info("Shutting down")
     proc = current_process()
     pid = proc._parent_pid if "SpawnProcess" in proc.name else proc.pid
     os.kill(pid, signal.SIGINT)
-    return {"message": "Shutting down"}
+    return ShutdownResponse()
 
 
 @app.on_event("startup")
@@ -190,11 +249,11 @@ def _init_logging():
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
-        format='%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  '
-               '%(message)s',
+        format="%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  "
+        "%(message)s",
         level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
         handlers=handlers,
-        force=True
+        force=True,
     )
     logger = logging.getLogger(__name__)
 
@@ -211,8 +270,10 @@ def _init_engines():
         _load_config(config_file)
 
     else:
-        logger.info("Did not find config file. Initializing engines with default "
-                    "configuration")
+        logger.info(
+            "Did not find config file. Initializing engines with default "
+            "configuration"
+        )
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
@@ -230,9 +291,7 @@ def _load_config(config_file):
             config = yaml.safe_load(f)
     except Exception as e:
         logger.exception(f"Failed to load config file {config_file}")
-        raise ConfigError(
-            f"Failed to load config file {config_file}. Error: {str(e)}"
-        )
+        raise ConfigError(f"Failed to load config file {config_file}. Error: {str(e)}")
     tokenizer_config = config.get("tokenizer", {})
     Tokenizer.initialize_from_config(tokenizer_config)
     if "chat_engine" not in config:
