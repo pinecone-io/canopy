@@ -77,8 +77,8 @@ async def chat(
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
 
-    The request schema is following OpenAI's chat completion API schema, but removes the need to configure
-    anything, other than the messages field: for more imformation see: https://platform.openai.com/docs/api-reference/chat/create
+    The request schema is following OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.  
+    Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
 
     """  # noqa: E501
     try:
@@ -121,9 +121,10 @@ async def query(
     request: ContextQueryRequest = Body(...),
 ) -> ContextContentResponse:
     """
-    Query the knowledgebase and return a context. Context is a collections of text snippets, each with a source.
-    Query enables tuning the context length (in tokens) such that you can cap the cost of the generation.
-    This method can be used with or without a LLM.
+    Query the knowledge base for relevant context.  
+    The returned text might be structured or unstructured, depending on the ContextEngine's configuration.
+    Query allows limiting the context length (in tokens), to control LLM costs.
+    This method does not pass through the LLM and uses only retieval and construction from Pinecone DB.
     """  # noqa: E501
     try:
         context: Context = await run_in_threadpool(
@@ -151,8 +152,7 @@ async def upsert(
     Upsert documents into the knowledgebase. Upserting is a way to add new documents or update existing ones.
     Each document has a unique ID. If a document with the same ID already exists, it will be updated.
 
-    This method will run the processing, chunking and endocing of the data in parallel, and then send the
-    encoded data to the Pinecone Index in batches.
+    The documents will be chunked and encoded, then the resulting encoded chunks will be sent to the Pinecone index in batches
     """  # noqa: E501
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
