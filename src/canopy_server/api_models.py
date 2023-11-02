@@ -19,7 +19,7 @@ class ChatRequest(BaseModel):
     )
     user: Optional[str] = Field(
         default=None,
-        description="A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.",  # noqa: E501
+        description="A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Unused, reserved for future extensions",  # noqa: E501
     )
 
 
