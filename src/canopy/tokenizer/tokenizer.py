@@ -69,7 +69,7 @@ class Tokenizer:
             ...         return sum([self.token_count(message) + 3 for message in messages])
             >>> Tokenizer.initialize(MyTokenizer)
 
-            Then, you can init a tokenizer instance by calling Tokenizer() from anywhere in the code:
+            Then, you can instantiate a tokenizer instance by calling Tokenizer() from anywhere in the code:
 
             >>> from canopy.tokenizer import Tokenizer
             >>> tokenizer = Tokenizer()
