@@ -8,7 +8,7 @@ from canopy.models.data_models import Messages, Query, Document
 class ChatRequest(BaseModel):
     model: str = Field(
         default="",
-        description="ID of the model to use. If empty, the default model will be used.",  # noqa: E501
+        description="ID of the model to use. Currecntly this field is ignored and this should be configured on Canopy config.",  # noqa: E501
     )
     messages: Messages = Field(
         description="A list of messages comprising the conversation so far."
