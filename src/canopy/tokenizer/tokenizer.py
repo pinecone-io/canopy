@@ -17,7 +17,7 @@ class Tokenizer:
     >>> from canopy.tokenizer import Tokenizer
     >>> Tokenizer.initialize()
 
-    Then, you can init a tokenizer instance by calling Tokenizer() from anywhere in the code and use it:
+    Then, you can instantiate a tokenizer instance by calling Tokenizer() from anywhere in the code and use it:
     >>> tokenizer = Tokenizer()
     >>> tokenizer.tokenize("Hello world!")
     ['Hello', 'world', '!']
@@ -48,7 +48,7 @@ class Tokenizer:
 
         Args:
             tokenizer_class: The tokenizer class to use. Must be a subclass of BaseTokenizer. Defaults to OpenAITokenizer.
-            **kwargs: Keyword arguments to pass to the tokenizer class constructor.
+            **kwargs: Keyword arguments to pass to the underlying `Tokenizer` class constructor.
 
         Examples:
             Initialize the tokenizer with the default tokenizer class:
@@ -69,7 +69,7 @@ class Tokenizer:
             ...         return sum([self.token_count(message) + 3 for message in messages])
             >>> Tokenizer.initialize(MyTokenizer)
 
-            Then, you can init a tokenizer instance by calling Tokenizer() from anywhere in the code:
+            Then, you can instantiate a tokenizer instance by calling Tokenizer() from anywhere in the code:
 
             >>> from canopy.tokenizer import Tokenizer
             >>> tokenizer = Tokenizer()
