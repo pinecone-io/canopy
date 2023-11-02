@@ -50,11 +50,7 @@ jobs:
       - name: Bump version
         run: |
           poetry version ${{ inputs.releaseLevel || 'patch' }}
-
-      - name: Store new version
-        id: get_version
-        run: |
-          echo ::set-output name=version::$(poetry version -s)
+          echo "CANOPY_VERSION=$(poetry version -s)" >> $GITHUB_ENV
 
       - name: Build wheel
         run: |
@@ -95,8 +91,8 @@ jobs:
 
       - name: Set version
         run: |
-          echo ${{ needs.jobs.build.outputs.get_version }}
-          poetry version ${{ needs.jobs.build.outputs.get_version }}
+          echo $CANOPY_VERSION
+          poetry version $CANOPY_VERSION
 
       - name: Commit version update
         run: |
