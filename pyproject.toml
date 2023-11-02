@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "pinecone-canopy"
+name = "canopy-sdk"
 version = "0.1.0"
 description = "Canopy is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
