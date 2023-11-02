@@ -36,7 +36,7 @@ class ContextUpsertRequest(BaseModel):
 
 
 class ContextDeleteRequest(BaseModel):
-    document_ids: List[str] = Field(description="List of document ids to delete.")
+    document_ids: List[str] = Field(description="List of document IDs to delete.")
 
 
 class HealthStatus(BaseModel):

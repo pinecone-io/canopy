@@ -114,7 +114,7 @@ async def chat(
     "/context/query",
     response_model=ContextContentResponse,
     responses={
-        500: {"description": "Failed to query the knowledgebase or Build the context"}
+        500: {"description": "Failed to query the knowledge base or build the context"}
     },
 )
 async def query(
@@ -149,8 +149,8 @@ async def upsert(
     request: ContextUpsertRequest = Body(...),
 ) -> SuccessUpsertResponse:
     """
-    Upsert documents into the knowledgebase. Upserting is a way to add new documents or update existing ones.
-    Each document has a unique ID. If a document with the same ID already exists, it will be updated.
+    Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
+    Each document has a unique ID. If a document with the same ID already exists, it is updated.
 
     The documents will be chunked and encoded, then the resulting encoded chunks will be sent to the Pinecone index in batches
     """  # noqa: E501
