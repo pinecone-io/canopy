@@ -97,7 +97,15 @@ class Tokenizer:
         Used by the config module to initialize the tokenizer from a config file.
 
         Args:
-            config: A dictionary containing the tokenizer configuration. Must contain a "type" key with the tokenizer class name.
+            config: A dictionary containing the tokenizer configuration. If not provided, the OpenAITokenizer will be used.
+
+        Usage:
+            >>> from canopy.tokenizer import Tokenizer
+            >>> config = {
+            ...     "type": "OpenAITokenizer",
+            ...     "model_name": "gpt2"
+            ... }
+            >>> Tokenizer.initialize_from_config(config)
         """  # noqa: E501
         if cls._initialized:
             raise ValueError("Tokenizer has already been initialized")
