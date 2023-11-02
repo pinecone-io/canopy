@@ -41,7 +41,7 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
 
 <li> Canopy KnowledgeBase will encode each chunk using one or more embedding models</li>
 
-<li> Canopy KnowledgeBase will upsert the encoded chunks into Pinecone Index</li>
+<li> Canopy KnowledgeBase will upsert the encoded chunks into Pinecone index</li>
 
 </ol>
 </details>
@@ -51,7 +51,7 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
 1. **Canopy Core Library** - The library has 3 main classes that are responsible for different parts of the RAG workflow:
     * **ChatEngine** - Exposes a chat interface to interact with your data. Given the history of chat messages, the `ChatEngine` formulates relevant queries to the `ContextEngine`, then uses the LLM to generate a knowledgeable response.
     * **ContextEngine**  - Performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant documents, then formulates a coherent textual context to be used as a prompt for the LLM. 
-    * **KnowledgeBase** - Manages your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings, storing them in a Pinecone vector database. Given a new textual query - the `KnowledgeBase` will retrieve the most relevant document chunks from the database. 
+    * **KnowledgeBase** - Manages your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings, storing them in a Pinecone vector database. Given a text query - the `KnowledgeBase` will retrieve the most relevant document chunks from the database. 
 
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
@@ -125,7 +125,7 @@ In this quickstart, we will show you how to use the **Canopy** to build a simple
 
 ### 1. Create a new **Canopy** Index
 
-As a one-time setup, Canopy needs to create and configure a new Pinecone index configured to work with Canopy. Just run:
+As a one-time setup, Canopy needs to create a new Pinecone index that is configured to work with Canopy. Just run:
 
 ```bash
 canopy new
@@ -134,11 +134,11 @@ canopy new
 And follow the CLI instructions. The index that will be created will have a prefix `canopy--<INDEX_NAME>`.   
 You only have to do this process once for every Canopy index you want to create.
 
-> To learn more about Pinecone Indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
+> To learn more about Pinecone indexes and how to manage them, please refer to the following guide: [Understanding indexes](https://docs.pinecone.io/docs/indexes)
 
 ### 2. Uploading data
 
-You can load data into your Canopy Index using the command:
+You can load data into your Canopy index using the command:
 
 ```bash
 canopy upsert /path/to/data_directory
