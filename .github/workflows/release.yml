@@ -127,12 +127,13 @@ jobs:
           tag_name: V${{ needs.build.outputs.new_version }}
           release_name: ${{ needs.build.outputs.new_version }}
           artifacts: "dist/*"
-          body_file: "CHANGELOG.md"
+          body_path: "CHANGELOG.md"
 
       - name: PyPI publish
         env:
           POETRY_HTTP_BASIC_PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }}
           POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
         run: |
+          ls -la dist/
           poetry publish -r https://test.pypi.org/simple
 #          poetry config pypi-token.pypi ${{ secrets.PYPI_PASSWORD }}
