@@ -68,7 +68,7 @@ logger: logging.Logger
 
 @app.post(
     "/context/chat/completions",
-    response_model=APIChatResponse,
+    response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
