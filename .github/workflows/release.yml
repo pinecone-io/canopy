@@ -129,10 +129,10 @@ jobs:
           artifacts: "dist/*"
           body_file: "CHANGELOG.md"
 
-#      - name: PyPI publish
-#        env:
-#          POETRY_HTTP_BASIC_PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }}
-#          POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
-#        run: |
-#  #          poetry config pypi-token.pypi ${{ secrets.PYPI_PASSWORD }}
-#          poetry publish -r https://test.pypi.org/simple
+      - name: PyPI publish
+        env:
+          POETRY_HTTP_BASIC_PYPI_USERNAME: ${{ secrets.TEST_PYPI_USERNAME }}
+          POETRY_HTTP_BASIC_PYPI_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        run: |
+          poetry publish -r https://test.pypi.org/simple
+#          poetry config pypi-token.pypi ${{ secrets.PYPI_PASSWORD }}
