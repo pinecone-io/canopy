@@ -124,5 +124,5 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         with:
-          tag_name: "V$(poetry version -s)"
-          release_name: $(poetry version -s)
+          tag_name: V${{ needs.build.outputs.new_version }}
+          release_name: ${{ needs.build.outputs.new_version }}
