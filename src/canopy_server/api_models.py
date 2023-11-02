@@ -31,7 +31,7 @@ class ContextQueryRequest(BaseModel):
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
     batch_size: int = Field(
-        default=200, description="Batch size for upserting documents to Pinecone."
+        default=200, description="The batch size to use when uploading documents chunks to the Pinecone Index."  # noqa: E501
     )
 
 
