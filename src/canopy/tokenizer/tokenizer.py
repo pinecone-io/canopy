@@ -17,7 +17,7 @@ class Tokenizer:
     >>> from canopy.tokenizer import Tokenizer
     >>> Tokenizer.initialize()
 
-    Then, you can init a tokenizer instance by calling Tokenizer() from anywhere in the code and use it:
+    Then, you can instantiate a tokenizer instance by calling Tokenizer() from anywhere in the code and use it:
     >>> tokenizer = Tokenizer()
     >>> tokenizer.tokenize("Hello world!")
     ['Hello', 'world', '!']
