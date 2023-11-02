@@ -49,9 +49,9 @@ Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and
 ## What's inside the box?
 
 1. **Canopy Core Library** - Canopy includes 3 main components that are responsible for different parts of the RAG workflow:
+    * **ChatEngine** - Exposes a chat interface to interact with your data. Given the history of chat messages, the `ChatEngine` formulates relevant queries to the `ContextEngine`, then uses the LLM to generate a knowledgeable response.
+    * **ContextEngine**  - Performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant documents, then formulates a coherent textual context to be used as a prompt for the LLM. 
     * **KnowledgeBase** - Manages your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings, storing them in a Pinecone vector database. Given a new textual query - the `KnowledgeBase` will retrieve the most relevant document chunks from the database. 
-    * **ContextEngine**  - Performs the “retrieval” part of RAG. The `ContextEngine` utilizes the underlying `KnowledgeBase` to retrieve the most relevant document chunks, then formulates a coherent textual context to be used as a prompt for the LLM. 
-    * **ChatEngine** - Exposes a chat interface to interact with your data. Given chat messages history, the `ChatEngine` uses the `ContextEngine` to generate a prompt and send it to an underlying LLM, returning a knowledge-augmented response.
 
 
 > more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
