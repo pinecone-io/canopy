@@ -15,7 +15,7 @@ class ChatRequest(BaseModel):
     )
     stream: bool = Field(
         default=False,
-        description="""If set, partial message deltas will be sent, like in ChatGPT. Tokens will be sent as data-only server-sent events as they become available, with the stream terminated by a data: [DONE] message.""",  # noqa: E501
+        description="""Whether or not to stream the chatbot's response. If set, the response will be server-sent events containing [chat.completion.chunk](https://platform.openai.com/docs/api-reference/chat/streaming) objects""",  # noqa: E501
     )
     user: Optional[str] = Field(
         default=None,
