@@ -128,7 +128,7 @@ def test_query(client):
             upsert_payload.dict()["documents"][0]["source"])
 
 
-def test_chat(client):
+def test_chat_required_params(client):
     # test response is as expected on /chat
     chat_payload = {
         "messages": [
@@ -146,6 +146,33 @@ def test_chat(client):
         "content"
     ]
     print(chat_response_content)
+    assert all([kw in chat_response_content for kw in ["red", "bananas"]])
+
+
+def test_chat_openai_additional_params(client):
+    chat_payload = {
+        "messages": [
+            {
+                "role": "user",
+                "content": "what is the topic of the test document? be concise",
+            }
+        ],
+        "user": "test-user",
+        "model": "gpt-4",
+        "temperature": 0.5,
+        "max_tokens": 10,
+        "logit_bias": {12: 10, 13: 11},
+        "n": 2,
+        "stop": "stop string",
+        "top_p": 0.5,
+    }
+    chat_response = client.post("/context/chat/completions", json=chat_payload)
+    assert chat_response.is_success
+    chat_response_as_json = chat_response.json()
+    assert chat_response_as_json["choices"][0]["message"]["role"] == "assistant"
+    chat_response_content = chat_response_as_json["choices"][0]["message"][
+        "content"
+    ]
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
 
 
