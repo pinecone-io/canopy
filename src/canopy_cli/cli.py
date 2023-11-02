@@ -435,9 +435,25 @@ def chat(chat_service_url, rag, debug, stream):
     history_with_pinecone = []
     history_without_pinecone = []
 
+    prompt_new_user_message = True
+
     while True:
-        click.echo(click.style("\nUser message:\n", fg="bright_blue"), nl=True)
-        message = click.get_text_stream("stdin").readline()
+        if prompt_new_user_message:
+            click.echo(click.style("\nUser message:\n", fg="bright_blue"), nl=True)
+            message = click.get_text_stream("stdin").readline()
+        prompt_new_user_message = False
+
+        if not message:
+            click.echo(click.style("Please enter a message", fg="red"))
+            continue
+
+        if message == "exit":
+            click.echo(click.style("Bye!", fg="red"))
+            break
+
+        if message.isspace() or message == "":
+            click.echo(click.style("Please enter a message", fg="red"))
+            continue
 
         dubug_info = _chat(
             speaker="With Context (RAG)",
@@ -470,6 +486,8 @@ def chat(chat_service_url, rag, debug, stream):
         )
         click.echo(click.style("˙▔▔▔", fg="bright_black", bold=True), nl=False)
         click.echo(click.style("˙", fg="bright_black", bold=True))
+
+        prompt_new_user_message = True
 
 
 @cli.command(
