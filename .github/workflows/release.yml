@@ -33,6 +33,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.bump.outputs.new_version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -50,7 +52,7 @@ jobs:
       - name: Bump version
         run: |
           poetry version ${{ inputs.releaseLevel || 'patch' }}
-          echo "CANOPY_VERSION=$(poetry version -s)" >> $GITHUB_ENV
+          echo "new_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
       - name: Build wheel
         run: |
@@ -91,8 +93,8 @@ jobs:
 
       - name: Set version
         run: |
-          echo $CANOPY_VERSION
-          poetry version $CANOPY_VERSION
+          echo ${{ needs.jobs.build.outputs.new_version }}
+          poetry version ${{ needs.jobs.build.outputs.new_version }}
 
       - name: Commit version update
         run: |
