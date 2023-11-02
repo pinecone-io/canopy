@@ -112,7 +112,7 @@ class OpenAILLM(BaseLLM):
                                max_tokens: Optional[int] = None,
                                model_params: Optional[ModelParams] = None) -> dict:
         """
-        This function enforces the model to response with a specific function call.
+        This function enforces the model to respond with a specific function call.
 
         To read more about this feature, see: https://platform.openai.com/docs/guides/gpt/function-calling
 
