@@ -77,7 +77,7 @@ async def chat(
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
 
-    The request schema is following OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.  
+    The request schema is following OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.
     Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
 
     """  # noqa: E501
@@ -121,7 +121,7 @@ async def query(
     request: ContextQueryRequest = Body(...),
 ) -> ContextContentResponse:
     """
-    Query the knowledge base for relevant context.  
+    Query the knowledge base for relevant context.
     The returned text might be structured or unstructured, depending on the ContextEngine's configuration.
     Query allows limiting the context length (in tokens), to control LLM costs.
     This method does not pass through the LLM and uses only retieval and construction from Pinecone DB.
