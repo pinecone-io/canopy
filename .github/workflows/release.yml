@@ -53,8 +53,7 @@ jobs:
         id: bump
         run: |
           poetry version ${{ inputs.releaseLevel || 'patch' }}
-#          echo "new_version=$(poetry version -s)" >> $GITHUB_OUTPUT
-          echo "new_version=0.2.2" >> $GITHUB_OUTPUT
+          echo "new_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
       - name: Build wheel
         run: |
@@ -94,9 +93,11 @@ jobs:
           path: ./dist/
 
       - name: Set version
+        env:
+          NEW_VERSION: ${{ needs.build.outputs.new_version }}
         run: |
-          echo ${{ needs.jobs.build.outputs.new_version }}
-          poetry version ${{ needs.jobs.build.outputs.new_version }}
+          echo $NEW_VERSION
+          poetry version $NEW_VERSION
 
       - name: Commit version update
         run: |
