@@ -22,6 +22,9 @@ class ChatRequest(BaseModel):
         description="A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Unused, reserved for future extensions",  # noqa: E501
     )
 
+    class Config:
+        extra = "ignore"
+
 
 class ContextQueryRequest(BaseModel):
     queries: List[Query]
