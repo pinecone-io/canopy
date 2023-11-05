@@ -5,7 +5,7 @@ import sys
 import uuid
 
 import openai
-from multiprocessing import current_process
+from multiprocessing import current_process, parent_process
 
 import yaml
 from dotenv import load_dotenv
@@ -232,7 +232,7 @@ async def shutdown() -> ShutdownResponse:
     """  # noqa: E501
     logger.info("Shutting down")
     proc = current_process()
-    pid = os.getppid() if "SpawnProcess" in proc.name else proc.pid
+    pid = parent_process().pid if parent_process() else proc.pid
     os.kill(pid, signal.SIGINT)
     return ShutdownResponse()
 
