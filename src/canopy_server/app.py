@@ -40,7 +40,6 @@ from .api_models import (
 
 from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
-from canopy_server import description
 from canopy import __version__
 
 
@@ -49,9 +48,25 @@ APIChatResponse = Union[ChatResponse, EventSourceResponse]
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+APP_DESCRIPTION = """
+Canopy is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.
+
+Canopy provides a configurable built-in server, so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own custom RAG application using the Canopy library.
+
+## Prerequisites
+
+### Pinecone API key
+If you don't have a Pinecone account, you can sign up for a free Starter plan at https://www.pinecone.io/.
+To find your Pinecone API key and environment log into Pinecone console (https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard, and find the environment name next to it.
+
+### OpenAI API key
+You can find your free trial OpenAI API key https://platform.openai.com/account/api-keys. You might need to log in or register for OpenAI services.
+"""  # noqa: E501
+
+
 app = FastAPI(
     title="Canopy API",
-    description=description,
+    description=APP_DESCRIPTION,
     version=__version__,
     license_info={
         "name": "Apache 2.0",

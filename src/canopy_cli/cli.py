@@ -577,20 +577,34 @@ def stop(url):
         """
     )
 )
-def api_docs():
-    import json
-    from canopy_cli import HTML_TEMPLATE
-    from canopy_server.app import app
-    # generate docs
-
-    filename = "canopy-api-docs.html"
-
-    with open(filename, "w") as fd:
-        print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
-
+@click.option("--url", default="http://0.0.0.0:8000",
+              help="Canopy's service url. Defaults to http://0.0.0.0:8000")
+def api_docs(url):
     import webbrowser
 
-    webbrowser.open('file://' + os.path.realpath(filename))
+    generated_docs = False
+    try:
+        check_service_health(url)
+    except CLIError:
+        msg = (f"Canopy server is not running. Would you like to generate the docs "
+               f"to a local HTML file?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        generated_docs = True
+
+    if generated_docs:
+        import json
+        from canopy_cli import HTML_TEMPLATE
+        from canopy_server.app import app
+        # generate docs
+
+        filename = "canopy-api-docs.html"
+        msg = f"Generating docs to {filename}"
+        click.echo(click.style(msg, fg="green"))
+        with open(filename, "w") as fd:
+            print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
+        webbrowser.open('file://' + os.path.realpath(filename))
+    else:
+        webbrowser.open('http://localhost:8000/redoc')
 
 
 if __name__ == "__main__":
