@@ -8,14 +8,14 @@ from canopy.models.data_models import Messages, Query, Document
 class ChatRequest(BaseModel):
     model: str = Field(
         default="",
-        description="ID of the model to use. Currecntly this field is ignored and this should be configured on Canopy config.",  # noqa: E501
+        description="The ID of the model to use. This field is ignored; instead, configure this field in the Canopy config.",  # noqa: E501
     )
     messages: Messages = Field(
         description="A list of messages comprising the conversation so far."
     )
     stream: bool = Field(
         default=False,
-        description="""Whether or not to stream the chatbot's response. If set, the response will be server-sent events containing [chat.completion.chunk](https://platform.openai.com/docs/api-reference/chat/streaming) objects""",  # noqa: E501
+        description="""Whether or not to stream the chatbot's response. If set, the response is server-sent events containing [chat.completion.chunk](https://platform.openai.com/docs/api-reference/chat/streaming) objects""",  # noqa: E501
     )
     user: Optional[str] = Field(
         default=None,

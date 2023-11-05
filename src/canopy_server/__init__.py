@@ -1,7 +1,7 @@
 description = """
 Canopy is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.
 
-Canopy provides a configurable built-in server so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own, custom RAG application using the Canopy lirbary.
+Canopy provides a configurable built-in server, so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own custom RAG application using the Canopy library.
 
 ## Prerequisites
 

@@ -14,11 +14,11 @@ class Query(BaseModel):
     text: str = Field(description="The query text.")
     namespace: str = Field(
         default="",
-        description="The namespace of the query, to learn more about namespaces, see https://docs.pinecone.io/docs/namespaces",  # noqa: E501
+        description="The namespace of the query. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces",  # noqa: E501
     )
     metadata_filter: Optional[dict] = Field(
         default=None,
-        description="A pinecone metadata filter, to learn more about metadata filters, see https://docs.pinecone.io/docs/metadata-filtering",  # noqa: E501
+        description="A Pinecone metadata filter, to learn more about metadata filters, see https://docs.pinecone.io/docs/metadata-filtering",  # noqa: E501
     )
     top_k: Optional[int] = Field(
         default=None,
@@ -39,7 +39,7 @@ class Document(BaseModel):
     )
     metadata: Metadata = Field(
         default_factory=dict,
-        description="The document metadata, to learn more about metadata, see https://docs.pinecone.io/docs/manage-data",  # noqa: E501
+        description="The document metadata. To learn more about metadata, see https://docs.pinecone.io/docs/manage-data",  # noqa: E501
     )
 
     class Config:
@@ -89,7 +89,7 @@ class Role(Enum):
 
 
 class MessageBase(BaseModel):
-    role: Role = Field(description="The role of the messages author.")
+    role: Role = Field(description="The role of the message's author. Can be one of ['User', 'Assistant', 'System']")
     content: str = Field(description="The contents of the message.")
 
     def dict(self, *args, **kwargs):
