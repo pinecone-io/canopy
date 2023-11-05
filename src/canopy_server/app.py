@@ -26,7 +26,7 @@ from canopy.models.api_models import (
     StreamingChatResponse,
     ChatResponse,
 )
-from canopy.models.data_models import Context, UserMessage, ContextContent
+from canopy.models.data_models import Context, UserMessage
 from .api_models import (
     ChatRequest,
     ContextQueryRequest,

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, List, Union, Dict, Sequence, Literal
+from typing import Optional, List, Union, Dict, Literal
 
 from pydantic import BaseModel, Field, validator, Extra
 
