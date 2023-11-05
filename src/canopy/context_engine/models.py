@@ -2,7 +2,7 @@ from typing import List
 
 from pydantic import BaseModel
 
-from canopy.models.data_models import ContextContent
+from canopy.models.data_models import _ContextContent
 
 
 class ContextSnippet(BaseModel):
@@ -10,7 +10,7 @@ class ContextSnippet(BaseModel):
     text: str
 
 
-class ContextQueryResult(ContextContent):
+class ContextQueryResult(_ContextContent):
     query: str
     snippets: List[ContextSnippet]
 

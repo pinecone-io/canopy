@@ -8,7 +8,7 @@ from canopy.context_engine.context_builder.base import ContextBuilder
 from canopy.context_engine.models import ContextQueryResult, ContextSnippet
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
-from canopy.models.data_models import Query, Context, ContextContent
+from canopy.models.data_models import Query, Context, _ContextContent
 
 
 class TestContextEngine:
@@ -68,7 +68,7 @@ class TestContextEngine:
         queries = [Query(text="How does photosynthesis work?")]
         max_context_tokens = 100
 
-        mock_context_content = create_autospec(ContextContent)
+        mock_context_content = create_autospec(_ContextContent)
         mock_context_content.to_text.return_value = sample_context_text
         mock_context = Context(content=mock_context_content, num_tokens=21)
 
@@ -93,7 +93,7 @@ class TestContextEngine:
         queries = [Query(text="How does photosynthesis work?")]
         max_context_tokens = 100
 
-        mock_context_content = create_autospec(ContextContent)
+        mock_context_content = create_autospec(_ContextContent)
         mock_context_content.to_text.return_value = sample_context_text
         mock_context = Context(content=mock_context_content, num_tokens=21)
 
@@ -149,7 +149,7 @@ class TestContextEngine:
         mock_knowledge_base.query.return_value = extended_mock_query_result
 
         combined_text = sample_context_text + "\n" + text
-        mock_context_content = create_autospec(ContextContent)
+        mock_context_content = create_autospec(_ContextContent)
         mock_context_content.to_text.return_value = combined_text
         mock_context = Context(content=mock_context_content, num_tokens=40)
 
@@ -168,7 +168,7 @@ class TestContextEngine:
 
         mock_knowledge_base.query.return_value = []
 
-        mock_context_content = create_autospec(ContextContent)
+        mock_context_content = create_autospec(_ContextContent)
         mock_context_content.to_text.return_value = ""
         mock_context = Context(content=mock_context_content, num_tokens=0)
 
