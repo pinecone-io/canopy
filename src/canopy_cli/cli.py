@@ -438,7 +438,12 @@ def chat(chat_service_url, rag, debug, stream):
 
     while True:
         click.echo(click.style("\nUser message: ", fg="bright_blue"), nl=False)
-        click.echo(click.style("([Esc] followed by [Enter] to accept input)\n", italic=True, fg="bright_black"), nl=True)
+        click.echo(
+            click.style("([Esc] followed by [Enter] to accept input)\n", 
+            italic=True, 
+            fg="bright_black"), 
+            nl=True
+        )
         message = prompt("  ", multiline=True, )
 
         if not message:
