@@ -593,7 +593,7 @@ def api_docs(url):
 
     if generated_docs:
         import json
-        from canopy_cli import HTML_TEMPLATE
+        from canopy_server._redocs_template import HTML_TEMPLATE
         from canopy_server.app import app
         # generate docs
 
