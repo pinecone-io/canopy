@@ -586,8 +586,8 @@ def api_docs(url):
     try:
         check_service_health(url)
     except CLIError:
-        msg = (f"Canopy server is not running. Would you like to generate the docs "
-               f"to a local HTML file?")
+        msg = ("Canopy server is not running. Would you like to generate the docs "
+               "to a local HTML file?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         generated_docs = True
 

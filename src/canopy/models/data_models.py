@@ -89,7 +89,8 @@ class Role(Enum):
 
 
 class MessageBase(BaseModel):
-    role: Role = Field(description="The role of the message's author. Can be one of ['User', 'Assistant', 'System']")
+    role: Role = Field(description="The role of the message's author. "
+                                   "Can be one of ['User', 'Assistant', 'System']")
     content: str = Field(description="The contents of the message.")
 
     def dict(self, *args, **kwargs):
