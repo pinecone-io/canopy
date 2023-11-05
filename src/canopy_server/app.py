@@ -26,7 +26,7 @@ from canopy.models.api_models import (
     StreamingChatResponse,
     ChatResponse,
 )
-from canopy.models.data_models import Context, UserMessage, ContextContentResponse
+from canopy.models.data_models import Context, UserMessage, ContextContents
 from .api_models import (
     ChatRequest,
     ContextQueryRequest,
@@ -112,14 +112,14 @@ async def chat(
 
 @app.post(
     "/context/query",
-    response_model=ContextContentResponse,
+    response_model=ContextContents,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
     },
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-) -> ContextContentResponse:
+) -> ContextContents:
     """
     Query the knowledge base for relevant context.
     The returned text might be structured or unstructured, depending on the ContextEngine's configuration.
@@ -232,7 +232,13 @@ async def shutdown() -> ShutdownResponse:
     """  # noqa: E501
     logger.info("Shutting down")
     proc = current_process()
-    pid = parent_process().pid if parent_process() else proc.pid
+    p_process = parent_process()
+    pid = p_process.pid if p_process is not None else proc.pid
+    if not pid:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to locate parent process. Cannot shutdown server.",
+        )
     os.kill(pid, signal.SIGINT)
     return ShutdownResponse()
 
