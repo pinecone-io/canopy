@@ -115,3 +115,13 @@ class SystemMessage(MessageBase):
 class AssistantMessage(MessageBase):
     role: Literal[Role.ASSISTANT] = Role.ASSISTANT
     content: str
+
+
+class DocumentWithScore(Document):
+    score: float
+
+
+class QueryResult(BaseModel):
+    query: str
+    documents: List[DocumentWithScore]
+    debug_info: dict = Field(default_factory=dict, exclude=True)

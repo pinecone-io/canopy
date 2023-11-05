@@ -36,8 +36,7 @@ class ContextEngine(BaseContextEngine):
     To create a context engine, you must provide a knowledge base and optionally a context builder.
 
     Example:
-    >>> from canopy.context_engine import ContextEngine
-    >>> from canopy.models.data_models import Query
+    >>> from canopy import ContextEngine, Query
     >>> context_engine = ContextEngine(knowledge_base=knowledge_base)
     >>> context_engine.query(Query(text="What is the capital of France?"), max_context_tokens=1000)
 
@@ -93,8 +92,7 @@ class ContextEngine(BaseContextEngine):
             A Context object containing the retrieved documents and metadata
 
         Example:
-        >>> from canopy.context_engine import ContextEngine
-        >>> from canopy.models.data_models import Query
+        >>> from canopy import ContextEngine, Query
         >>> context_engine = ContextEngine(knowledge_base=knowledge_base)
         >>> context_engine.query(Query(text="What is the capital of France?"), max_context_tokens=1000)
         """  # noqa: E501

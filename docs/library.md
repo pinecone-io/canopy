@@ -1,4 +1,4 @@
-# Canopy Library
+z# Canopy Library
 
 For most common use cases, users can simply deploy the fully-configurable [Canopy service](../README.md), which provides a REST API backend for your own RAG-infused Chatbot.  
 
@@ -68,14 +68,14 @@ Since manny different classes rely on a tokenizer,  Canopy uses a singleton `Tok
 Before instantiating any other canopy core objects, please initialize the `Tokenizer` singleton:
 
 ```python
-from canopy.tokenizer import Tokenizer
+from canopy import Tokenizer
 Tokenizer.initialize()
 ```
 
 Then, each time you want to use the tokenizer, you can simply instantiate a local object:
 
 ```python
-from canopy.tokenizer import Tokenizer
+from canopy import Tokenizer
 
 # no need to pass any parameters, the global tokenizer will be used
 tokenizer = Tokenizer()
@@ -106,8 +106,7 @@ Tokenizer.initialize(tokenizer_class=CustomTokenizer)
 When you initialize the `Tokenizer` singleton, you can pass init arguments to the underlying Tokenizer class. Any init argument that is expected by the underlying class's constructor, can be passed as `kwarg` directly to `Tokenizer.initalize()`. For example:
 
 ```python
-from canopy.tokenizer import Tokenizer
-from canopy.tokenizer.openai import OpenAITokenizer
+from canopy.tokenizer import Tokenizer, OpenAITokenizer
 Tokenizer.initialize(tokenizer_class=OpenAITokenizer, model_name="gpt2")
 ```
 
@@ -115,13 +114,13 @@ Will initialize the global tokenizer with `OpenAITokenizer` and will pass the `m
 </details>
 
 
-### Step 2: Create a knowledge base
+### Step 2: Create a `KnowledgeBase`
 Knowledge base is an object that is responsible for storing and query your data. It holds a connection to a single Pinecone index and provides a simple API to insert, delete and search textual documents.
 
 To create a knowledge base, you can use the following command:
 
 ```python
-from canopy.knowledge_base import KnowledgeBase
+from canopy import KnowledgeBase
 
 kb = KnowledgeBase(index_name="my-index")
 ```
@@ -153,7 +152,7 @@ To learn more about customizing the KnowledgeBase and its inner components, see 
 To insert data into the knowledge base, you can create a list of documents and use the `upsert` method:
 
 ```python
-from canopy.models.data_models import Document
+from canopy import Document
 documents = [Document(id="1",
                       text="U2 are an Irish rock band from Dublin, formed in 1976.",
                       source="https://en.wikipedia.org/wiki/U2"),
@@ -167,7 +166,7 @@ kb.upsert(documents)
 Now you can query the knowledge base with the `query` method to find the most similar documents to a given text:
 
 ```python
-from canopy.models.data_models import Query
+from canopy import Query
 results = kb.query([Query(text="Arctic Monkeys music genre"),
                     Query(text="U2 music genre",
                           top_k=10,
@@ -190,7 +189,7 @@ The output of the context engine is designed to provide the LLM the most relevan
 To create a context engine using a knowledge base, you can use the following command:
 
 ```python
-from canopy.context_engine import ContextEngine
+from canopy import ContextEngine
 context_engine = ContextEngine(kb)
 ```
 
@@ -245,14 +244,14 @@ Given chat history, the chat engine orchestrates its underlying context engine a
 To create a chat engine using a context, you can use the following command:
 
 ```python
-from canopy.chat_engine import ChatEngine
+from canopy import ChatEngine
 chat_engine = ChatEngine(context_engine)
 ```
 
 Then, you can start chatting!
 
 ```python
-from canopy.models.data_models import UserMessage
+from canopy import UserMessage
 
 response = chat_engine.chat(messages=[UserMessage(content="what is the genre of Arctic Monkeys band?")], stream=False)
 

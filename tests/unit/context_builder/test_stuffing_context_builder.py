@@ -1,9 +1,7 @@
 from canopy.context_engine.models import \
     ContextSnippet, ContextQueryResult
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, DocumentWithScore, QueryResult
 from ..stubs.stub_tokenizer import StubTokenizer
-from canopy.knowledge_base.models import \
-    QueryResult, DocumentWithScore
 from canopy.context_engine.context_builder import StuffingContextBuilder
 
 

@@ -2,7 +2,7 @@ from copy import deepcopy
 from typing import List, Optional
 
 from pinecone_text.sparse import SparseVector
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from canopy.models.data_models import Document, Query
 
@@ -46,13 +46,3 @@ class KBQuery(Query):
 class KBQueryResult(BaseModel):
     query: str
     documents: List[KBDocChunkWithScore]
-
-
-class DocumentWithScore(Document):
-    score: float
-
-
-class QueryResult(BaseModel):
-    query: str
-    documents: List[DocumentWithScore]
-    debug_info: dict = Field(default_factory=dict, exclude=True)

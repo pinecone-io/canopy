@@ -3,9 +3,8 @@ from typing import List, Tuple
 
 from canopy.context_engine.context_builder.base import ContextBuilder
 from canopy.context_engine.models import ContextQueryResult, ContextSnippet
-from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.tokenizer import Tokenizer
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, DocumentWithScore, QueryResult
 
 
 class StuffingContextBuilder(ContextBuilder):

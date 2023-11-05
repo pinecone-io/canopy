@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from canopy.knowledge_base.models import QueryResult
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, QueryResult
 from canopy.utils.config import ConfigurableMixin
 
 

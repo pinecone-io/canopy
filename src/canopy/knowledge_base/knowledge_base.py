@@ -20,11 +20,9 @@ from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
                                                   OpenAIRecordEncoder)
-from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
-                                          KBDocChunkWithScore, DocumentWithScore)
+from canopy.knowledge_base.models import (KBQueryResult, KBQuery, KBDocChunkWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
-from canopy.models.data_models import Query, Document
-
+from canopy.models.data_models import Query, Document, DocumentWithScore, QueryResult
 
 INDEX_NAME_PREFIX = "canopy--"
 TIMEOUT_INDEX_CREATE = 300
@@ -84,8 +82,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     This is a one-time setup process - the index will exist on Pinecone's managed service until it is deleted.
 
     Example:
-        >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-        >>> from tokenizer import Tokenizer
+        >>> from canopy import KnowledgeBase, Tokenizer
         >>> Tokenizer.initialize()
         >>> kb = KnowledgeBase(index_name="my_index")
         >>> kb.create_canopy_index()
@@ -121,8 +118,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         Example:
 
             create a new index:
-            >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy import KnowledgeBase, Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.create_canopy_index()
@@ -417,8 +413,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             A list of QueryResult objects.
 
         Examples:
-            >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy import KnowledgeBase, Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
@@ -514,8 +509,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
 
         Example:
-            >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy import KnowledgeBase, Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
@@ -593,8 +587,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             None
 
         Example:
-            >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy import KnowledgeBase, Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
