@@ -232,8 +232,7 @@ async def shutdown() -> ShutdownResponse:
     """  # noqa: E501
     logger.info("Shutting down")
     proc = current_process()
-    # TODO: fix this, BaseProcess does have _parent_pid but it is not in the stubs
-    pid = proc._parent_pid if "SpawnProcess" in proc.name else proc.pid  # type: ignore
+    pid = os.getppid() if "SpawnProcess" in proc.name else proc.pid
     os.kill(pid, signal.SIGINT)
     return ShutdownResponse()
 
