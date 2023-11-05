@@ -6,7 +6,8 @@ import random
 from canopy.chat_engine import ChatEngine
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.context_engine import ContextEngine
-from canopy.context_engine.models import ContextQueryResult, ContextSnippet
+from canopy.context_engine.models import (ContextQueryResult, ContextSnippet,
+                                          StuffingContextContent, )
 from canopy.llm import BaseLLM
 from canopy.models.data_models import SystemMessage
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
@@ -58,13 +59,15 @@ class TestChatEngine:
         ]
         mock_queries = [Query(text="How does photosynthesis work?")]
         mock_context = Context(
-            content=ContextQueryResult(
-                query="How does photosynthesis work?",
+            content=StuffingContextContent(
+                __root__=ContextQueryResult(
+                    query="How does photosynthesis work?",
 
-                snippets=[ContextSnippet(source="ref 1",
-                                         text=self._generate_text(snippet_length)),
-                          ContextSnippet(source="ref 2",
-                                         text=self._generate_text(12))]
+                    snippets=[ContextSnippet(source="ref 1",
+                                             text=self._generate_text(snippet_length)),
+                              ContextSnippet(source="ref 2",
+                                             text=self._generate_text(12))]
+                )
             ),
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )

@@ -1,3 +1,4 @@
+import json
 import os
 from typing import List
 
@@ -27,14 +28,14 @@ upsert_payload = ContextUpsertRequest(
 )
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_exist(vector_ids: List[str],
                             knowledge_base: KnowledgeBase):
     fetch_response = knowledge_base._index.fetch(ids=vector_ids)
     assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_not_exist(vector_ids: List[str],
                                 knowledge_base: KnowledgeBase):
     fetch_response = knowledge_base._index.fetch(ids=vector_ids)
@@ -98,7 +99,7 @@ def test_upsert(client):
     assert upsert_response.is_success
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def test_query(client):
     # fetch the context with all the right filters
     query_payload = ContextQueryRequest(
@@ -116,7 +117,7 @@ def test_query(client):
     assert query_response.is_success
 
     # test response is as expected on /query
-    response_as_json = query_response.json()
+    response_as_json = json.loads(query_response.json())
 
     assert (
             response_as_json[0]["query"]

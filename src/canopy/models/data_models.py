@@ -56,15 +56,12 @@ class Document(BaseModel):
         return v
 
 
-class _ContextContent(BaseModel, ABC):
+class ContextContent(BaseModel, ABC):
     # Any context should be able to be represented as well formatted text.
     # In the most minimal case, that could simply be a call to `.json()`.
     @abstractmethod
     def to_text(self, **kwargs) -> str:
         pass
-
-
-ContextContent = Union[_ContextContent, Sequence[_ContextContent]]
 
 
 class Context(BaseModel):
@@ -73,10 +70,7 @@ class Context(BaseModel):
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
     def to_text(self, **kwargs) -> str:
-        if isinstance(self.content, Sequence):
-            return "\n".join([c.to_text(**kwargs) for c in self.content])
-        else:
-            return self.content.to_text(**kwargs)
+        return self.content.to_text(**kwargs)
 
 
 # --------------------- LLM models ------------------------
