@@ -131,7 +131,29 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
     return kb_config
 
 
-@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
+class CanopyCommandGroup(click.Group):
+    """
+    A custom click Group that lets us control the order of commands in the help menu.
+    """
+    def __init__(self, name=None, commands=None, **attrs):
+        super().__init__(name, commands, **attrs)
+        self._commands_order = {
+            "new": 0,
+            "upsert": 1,
+            "start": 2,
+            "chat": 3,
+            "health": 4,
+            "stop": 5,
+            "api-docs": 6,
+
+        }
+
+    def list_commands(self, ctx):
+        return sorted(self.commands, key=lambda x: self._commands_order.get(x, 1000))
+
+
+@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS,
+             cls=CanopyCommandGroup)
 @click.version_option(__version__, "-v", "--version", prog_name="Canopy")
 @click.pass_context
 def cli(ctx):
