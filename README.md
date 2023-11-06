@@ -94,7 +94,7 @@ Usage: canopy [OPTIONS] COMMAND [ARGS]...
 
 ## Quickstart
 
-In this quickstart, we will show you how to use the **Canopy** to build a simple question answering system using RAG (retrival augmented generation).
+In this quickstart, we will show you how to use the **Canopy** to build a simple question answering system using RAG (retrieval augmented generation).
 
 ### 1. Create a new **Canopy** Index
 
