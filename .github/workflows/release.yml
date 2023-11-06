@@ -22,11 +22,6 @@ on:
         required: true
         type: boolean
         default: false
-      generateTag:
-        description: 'Whether to generate a release tag'
-        required: true
-        type: boolean
-        default: true
       useTestPyPI:
         description: 'Whether to use the test PyPI repository'
         required: true
@@ -110,6 +105,7 @@ jobs:
           poetry version $NEW_VERSION
 
       - name: Commit version update
+        if: ${{ inputs.bumpVersion == true }}
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "relevance@pinecone.io"
