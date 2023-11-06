@@ -3,8 +3,13 @@ name: 'Release'
 on:
   workflow_dispatch:
     inputs:
-      releaseLevel:
-        description: 'Release level'
+      bumpVersion:
+        description: 'Whether to bump the version number'
+        required: true
+        type: boolean
+        default: true
+      versionLevel:
+        description: 'Which version level to bump'
         required: true
         type: choice
         default: 'patch'
@@ -22,10 +27,11 @@ on:
         required: true
         type: boolean
         default: true
-  push:
-
-env:
-  PYPI_PASSWORD: ${{ secrets.TEST_PYPI_TOKEN }}
+      useTestPyPI:
+        description: 'Whether to use the test PyPI repository'
+        required: true
+        type: boolean
+        default: false
 
 
 jobs:
@@ -33,7 +39,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     outputs:
-      new_version: ${{ steps.bump.outputs.new_version }}
+      new_version: ${{ steps.store-version.outputs.new_version }}
 
     steps:
       - uses: actions/checkout@v3
@@ -49,9 +55,13 @@ jobs:
           version: 1.3.2
 
       - name: Bump version
-        id: bump
+        if: ${{ inputs.bumpVersion == true }}
         run: |
           poetry version ${{ inputs.releaseLevel || 'patch' }}
+
+      - name: Store version number
+        id: store-version
+        run: |
           echo "new_version=$(poetry version -s)" >> $GITHUB_OUTPUT
 
       - name: Build wheel
@@ -65,13 +75,11 @@ jobs:
           path: ./dist/
 
   test-all-OSes:
-    if: false
     needs: build
     uses: ./.github/workflows/pre-release-CI.yml
 
   publish:
-#    needs: [build, test-all-OSes]
-    needs: [build]
+    needs: [build, test-all-OSes]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -96,7 +104,7 @@ jobs:
 
       - name: Set version
         env:
-          NEW_VERSION: ${{ needs.build.outputs.new_version }}
+          NEW_VERSION: ${{ needs.store-version.outputs.new_version }}
         run: |
           echo $NEW_VERSION
           poetry version $NEW_VERSION
@@ -109,19 +117,13 @@ jobs:
           git commit -m "Bump version to $(poetry version -s)"
           git push 
 
-#      - name: Create tag
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generateTag == 'true' }}
-#        run: |
-#          git tag -a $(poetry version -s) -m "V$(poetry version -s)"
-#          git push origin "V$(poetry version -s)"
-
       - name: Create release branch
-#        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generateBranch == 'true' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generateBranch == 'true' }}
         run: |
           git checkout -b release/$(poetry version -s)
           git push origin release/$(poetry version -s)
 
-      - name: Create release
+      - name: Create GH release
         uses: ncipollo/release-action@v1
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
@@ -131,8 +133,15 @@ jobs:
           artifacts: "dist/*"
           bodyFile: "CHANGELOG.md"
 
-      - name: PyPI publish
+      - name: Publish to test pypi
+        if: ${{ inputs.useTestPyPI == 'true' }}
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
           poetry publish -r testpypi
+
+      - name: Publish to pypi
+        if: ${{ inputs.useTestPyPI == 'false' }}
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish
