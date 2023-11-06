@@ -36,8 +36,8 @@ With just three CLI commands, you can create a new Canopy server, upload your do
 
 ## Considerations
 
-* Canopy currently only supports OpenAI as backend for both both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
-   More integrations would be supported in the near future.
+* Canopy currently only supports OpenAI as backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
+   More integrations will be supported in the near future.
 
 ## Setup
 
