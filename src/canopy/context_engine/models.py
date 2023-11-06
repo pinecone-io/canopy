@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 
 from pydantic import BaseModel
 
@@ -16,7 +16,7 @@ class ContextQueryResult(BaseModel):
 
 
 class StuffingContextContent(ContextContent):
-    __root__: Union[ContextQueryResult, List[ContextQueryResult]]
+    __root__: List[ContextQueryResult]
 
     def dict(self, **kwargs):
         return super().dict(**kwargs)['__root__']

@@ -25,13 +25,9 @@ class StuffingContextBuilder(ContextBuilder):
             ContextQueryResult(query=qr.query, snippets=[])
             for qr in query_results]
         debug_info = {"num_docs": len(sorted_docs_with_origin)}
-        context = Context(
-            content=StuffingContextContent(__root__=context_query_results),
-            num_tokens=0,
-            debug_info=debug_info
-        )
+        content = StuffingContextContent(__root__=context_query_results)
 
-        if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
+        if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
             return Context(content=StuffingContextContent(__root__=[]),
                            num_tokens=1, debug_info=debug_info)
 
@@ -45,16 +41,17 @@ class StuffingContextBuilder(ContextBuilder):
                     snippet)
                 seen_doc_ids.add(doc.id)
                 # if the context is too long, remove the snippet
-                if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
+                if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
                     context_query_results[origin_query_idx].snippets.pop()
 
         # remove queries with no snippets
-        context.content = StuffingContextContent(
+        content = StuffingContextContent(
             __root__=[qr for qr in context_query_results if len(qr.snippets) > 0]
         )
 
-        context.num_tokens = self._tokenizer.token_count(context.to_text())
-        return context
+        return Context(content=content,
+                       num_tokens=self._tokenizer.token_count(content.to_text()),
+                       debug_info=debug_info)
 
     @staticmethod
     def _round_robin_sort(

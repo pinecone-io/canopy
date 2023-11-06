@@ -60,14 +60,14 @@ class TestChatEngine:
         mock_queries = [Query(text="How does photosynthesis work?")]
         mock_context = Context(
             content=StuffingContextContent(
-                __root__=ContextQueryResult(
+                __root__=[ContextQueryResult(
                     query="How does photosynthesis work?",
 
                     snippets=[ContextSnippet(source="ref 1",
                                              text=self._generate_text(snippet_length)),
                               ContextSnippet(source="ref 2",
                                              text=self._generate_text(12))]
-                )
+                )]
             ),
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )
