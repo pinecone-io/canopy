@@ -1,3 +1,5 @@
+import json
+
 from canopy.context_engine.models import \
     (ContextSnippet, ContextQueryResult, StuffingContextContent, )
 from canopy.models.data_models import Context, ContextContent
@@ -153,7 +155,8 @@ class TestStuffingContextBuilder:
         context = self.builder.build(
             missing_metadata_query_results, max_context_tokens=100)
         self.assert_num_tokens(context, 100)
-        assert context.content[0].snippets[0].source == ""
+        content = json.loads(context.to_text())
+        assert content[0]["snippets"][0]["source"] == ""
 
     def test_empty_documents(self):
         empty_query_results = [
@@ -180,11 +183,13 @@ class TestStuffingContextBuilder:
     def assert_contexts_equal(actual: Context, expected: Context):
         assert isinstance(actual.content, ContextContent)
         assert actual.num_tokens == expected.num_tokens
-        assert len(actual.content) == len(expected.content)
-        for actual_qr, expected_qr in zip(actual.content, expected.content):
-            assert actual_qr.query == expected_qr.query
-            assert len(actual_qr.snippets) == len(expected_qr.snippets)
-            for actual_snippet, expected_snippet in zip(actual_qr.snippets,
-                                                        expected_qr.snippets):
-                assert actual_snippet.text == expected_snippet.text
-                assert actual_snippet.source == expected_snippet.source
+        actual_content = json.loads(actual.to_text())
+        expected_content = json.loads(expected.to_text())
+        assert len(actual_content) == len(expected_content)
+        for actual_qr, expected_qr in zip(actual_content, expected_content):
+            assert actual_qr["query"] == expected_qr["query"]
+            assert len(actual_qr["snippets"]) == len(expected_qr["snippets"])
+            for actual_snippet, expected_snippet in zip(actual_qr["snippets"],
+                                                        expected_qr["snippets"]):
+                assert actual_snippet["text"] == expected_snippet["text"]
+                assert actual_snippet["source"] == expected_snippet["source"]
