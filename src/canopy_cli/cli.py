@@ -4,6 +4,7 @@ import subprocess
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
+from prompt_toolkit import prompt
 import time
 
 import requests
@@ -436,8 +437,26 @@ def chat(chat_service_url, rag, debug, stream):
     history_without_pinecone = []
 
     while True:
-        click.echo(click.style("\nUser message:\n", fg="bright_blue"), nl=True)
-        message = click.get_text_stream("stdin").readline()
+        click.echo(click.style("\nUser message: ", fg="bright_blue"), nl=False)
+        click.echo(
+            click.style("([Esc] followed by [Enter] to accept input)\n",
+                        italic=True,
+                        fg="bright_black"),
+            nl=True
+        )
+        message = prompt("  ", multiline=True, )
+
+        if not message:
+            click.echo(click.style("Please enter a message", fg="red"))
+            continue
+
+        if message == "exit":
+            click.echo(click.style("Bye!", fg="red"))
+            break
+
+        if message.isspace() or message == "":
+            click.echo(click.style("Please enter a message", fg="red"))
+            continue
 
         dubug_info = _chat(
             speaker="With Context (RAG)",

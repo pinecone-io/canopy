@@ -27,6 +27,9 @@ types-tqdm = "^4.61.0"
 tqdm = "^4.66.1"
 gunicorn = "^21.2.0"
 types-pyyaml = "^6.0.12.12"
+jsonschema = "^4.2.0"
+types-jsonschema = "^4.2.0"
+prompt-toolkit = "^3.0.39"
 
 
 [tool.poetry.group.dev.dependencies]

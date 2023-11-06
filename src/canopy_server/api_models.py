@@ -11,6 +11,9 @@ class ChatRequest(BaseModel):
     stream: bool = False
     user: Optional[str] = None
 
+    class Config:
+        extra = "ignore"
+
 
 class ContextQueryRequest(BaseModel):
     queries: List[Query]
