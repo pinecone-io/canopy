@@ -13,7 +13,7 @@ from canopy.knowledge_base import KnowledgeBase
 
 from canopy_server.app import app
 from canopy_server.api_models import (HealthStatus, ContextUpsertRequest,
-                                      ContextQueryRequest, ContextResponse, )
+                                      ContextQueryRequest, )
 from .. import Tokenizer
 
 upsert_payload = ContextUpsertRequest(

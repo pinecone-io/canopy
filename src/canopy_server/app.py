@@ -135,7 +135,7 @@ async def chat(
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-) -> Context:
+) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
     The returned text may be structured or unstructured, depending on the Canopy configuration.
