@@ -36,6 +36,7 @@ from .api_models import (
     ShutdownResponse,
     SuccessUpsertResponse,
     SuccessDeleteResponse,
+    ContextResponse,
 )
 
 from canopy.llm.openai import OpenAILLM
@@ -127,7 +128,7 @@ async def chat(
 
 @app.post(
     "/context/query",
-    response_model=Context,
+    response_model=ContextResponse,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
     },
@@ -147,7 +148,8 @@ async def query(
             queries=request.queries,
             max_context_tokens=request.max_tokens,
         )
-        return context
+        return ContextResponse(content=context.content.to_text(),
+                               num_tokens=context.num_tokens)
 
     except Exception as e:
         logger.exception(e)

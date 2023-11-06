@@ -30,12 +30,10 @@ class StuffingContextContent(ContextContent):
     # In the case of StuffingContextBuilder, we simply want the text representation to
     # be a json. Other ContextContent subclasses may render into text differently
     def to_text(self, **kwargs):
-        # We can't use self.json() since this is mapped back to self.to_text() in the
-        # base class, which would cause infinite recursion.
-        return super(ContextContent, self).json(**kwargs)
+        return self.json(**kwargs)
 
 
-# ------------- CONTEXT BUILDER ------------- 
+# ------------- CONTEXT BUILDER -------------
 
 class StuffingContextBuilder(ContextBuilder):
 

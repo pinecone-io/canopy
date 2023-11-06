@@ -66,9 +66,6 @@ class ContextContent(BaseModel, ABC):
     def __str__(self):
         return self.to_text()
 
-    def json(self, **kwargs):
-        return self.to_text(**kwargs)
-
 
 class Context(BaseModel):
     content: ContextContent
@@ -78,11 +75,6 @@ class Context(BaseModel):
     def to_text(self, **kwargs) -> str:
         return self.content.to_text(**kwargs)
 
-    class Config:
-        @staticmethod
-        # Override the JSON schema, to show `content` as a string in the docs
-        def schema_extra(schema: dict[str, Any]) -> None:
-            schema['properties']['content'] = {'type': 'String', 'title': 'content'}
 
 # --------------------- LLM models ------------------------
 
