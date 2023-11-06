@@ -31,6 +31,11 @@ class ContextQueryRequest(BaseModel):
     max_tokens: int
 
 
+class ContextResponse(BaseModel):
+    content: str
+    num_tokens: int
+
+
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
     batch_size: int = Field(

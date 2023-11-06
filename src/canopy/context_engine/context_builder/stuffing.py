@@ -1,12 +1,39 @@
 from itertools import zip_longest
 from typing import List, Tuple
 
+from pydantic import BaseModel
+
 from canopy.context_engine.context_builder.base import ContextBuilder
-from canopy.context_engine.models import ContextQueryResult, ContextSnippet
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.tokenizer import Tokenizer
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, ContextContent
 
+
+# ------------- DATA MODELS -------------
+
+class ContextSnippet(BaseModel):
+    source: str
+    text: str
+
+
+class ContextQueryResult(BaseModel):
+    query: str
+    snippets: List[ContextSnippet]
+
+
+class StuffingContextContent(ContextContent):
+    __root__: List[ContextQueryResult]
+
+    def dict(self, **kwargs):
+        return super().dict(**kwargs)['__root__']
+
+    # In the case of StuffingContextBuilder, we simply want the text representation to
+    # be a json. Other ContextContent subclasses may render into text differently
+    def to_text(self, **kwargs):
+        return self.json(**kwargs)
+
+
+# ------------- CONTEXT BUILDER -------------
 
 class StuffingContextBuilder(ContextBuilder):
 
@@ -24,12 +51,11 @@ class StuffingContextBuilder(ContextBuilder):
             ContextQueryResult(query=qr.query, snippets=[])
             for qr in query_results]
         debug_info = {"num_docs": len(sorted_docs_with_origin)}
-        context = Context(content=context_query_results,
-                          num_tokens=0,
-                          debug_info=debug_info)
+        content = StuffingContextContent(__root__=context_query_results)
 
-        if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
-            return Context(content=[], num_tokens=0, debug_info=debug_info)
+        if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
+            return Context(content=StuffingContextContent(__root__=[]),
+                           num_tokens=1, debug_info=debug_info)
 
         seen_doc_ids = set()
         for doc, origin_query_idx in sorted_docs_with_origin:
@@ -41,15 +67,17 @@ class StuffingContextBuilder(ContextBuilder):
                     snippet)
                 seen_doc_ids.add(doc.id)
                 # if the context is too long, remove the snippet
-                if self._tokenizer.token_count(context.to_text()) > max_context_tokens:
+                if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
                     context_query_results[origin_query_idx].snippets.pop()
 
         # remove queries with no snippets
-        context.content = [qr for qr in context_query_results
-                           if len(qr.snippets) > 0]
+        content = StuffingContextContent(
+            __root__=[qr for qr in context_query_results if len(qr.snippets) > 0]
+        )
 
-        context.num_tokens = self._tokenizer.token_count(context.to_text())
-        return context
+        return Context(content=content,
+                       num_tokens=self._tokenizer.token_count(content.to_text()),
+                       debug_info=debug_info)
 
     @staticmethod
     def _round_robin_sort(

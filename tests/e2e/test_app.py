@@ -1,3 +1,4 @@
+import json
 import os
 from typing import List
 
@@ -12,7 +13,7 @@ from canopy.knowledge_base import KnowledgeBase
 
 from canopy_server.app import app
 from canopy_server.api_models import (HealthStatus, ContextUpsertRequest,
-                                      ContextQueryRequest)
+                                      ContextQueryRequest, )
 from .. import Tokenizer
 
 upsert_payload = ContextUpsertRequest(
@@ -27,14 +28,14 @@ upsert_payload = ContextUpsertRequest(
 )
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_exist(vector_ids: List[str],
                             knowledge_base: KnowledgeBase):
     fetch_response = knowledge_base._index.fetch(ids=vector_ids)
     assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_not_exist(vector_ids: List[str],
                                 knowledge_base: KnowledgeBase):
     fetch_response = knowledge_base._index.fetch(ids=vector_ids)
@@ -98,9 +99,10 @@ def test_upsert(client):
     assert upsert_response.is_success
 
 
-@retry(stop=stop_after_attempt(60), wait=wait_fixed(1))
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def test_query(client):
     # fetch the context with all the right filters
+    tokenizer = Tokenizer()
     query_payload = ContextQueryRequest(
         queries=[
             {
@@ -115,16 +117,18 @@ def test_query(client):
     query_response = client.post("/context/query", json=query_payload.dict())
     assert query_response.is_success
 
-    # test response is as expected on /query
-    response_as_json = query_response.json()
+    query_response = query_response.json()
+    assert (query_response["num_tokens"] ==
+            len(tokenizer.tokenize(query_response["content"])))
 
+    stuffing_content = json.loads(query_response["content"])
     assert (
-            response_as_json[0]["query"]
+            stuffing_content[0]["query"]
             == query_payload.dict()["queries"][0]["text"]
-            and response_as_json[0]["snippets"][0]["text"]
+            and stuffing_content[0]["snippets"][0]["text"]
             == upsert_payload.dict()["documents"][0]["text"]
     )
-    assert (response_as_json[0]["snippets"][0]["source"] ==
+    assert (stuffing_content[0]["snippets"][0]["source"] ==
             upsert_payload.dict()["documents"][0]["source"])
 
 

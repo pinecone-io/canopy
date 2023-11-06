@@ -26,7 +26,7 @@ from canopy.models.api_models import (
     StreamingChatResponse,
     ChatResponse,
 )
-from canopy.models.data_models import Context, UserMessage, ContextContent
+from canopy.models.data_models import Context, UserMessage
 from .api_models import (
     ChatRequest,
     ContextQueryRequest,
@@ -36,6 +36,7 @@ from .api_models import (
     ShutdownResponse,
     SuccessUpsertResponse,
     SuccessDeleteResponse,
+    ContextResponse,
 )
 
 from canopy.llm.openai import OpenAILLM
@@ -127,14 +128,14 @@ async def chat(
 
 @app.post(
     "/context/query",
-    response_model=ContextContent,
+    response_model=ContextResponse,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
     },
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-) -> ContextContent:
+) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
     The returned text may be structured or unstructured, depending on the Canopy configuration.
@@ -147,8 +148,8 @@ async def query(
             queries=request.queries,
             max_context_tokens=request.max_tokens,
         )
-
-        return context.content
+        return ContextResponse(content=context.content.to_text(),
+                               num_tokens=context.num_tokens)
 
     except Exception as e:
         logger.exception(e)
