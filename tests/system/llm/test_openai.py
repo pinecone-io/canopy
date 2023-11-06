@@ -1,4 +1,6 @@
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
+
+import jsonschema
 import pytest
 
 
@@ -184,3 +186,22 @@ class TestOpenAILLM:
         with pytest.raises(Exception, match="API call failed"):
             openai_llm.enforced_function_call(messages=messages,
                                               function=function_query_knowledgebase)
+
+    @staticmethod
+    @patch("openai.ChatCompletion")
+    def test_enforce_function_wrong_output_schema(chat_completion,
+                                                  openai_llm,
+                                                  messages,
+                                                  function_query_knowledgebase):
+        chat_completion.create.return_value = MagicMock(
+            choices=[MagicMock(
+                message=MagicMock(
+                    function_call={"arguments": "{\"key\": \"value\"}"}))])
+
+        with pytest.raises(jsonschema.ValidationError,
+                           match="'queries' is a required property"):
+            openai_llm.enforced_function_call(messages=messages,
+                                              function=function_query_knowledgebase)
+
+        assert chat_completion.create.call_count == 3, \
+            "retry did not happen as expected"
