@@ -50,7 +50,7 @@ jobs:
         run: |
           source $VENV
           ls -lah ./dist
-          pip install ./dist/pinecone_canopy*.whl
+          pip install ./dist/canopy_sdk*.whl
 
       - name: Run unit tests
         run: |
