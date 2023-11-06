@@ -1,13 +1,41 @@
 from itertools import zip_longest
 from typing import List, Tuple
 
+from pydantic import BaseModel
+
 from canopy.context_engine.context_builder.base import ContextBuilder
-from canopy.context_engine.models import (ContextQueryResult, ContextSnippet,
-                                          StuffingContextContent, )
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.tokenizer import Tokenizer
-from canopy.models.data_models import Context
+from canopy.models.data_models import Context, ContextContent
 
+
+# ------------- DATA MODELS -------------
+
+class ContextSnippet(BaseModel):
+    source: str
+    text: str
+
+
+class ContextQueryResult(BaseModel):
+    query: str
+    snippets: List[ContextSnippet]
+
+
+class StuffingContextContent(ContextContent):
+    __root__: List[ContextQueryResult]
+
+    def dict(self, **kwargs):
+        return super().dict(**kwargs)['__root__']
+
+    # In the case of StuffingContextBuilder, we simply want the text representation to
+    # be a json. Other ContextContent subclasses may render into text differently
+    def to_text(self, **kwargs):
+        # We can't use self.json() since this is mapped back to self.to_text() in the
+        # base class, which would cause infinite recursion.
+        return super(ContextContent, self).json(**kwargs)
+
+
+# ------------- CONTEXT BUILDER ------------- 
 
 class StuffingContextBuilder(ContextBuilder):
 

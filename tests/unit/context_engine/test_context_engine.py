@@ -5,8 +5,9 @@ from unittest.mock import create_autospec
 
 from canopy.context_engine import ContextEngine
 from canopy.context_engine.context_builder.base import ContextBuilder
-from canopy.context_engine.models import (ContextQueryResult, ContextSnippet,
-                                          StuffingContextContent, )
+from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
+                                                            ContextQueryResult,
+                                                            StuffingContextContent, )
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.models.data_models import Query, Context, ContextContent

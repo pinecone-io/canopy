@@ -1,7 +1,8 @@
 import json
 
-from canopy.context_engine.models import \
-    (ContextSnippet, ContextQueryResult, StuffingContextContent, )
+from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
+                                                            ContextQueryResult,
+                                                            StuffingContextContent, )
 from canopy.models.data_models import Context, ContextContent
 from ..stubs.stub_tokenizer import StubTokenizer
 from canopy.knowledge_base.models import \

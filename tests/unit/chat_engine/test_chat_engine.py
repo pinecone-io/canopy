@@ -6,8 +6,9 @@ import random
 from canopy.chat_engine import ChatEngine
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.context_engine import ContextEngine
-from canopy.context_engine.models import (ContextQueryResult, ContextSnippet,
-                                          StuffingContextContent, )
+from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
+                                                            ContextQueryResult,
+                                                            StuffingContextContent, )
 from canopy.llm import BaseLLM
 from canopy.models.data_models import SystemMessage
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts

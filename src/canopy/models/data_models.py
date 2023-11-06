@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, List, Union, Dict, Literal
+from typing import Optional, List, Union, Dict, Literal, Any
 
 from pydantic import BaseModel, Field, validator, Extra
 
@@ -63,15 +63,26 @@ class ContextContent(BaseModel, ABC):
     def to_text(self, **kwargs) -> str:
         pass
 
+    def __str__(self):
+        return self.to_text()
+
+    def json(self, **kwargs):
+        return self.to_text(**kwargs)
+
 
 class Context(BaseModel):
     content: ContextContent
-    num_tokens: int = Field(exclude=True)
+    num_tokens: int
     debug_info: dict = Field(default_factory=dict, exclude=True)
 
     def to_text(self, **kwargs) -> str:
         return self.content.to_text(**kwargs)
 
+    class Config:
+        @staticmethod
+        # Override the JSON schema, to show `content` as a string in the docs
+        def schema_extra(schema: dict[str, Any]) -> None:
+            schema['properties']['content'] = {'type': 'String', 'title': 'content'}
 
 # --------------------- LLM models ------------------------
 

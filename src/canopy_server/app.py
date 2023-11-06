@@ -127,13 +127,14 @@ async def chat(
 
 @app.post(
     "/context/query",
+    response_model=Context,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
     },
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-) -> str:
+) -> Context:
     """
     Query the knowledge base for relevant context.
     The returned text may be structured or unstructured, depending on the Canopy configuration.
@@ -146,7 +147,7 @@ async def query(
             queries=request.queries,
             max_context_tokens=request.max_tokens,
         )
-        return context.to_text()
+        return context
 
     except Exception as e:
         logger.exception(e)
