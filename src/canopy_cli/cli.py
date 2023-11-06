@@ -31,7 +31,7 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from canopy_server.app import start as start_service
+from canopy_server.app import start as start_server
 from .cli_spinner import Spinner
 from canopy_server.api_models import ChatDebugInfo
 
@@ -44,14 +44,14 @@ spinner = Spinner()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
-def check_service_health(url: str):
+def check_server_health(url: str):
     try:
         res = requests.get(urljoin(url, "/health"))
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Canopy service is not running on {url}.
+        Canopy server is not running on {url}.
         please run `canopy start`
         """
         raise CLIError(msg)
@@ -62,14 +62,14 @@ def check_service_health(url: str):
         else:
             error = str(e)
         msg = (
-            f"Canopy service on {url} is not healthy, failed with error: {error}"
+            f"Canopy server on {url} is not healthy, failed with error: {error}"
         )
         raise CLIError(msg)
 
 
 @retry(reraise=True, wait=wait_fixed(5), stop=stop_after_attempt(6))
-def wait_for_service(chat_service_url: str):
-    check_service_health(chat_service_url)
+def wait_for_server(chat_server_url: str):
+    check_server_health(chat_server_url)
 
 
 def validate_connection():
@@ -132,7 +132,29 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
     return kb_config
 
 
-@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS)
+class CanopyCommandGroup(click.Group):
+    """
+    A custom click Group that lets us control the order of commands in the help menu.
+    """
+    def __init__(self, name=None, commands=None, **attrs):
+        super().__init__(name, commands, **attrs)
+        self._commands_order = {
+            "new": 0,
+            "upsert": 1,
+            "start": 2,
+            "chat": 3,
+            "health": 4,
+            "stop": 5,
+            "api-docs": 6,
+
+        }
+
+    def list_commands(self, ctx):
+        return sorted(self.commands, key=lambda x: self._commands_order.get(x, 1000))
+
+
+@click.group(invoke_without_command=True, context_settings=CONTEXT_SETTINGS,
+             cls=CanopyCommandGroup)
 @click.version_option(__version__, "-v", "--version", prog_name="Canopy")
 @click.pass_context
 def cli(ctx):
@@ -148,12 +170,12 @@ def cli(ctx):
         # click.echo(command.get_help(ctx))
 
 
-@cli.command(help="Check if canopy service is running and healthy.")
+@cli.command(help="Check if canopy server is running and healthy.")
 @click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's service url. Defaults to http://0.0.0.0:8000")
+              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
 def health(url):
-    check_service_health(url)
-    click.echo(click.style("Canopy service is healthy!", fg="green"))
+    check_server_health(url)
+    click.echo(click.style("Canopy server is healthy!", fg="green"))
     return
 
 
@@ -409,10 +431,10 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-service-url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
-def chat(chat_service_url, rag, debug, stream):
-    check_service_health(chat_service_url)
+@click.option("--chat-server-url", default="http://0.0.0.0:8000",
+              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+def chat(chat_server_url, rag, debug, stream):
+    check_server_health(chat_server_url)
     note_msg = (
         "🚨 Note 🚨\n"
         "Chat is a debugging tool, it is not meant to be used for production!"
@@ -424,7 +446,7 @@ def chat(chat_service_url, rag, debug, stream):
     note_white_message = (
         "This method should be used by developers to test the RAG data and model"
         "during development. "
-        "When you are ready to deploy, run the Canopy service as a REST API "
+        "When you are ready to deploy, run the Canopy server as a REST API "
         "backend for your chatbot UI. \n\n"
         "Let's Chat!"
     )
@@ -465,7 +487,7 @@ def chat(chat_service_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=os.path.join(chat_service_url, "context"),
+            api_base=os.path.join(chat_server_url, "context"),
             print_debug_info=debug,
         )
 
@@ -495,7 +517,7 @@ def chat(chat_service_url, rag, debug, stream):
     help=(
         """
         \b
-        Start the Canopy service.
+        Start the Canopy server.
         This command will launch a uvicorn server that will serve the Canopy API.
 
         If you like to try out the chatbot, run `canopy chat` in a separate terminal
@@ -518,7 +540,7 @@ def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy service in production, run the command:"
+        "For debugging only. To run the Canopy server in production, run the command:"
         "\n"
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
@@ -538,30 +560,30 @@ def start(host: str, port: str, reload: bool,
             )
         os.environ["INDEX_NAME"] = index_name
 
-    click.echo(f"Starting Canopy service on {host}:{port}")
-    start_service(host, port=port, reload=reload, config_file=config)
+    click.echo(f"Starting Canopy server on {host}:{port}")
+    start_server(host, port=port, reload=reload, config_file=config)
 
 
 @cli.command(
     help=(
         """
         \b
-        Stop the Canopy service.
-        This command will send a shutdown request to the Canopy service.
+        Stop the Canopy server.
+        This command will send a shutdown request to the Canopy server.
         """
     )
 )
 @click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy service to use. Defaults to http://0.0.0.0:8000")
+              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
 def stop(url):
-    # Check if the service was started using Gunicorn
+    # Check if the server was started using Gunicorn
     res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
                          capture_output=True)
     output = res.stdout.decode("utf-8").split()
 
     # If Gunicorn was used, kill all Gunicorn processes
     if output:
-        msg = ("It seems that Canopy service was launched using Gunicorn.\n"
+        msg = ("It seems that Canopy server was launched using Gunicorn.\n"
                "Do you want to kill all Gunicorn processes?")
         click.confirm(click.style(msg, fg="red"), abort=True)
         try:
@@ -583,9 +605,47 @@ def stop(url):
         return res.ok
     except requests.exceptions.ConnectionError:
         msg = f"""
-        Could not find Canopy service on {url}.
+        Could not find Canopy server on {url}.
         """
         raise CLIError(msg)
+
+
+@cli.command(
+    help=(
+        """
+        \b
+        Open the Canopy Server docs
+        """
+    )
+)
+@click.option("--url", default="http://0.0.0.0:8000",
+              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+def api_docs(url):
+    import webbrowser
+
+    generated_docs = False
+    try:
+        check_server_health(url)
+    except CLIError:
+        msg = ("Canopy server is not running. Would you like to generate the docs "
+               "to a local HTML file?")
+        click.confirm(click.style(msg, fg="red"), abort=True)
+        generated_docs = True
+
+    if generated_docs:
+        import json
+        from canopy_server._redocs_template import HTML_TEMPLATE
+        from canopy_server.app import app
+        # generate docs
+
+        filename = "canopy-api-docs.html"
+        msg = f"Generating docs to {filename}"
+        click.echo(click.style(msg, fg="green"))
+        with open(filename, "w") as fd:
+            print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
+        webbrowser.open('file://' + os.path.realpath(filename))
+    else:
+        webbrowser.open('http://localhost:8000/redoc')
 
 
 if __name__ == "__main__":

@@ -163,3 +163,4 @@ cython_debug/
 **/.DS_Store
 
 datafiles/*
+canopy-api-docs.html

@@ -5,7 +5,7 @@ import sys
 import uuid
 
 import openai
-from multiprocessing import current_process
+from multiprocessing import current_process, parent_process
 
 import yaml
 from dotenv import load_dotenv
@@ -20,21 +20,60 @@ from sse_starlette.sse import EventSourceResponse
 
 from fastapi import FastAPI, HTTPException, Body
 import uvicorn
-from typing import cast
+from typing import cast, Union
 
-from canopy.models.api_models import StreamingChatResponse, ChatResponse
+from canopy.models.api_models import (
+    StreamingChatResponse,
+    ChatResponse,
+)
 from canopy.models.data_models import Context, UserMessage
-from .api_models import \
-     ChatRequest, ContextQueryRequest, \
-     ContextUpsertRequest, HealthStatus, ContextDeleteRequest
+from .api_models import (
+    ChatRequest,
+    ContextQueryRequest,
+    ContextUpsertRequest,
+    HealthStatus,
+    ContextDeleteRequest,
+    ShutdownResponse,
+    SuccessUpsertResponse,
+    SuccessDeleteResponse,
+    ContextResponse,
+)
 
 from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
+from canopy import __version__
+
+
+APIChatResponse = Union[ChatResponse, EventSourceResponse]
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
-app = FastAPI()
+APP_DESCRIPTION = """
+Canopy is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.
+
+Canopy provides a configurable built-in server, so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own custom RAG application using the Canopy library.
+
+## Prerequisites
+
+### Pinecone API key
+If you don't have a Pinecone account, you can sign up for a free Starter plan at https://www.pinecone.io/.
+To find your Pinecone API key and environment log into Pinecone console (https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard, and find the environment name next to it.
+
+### OpenAI API key
+You can find your free trial OpenAI API key https://platform.openai.com/account/api-keys. You might need to log in or register for OpenAI services.
+"""  # noqa: E501
+
+
+app = FastAPI(
+    title="Canopy API",
+    description=APP_DESCRIPTION,
+    version=__version__,
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
 
 context_engine: ContextEngine
 chat_engine: ChatEngine
@@ -45,19 +84,29 @@ logger: logging.Logger
 
 @app.post(
     "/context/chat/completions",
+    response_model=None,
+    responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
     request: ChatRequest = Body(...),
-):
+) -> APIChatResponse:
+    """
+    Chat with Canopy, using the LLM and context engine, and return a response.
+
+    The request schema follows OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.
+    Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
+
+    """  # noqa: E501
     try:
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
-        answer = await run_in_threadpool(chat_engine.chat,
-                                         messages=request.messages,
-                                         stream=request.stream)
+        answer = await run_in_threadpool(
+            chat_engine.chat, messages=request.messages, stream=request.stream
+        )
 
         if request.stream:
+
             def stringify_content(response: StreamingChatResponse):
                 for chunk in response.chunks:
                     chunk.id = question_id
@@ -65,7 +114,7 @@ async def chat(
                     yield data
 
             content_stream = stringify_content(cast(StreamingChatResponse, answer))
-            return EventSourceResponse(content_stream, media_type='text/event-stream')
+            return EventSourceResponse(content_stream, media_type="text/event-stream")
 
         else:
             chat_response = cast(ChatResponse, answer)
@@ -74,105 +123,140 @@ async def chat(
 
     except Exception as e:
         logger.exception(f"Chat with question_id {question_id} failed")
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/query",
+    response_model=ContextResponse,
+    responses={
+        500: {"description": "Failed to query the knowledge base or build the context"}
+    },
 )
 async def query(
     request: ContextQueryRequest = Body(...),
-):
+) -> ContextResponse:
+    """
+    Query the knowledge base for relevant context.
+    The returned text may be structured or unstructured, depending on the Canopy configuration.
+    Query allows limiting the context length in tokens to control LLM costs.
+    This method does not pass through the LLM and uses only retrieval and construction from Pinecone DB.
+    """  # noqa: E501
     try:
         context: Context = await run_in_threadpool(
             context_engine.query,
             queries=request.queries,
-            max_context_tokens=request.max_tokens)
-
-        return context.content
+            max_context_tokens=request.max_tokens,
+        )
+        return ContextResponse(content=context.content.to_text(),
+                               num_tokens=context.num_tokens)
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/upsert",
+    response_model=SuccessUpsertResponse,
+    responses={500: {"description": "Failed to upsert documents"}},
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
-):
+) -> SuccessUpsertResponse:
+    """
+    Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
+    Each document has a unique ID. If a document with the same ID already exists, it is updated.
+
+    The documents are chunked and encoded, then the resulting encoded chunks are sent to the Pinecone index in batches.
+    """  # noqa: E501
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
-        upsert_results = await run_in_threadpool(
-            kb.upsert,
-            documents=request.documents,
-            batch_size=request.batch_size)
+        await run_in_threadpool(
+            kb.upsert, documents=request.documents, batch_size=request.batch_size
+        )
 
-        return upsert_results
+        return SuccessUpsertResponse()
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.post(
     "/context/delete",
+    response_model=SuccessDeleteResponse,
+    responses={500: {"description": "Failed to delete documents"}},
 )
 async def delete(
     request: ContextDeleteRequest = Body(...),
-):
+) -> SuccessDeleteResponse:
+    """
+    Delete documents from the knowledgebase. Deleting documents is done by their unique ID.
+    """  # noqa: E501
     try:
         logger.info(f"Delete {len(request.document_ids)} documents")
-        await run_in_threadpool(
-            kb.delete,
-            document_ids=request.document_ids)
-        return {"message": "success"}
+        await run_in_threadpool(kb.delete, document_ids=request.document_ids)
+        return SuccessDeleteResponse()
 
     except Exception as e:
         logger.exception(e)
-        raise HTTPException(
-            status_code=500, detail=f"Internal Service Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
 @app.get(
     "/health",
+    response_model=HealthStatus,
+    responses={500: {"description": "Failed to connect to Pinecone or LLM"}},
 )
-async def health_check():
+@app.exception_handler(Exception)
+async def health_check() -> HealthStatus:
+    """
+    Health check for the Canopy server. This endpoint checks the connection to Pinecone and the LLM.
+    """  # noqa: E501
     try:
         await run_in_threadpool(kb.verify_index_connection)
     except Exception as e:
         err_msg = f"Failed connecting to Pinecone Index {kb._index_name}"
         logger.exception(err_msg)
         raise HTTPException(
-            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}"
+        ) from e
 
     try:
         msg = UserMessage(content="This is a health check. Are you alive? Be concise")
-        await run_in_threadpool(llm.chat_completion,
-                                messages=[msg],
-                                max_tokens=50)
+        await run_in_threadpool(llm.chat_completion, messages=[msg], max_tokens=50)
     except Exception as e:
         err_msg = f"Failed to communicate with {llm.__class__.__name__}"
         logger.exception(err_msg)
         raise HTTPException(
-            status_code=500, detail=f"{err_msg}. Error: {str(e)}") from e
+            status_code=500, detail=f"{err_msg}. Error: {str(e)}"
+        ) from e
 
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
-@app.get(
-    "/shutdown"
-)
-async def shutdown():
+@app.get("/shutdown")
+async def shutdown() -> ShutdownResponse:
+    """
+    __WARNING__: Experimental method.
+
+
+    This method will shutdown the server. It is used for testing purposes, and not recommended to be used
+    in production.
+    This method will locate the parent process and send a SIGINT signal to it.
+    """  # noqa: E501
     logger.info("Shutting down")
     proc = current_process()
-    pid = proc._parent_pid if "SpawnProcess" in proc.name else proc.pid
+    p_process = parent_process()
+    pid = p_process.pid if p_process is not None else proc.pid
+    if not pid:
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to locate parent process. Cannot shutdown server.",
+        )
     os.kill(pid, signal.SIGINT)
-    return {"message": "Shutting down"}
+    return ShutdownResponse()
 
 
 @app.on_event("startup")
@@ -190,11 +274,11 @@ def _init_logging():
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
-        format='%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  '
-               '%(message)s',
+        format="%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  "
+        "%(message)s",
         level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
         handlers=handlers,
-        force=True
+        force=True,
     )
     logger = logging.getLogger(__name__)
 
@@ -211,8 +295,10 @@ def _init_engines():
         _load_config(config_file)
 
     else:
-        logger.info("Did not find config file. Initializing engines with default "
-                    "configuration")
+        logger.info(
+            "Did not find config file. Initializing engines with default "
+            "configuration"
+        )
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
@@ -230,9 +316,7 @@ def _load_config(config_file):
             config = yaml.safe_load(f)
     except Exception as e:
         logger.exception(f"Failed to load config file {config_file}")
-        raise ConfigError(
-            f"Failed to load config file {config_file}. Error: {str(e)}"
-        )
+        raise ConfigError(f"Failed to load config file {config_file}. Error: {str(e)}")
     tokenizer_config = config.get("tokenizer", {})
     Tokenizer.initialize_from_config(tokenizer_config)
     if "chat_engine" not in config:
