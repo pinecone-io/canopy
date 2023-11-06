@@ -1,5 +1,6 @@
 from typing import Union, Iterable, Optional, Any, Dict, List
 
+import jsonschema
 import openai
 import json
 from tenacity import (
@@ -102,7 +103,8 @@ class OpenAILLM(BaseLLM):
         wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(
-            OPEN_AI_TRANSIENT_EXCEPTIONS + (json.decoder.JSONDecodeError,)
+            OPEN_AI_TRANSIENT_EXCEPTIONS + (json.decoder.JSONDecodeError,
+                                            jsonschema.ValidationError)
         ),
     )
     def enforced_function_call(self,
@@ -172,7 +174,10 @@ class OpenAILLM(BaseLLM):
         )
 
         result = chat_completion.choices[0].message.function_call
-        return json.loads(result["arguments"])
+        arguments = json.loads(result["arguments"])
+
+        jsonschema.validate(instance=arguments, schema=function.parameters.dict())
+        return arguments
 
     async def achat_completion(self,
                                messages: Messages, *, stream: bool = False,
