@@ -1,0 +1,143 @@
+name: 'Release'
+
+on:
+  workflow_dispatch:
+    inputs:
+      bumpVersion:
+        description: 'Whether to bump the version number'
+        required: true
+        type: boolean
+        default: true
+      versionLevel:
+        description: 'Which version level to bump'
+        required: true
+        type: choice
+        default: 'patch'
+        options:
+          - 'patch' # bug fixes
+          - 'minor' # new features, backwards compatible
+          - 'major' # breaking changes
+      generateBranch:
+        description: 'Whether to generate a release branch'
+        required: true
+        type: boolean
+        default: false
+      useTestPyPI:
+        description: 'Whether to use the test PyPI repository'
+        required: true
+        type: boolean
+        default: false
+
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      new_version: ${{ steps.store-version.outputs.new_version }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9  # The lowest we support
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.2
+
+      - name: Bump version
+        if: ${{ inputs.bumpVersion == true }}
+        run: |
+          poetry version ${{ inputs.releaseLevel || 'patch' }}
+
+      - name: Store version number
+        id: store-version
+        run: |
+          echo "new_version=$(poetry version -s)" >> $GITHUB_OUTPUT
+
+      - name: Build wheel
+        run: |
+          poetry build
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          name: wheels
+          path: ./dist/
+
+  test-all-OSes:
+    needs: build
+    uses: ./.github/workflows/pre-release-CI.yml
+
+  publish:
+    needs: [build, test-all-OSes]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.3.2
+
+      - name: download wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: ./dist/
+
+      - name: Set version
+        env:
+          NEW_VERSION: ${{ needs.store-version.outputs.new_version }}
+        run: |
+          echo $NEW_VERSION
+          poetry version $NEW_VERSION
+
+      - name: Commit version update
+        if: ${{ inputs.bumpVersion == true }}
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "relevance@pinecone.io"
+          git add pyproject.toml
+          git commit -m "Bump version to $(poetry version -s)"
+          git push 
+
+      - name: Create release branch
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.generateBranch == 'true' }}
+        run: |
+          git checkout -b release/$(poetry version -s)
+          git push origin release/$(poetry version -s)
+
+      - name: Create GH release
+        uses: ncipollo/release-action@v1
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+        with:
+          tag: V${{ needs.build.outputs.new_version }}
+          name: ${{ needs.build.outputs.new_version }}
+          artifacts: "dist/*"
+          bodyFile: "CHANGELOG.md"
+
+      - name: Publish to test pypi
+        if: ${{ inputs.useTestPyPI == 'true' }}
+        run: |
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
+          poetry publish -r testpypi
+
+      - name: Publish to pypi
+        if: ${{ inputs.useTestPyPI == 'false' }}
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
+          poetry publish
