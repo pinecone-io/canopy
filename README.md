@@ -12,39 +12,11 @@ Canopy is desinged to be:
 
 ## RAG with Canopy
 
-Learn how Canopy implemenets the full RAG workflow to prevent hallucinations and augment you LLM (via an OpenAI endpoint) with your own text data. 
-
 ![](.readme-content/rag_flow.png)
 
-<details>
-<summary><b>Chat Flow</b> (click to expand)
-</summary>
+Canopy implemenets the full RAG workflow to prevent hallucinations and augment you LLM with your own text data.
 
-1. User will promt a question to Canopy /chat/completions endpoint. 
-2. canopy will use a language model to break down the questions into queries, sometimes, a single user ask may result in multiple knowledge queries. 
-3. Canopy will encode and embed each query seperateley.
-4. Canopy will query pinecone with the embedded queries and will fetch back K results for each. Canopy will determine how many results it needs to fetch based on the token budget set by the user 
-5. Now canopy has all the external knowledge needed to answer the original question, Canopy will perform a _context building_ step to create an on-bugdet optimal context.
-6. Canopy will generate a prompt combining general task information and the system message and sent the prompt+context to the language model. 
-7. Canopy will decode the response from the language model and will return the response in the API response (or in streaming).
-
-</details>
-
-<details>
-<summary><b>Context Flow</b> (click to expand)
-</summary>
-
-<ol type="I">
-<li> User will call /context/upsert with Documents - each document with id, text, and optinally source and metadata </li>
-
-<li> Canopy KnowledgeBase will process the documents and chunk ecah document in a structural and semantic way </li>
-
-<li> Canopy KnowledgeBase will encode each chunk using one or more embedding models</li>
-
-<li> Canopy KnowledgeBase will upsert the encoded chunks into Pinecone index</li>
-
-</ol>
-</details>
+Canopy has two flows, knowledge base creation and chat. In knowledge base creation flow, users upload their documents and transform them into meaningful representations stored in Pinecone's VectorDB. In the chat flow, incoming queries and chat history are optimized to retrieve the most relevant documents, the knowledge base is queried, and a meaningful context is generated for the LLM to answer.
 
 ## What's inside the box?
 
