@@ -2,7 +2,7 @@
 
 **Canopy** is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.   
 
-Canopy provides a configurable built-in server so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own, custom RAG application using the Canopy lirbary. 
+Canopy provides a configurable built-in server so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own, custom RAG application using the Canopy library. 
 
 Canopy is desinged to be: 
 * **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy makes it easy to incorporate RAG into your OpenAI chat applications. 
@@ -16,7 +16,7 @@ Canopy is desinged to be:
 
 Canopy implemenets the full RAG workflow to prevent hallucinations and augment you LLM with your own text data.
 
-Canopy has two flows, knowledge base creation and chat. In knowledge base creation flow, users upload their documents and transform them into meaningful representations stored in Pinecone's VectorDB. In the chat flow, incoming queries and chat history are optimized to retrieve the most relevant documents, the knowledge base is queried, and a meaningful context is generated for the LLM to answer.
+Canopy has two flows: knowledge base creation and chat. In the knowledge base creation flow, users upload their documents and transform them into meaningful representations stored in Pinecone's Vector Database. In the chat flow, incoming queries and chat history are optimized to retrieve the most relevant documents, the knowledge base is queried, and a meaningful context is generated for the LLM to answer.
 
 ## What's inside the box?
 
@@ -37,7 +37,7 @@ With just three CLI commands, you can create a new Canopy server, upload your do
 ## Considerations
 
 * Canopy currently only supports OpenAI as backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
-   More integrations will be supported in the near future.
+* More integrations will be supported in the near future.
 
 ## Setup
 
