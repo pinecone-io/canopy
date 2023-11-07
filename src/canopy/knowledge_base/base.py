@@ -24,7 +24,9 @@ class BaseKnowledgeBase(ABC, ConfigurableMixin):
                namespace: str = "", ) -> None:
         pass
 
-    # TODO: Do we want delete by metadata?
+    # TODO: Do we want delete by metadata? 
+    #       this could be useful for Document management 
+    #       also, it makes the API more like Pinecone DB
     @abstractmethod
     def delete(self,
                document_ids: List[str],

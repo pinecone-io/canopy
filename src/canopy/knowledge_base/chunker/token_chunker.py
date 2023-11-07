@@ -25,7 +25,7 @@ class TokenChunker(Chunker):
             overlap: overlap between chunks, in tokens
         """  # noqa: E501
 
-        # TODO: should add check for overlap not bigger than max_chunk_size
+        # TODO: should add check for overlap not bigger than max_chunk_size 
         if overlap < 0:
             cls_name = self.__class__.__name__
             raise ValueError(

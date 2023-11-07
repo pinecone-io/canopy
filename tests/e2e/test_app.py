@@ -80,8 +80,8 @@ def teardown_knowledge_base(knowledge_base):
         pinecone.delete_index(index_name)
 
 # TODO: the following test is a complete e2e test, this it not the final design
-# for the e2e tests, however there were some issues
-# with the fixtures that will be resovled
+#       for the e2e tests, however there were some issues
+#       with the fixtures that will be resolved
 
 
 def test_health(client):
