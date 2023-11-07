@@ -49,7 +49,8 @@ jobs:
       - name: Install the wheel
         run: |
           source $VENV
-          pip install dist/pinecone_canopy*.whl
+          ls -lah ./dist
+          pip install ./dist/canopy_sdk*.whl
 
       - name: Run unit tests
         run: |
