@@ -99,7 +99,7 @@ jobs:
 
       - name: Set version
         env:
-          NEW_VERSION: ${{ needs.store-version.outputs.new_version }}
+          NEW_VERSION: ${{ needs.build.outputs.new_version }}
         run: |
           echo $NEW_VERSION
           poetry version $NEW_VERSION
