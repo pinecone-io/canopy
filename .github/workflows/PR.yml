@@ -3,6 +3,7 @@ name: Run linters and tests
 on:
   - pull_request
   - merge_group
+  - workflow_dispatch
 
 # Cancel previous runs on the same branch \ PR number if they are still running
 # From: https://stackoverflow.com/a/72408109
@@ -58,7 +59,7 @@ jobs:
     - name: Run unit tests
       run: poetry run pytest --html=report.html --self-contained-html tests/unit
     - name: Set Index Name for System / E2E
-      if: github.event_name == 'merge_group'
+      if: github.event_name != 'pull_request'
       id: gen_suffix
       run: |
         RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
@@ -66,7 +67,7 @@ jobs:
         echo "${SUFFIX}"
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
-      if: github.event_name == 'merge_group'
+      if: github.event_name != 'pull_request'
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
@@ -74,7 +75,7 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
     - name: Run e2e tests
-      if: github.event_name == 'merge_group'
+      if: github.event_name != 'pull_request'
       env:
         INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
