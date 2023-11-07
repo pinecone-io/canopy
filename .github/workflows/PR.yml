@@ -67,7 +67,6 @@ jobs:
         echo "${SUFFIX}"
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
-      if: github.event_name != 'pull_request'
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
