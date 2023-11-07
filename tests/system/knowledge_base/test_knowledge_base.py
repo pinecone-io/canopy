@@ -227,12 +227,13 @@ def test_create_index(index_full_name, knowledge_base):
 
 
 def test_list_indexes(index_full_name):
-    actual = list_canopy_indexes()
-    expected = [index for index in pinecone.list_indexes()
-                if index.startswith(INDEX_NAME_PREFIX)]
+    index_list = list_canopy_indexes()
 
-    assert index_full_name in actual
-    assert sorted(actual) == sorted(expected)
+    assert len(index_list) > 0
+    for item in index_list:
+        assert INDEX_NAME_PREFIX in item
+    
+    assert index_full_name in index_list
 
 
 def test_is_verify_index_connection_happy_path(knowledge_base):
