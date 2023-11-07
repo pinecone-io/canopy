@@ -232,7 +232,7 @@ def test_list_indexes(index_full_name):
     assert len(index_list) > 0
     for item in index_list:
         assert INDEX_NAME_PREFIX in item
-    
+
     assert index_full_name in index_list
 
 
