@@ -2,13 +2,13 @@
 
 **Canopy** is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.   
 
+Canopy takes on the heavy lifting for building RAG applications: from chunking and embedding your text data to chat history management, query optimization, context retrieval (including prompt engineering), and augmented generation. 
+
 Canopy provides a configurable built-in server so you can effortlessly deploy a RAG-powered chat application to your existing chat UI or interface. Or you can build your own, custom RAG application using the Canopy library. 
 
-Canopy is designed to be: 
-* **Easy to implement:** Bring your text data in Parquet or JSONL format, and Canopy will handle the rest. Canopy makes it easy to incorporate RAG into your OpenAI chat applications. 
-* **Reliable at scale:** Build fast, highly accurate GenAI applications that are production-ready and backed by Pinecone’s vector database. Seamlessly scale to billions of items with transparent, resource-based pricing. 
-* **Open and flexible:** Fully open-source, Canopy is both modular and extensible. You can configure to choose the components you need, or extend any component with your own custom implementation.  
-* **Interactive and iterative:** Evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side. 
+Canopy lets you evaluate your RAG workflow with a CLI based chat tool. With a simple command in the Canopy CLI you can interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side. 
+
+Check out our [blog post](https://pinecone.io/blog/canopy-rag-framework) to learn more, or see a quick [tutorial here](https://www.youtube.com/watch?v=dVGPglKh80Y). 
 
 ## RAG with Canopy
 
@@ -26,18 +26,13 @@ Canopy has two flows: knowledge base creation and chat. In the knowledge base cr
     * **KnowledgeBase** - Manages your data for the RAG workflow. It automatically chunks and transforms your text data into text embeddings, storing them in a Pinecone vector database. Given a text query - the `KnowledgeBase` will retrieve the most relevant document chunks from the database. 
 
 
-> more information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
+> More information about the Core Library usage can be found in the [Library Documentation](docs/library.md)
 
 2. **Canopy Server** - This is a webservice that wraps the **Canopy Core** library and exposes it as a REST API. The server is built on top of FastAPI, Uvicorn and Gunicorn and can be easily deployed in production. 
 The server also comes with a built-in Swagger UI for easy testing and documentation. After you [start the server](#3-start-the-canopy-server), you can access the Swagger UI at `http://host:port/docs` (default: `http://localhost:8000/docs`)
 
  3. **Canopy CLI** - A built-in development tool that allows users to swiftly set up their own Canopy server and test its configuration.  
 With just three CLI commands, you can create a new Canopy server, upload your documents to it, and then interact with the Chatbot using a built-in chat application directly from the terminal. The built-in chatbot also enables comparison of RAG-infused responses against a native LLM chatbot.
-
-## Considerations
-
-* Canopy currently only supports OpenAI as backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
-* More integrations will be supported in the near future.
 
 ## Setup
 
@@ -46,7 +41,7 @@ With just three CLI commands, you can create a new Canopy server, upload your do
 python3 -m venv canopy-env
 source canopy-env/bin/activate
 ```
-more about virtual environments [here](https://docs.python.org/3/tutorial/venv.html)
+> More information about virtual environments can be found [here](https://docs.python.org/3/tutorial/venv.html)
 
 1. install the package
 ```bash
@@ -83,7 +78,7 @@ export INDEX_NAME=<INDEX_NAME>
 canopy
 ```
 
-output should be similar to this:
+Output should be similar to this:
 
 ```bash
 Canopy: Ready
@@ -98,7 +93,7 @@ In this quickstart, we will show you how to use the **Canopy** to build a simple
 
 ### 1. Create a new **Canopy** Index
 
-As a one-time setup, Canopy needs to create a new Pinecone index that is configured to work with Canopy. Just run:
+As a one-time setup, Canopy needs to create a new Pinecone index that is configured to work with Canopy, just run:
 
 ```bash
 canopy new
@@ -123,7 +118,7 @@ canopy upsert /path/to/data_directory/file.parquet
 canopy upsert /path/to/data_directory/file.jsonl
 ```
 
-Canopy supports files in `jsonl` or `parquet` format. The documents should have the following schema:
+Canopy supports files in `jsonl` or `parquet` formats. The documents should have the following schema:
 
 ```
 +----------+--------------+--------------+---------------+
@@ -133,12 +128,13 @@ Canopy supports files in `jsonl` or `parquet` format. The documents should have 
 | "id1"    | "some text"  | "some source"| {"key": "val"}|
 +----------+--------------+--------------+---------------+
 ```
+> [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format.
 
 Follow the instructions in the CLI to upload your data.
 
 ### 3. Start the Canopy server
 
-The canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
+The Canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
 To start the server, run:
 
 ```bash
@@ -152,11 +148,8 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ```
 **That's it!** you can now start using the **Canopy** server with any chat application that supports a `/chat.completion` endpoint.
 
-> _📝 NOTE:_
->
-> The canopy start command will keep the terminal occupied. 
+> The canopy start command will keep the terminal occupied (recommended use). 
 > If you want to run the server in the background, you can use the following command - **```nohup canopy start &```**
-> However, this is not recommended.
 
 
 ### Stopping the server 
@@ -188,10 +181,14 @@ canopy chat --no-rag
 
 This will open a similar chat interface window, but will show both the RAG and non-RAG responses side-by-side.
 
+## Considerations
+
+* Canopy currently only supports OpenAI as the backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
+* More integrations will be supported in the near future.
 
 ## Advanced usage
 
-### Migrating existing OpenAI application to **Canopy**
+### Migrating an existing OpenAI application to **Canopy**
 
 If you already have an application that uses the OpenAI API, you can migrate it to **Canopy** by simply changing the API endpoint to `http://host:port/context` as follows:
 
