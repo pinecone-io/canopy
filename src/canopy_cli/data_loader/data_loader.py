@@ -1,6 +1,7 @@
 import json
 import os
 import glob
+from enum import Enum
 from collections.abc import Iterable
 from typing import List
 from textwrap import dedent
@@ -20,6 +21,8 @@ class IDsNotUniqueError(ValueError):
 class DocumentsValidationError(ValueError):
     pass
 
+class NonSchematicFilesTypes(Enum):
+    TEXT = "txt"
 
 def format_multiline(msg):
     return dedent(msg).strip()
@@ -67,7 +70,31 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
     return documents
 
 
-def _load_single_file_by_suffix(file_path: str) -> List[Document]:
+def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
+    """Load multiple text files into a single dataframe
+
+    Args:
+        file_paths (List[str]): List of file paths to load
+
+    Returns:
+        pd.DataFrame: Dataframe with columns `id`, `text` and 'source`
+                      Note: metadata will be empty
+    """
+    if not isinstance(file_paths, list):
+        raise ValueError("file_paths must be a list of strings")
+    if len(file_paths) == 0:
+        raise ValueError("file_paths must not be empty")
+
+    df = pd.DataFrame(columns=["id", "text", "source"])
+    rows = []
+    for file_path in file_paths:
+        with open(file_path, "r") as f:
+            text = f.read()
+            rows.append({"id": os.path.basename(file_path), "text": text, "source": file_path})
+        df = pd.DataFrame(rows, columns=["id", "text", "source"])
+    return df
+
+def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
     if file_path.endswith(".parquet"):
         df = pd.read_parquet(file_path)
     elif file_path.endswith(".csv"):
@@ -75,22 +102,52 @@ def _load_single_file_by_suffix(file_path: str) -> List[Document]:
     elif file_path.endswith(".jsonl"):
         df = pd.read_json(file_path, lines=True)
     else:
-        raise ValueError("Only .parquet and .jsonl files are supported")
+        raise ValueError(
+            "Only [.parquet, .jsonl, .csv, .txt] files are supported"
+        )
+
+    return _df_to_documents(df)
+
+def _load_multiple_non_schematic_files(file_paths: List[str], type: NonSchematicFilesTypes) -> List[Document]:
+    if not isinstance(file_paths, list):
+        raise ValueError("file_paths must be a list of strings")
+    if len(file_paths) == 0:
+        raise ValueError("file_paths must not be empty")
+
+    if type == NonSchematicFilesTypes.TEXT:
+        df = _load_multiple_txt_files(file_paths)
+    else:
+        raise ValueError(f"Unsupported file type: {type}")
 
     return _df_to_documents(df)
 
 
 def load_from_path(path: str) -> List[Document]:
     if os.path.isdir(path):
-        all_files = [f for ext in ['*.jsonl', '*.parquet', '*.csv']
-                     for f in glob.glob(os.path.join(path, ext))]
-        if len(all_files) == 0:
+        # List all files in directory
+        all_files_schematic = [f for ext in ['*.jsonl', '*.parquet', '*.csv']
+                               for f in glob.glob(os.path.join(path, ext))]
+        all_files_non_schematic = [f for ext in ['*.txt']
+                                   for f in glob.glob(os.path.join(path, ext))]
+        if len(all_files_schematic) + len(all_files_non_schematic) == 0:
             raise ValueError("No files found in directory")
+
         documents: List[Document] = []
-        for f in all_files:
-            documents.extend(_load_single_file_by_suffix(f))
+        # Load all files
+        for f in all_files_schematic:
+            documents.extend(_load_single_schematic_file_by_suffix(f))
+
+        documents.extend(
+            _load_multiple_non_schematic_files(
+                all_files_non_schematic, 
+                NonSchematicFilesTypes.TEXT))
+    
+    # Load single file
     elif os.path.isfile(path):
-        documents = _load_single_file_by_suffix(path)
+        if path.endswith(".txt"):
+            documents = _load_multiple_txt_files_to_dataframe([path], NonSchematicFilesTypes.TEXT)
+        else:
+            documents = _load_single_schematic_file_by_suffix(path)
     else:
         raise ValueError(f"Could not find file or directory at {path}")
     return documents

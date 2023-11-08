@@ -310,7 +310,8 @@ def upsert(index_name: str,
         except Exception:
             msg = (
                 f"A unexpected error while loading the data from files in {data_path}. "
-                "Please make sure the data is in valid `jsonl` or `parquet` format."
+                "Please make sure the data is in valid `jsonl`, `parquet`, `csv` format "
+                "or plaintext `.txt` files."
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20

@@ -8,7 +8,7 @@ from canopy_cli.data_loader.data_loader import (
     IDsNotUniqueError,
     DocumentsValidationError,
     load_from_path,
-    _load_single_file_by_suffix, _df_to_documents,
+    _load_single_schematic_file_by_suffix, _df_to_documents,
 )
 
 
@@ -253,7 +253,7 @@ def test_load_single_file_jsonl(tmpdir, dict_rows_input, expected_documents):
     path = tmpdir.join("test.jsonl")
     path.write("\n".join([json.dumps(row) for row in dict_rows_input]))
 
-    docs = _load_single_file_by_suffix(str(path))
+    docs = _load_single_schematic_file_by_suffix(str(path))
     assert docs == expected_documents
 
 
@@ -263,7 +263,7 @@ def test_load_single_file_parquet(tmpdir, dict_rows_input, expected_documents):
     path = tmpdir.join("test.parquet")
     pd.DataFrame(data).to_parquet(str(path))
 
-    docs = _load_single_file_by_suffix(str(path))
+    docs = _load_single_schematic_file_by_suffix(str(path))
     assert docs == expected_documents
 
 
