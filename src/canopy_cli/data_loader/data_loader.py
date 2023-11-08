@@ -87,7 +87,6 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
     if len(file_paths) == 0:
         raise ValueError("file_paths must not be empty")
 
-    df = pd.DataFrame(columns=["id", "text", "source"])
     rows = []
     for file_path in file_paths:
         with open(file_path, "r") as f:
