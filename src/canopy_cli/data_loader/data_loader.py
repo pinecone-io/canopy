@@ -94,7 +94,7 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
             text = f.read()
             rows.append(
                 {
-                    "id": os.path.basename(file_path),
+                    "id": os.path.basename(file_path).replace(".txt", ""),
                     "text": text,
                     "source": file_path
                 }
