@@ -1,15 +1,16 @@
-name: Pre Release CI
+name: Build and Test installation
 
 on:
   workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build-and-test:
-    name: Build & Test on ${{ matrix.os }}-py${{ matrix.python-version }}
+  test-installation:
+    name: Test on ${{ matrix.os }}-py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -31,30 +32,36 @@ jobs:
         uses: snok/install-poetry@v1
         with:
           version: 1.3.2
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+          installer-parallel: true
 
-      - name: Build wheel
+      - name: Download wheels
+        uses: actions/download-artifact@v2
+        with:
+          name: wheels
+          path: ./dist/
+
+      - name: Install dev dependencies
         run: |
-          poetry build
+          poetry install --no-root --only dev --no-interaction
 
       - name: Install the wheel
         run: |
-          pip install dist/pinecone_canopy*.whl
+          source $VENV
+          ls -lah ./dist
+          pip install ./dist/canopy_sdk*.whl
 
-      - name: Create dev requirements file
+      - name: Run unit tests
         run: |
-          poetry export -f requirements.txt --without-hashes --only dev -o only-dev.txt
-
-      - name: Install dev requirements
-        run: |
-          pip install -r only-dev.txt
-
-      - name: Run tests
-        run: pytest --html=report.html --self-contained-html tests/unit
+          source $VENV
+          pytest --html=report.html --self-contained-html tests/unit
 
       - name: Upload pytest reports
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v3
         with:
           name: pytest-report-${{ matrix.os }}-py${{ matrix.python-version }}
           path: .pytest_cache
+
 
