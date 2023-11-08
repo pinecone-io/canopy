@@ -159,10 +159,11 @@ def load_from_path(path: str) -> List[Document]:
             documents.extend(_load_single_schematic_file_by_suffix(f))
 
         # Load all non-schematic files
-        documents.extend(
-            _load_multiple_non_schematic_files(
-                all_files_non_schematic_txt,
-                NonSchematicFilesTypes.TEXT))
+        if len(all_files_non_schematic_txt) > 0:
+            documents.extend(
+                _load_multiple_non_schematic_files(
+                    all_files_non_schematic_txt,
+                    NonSchematicFilesTypes.TEXT))
 
     # Load single file
     elif os.path.isfile(path):
