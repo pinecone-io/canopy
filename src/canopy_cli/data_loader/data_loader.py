@@ -99,7 +99,7 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
                     "source": file_path
                 }
             )
-        df = pd.DataFrame(rows, columns=["id", "text", "source"])
+    df = pd.DataFrame(rows, columns=["id", "text", "source"])
     return df
 
 
@@ -146,10 +146,17 @@ def load_from_path(path: str) -> List[Document]:
     """
     if os.path.isdir(path):
         # List all files in directory
-        all_files_schematic = [f for ext in ['*.jsonl', '*.parquet', '*.csv']
-                               for f in glob.glob(os.path.join(path, ext))]
-        all_files_non_schematic_txt = [f for ext in ['*.txt']
-                                       for f in glob.glob(os.path.join(path, ext))]
+        all_files_schematic = []
+        all_files_non_schematic_txt = []
+        for file in glob.glob(os.path.join(path, "*")):
+            if not os.path.isfile(file):
+                continue
+            if file.endswith(".txt"):
+                all_files_non_schematic_txt.append(file)
+            elif (file.endswith(".jsonl") or
+                  file.endswith(".csv") or
+                  file.endswith(".parquet")):
+                all_files_schematic.append(file)
         if len(all_files_schematic) + len(all_files_non_schematic_txt) == 0:
             raise ValueError("No files found in directory")
 
