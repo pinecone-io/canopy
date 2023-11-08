@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "canopy-sdk"
-version = "0.1.1"
+version = "0.1.2"
 description = "Canopy is an orchestration engine for intergating LLMs with Pinecone."
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
@@ -17,7 +17,7 @@ openai = "^0.27.5"
 tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.2"
 pydantic = "^1.10.7"
-pinecone-text = { version = "^0.6.0", extras = ["openai"] }
+pinecone-text = { version = "^0.6.1", extras = ["openai"] }
 pandas-stubs = "^2.0.3.230814"
 fastapi = "^0.92.0"
 uvicorn = "^0.20.0"
