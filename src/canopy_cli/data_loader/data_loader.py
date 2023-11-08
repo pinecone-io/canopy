@@ -76,7 +76,7 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
     """Load multiple text files into a single dataframe
 
     Args:
-        file_paths (List[str]): List of file paths to load
+        file_paths: List of file paths to load
 
     Returns:
         pd.DataFrame: Dataframe with columns `id`, `text` and 'source`
@@ -135,6 +135,15 @@ def _load_multiple_non_schematic_files(
 
 
 def load_from_path(path: str) -> List[Document]:
+    """
+    Load documents from a file or directory
+
+    Args:
+        path: Path to file or directory
+
+    Returns:
+        List[Document]: List of documents
+    """
     if os.path.isdir(path):
         # List all files in directory
         all_files_schematic = [f for ext in ['*.jsonl', '*.parquet', '*.csv']
