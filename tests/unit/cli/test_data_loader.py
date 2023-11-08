@@ -1,3 +1,6 @@
+import os
+import random
+
 import numpy as np
 import pytest
 import json
@@ -10,6 +13,7 @@ from canopy_cli.data_loader.data_loader import (
     load_from_path,
     _load_single_schematic_file_by_suffix, _df_to_documents,
 )
+from tests.unit import random_words
 
 
 good_df_minimal = (
@@ -292,4 +296,35 @@ def test_load_multiple_files(tmpdir, dict_rows_input, expected_documents):
     pd.DataFrame(data2).to_parquet(str(path2))
 
     docs = load_from_path(str(base_path))
-    assert docs == expected
+    assert sorted(docs, key=lambda x: x.id) == sorted(expected, key=lambda x: x.id)
+
+
+def _generate_text(num_words: int, num_rows: int) -> str:
+    return "\n".join([" ".join(random.choices(random_words, k=num_words)) for _ in range(num_rows)])  # noqa: E501
+
+
+def test_load_text_files(tmpdir, dict_rows_input, expected_documents):
+    tmpdir.mkdir("test_text_files")
+    base_path = tmpdir.join("test_text_files")
+    path1 = base_path.join("test1.jsonl")
+    path1.write("\n".join([json.dumps(row) for row in dict_rows_input]))
+    path2 = base_path.join("test2.txt")
+    path_2_text = _generate_text(10, 3)
+    path2.write(path_2_text)
+    path3 = base_path.join("test3.txt")
+    path_3_text = _generate_text(10, 3)
+    path3.write(path_3_text)
+
+    expected = expected_documents + [
+        Document(text=path_2_text,
+                 id="test2",
+                 source=os.path.join(str(base_path), "test2.txt")
+                 ),
+        Document(text=path_3_text,
+                 id="test3",
+                 source=os.path.join(str(base_path), "test3.txt")
+                 ),
+    ]
+
+    docs = load_from_path(str(base_path))
+    assert sorted(docs, key=lambda x: x.id) == sorted(expected, key=lambda x: x.id)
