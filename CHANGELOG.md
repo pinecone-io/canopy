@@ -1,3 +1,6 @@
+## [0.1.3] - 2023-10-09
+- Edit description on pyproject.toml.
+
 ## [0.1.2] - 2023-10-09
 
 - Added the ability to load individual text files from a directory
