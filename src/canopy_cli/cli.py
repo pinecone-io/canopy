@@ -80,7 +80,7 @@ def validate_connection():
             f"{str(e)}\n"
             "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
             " environment variables. "
-            "Please visit https://www.pinecone.io/docs/quick-start/ for more details."
+            "Please visit https://www.pinecone.io/docs/quickstart/ for more details."
         )
         raise CLIError(msg)
     try:
@@ -284,7 +284,7 @@ def upsert(index_name: str,
         if "credentials" in msg:
             msg += ("\nCredentials should be set by the PINECONE_API_KEY and "
                     "PINECONE_ENVIRONMENT environment variables. Please visit "
-                    "https://www.pinecone.io/docs/quick-start/ for more details.")
+                    "https://www.pinecone.io/docs/quickstart/ for more details.")
         raise CLIError(msg)
 
     click.echo("Canopy is going to upsert data from ", nl=False)
