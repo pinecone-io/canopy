@@ -64,6 +64,8 @@ To find your Pinecone API key and environment log into Pinecone console (https:/
 You can find your free trial OpenAI API key https://platform.openai.com/account/api-keys. You might need to log in or register for OpenAI services.
 """  # noqa: E501
 
+API_VERSION = "v1"
+
 
 app = FastAPI(
     title="Canopy API",
@@ -83,7 +85,7 @@ logger: logging.Logger
 
 
 @app.post(
-    "/context/chat/completions",
+    f"/api/{API_VERSION}/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
@@ -127,7 +129,7 @@ async def chat(
 
 
 @app.post(
-    "/context/query",
+    f"/api/{API_VERSION}/context/query",
     response_model=ContextResponse,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
@@ -157,7 +159,7 @@ async def query(
 
 
 @app.post(
-    "/context/upsert",
+    f"/api/{API_VERSION}/context/upsert",
     response_model=SuccessUpsertResponse,
     responses={500: {"description": "Failed to upsert documents"}},
 )
@@ -184,7 +186,7 @@ async def upsert(
 
 
 @app.post(
-    "/context/delete",
+    f"/api/{API_VERSION}/context/delete",
     response_model=SuccessDeleteResponse,
     responses={500: {"description": "Failed to delete documents"}},
 )
