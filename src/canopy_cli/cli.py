@@ -541,12 +541,17 @@ def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production, run the command:"
+        "For debugging only. To run the Canopy server in production "
+    )
+    msg_suffix = (
+        "run the command:"
         "\n"
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
+    ) if os.name != "nt" else (
+        "please use Docker"  #  TODO: Add Docker instructions once we have a Dockerfile
     )
-    for c in note_msg:
+    for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
