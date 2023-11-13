@@ -171,8 +171,8 @@ def cli(ctx):
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -432,8 +432,8 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("--chat-server-url", default="http://localhost:8000",
+              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
@@ -579,8 +579,8 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("url", "--url", default="http://localhost:8000",
+              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
 def stop(url):
     if os.name != "nt":
         # Check if the server was started using Gunicorn
@@ -625,8 +625,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def api_docs(url):
     import webbrowser
 
