@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 import pandas as pd
 import openai
-from openai.error import APIError as OpenAI_APIError
+from openai import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
 from canopy.knowledge_base import KnowledgeBase

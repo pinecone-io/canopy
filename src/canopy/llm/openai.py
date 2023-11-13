@@ -3,15 +3,15 @@ from typing import Union, Iterable, Optional, Any, Dict, List
 import jsonschema
 import openai
 import json
+
+from openai.types.chat import completion_create_params
 from tenacity import (
     retry,
-    wait_random_exponential,
     stop_after_attempt,
     retry_if_exception_type,
 )
-from canopy.utils.openai_exceptions import OPEN_AI_TRANSIENT_EXCEPTIONS
 from canopy.llm import BaseLLM
-from canopy.llm.models import Function, ModelParams
+from canopy.llm.models import Function, ModelParams, ClientParams
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
@@ -30,20 +30,18 @@ class OpenAILLM(BaseLLM):
                  model_name: str = "gpt-3.5-turbo",
                  *,
                  model_params: Optional[ModelParams] = None,
+                 client_params: Optional[ClientParams] = None,
                  ):
         super().__init__(model_name,
                          model_params=model_params)
+        client_params = client_params or ClientParams()
+        self._client = openai.OpenAI(
+            **(client_params.dict(exclude_defaults=True)))
 
     @property
     def available_models(self):
         return [k["id"] for k in openai.Model.list().data]
 
-    @retry(
-        reraise=True,
-        wait=wait_random_exponential(min=1, max=10),
-        stop=stop_after_attempt(3),
-        retry=retry_if_exception_type(OPEN_AI_TRANSIENT_EXCEPTIONS),
-    )
     def chat_completion(self,
                         messages: Messages,
                         *,
@@ -83,28 +81,27 @@ class OpenAILLM(BaseLLM):
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
         messages = [m.dict() for m in messages]
-        response = openai.ChatCompletion.create(model=self.model_name,
-                                                messages=messages,
-                                                stream=stream,
-                                                max_tokens=max_tokens,
-                                                **model_params_dict)
+        response = self._client.chat.completions.create(model=self.model_name,
+                                                        messages=messages,
+                                                        stream=stream,
+                                                        max_tokens=max_tokens,
+                                                        **model_params_dict)
 
         def streaming_iterator(response):
             for chunk in response:
-                yield StreamingChatChunk(**chunk)
+                yield StreamingChatChunk.parse_obj(chunk)
 
         if stream:
             return streaming_iterator(response)
 
-        return ChatResponse(**response)
+        return ChatResponse.parse_obj(response)
 
     @retry(
         reraise=True,
-        wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(
-            OPEN_AI_TRANSIENT_EXCEPTIONS + (json.decoder.JSONDecodeError,
-                                            jsonschema.ValidationError)
+            (json.decoder.JSONDecodeError,
+             jsonschema.ValidationError)
         ),
     )
     def enforced_function_call(self,
@@ -152,8 +149,6 @@ class OpenAILLM(BaseLLM):
             >>> llm.enforced_function_call(messages, function)
             {'queries': ['capital of France']}
         """  # noqa: E501
-        # this enforces the model to call the function
-        function_call = {"name": function.name}
 
         model_params_dict: Dict[str, Any] = {}
         model_params_dict.update(
@@ -164,17 +159,24 @@ class OpenAILLM(BaseLLM):
 
         messages = [m.dict() for m in messages]
 
-        chat_completion = openai.ChatCompletion.create(
+        # this enforces the model to call the function
+        function_call = completion_create_params.ChatCompletionFunctionCallOptionParam(
+            name=function.name)
+
+        chat_completion = self._client.chat.completions.create(
             model=self.model_name,
             messages=messages,
-            functions=[function.dict()],
+            functions=[completion_create_params.Function(
+                name=function.name,
+                description=function.description,
+                parameters=function.parameters.dict())],
             function_call=function_call,
             max_tokens=max_tokens,
             **model_params_dict
         )
 
-        result = chat_completion.choices[0].message.function_call
-        arguments = json.loads(result["arguments"])
+        result = chat_completion.choices[0].message.function_call  # type: ignore
+        arguments = json.loads(result.arguments)
 
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
         return arguments

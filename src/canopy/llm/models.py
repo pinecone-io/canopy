@@ -9,6 +9,14 @@ class ModelParams(BaseModel):
     top_p: Optional[float] = None
 
 
+class ClientParams(BaseModel):
+    api_key: Optional[str] = None
+    organization: Optional[str] = None
+    base_url: Optional[str] = None
+    max_retries: int = 2
+    timeout: Optional[int] = 20
+
+
 class FunctionPrimitiveProperty(BaseModel):
     name: str
     type: str

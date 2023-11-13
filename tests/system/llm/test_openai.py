@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 import jsonschema
 import pytest
@@ -9,7 +9,7 @@ from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
 from canopy.llm.openai import OpenAILLM # noqa
 from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty, ModelParams # noqa
-from openai import InvalidRequestError # noqa
+from openai import BadRequestError # noqa
 
 
 def assert_chat_completion(response, num_choices=1):
@@ -157,51 +157,50 @@ class TestOpenAILLM:
 
     @staticmethod
     def test_missing_messages(openai_llm):
-        with pytest.raises(InvalidRequestError):
+        with pytest.raises(BadRequestError):
             openai_llm.chat_completion(messages=[])
 
     @staticmethod
     def test_negative_max_tokens(openai_llm, messages):
-        with pytest.raises(InvalidRequestError):
+        with pytest.raises(BadRequestError):
             openai_llm.chat_completion(messages=messages, max_tokens=-5)
 
     @staticmethod
-    @patch("openai.ChatCompletion.create")
-    def test_chat_complete_api_failure_populates(mock_api_call,
-                                                 openai_llm,
+    def test_chat_complete_api_failure_populates(openai_llm,
                                                  messages):
-        mock_api_call.side_effect = Exception("API call failed")
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.side_effect = Exception(
+            "API call failed")
 
         with pytest.raises(Exception, match="API call failed"):
             openai_llm.chat_completion(messages=messages)
 
     @staticmethod
-    @patch("openai.ChatCompletion.create")
-    def test_enforce_function_api_failure_populates(mock_api_call,
-                                                    openai_llm,
+    def test_enforce_function_api_failure_populates(openai_llm,
                                                     messages,
                                                     function_query_knowledgebase):
-        mock_api_call.side_effect = Exception("API call failed")
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.side_effect = Exception(
+            "API call failed")
 
         with pytest.raises(Exception, match="API call failed"):
             openai_llm.enforced_function_call(messages=messages,
                                               function=function_query_knowledgebase)
 
     @staticmethod
-    @patch("openai.ChatCompletion")
-    def test_enforce_function_wrong_output_schema(chat_completion,
-                                                  openai_llm,
+    def test_enforce_function_wrong_output_schema(openai_llm,
                                                   messages,
                                                   function_query_knowledgebase):
-        chat_completion.create.return_value = MagicMock(
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.return_value = MagicMock(
             choices=[MagicMock(
                 message=MagicMock(
-                    function_call={"arguments": "{\"key\": \"value\"}"}))])
+                    function_call=MagicMock(arguments="{\"key\": \"value\"}")))])
 
         with pytest.raises(jsonschema.ValidationError,
                            match="'queries' is a required property"):
             openai_llm.enforced_function_call(messages=messages,
                                               function=function_query_knowledgebase)
 
-        assert chat_completion.create.call_count == 3, \
+        assert openai_llm._client.chat.completions.create.call_count == 3, \
             "retry did not happen as expected"
