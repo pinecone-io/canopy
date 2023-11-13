@@ -488,7 +488,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=os.path.join(urljoin(url, "/context")),
+            api_base=os.path.join(urljoin(chat_server_url, "/context")),
             print_debug_info=debug,
         )
 
@@ -549,7 +549,7 @@ def start(host: str, port: str, reload: bool,
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     ) if os.name != "nt" else (
-        "please use Docker"  #  TODO: Add Docker instructions once we have a Dockerfile
+        "please use Docker"  # TODO: Add Docker instructions once we have a Dockerfile
     )
     for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
