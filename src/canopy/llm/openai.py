@@ -4,7 +4,6 @@ import jsonschema
 import openai
 import json
 
-from openai.types.chat import completion_create_params
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -157,26 +156,18 @@ class OpenAILLM(BaseLLM):
         if model_params:
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
-        messages = [m.dict() for m in messages]
-
-        # this enforces the model to call the function
-        function_call = completion_create_params.ChatCompletionFunctionCallOptionParam(
-            name=function.name)
-
         chat_completion = self._client.chat.completions.create(
             model=self.model_name,
-            messages=messages,
-            functions=[completion_create_params.Function(
-                name=function.name,
-                description=function.description,
-                parameters=function.parameters.dict())],
-            function_call=function_call,
+            messages=[m.dict() for m in messages],
+            tools=[{"type": "function", "function": function.dict()}],
+            tool_choice={"type": "function",
+                         "function": {"name": function.name}},
             max_tokens=max_tokens,
             **model_params_dict
         )
 
-        result = chat_completion.choices[0].message.function_call  # type: ignore
-        arguments = json.loads(result.arguments)
+        result = chat_completion.choices[0].message.tool_calls[0].function.arguments
+        arguments = json.loads(result)
 
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
         return arguments

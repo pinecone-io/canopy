@@ -214,7 +214,8 @@ class TestOpenAILLM:
         openai_llm._client.chat.completions.create.return_value = MagicMock(
             choices=[MagicMock(
                 message=MagicMock(
-                    function_call=MagicMock(arguments="{\"key\": \"value\"}")))])
+                    tool_calls=[
+                        MagicMock(function=MagicMock(arguments="{\"key\": \"value\"}"))]))])
 
         with pytest.raises(jsonschema.ValidationError,
                            match="'queries' is a required property"):
