@@ -18,7 +18,12 @@ from canopy.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Body,
+    APIRouter
+)
 import uvicorn
 from typing import cast, Union
 
@@ -27,7 +32,7 @@ from canopy.models.api_models import (
     ChatResponse,
 )
 from canopy.models.data_models import Context, UserMessage
-from .api_models import (
+from .models.v1.api_models import (
     ChatRequest,
     ContextQueryRequest,
     ContextUpsertRequest,
@@ -76,6 +81,8 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+
+chat_completion_router 
 
 context_engine: ContextEngine
 chat_engine: ChatEngine
