@@ -171,8 +171,9 @@ def cli(ctx):
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default="http://localhost:8000",
-              help="Canopy's server url. Defaults to http://localhost:8000")
+@click.option("--url", default=f"http://localhost:8000/{API_VERSION}",
+              help=("Canopy's server url. "
+                    f"Defaults to http://localhost:8000/{API_VERSION}"))
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -581,8 +582,9 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default="http://localhost:8000",
-              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
+@click.option("url", "--url", default=f"http://localhost:8000/{API_VERSION}",
+              help=("URL of the Canopy server to use. "
+                    f"Defaults to http://localhost:8000/{API_VERSION}"))
 def stop(url):
     if os.name != "nt":
         # Check if the server was started using Gunicorn
