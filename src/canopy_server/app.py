@@ -281,7 +281,8 @@ async def startup():
 
 def _init_routes(app):
     # Include the application level router (health, shutdown, ...)
-    app.include_router(application_router)
+    app.include_router(application_router, include_in_schema=False)
+    app.include_router(application_router, prefix=f"/{API_VERSION}")
     # Include the API without version == latest
     app.include_router(context_api_router, include_in_schema=False)
     app.include_router(openai_api_router, include_in_schema=False)
