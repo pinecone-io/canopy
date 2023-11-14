@@ -6,7 +6,7 @@ import pytest
 
 from canopy.models.data_models import Role, MessageBase # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
-from canopy.llm.openai import OpenAILLM # noqa
+from canopy.llm.openai import OpenAILLM, OpenAIClientParams  # noqa
 from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty, ModelParams # noqa
 from openai import BadRequestError # noqa
@@ -78,6 +78,25 @@ class TestOpenAILLM:
     @pytest.fixture
     def openai_llm(model_name):
         return OpenAILLM(model_name=model_name)
+
+    @staticmethod
+    def test_init_with_custom_params(openai_llm):
+        llm = OpenAILLM(model_name="test_model_name",
+                        model_params=ModelParams(temperature=0.9,
+                                                 top_p=0.95,
+                                                 n=3),
+                        client_params=OpenAIClientParams(
+                            api_key="test_api_key",
+                            organization="test_organization",
+                            timeout=30))
+
+        assert llm.model_name == "test_model_name"
+        assert llm.default_model_params.temperature == 0.9
+        assert llm.default_model_params.top_p == 0.95
+        assert llm.default_model_params.n == 3
+        assert llm._client.api_key == "test_api_key"
+        assert llm._client.organization == "test_organization"
+        assert llm._client.timeout == 30
 
     @staticmethod
     def test_chat_completion(openai_llm, messages):

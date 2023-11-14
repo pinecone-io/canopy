@@ -5,15 +5,24 @@ import openai
 import json
 
 from openai.types.chat import completion_create_params
+from pydantic import BaseModel
 from tenacity import (
     retry,
     stop_after_attempt,
     retry_if_exception_type,
 )
 from canopy.llm import BaseLLM
-from canopy.llm.models import Function, ModelParams, ClientParams
+from canopy.llm.models import Function, ModelParams
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
+
+
+class OpenAIClientParams(BaseModel):
+    api_key: Optional[str] = None
+    organization: Optional[str] = None
+    base_url: Optional[str] = None
+    max_retries: int = 2
+    timeout: Optional[int] = 20
 
 
 class OpenAILLM(BaseLLM):
@@ -30,11 +39,11 @@ class OpenAILLM(BaseLLM):
                  model_name: str = "gpt-3.5-turbo",
                  *,
                  model_params: Optional[ModelParams] = None,
-                 client_params: Optional[ClientParams] = None,
+                 client_params: Optional[OpenAIClientParams] = None,
                  ):
         super().__init__(model_name,
                          model_params=model_params)
-        client_params = client_params or ClientParams()
+        client_params = client_params or OpenAIClientParams()
         self._client = openai.OpenAI(
             **(client_params.dict(exclude_defaults=True)))
 
