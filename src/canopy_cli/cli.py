@@ -529,8 +529,8 @@ def chat(chat_server_url, rag, debug, stream):
         """
     )
 )
-@click.option("--host", default="localhost",
-              help="Hostname or address to bind the server to. Defaults to localhost")
+@click.option("--host", default="0.0.0.0",
+              help="Hostname or address to bind the server to. Defaults to 0.0.0.0")
 @click.option("--port", default=8000,
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
