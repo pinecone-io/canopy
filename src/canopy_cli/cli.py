@@ -549,7 +549,8 @@ def start(host: str, port: str, reload: bool,
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
     ) if os.name != "nt" else (
-        "please use Docker with a Gunicorn server."  # TODO: Add Docker instructions once we have a Dockerfile
+        # TODO: Replace with proper instructions once we have a Dockerfile
+        "please use Docker with a Gunicorn server."
     )
     for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
