@@ -71,28 +71,24 @@ You can find your free trial OpenAI API key https://platform.openai.com/account/
 
 API_VERSION = "v1"
 
+# Global variables - Application
+app: FastAPI
+openai_api_router = APIRouter(tags=["openai"])
+context_api_router = APIRouter(prefix="/context",tags=["context"])
+application_router = APIRouter(tags=["application"])
 
-app = FastAPI(
-    title="Canopy API",
-    description=APP_DESCRIPTION,
-    version=__version__,
-    license_info={
-        "name": "Apache 2.0",
-        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-    },
-)
-
-chat_completion_router 
-
+# Global variables - Engines
 context_engine: ContextEngine
 chat_engine: ChatEngine
 kb: KnowledgeBase
 llm: BaseLLM
+
+# Global variables - Logging
 logger: logging.Logger
 
 
-@app.post(
-    f"/api/{API_VERSION}/chat/completions",
+@openai_api_router.post(
+    f"/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
@@ -135,8 +131,8 @@ async def chat(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    f"/api/{API_VERSION}/context/query",
+@context_api_router.post(
+    "/query",
     response_model=ContextResponse,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
@@ -165,8 +161,8 @@ async def query(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    f"/api/{API_VERSION}/context/upsert",
+@context_api_router.post(
+    "/upsert",
     response_model=SuccessUpsertResponse,
     responses={500: {"description": "Failed to upsert documents"}},
 )
@@ -192,8 +188,8 @@ async def upsert(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    f"/api/{API_VERSION}/context/delete",
+@context_api_router.post(
+    "/delete",
     response_model=SuccessDeleteResponse,
     responses={500: {"description": "Failed to delete documents"}},
 )
@@ -213,12 +209,12 @@ async def delete(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@application_router.get(
     "/health",
     response_model=HealthStatus,
     responses={500: {"description": "Failed to connect to Pinecone or LLM"}},
 )
-@app.exception_handler(Exception)
+@application_router.exception_handler(Exception)
 async def health_check() -> HealthStatus:
     """
     Health check for the Canopy server. This endpoint checks the connection to Pinecone and the LLM.
@@ -245,7 +241,7 @@ async def health_check() -> HealthStatus:
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
-@app.get("/shutdown")
+@application_router.get("/shutdown")
 async def shutdown() -> ShutdownResponse:
     """
     __WARNING__: Experimental method.
@@ -272,7 +268,28 @@ async def shutdown() -> ShutdownResponse:
 async def startup():
     _init_logging()
     _init_engines()
+    _init_app()
 
+
+def _init_app():
+    global app
+    app = FastAPI(
+        title="Canopy API",
+        description=APP_DESCRIPTION,
+        version=__version__,
+        license_info={
+            "name": "Apache 2.0",
+            "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+        },
+    )
+
+    # Include the application level router (health, shutdown, ...)
+    app.include_router(application_router)
+    # Include the API without version == latest
+    app.include_router(openai_api_router)
+    # Include the API version in the path, API_VERSION should be the latest version.
+    app.include_router(openai_api_router, prefix=f"{API_VERSION}")
+    
 
 def _init_logging():
     global logger
