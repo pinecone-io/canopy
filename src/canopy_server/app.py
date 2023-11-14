@@ -18,7 +18,12 @@ from canopy.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
-from fastapi import FastAPI, HTTPException, Body
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Body,
+    APIRouter
+)
 import uvicorn
 from typing import cast, Union
 
@@ -27,7 +32,7 @@ from canopy.models.api_models import (
     ChatResponse,
 )
 from canopy.models.data_models import Context, UserMessage
-from .api_models import (
+from .models.v1.api_models import (
     ChatRequest,
     ContextQueryRequest,
     ContextUpsertRequest,
@@ -64,8 +69,10 @@ To find your Pinecone API key and environment log into Pinecone console (https:/
 You can find your free trial OpenAI API key https://platform.openai.com/account/api-keys. You might need to log in or register for OpenAI services.
 """  # noqa: E501
 
+API_VERSION = "v1"
 
-app = FastAPI(
+# Global variables - Application
+app: FastAPI = FastAPI(
     title="Canopy API",
     description=APP_DESCRIPTION,
     version=__version__,
@@ -74,16 +81,22 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+openai_api_router = APIRouter()
+context_api_router = APIRouter(prefix="/context")
+application_router = APIRouter(tags=["Application"])
 
+# Global variables - Engines
 context_engine: ContextEngine
 chat_engine: ChatEngine
 kb: KnowledgeBase
 llm: BaseLLM
+
+# Global variables - Logging
 logger: logging.Logger
 
 
-@app.post(
-    "/context/chat/completions",
+@openai_api_router.post(
+    "/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
@@ -126,8 +139,8 @@ async def chat(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    "/context/query",
+@context_api_router.post(
+    "/query",
     response_model=ContextResponse,
     responses={
         500: {"description": "Failed to query the knowledge base or build the context"}
@@ -156,8 +169,8 @@ async def query(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    "/context/upsert",
+@context_api_router.post(
+    "/upsert",
     response_model=SuccessUpsertResponse,
     responses={500: {"description": "Failed to upsert documents"}},
 )
@@ -183,8 +196,8 @@ async def upsert(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.post(
-    "/context/delete",
+@context_api_router.post(
+    "/delete",
     response_model=SuccessDeleteResponse,
     responses={500: {"description": "Failed to delete documents"}},
 )
@@ -204,7 +217,7 @@ async def delete(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@app.get(
+@application_router.get(
     "/health",
     response_model=HealthStatus,
     responses={500: {"description": "Failed to connect to Pinecone or LLM"}},
@@ -236,7 +249,7 @@ async def health_check() -> HealthStatus:
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
-@app.get("/shutdown")
+@application_router.get("/shutdown")
 async def shutdown() -> ShutdownResponse:
     """
     __WARNING__: Experimental method.
@@ -255,7 +268,11 @@ async def shutdown() -> ShutdownResponse:
             status_code=500,
             detail="Failed to locate parent process. Cannot shutdown server.",
         )
-    os.kill(pid, signal.SIGINT)
+    if sys.platform == 'win32':
+        kill_signal = signal.CTRL_C_EVENT
+    else:
+        kill_signal = signal.SIGINT
+    os.kill(pid, kill_signal)
     return ShutdownResponse()
 
 
@@ -263,6 +280,19 @@ async def shutdown() -> ShutdownResponse:
 async def startup():
     _init_logging()
     _init_engines()
+    _init_routes(app)
+
+
+def _init_routes(app):
+    # Include the application level router (health, shutdown, ...)
+    app.include_router(application_router, include_in_schema=False)
+    app.include_router(application_router, prefix=f"/{API_VERSION}")
+    # Include the API without version == latest
+    app.include_router(context_api_router, include_in_schema=False)
+    app.include_router(openai_api_router, include_in_schema=False)
+    # Include the API version in the path, API_VERSION should be the latest version.
+    app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
+    app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
 
 
 def _init_logging():

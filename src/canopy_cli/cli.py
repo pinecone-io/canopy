@@ -31,17 +31,18 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from canopy_server.app import start as start_server
+from canopy_server.app import start as start_server, API_VERSION
 from .cli_spinner import Spinner
-from canopy_server.api_models import ChatDebugInfo
+from canopy_server.models.v1.api_models import ChatDebugInfo
 
 
 load_dotenv()
 if os.getenv("OPENAI_API_KEY"):
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
-spinner = Spinner()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
+spinner = Spinner()
 
 
 def check_server_health(url: str):
@@ -171,8 +172,9 @@ def cli(ctx):
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default=DEFAULT_SERVER_URL,
+              help=("Canopy's server url. "
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -432,8 +434,9 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
+              help=("URL of the Canopy server to use."
+                    f" Defaults to {DEFAULT_SERVER_URL}"))
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
@@ -488,7 +491,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=os.path.join(chat_server_url, "context"),
+            api_base=chat_server_url,
             print_debug_info=debug,
         )
 
@@ -527,7 +530,7 @@ def chat(chat_server_url, rag, debug, stream):
     )
 )
 @click.option("--host", default="0.0.0.0",
-              help="Hostname or ip address to bind the server to. Defaults to 0.0.0.0")
+              help="Hostname or address to bind the server to. Defaults to 0.0.0.0")
 @click.option("--port", default=8000,
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
@@ -541,12 +544,18 @@ def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production, run the command:"
+        "For debugging only. To run the Canopy server in production "
+    )
+    msg_suffix = (
+        "run the command:"
         "\n"
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
+    ) if os.name != "nt" else (
+        # TODO: Replace with proper instructions once we have a Dockerfile
+        "please use Docker with a Gunicorn server."
     )
-    for c in note_msg:
+    for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
@@ -574,31 +583,33 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("url", "--url", default=DEFAULT_SERVER_URL,
+              help=("URL of the Canopy server to use. "
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def stop(url):
-    # Check if the server was started using Gunicorn
-    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
-                         capture_output=True)
-    output = res.stdout.decode("utf-8").split()
+    if os.name != "nt":
+        # Check if the server was started using Gunicorn
+        res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
+                             capture_output=True)
+        output = res.stdout.decode("utf-8").split()
 
-    # If Gunicorn was used, kill all Gunicorn processes
-    if output:
-        msg = ("It seems that Canopy server was launched using Gunicorn.\n"
-               "Do you want to kill all Gunicorn processes?")
-        click.confirm(click.style(msg, fg="red"), abort=True)
-        try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
-                           check=True)
-        except subprocess.CalledProcessError:
+        # If Gunicorn was used, kill all Gunicorn processes
+        if output:
+            msg = ("It seems that Canopy server was launched using Gunicorn.\n"
+                   "Do you want to kill all Gunicorn processes?")
+            click.confirm(click.style(msg, fg="red"), abort=True)
             try:
-                [os.kill(int(pid), signal.SIGINT) for pid in output]
-            except OSError:
-                msg = (
-                    "Could not kill Gunicorn processes. Please kill them manually."
-                    f"Found process ids: {output}"
-                )
-                raise CLIError(msg)
+                subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                               check=True)
+            except subprocess.CalledProcessError:
+                try:
+                    [os.kill(int(pid), signal.SIGINT) for pid in output]
+                except OSError:
+                    msg = (
+                        "Could not kill Gunicorn processes. Please kill them manually."
+                        f"Found process ids: {output}"
+                    )
+                    raise CLIError(msg)
 
     try:
         res = requests.get(urljoin(url, "/shutdown"))
@@ -619,8 +630,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def api_docs(url):
     import webbrowser
 
@@ -636,9 +647,9 @@ def api_docs(url):
     if generated_docs:
         import json
         from canopy_server._redocs_template import HTML_TEMPLATE
-        from canopy_server.app import app
+        from canopy_server.app import app, _init_routes
         # generate docs
-
+        _init_routes(app)
         filename = "canopy-api-docs.html"
         msg = f"Generating docs to {filename}"
         click.echo(click.style(msg, fg="green"))
@@ -646,7 +657,7 @@ def api_docs(url):
             print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
         webbrowser.open('file://' + os.path.realpath(filename))
     else:
-        webbrowser.open('http://localhost:8000/redoc')
+        webbrowser.open(urljoin(url, "redoc"))
 
 
 if __name__ == "__main__":
