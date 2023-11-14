@@ -112,3 +112,11 @@ class SystemMessage(MessageBase):
 class AssistantMessage(MessageBase):
     role: Literal[Role.ASSISTANT] = Role.ASSISTANT
     content: str
+
+
+class OpenAIClientParams(BaseModel):
+    api_key: Optional[str] = None
+    organization: Optional[str] = None
+    base_url: Optional[str] = None
+    max_retries: Optional[int] = 3
+    timeout: Optional[int] = 30

@@ -24,7 +24,7 @@ def generate_mock_openai_response(input, model):
 @pytest.fixture(autouse=True)
 def mock_openai(monkeypatch):
     mock_create = Mock(side_effect=generate_mock_openai_response)
-    monkeypatch.setattr('openai.Embedding.create', mock_create)
+    monkeypatch.setattr('openai.OpenAI.embeddings.create', mock_create)
 
 
 class TestOpenAIRecordEncoder(BaseTestRecordEncoder):
