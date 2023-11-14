@@ -489,7 +489,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=urljoin(chat_server_url, "/context"),
+            api_base=chat_server_url,
             print_debug_info=debug,
         )
 
