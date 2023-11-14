@@ -33,7 +33,7 @@ from canopy import __version__
 
 from canopy_server.app import start as start_server
 from .cli_spinner import Spinner
-from canopy_server.api_models import ChatDebugInfo
+from canopy_server.models.v1.api_models import ChatDebugInfo
 
 
 load_dotenv()
@@ -636,9 +636,9 @@ def api_docs(url):
     if generated_docs:
         import json
         from canopy_server._redocs_template import HTML_TEMPLATE
-        from canopy_server.app import app
+        from canopy_server.app import app, _init_routes
         # generate docs
-
+        _init_routes(app)
         filename = "canopy-api-docs.html"
         msg = f"Generating docs to {filename}"
         click.echo(click.style(msg, fg="green"))
@@ -646,7 +646,7 @@ def api_docs(url):
             print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
         webbrowser.open('file://' + os.path.realpath(filename))
     else:
-        webbrowser.open('http://localhost:8000/redoc')
+        webbrowser.open(urljoin(url, "redoc"))
 
 
 if __name__ == "__main__":

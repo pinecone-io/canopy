@@ -72,10 +72,18 @@ You can find your free trial OpenAI API key https://platform.openai.com/account/
 API_VERSION = "v1"
 
 # Global variables - Application
-app: FastAPI
-openai_api_router = APIRouter(tags=["openai"])
-context_api_router = APIRouter(prefix="/context",tags=["context"])
-application_router = APIRouter(tags=["application"])
+app: FastAPI = FastAPI(
+    title="Canopy API",
+    description=APP_DESCRIPTION,
+    version=__version__,
+    license_info={
+        "name": "Apache 2.0",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
+    },
+)
+openai_api_router = APIRouter()
+context_api_router = APIRouter(prefix="/context")
+application_router = APIRouter(tags=["Application"])
 
 # Global variables - Engines
 context_engine: ContextEngine
@@ -88,7 +96,7 @@ logger: logging.Logger
 
 
 @openai_api_router.post(
-    f"/chat/completions",
+    "/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
@@ -214,7 +222,7 @@ async def delete(
     response_model=HealthStatus,
     responses={500: {"description": "Failed to connect to Pinecone or LLM"}},
 )
-@application_router.exception_handler(Exception)
+@app.exception_handler(Exception)
 async def health_check() -> HealthStatus:
     """
     Health check for the Canopy server. This endpoint checks the connection to Pinecone and the LLM.
@@ -268,28 +276,19 @@ async def shutdown() -> ShutdownResponse:
 async def startup():
     _init_logging()
     _init_engines()
-    _init_app()
+    _init_routes(app)
 
 
-def _init_app():
-    global app
-    app = FastAPI(
-        title="Canopy API",
-        description=APP_DESCRIPTION,
-        version=__version__,
-        license_info={
-            "name": "Apache 2.0",
-            "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
-        },
-    )
-
+def _init_routes(app):
     # Include the application level router (health, shutdown, ...)
     app.include_router(application_router)
     # Include the API without version == latest
-    app.include_router(openai_api_router)
+    app.include_router(context_api_router, include_in_schema=False)
+    app.include_router(openai_api_router, include_in_schema=False)
     # Include the API version in the path, API_VERSION should be the latest version.
-    app.include_router(openai_api_router, prefix=f"{API_VERSION}")
-    
+    app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
+    app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
+
 
 def _init_logging():
     global logger

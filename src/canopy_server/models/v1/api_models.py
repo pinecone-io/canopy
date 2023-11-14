@@ -6,6 +6,7 @@ from canopy.models.data_models import Messages, Query, Document
 
 # TODO: consider separating these into modules: Chat, Context, Application, etc.
 
+
 class ChatRequest(BaseModel):
     model: str = Field(
         default="",
