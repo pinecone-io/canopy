@@ -12,8 +12,10 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from canopy.knowledge_base import KnowledgeBase
 
 from canopy_server.app import app, API_VERSION
-from canopy_server.api_models import (HealthStatus, ContextUpsertRequest,
-                                      ContextQueryRequest, )
+from canopy_server.models.v1.api_models import (
+    HealthStatus,
+    ContextUpsertRequest,
+    ContextQueryRequest)
 from .. import Tokenizer
 
 upsert_payload = ContextUpsertRequest(
