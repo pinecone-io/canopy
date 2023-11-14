@@ -63,6 +63,7 @@ def client(knowledge_base, index_name):
     os.environ["INDEX_NAME"] = index_name
     Tokenizer.clear()
     with TestClient(app) as client:
+        client.base_url = f"{client.base_url}/{API_VERSION}"
         yield client
     if index_name_before:
         os.environ["INDEX_NAME"] = index_name_before
@@ -96,7 +97,7 @@ def test_health(client):
 def test_upsert(client):
     # Upsert a document to the index
     upsert_response = client.post(
-        f"/api/{API_VERSION}/context/upsert",
+        "/context/upsert",
         json=upsert_payload.dict())
     assert upsert_response.is_success
 
@@ -117,7 +118,7 @@ def test_query(client):
     )
 
     query_response = client.post(
-        f"/api/{API_VERSION}/context/query",
+        "/context/query",
         json=query_payload.dict())
     assert query_response.is_success
 
@@ -147,7 +148,7 @@ def test_chat_required_params(client):
         ]
     }
     chat_response = client.post(
-        f"/api/{API_VERSION}/chat/completions",
+        "/chat/completions",
         json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
@@ -177,7 +178,7 @@ def test_chat_openai_additional_params(client):
         "top_p": 0.5,
     }
     chat_response = client.post(
-        f"/api/{API_VERSION}/chat/completions",
+        "/chat/completions",
         json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
@@ -198,7 +199,7 @@ def test_delete(client, knowledge_base):
         "document_ids": doc_ids
     }
     delete_response = client.post(
-        f"/api/{API_VERSION}/context/delete",
+        "/context/delete",
         json=delete_payload)
     assert delete_response.is_success
 
