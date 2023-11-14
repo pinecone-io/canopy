@@ -171,8 +171,8 @@ def cli(ctx):
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -432,8 +432,8 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("--chat-server-url", default="http://localhost:8000",
+              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
@@ -488,7 +488,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=os.path.join(chat_server_url, "context"),
+            api_base=urljoin(chat_server_url, "/context"),
             print_debug_info=debug,
         )
 
@@ -541,12 +541,18 @@ def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production, run the command:"
+        "For debugging only. To run the Canopy server in production "
+    )
+    msg_suffix = (
+        "run the command:"
         "\n"
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
+    ) if os.name != "nt" else (
+        # TODO: Replace with proper instructions once we have a Dockerfile
+        "please use Docker with a Gunicorn server."
     )
-    for c in note_msg:
+    for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
@@ -574,31 +580,32 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("url", "--url", default="http://localhost:8000",
+              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
 def stop(url):
-    # Check if the server was started using Gunicorn
-    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
-                         capture_output=True)
-    output = res.stdout.decode("utf-8").split()
+    if os.name != "nt":
+        # Check if the server was started using Gunicorn
+        res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
+                             capture_output=True)
+        output = res.stdout.decode("utf-8").split()
 
-    # If Gunicorn was used, kill all Gunicorn processes
-    if output:
-        msg = ("It seems that Canopy server was launched using Gunicorn.\n"
-               "Do you want to kill all Gunicorn processes?")
-        click.confirm(click.style(msg, fg="red"), abort=True)
-        try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
-                           check=True)
-        except subprocess.CalledProcessError:
+        # If Gunicorn was used, kill all Gunicorn processes
+        if output:
+            msg = ("It seems that Canopy server was launched using Gunicorn.\n"
+                   "Do you want to kill all Gunicorn processes?")
+            click.confirm(click.style(msg, fg="red"), abort=True)
             try:
-                [os.kill(int(pid), signal.SIGINT) for pid in output]
-            except OSError:
-                msg = (
-                    "Could not kill Gunicorn processes. Please kill them manually."
-                    f"Found process ids: {output}"
-                )
-                raise CLIError(msg)
+                subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                               check=True)
+            except subprocess.CalledProcessError:
+                try:
+                    [os.kill(int(pid), signal.SIGINT) for pid in output]
+                except OSError:
+                    msg = (
+                        "Could not kill Gunicorn processes. Please kill them manually."
+                        f"Found process ids: {output}"
+                    )
+                    raise CLIError(msg)
 
     try:
         res = requests.get(urljoin(url, "/shutdown"))
@@ -619,8 +626,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def api_docs(url):
     import webbrowser
 

@@ -255,7 +255,11 @@ async def shutdown() -> ShutdownResponse:
             status_code=500,
             detail="Failed to locate parent process. Cannot shutdown server.",
         )
-    os.kill(pid, signal.SIGINT)
+    if sys.platform == 'win32':
+        kill_signal = signal.CTRL_C_EVENT
+    else:
+        kill_signal = signal.SIGINT
+    os.kill(pid, kill_signal)
     return ShutdownResponse()
 
 
