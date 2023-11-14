@@ -40,8 +40,9 @@ load_dotenv()
 if os.getenv("OPENAI_API_KEY"):
     openai.api_key = os.getenv("OPENAI_API_KEY")
 
-spinner = Spinner()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
+spinner = Spinner()
 
 
 def check_server_health(url: str):
@@ -171,9 +172,9 @@ def cli(ctx):
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default=f"http://localhost:8000/{API_VERSION}",
+@click.option("--url", default=DEFAULT_SERVER_URL,
               help=("Canopy's server url. "
-                    f"Defaults to http://localhost:8000/{API_VERSION}"))
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -433,9 +434,9 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default=f"http://localhost:8000/{API_VERSION}",
+@click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
-                    f" Defaults to http://localhost:8000/{API_VERSION}"))
+                    f" Defaults to {DEFAULT_SERVER_URL}"))
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
@@ -528,8 +529,8 @@ def chat(chat_server_url, rag, debug, stream):
         """
     )
 )
-@click.option("--host", default="0.0.0.0",
-              help="Hostname or ip address to bind the server to. Defaults to 0.0.0.0")
+@click.option("--host", default="localhost",
+              help="Hostname or address to bind the server to. Defaults to localhost")
 @click.option("--port", default=8000,
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
@@ -582,9 +583,9 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default=f"http://localhost:8000/{API_VERSION}",
+@click.option("url", "--url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use. "
-                    f"Defaults to http://localhost:8000/{API_VERSION}"))
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def stop(url):
     if os.name != "nt":
         # Check if the server was started using Gunicorn
