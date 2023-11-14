@@ -31,7 +31,7 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from canopy_server.app import start as start_server
+from canopy_server.app import start as start_server, API_VERSION
 from .cli_spinner import Spinner
 from canopy_server.models.v1.api_models import ChatDebugInfo
 
@@ -432,8 +432,9 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default="http://localhost:8000",
-              help="URL of the Canopy server to use. Defaults to http://localhost:8000")
+@click.option("--chat-server-url", default=f"http://localhost:8000/{API_VERSION}",
+              help=("URL of the Canopy server to use."
+                    f" Defaults to http://localhost:8000/{API_VERSION}"))
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
