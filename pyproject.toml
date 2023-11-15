@@ -13,11 +13,10 @@ packages = [{include = "canopy", from = "src"},
 python = "^3.9"
 pinecone-client = "^2.2.2"
 python-dotenv = "^1.0.0"
-openai = "^0.27.5"
+openai = "^1.2.3"
 tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.2"
 pydantic = "^1.10.7"
-pinecone-text = { version = "^0.6.1", extras = ["openai"] }
 pandas-stubs = "^2.0.3.230814"
 fastapi = "^0.92.0"
 uvicorn = "^0.20.0"
@@ -30,6 +29,7 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
+pinecone-text = "^0.7.0"
 
 
 [tool.poetry.group.dev.dependencies]

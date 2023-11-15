@@ -9,7 +9,6 @@ from canopy.chat_engine.query_generator import (QueryGenerator,
 from canopy.context_engine import ContextEngine
 from canopy.tokenizer import Tokenizer
 from canopy.llm import BaseLLM, OpenAILLM
-from canopy.llm.models import ModelParams
 from canopy.models.api_models import (StreamingChatChunk, ChatResponse,
                                       StreamingChatResponse, )
 from canopy.models.data_models import Context, Messages, SystemMessage
@@ -30,7 +29,7 @@ class BaseChatEngine(ABC, ConfigurableMixin):
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[ModelParams] = None
+             model_params: Optional[dict] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
@@ -39,7 +38,7 @@ class BaseChatEngine(ABC, ConfigurableMixin):
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    model_params: Optional[ModelParams] = None
+                    model_params: Optional[dict] = None
                     ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
@@ -160,7 +159,7 @@ class ChatEngine(BaseChatEngine):
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[ModelParams] = None
+             model_params: Optional[dict] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -228,7 +227,7 @@ class ChatEngine(BaseChatEngine):
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    model_params: Optional[ModelParams] = None
+                    model_params: Optional[dict] = None
                     ) -> Union[ChatResponse, StreamingChatResponse]:
         raise NotImplementedError
 
