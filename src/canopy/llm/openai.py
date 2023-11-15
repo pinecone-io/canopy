@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List, cast
 
 import jsonschema
@@ -11,9 +12,9 @@ from tenacity import (
     retry_if_exception_type,
 )
 from canopy.llm import BaseLLM
-from canopy.llm.models import Function, ModelParams
+from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Query, OpenAIClientParams
+from canopy.models.data_models import Messages, Query
 
 
 class OpenAILLM(BaseLLM):
@@ -29,14 +30,16 @@ class OpenAILLM(BaseLLM):
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo",
                  *,
-                 model_params: Optional[ModelParams] = None,
-                 client_params: Optional[OpenAIClientParams] = None,
+                 api_key: Optional[str] = None,
+                 organization: Optional[str] = None,
+                 base_url: Optional[str] = None,
+                 **kwargs: Any,
                  ):
-        super().__init__(model_name,
-                         model_params=model_params)
-        client_params = client_params or OpenAIClientParams()
-        self._client = openai.OpenAI(
-            **(client_params.dict(exclude_none=True)))
+        super().__init__(model_name)
+        self._client = openai.OpenAI(api_key=api_key,
+                                     organization=organization,
+                                     base_url=base_url)
+        self.default_model_params = kwargs
 
     @property
     def available_models(self):
@@ -47,7 +50,7 @@ class OpenAILLM(BaseLLM):
                         *,
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
-                        model_params: Optional[ModelParams] = None,
+                        model_params: Optional[dict] = None,
                         ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         """
         Chat completion using the OpenAI API.
@@ -73,12 +76,10 @@ class OpenAILLM(BaseLLM):
             "I'm good, how are you?"
         """  # noqa: E501
 
-        model_params_dict: Dict[str, Any] = {}
+        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
         model_params_dict.update(
-            **self.default_model_params.dict(exclude_defaults=True)
+            model_params or {}
         )
-        if model_params:
-            model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
         messages = [m.dict() for m in messages]
         response = self._client.chat.completions.create(model=self.model_name,
@@ -109,7 +110,7 @@ class OpenAILLM(BaseLLM):
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None) -> dict:
+                               model_params: Optional[dict] = None,) -> dict:
         """
         This function enforces the model to respond with a specific function call.
 
@@ -150,12 +151,10 @@ class OpenAILLM(BaseLLM):
             {'queries': ['capital of France']}
         """  # noqa: E501
 
-        model_params_dict: Dict[str, Any] = {}
+        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
         model_params_dict.update(
-            **self.default_model_params.dict(exclude_defaults=True)
+            model_params or {}
         )
-        if model_params:
-            model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
@@ -179,7 +178,7 @@ class OpenAILLM(BaseLLM):
     async def achat_completion(self,
                                messages: Messages, *, stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None
+                               model_params: Optional[dict] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
@@ -188,6 +187,6 @@ class OpenAILLM(BaseLLM):
                                 messages: Messages,
                                 *,
                                 max_generated_tokens: Optional[int] = None,
-                                model_params: Optional[ModelParams] = None
+                                model_params: Optional[dict] = None,
                                 ) -> List[Query]:
         raise NotImplementedError()

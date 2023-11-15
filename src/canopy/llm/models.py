@@ -3,12 +3,6 @@ from typing import Optional, List, Union
 from pydantic import BaseModel
 
 
-class ModelParams(BaseModel):
-    temperature: Optional[float] = None
-    n: Optional[int] = None  # number of completions to generate
-    top_p: Optional[float] = None
-
-
 class FunctionPrimitiveProperty(BaseModel):
     name: str
     type: str

@@ -1,5 +1,4 @@
-from typing import List, Optional
-from canopy.models.data_models import OpenAIClientParams
+from typing import List
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
 from canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
@@ -18,7 +17,6 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                  *,
                  model_name: str = "text-embedding-ada-002",
                  batch_size: int = 400,
-                 client_params: Optional[OpenAIClientParams] = None,
                  **kwargs):
         """
         Initialize the OpenAIRecordEncoder
@@ -29,9 +27,8 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                         Defaults to 400.
             **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
         """  # noqa: E501
-        client_params = client_params or OpenAIClientParams()
-        encoder = OpenAIEncoder(model_name, **client_params.dict(exclude_none=True))
-        super().__init__(dense_encoder=encoder, batch_size=batch_size, **kwargs)
+        encoder = OpenAIEncoder(model_name, **kwargs)
+        super().__init__(dense_encoder=encoder, batch_size=batch_size)
 
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         """
