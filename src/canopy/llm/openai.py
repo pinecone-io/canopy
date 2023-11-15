@@ -35,6 +35,18 @@ class OpenAILLM(BaseLLM):
                  base_url: Optional[str] = None,
                  **kwargs: Any,
                  ):
+        """
+        Initialize the OpenAI LLM.
+
+        Args:
+            model_name: The name of the model to use. See https://platform.openai.com/docs/models
+            api_key: Your OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
+            organization: Your OpenAI organization. Defaults to None (uses the "OPENAI_ORG" environment variable if set, otherwise uses the "default" organization).
+            base_url: The base URL to use for the OpenAI API. Defaults to None (uses the default OpenAI API URL).
+            kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
+                    For example, you can set the temperature, top_p etc
+                    These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
+        """  # noqa: E501
         super().__init__(model_name)
         self._client = openai.OpenAI(api_key=api_key,
                                      organization=organization,
@@ -62,6 +74,8 @@ class OpenAILLM(BaseLLM):
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
+                          Dictonary of parametrs to override the default model parameters if set on initialization.
+                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
             ChatResponse or StreamingChatChunk
@@ -123,7 +137,9 @@ class OpenAILLM(BaseLLM):
             function: Function to call. See canopy.llm.models.Function for more details.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                            see: https://platform.openai.com/docs/api-reference/chat/create
+                          Overrides the default model parameters if set on initialization.
+                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
+                          see: https://platform.openai.com/docs/api-reference/chat/create
 
         Returns:
             dict: Function call arguments as a dictionary.
