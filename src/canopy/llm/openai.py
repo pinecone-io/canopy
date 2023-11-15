@@ -43,7 +43,7 @@ class OpenAILLM(BaseLLM):
             api_key: Your OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
             organization: Your OpenAI organization. Defaults to None (uses the "OPENAI_ORG" environment variable if set, otherwise uses the "default" organization).
             base_url: The base URL to use for the OpenAI API. Defaults to None (uses the default OpenAI API URL).
-            kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
+            **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
                     For example, you can set the temperature, top_p etc
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
         """  # noqa: E501
