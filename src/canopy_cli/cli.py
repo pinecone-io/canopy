@@ -37,8 +37,7 @@ from canopy_server.api_models import ChatDebugInfo
 
 
 load_dotenv()
-if os.getenv("OPENAI_API_KEY"):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
+
 
 spinner = Spinner()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
@@ -364,10 +363,12 @@ def _chat(
 ):
     output = ""
     history += [{"role": "user", "content": message}]
+    client = openai.OpenAI(base_url=api_base)
+
     start = time.time()
     try:
-        openai_response = openai.ChatCompletion.create(
-            model=model, messages=history, stream=stream, api_base=api_base
+        openai_response = client.chat.completions.create(
+            model=model, messages=history, stream=stream
         )
     except (Exception, OpenAI_APIError) as e:
         err = e.http_body if isinstance(e, OpenAI_APIError) else str(e)
@@ -380,7 +381,7 @@ def _chat(
         for chunk in openai_response:
             openai_response_id = chunk.id
             intenal_model = chunk.model
-            text = chunk.choices[0].delta.get("content", "")
+            text = chunk.choices[0].delta.content or ""
             output += text
             click.echo(text, nl=False)
         click.echo()
@@ -391,7 +392,7 @@ def _chat(
         )
     else:
         intenal_model = openai_response.model
-        text = openai_response.choices[0].message.get("content", "")
+        text = openai_response.choices[0].message.content or ""
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
