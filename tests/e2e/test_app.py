@@ -63,6 +63,7 @@ def knowledge_base(index_name):
 def client(knowledge_base, index_name):
     index_name_before = os.getenv("INDEX_NAME")
     os.environ["INDEX_NAME"] = index_name
+    tokenizer_before = Tokenizer._tokenizer_instance
     Tokenizer.clear()
     with TestClient(app) as client:
         client.base_url = f"{client.base_url}/{API_VERSION}"
@@ -71,6 +72,7 @@ def client(knowledge_base, index_name):
         os.environ["INDEX_NAME"] = index_name_before
     else:
         os.unsetenv("INDEX_NAME")
+    Tokenizer.initialize(tokenizer_before.__class__)
 
 
 @pytest.fixture(scope="module", autouse=True)
