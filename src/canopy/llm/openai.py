@@ -157,8 +157,8 @@ class OpenAILLM(BaseLLM):
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
         chat_completion = self._client.chat.completions.create(
-            model=self.model_name,
             messages=[m.dict() for m in messages],
+            model=self.model_name,
             tools=[{"type": "function", "function": function.dict()}],
             tool_choice={"type": "function",
                          "function": {"name": function.name}},
