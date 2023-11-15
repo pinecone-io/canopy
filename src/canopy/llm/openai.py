@@ -1,9 +1,10 @@
-from typing import Union, Iterable, Optional, Any, Dict, List
+from typing import Union, Iterable, Optional, Any, Dict, List, cast
 
 import jsonschema
 import openai
 import json
 
+from openai.types.chat import ChatCompletionToolParam
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -156,10 +157,13 @@ class OpenAILLM(BaseLLM):
         if model_params:
             model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
+        function_dict = cast(ChatCompletionToolParam,
+                             {"type": "function", "function": function.dict()})
+
         chat_completion = self._client.chat.completions.create(
             messages=[m.dict() for m in messages],
             model=self.model_name,
-            tools=[{"type": "function", "function": function.dict()}],
+            tools=[function_dict],
             tool_choice={"type": "function",
                          "function": {"name": function.name}},
             max_tokens=max_tokens,
