@@ -130,14 +130,14 @@ jobs:
           bodyFile: "CHANGELOG.md"
 
       - name: Publish to test pypi
-        if: ${{ inputs.useTestPyPI == 'true' }}
+        if: ${{ inputs.useTestPyPI == true }}
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_TOKEN }}
           poetry publish -r testpypi
 
       - name: Publish to pypi
-        if: ${{ inputs.useTestPyPI == 'false' }}
+        if: ${{ inputs.useTestPyPI == false }}
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish

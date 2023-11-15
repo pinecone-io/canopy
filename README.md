@@ -116,9 +116,14 @@ canopy upsert /path/to/data_directory/file.parquet
 
 # or
 canopy upsert /path/to/data_directory/file.jsonl
+
+# or
+canopy upsert /path/to/directory_of_txt_files/
+
+# ...
 ```
 
-Canopy supports files in `jsonl` or `parquet` formats. The documents should have the following schema:
+Canopy supports files in `jsonl`, `parquet` and `csv` formats. The documents should have the following schema:
 
 ```
 +----------+--------------+--------------+---------------+
@@ -129,6 +134,8 @@ Canopy supports files in `jsonl` or `parquet` formats. The documents should have
 +----------+--------------+--------------+---------------+
 ```
 > [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format.
+
+Additionally, you can load plaintext data files in `.txt` format. In this case, each file will be treated as a single document. The document id will be the filename, and the source will be the full path of the file.
 
 Follow the instructions in the CLI to upload your data.
 
