@@ -212,7 +212,9 @@ class TestOpenAILLM:
             choices=[MagicMock(
                 message=MagicMock(
                     tool_calls=[
-                        MagicMock(function=MagicMock(arguments="{\"key\": \"value\"}"))]))])
+                        MagicMock(
+                            function=MagicMock(
+                                arguments="{\"key\": \"value\"}"))]))])
 
         with pytest.raises(jsonschema.ValidationError,
                            match="'queries' is a required property"):
