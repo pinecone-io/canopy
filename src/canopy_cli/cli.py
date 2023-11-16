@@ -144,7 +144,7 @@ def _validate_chat_engine(config_file: Optional[str]):
     except openai.OpenAIError:
         raise CLIError(OPENAI_AUTH_ERROR_MSG)
     except Exception as e:
-        msg = f"Failed to initialize chat engine. Reason:\n{e}"
+        msg = f"Failed to initialize Canopy server. Reason:\n{e}"
         if config_file:
             msg += f"\nPlease check the configuration file {config_file}"
         raise CLIError(msg)
