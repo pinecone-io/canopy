@@ -223,3 +223,11 @@ class TestOpenAILLM:
 
         assert openai_llm._client.chat.completions.create.call_count == 3, \
             "retry did not happen as expected"
+
+    @staticmethod
+    def test_available_models(openai_llm):
+        models = openai_llm.available_models()
+        assert isinstance(models, list)
+        assert len(models) > 0
+        assert isinstance(models[0], str)
+        assert openai_llm.model_name in models

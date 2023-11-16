@@ -140,7 +140,7 @@ def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
     Tokenizer.initialize()
     try:
-        chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
+        ChatEngine.from_config(config.get("chat_engine", {}))
     except openai.OpenAIError:
         raise CLIError(OPENAI_AUTH_ERROR_MSG)
     except Exception as e:
