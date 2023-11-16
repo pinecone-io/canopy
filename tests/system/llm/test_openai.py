@@ -226,7 +226,7 @@ class TestOpenAILLM:
 
     @staticmethod
     def test_available_models(openai_llm):
-        models = openai_llm.available_models()
+        models = openai_llm.available_models
         assert isinstance(models, list)
         assert len(models) > 0
         assert isinstance(models[0], str)
