@@ -55,7 +55,7 @@ class OpenAILLM(BaseLLM):
 
     @property
     def available_models(self):
-        return [k["id"] for k in openai.Model.list().data]
+        return [k.id for k in self._client.models.list()]
 
     def chat_completion(self,
                         messages: Messages,
