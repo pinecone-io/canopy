@@ -84,7 +84,8 @@ def validate_connection():
         )
         raise CLIError(msg)
     try:
-        openai.Model.list()
+        client = openai.OpenAI()
+        client.models.list()
     except Exception:
         msg = (
             "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
