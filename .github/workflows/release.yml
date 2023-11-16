@@ -55,7 +55,7 @@ jobs:
       - name: Bump version
         if: ${{ inputs.bumpVersion == true }}
         run: |
-          poetry version ${{ inputs.releaseLevel || 'patch' }}
+          poetry version ${{ inputs.versionLevel || 'patch' }}
 
       - name: Store version number
         id: store-version
