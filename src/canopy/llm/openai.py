@@ -1,17 +1,18 @@
-from typing import Union, Iterable, Optional, Any, Dict, List
+from copy import deepcopy
+from typing import Union, Iterable, Optional, Any, Dict, List, cast
 
 import jsonschema
 import openai
 import json
+
+from openai.types.chat import ChatCompletionToolParam
 from tenacity import (
     retry,
-    wait_random_exponential,
     stop_after_attempt,
     retry_if_exception_type,
 )
-from canopy.utils.openai_exceptions import OPEN_AI_TRANSIENT_EXCEPTIONS
 from canopy.llm import BaseLLM
-from canopy.llm.models import Function, ModelParams
+from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
@@ -29,27 +30,39 @@ class OpenAILLM(BaseLLM):
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo",
                  *,
-                 model_params: Optional[ModelParams] = None,
+                 api_key: Optional[str] = None,
+                 organization: Optional[str] = None,
+                 base_url: Optional[str] = None,
+                 **kwargs: Any,
                  ):
-        super().__init__(model_name,
-                         model_params=model_params)
+        """
+        Initialize the OpenAI LLM.
+
+        Args:
+            model_name: The name of the model to use. See https://platform.openai.com/docs/models
+            api_key: Your OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
+            organization: Your OpenAI organization. Defaults to None (uses the "OPENAI_ORG" environment variable if set, otherwise uses the "default" organization).
+            base_url: The base URL to use for the OpenAI API. Defaults to None (uses the default OpenAI API URL).
+            **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
+                    For example, you can set the temperature, top_p etc
+                    These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
+        """  # noqa: E501
+        super().__init__(model_name)
+        self._client = openai.OpenAI(api_key=api_key,
+                                     organization=organization,
+                                     base_url=base_url)
+        self.default_model_params = kwargs
 
     @property
     def available_models(self):
-        return [k["id"] for k in openai.Model.list().data]
+        return [k.id for k in self._client.models.list()]
 
-    @retry(
-        reraise=True,
-        wait=wait_random_exponential(min=1, max=10),
-        stop=stop_after_attempt(3),
-        retry=retry_if_exception_type(OPEN_AI_TRANSIENT_EXCEPTIONS),
-    )
     def chat_completion(self,
                         messages: Messages,
                         *,
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
-                        model_params: Optional[ModelParams] = None,
+                        model_params: Optional[dict] = None,
                         ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         """
         Chat completion using the OpenAI API.
@@ -61,6 +74,8 @@ class OpenAILLM(BaseLLM):
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
+                          Dictonary of parametrs to override the default model parameters if set on initialization.
+                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
             ChatResponse or StreamingChatChunk
@@ -75,36 +90,33 @@ class OpenAILLM(BaseLLM):
             "I'm good, how are you?"
         """  # noqa: E501
 
-        model_params_dict: Dict[str, Any] = {}
+        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
         model_params_dict.update(
-            **self.default_model_params.dict(exclude_defaults=True)
+            model_params or {}
         )
-        if model_params:
-            model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
         messages = [m.dict() for m in messages]
-        response = openai.ChatCompletion.create(model=self.model_name,
-                                                messages=messages,
-                                                stream=stream,
-                                                max_tokens=max_tokens,
-                                                **model_params_dict)
+        response = self._client.chat.completions.create(model=self.model_name,
+                                                        messages=messages,
+                                                        stream=stream,
+                                                        max_tokens=max_tokens,
+                                                        **model_params_dict)
 
         def streaming_iterator(response):
             for chunk in response:
-                yield StreamingChatChunk(**chunk)
+                yield StreamingChatChunk.parse_obj(chunk)
 
         if stream:
             return streaming_iterator(response)
 
-        return ChatResponse(**response)
+        return ChatResponse.parse_obj(response)
 
     @retry(
         reraise=True,
-        wait=wait_random_exponential(min=1, max=10),
         stop=stop_after_attempt(3),
         retry=retry_if_exception_type(
-            OPEN_AI_TRANSIENT_EXCEPTIONS + (json.decoder.JSONDecodeError,
-                                            jsonschema.ValidationError)
+            (json.decoder.JSONDecodeError,
+             jsonschema.ValidationError)
         ),
     )
     def enforced_function_call(self,
@@ -112,7 +124,7 @@ class OpenAILLM(BaseLLM):
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None) -> dict:
+                               model_params: Optional[dict] = None,) -> dict:
         """
         This function enforces the model to respond with a specific function call.
 
@@ -125,7 +137,9 @@ class OpenAILLM(BaseLLM):
             function: Function to call. See canopy.llm.models.Function for more details.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                            see: https://platform.openai.com/docs/api-reference/chat/create
+                          Overrides the default model parameters if set on initialization.
+                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
+                          see: https://platform.openai.com/docs/api-reference/chat/create
 
         Returns:
             dict: Function call arguments as a dictionary.
@@ -152,29 +166,27 @@ class OpenAILLM(BaseLLM):
             >>> llm.enforced_function_call(messages, function)
             {'queries': ['capital of France']}
         """  # noqa: E501
-        # this enforces the model to call the function
-        function_call = {"name": function.name}
 
-        model_params_dict: Dict[str, Any] = {}
+        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
         model_params_dict.update(
-            **self.default_model_params.dict(exclude_defaults=True)
+            model_params or {}
         )
-        if model_params:
-            model_params_dict.update(**model_params.dict(exclude_defaults=True))
 
-        messages = [m.dict() for m in messages]
+        function_dict = cast(ChatCompletionToolParam,
+                             {"type": "function", "function": function.dict()})
 
-        chat_completion = openai.ChatCompletion.create(
+        chat_completion = self._client.chat.completions.create(
+            messages=[m.dict() for m in messages],
             model=self.model_name,
-            messages=messages,
-            functions=[function.dict()],
-            function_call=function_call,
+            tools=[function_dict],
+            tool_choice={"type": "function",
+                         "function": {"name": function.name}},
             max_tokens=max_tokens,
             **model_params_dict
         )
 
-        result = chat_completion.choices[0].message.function_call
-        arguments = json.loads(result["arguments"])
+        result = chat_completion.choices[0].message.tool_calls[0].function.arguments
+        arguments = json.loads(result)
 
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
         return arguments
@@ -182,7 +194,7 @@ class OpenAILLM(BaseLLM):
     async def achat_completion(self,
                                messages: Messages, *, stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[ModelParams] = None
+                               model_params: Optional[dict] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
@@ -191,6 +203,6 @@ class OpenAILLM(BaseLLM):
                                 messages: Messages,
                                 *,
                                 max_generated_tokens: Optional[int] = None,
-                                model_params: Optional[ModelParams] = None
+                                model_params: Optional[dict] = None,
                                 ) -> List[Query]:
         raise NotImplementedError()

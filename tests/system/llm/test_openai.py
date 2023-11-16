@@ -1,4 +1,4 @@
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 import jsonschema
 import pytest
@@ -6,10 +6,10 @@ import pytest
 
 from canopy.models.data_models import Role, MessageBase # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
-from canopy.llm.openai import OpenAILLM # noqa
+from canopy.llm.openai import OpenAILLM  # noqa
 from canopy.llm.models import \
-    Function, FunctionParameters, FunctionArrayProperty, ModelParams # noqa
-from openai import InvalidRequestError # noqa
+    Function, FunctionParameters, FunctionArrayProperty  # noqa
+from openai import BadRequestError # noqa
 
 
 def assert_chat_completion(response, num_choices=1):
@@ -67,17 +67,33 @@ class TestOpenAILLM:
     @staticmethod
     @pytest.fixture
     def model_params_high_temperature():
-        return ModelParams(temperature=0.9, top_p=0.95, n=3)
+        return {"temperature": 0.9, "top_p": 0.95, "n": 3}
 
     @staticmethod
     @pytest.fixture
     def model_params_low_temperature():
-        return ModelParams(temperature=0.2, top_p=0.5, n=1)
+        return {"temperature": 0.2, "top_p": 0.5, "n": 1}
 
     @staticmethod
     @pytest.fixture
     def openai_llm(model_name):
         return OpenAILLM(model_name=model_name)
+
+    @staticmethod
+    def test_init_with_custom_params(openai_llm):
+        llm = OpenAILLM(model_name="test_model_name",
+                        api_key="test_api_key",
+                        organization="test_organization",
+                        temperature=0.9,
+                        top_p=0.95,
+                        n=3,)
+
+        assert llm.model_name == "test_model_name"
+        assert llm.default_model_params["temperature"] == 0.9
+        assert llm.default_model_params["top_p"] == 0.95
+        assert llm.default_model_params["n"] == 3
+        assert llm._client.api_key == "test_api_key"
+        assert llm._client.organization == "test_organization"
 
     @staticmethod
     def test_chat_completion(openai_llm, messages):
@@ -102,7 +118,7 @@ class TestOpenAILLM:
             model_params=model_params_high_temperature
         )
         assert_chat_completion(response,
-                               num_choices=model_params_high_temperature.n)
+                               num_choices=model_params_high_temperature["n"])
 
     @staticmethod
     def test_chat_completion_low_temperature(openai_llm,
@@ -111,7 +127,7 @@ class TestOpenAILLM:
         response = openai_llm.chat_completion(messages=messages,
                                               model_params=model_params_low_temperature)
         assert_chat_completion(response,
-                               num_choices=model_params_low_temperature.n)
+                               num_choices=model_params_low_temperature["n"])
 
     @staticmethod
     def test_enforced_function_call_high_temperature(openai_llm,
@@ -157,51 +173,61 @@ class TestOpenAILLM:
 
     @staticmethod
     def test_missing_messages(openai_llm):
-        with pytest.raises(InvalidRequestError):
+        with pytest.raises(BadRequestError):
             openai_llm.chat_completion(messages=[])
 
     @staticmethod
     def test_negative_max_tokens(openai_llm, messages):
-        with pytest.raises(InvalidRequestError):
+        with pytest.raises(BadRequestError):
             openai_llm.chat_completion(messages=messages, max_tokens=-5)
 
     @staticmethod
-    @patch("openai.ChatCompletion.create")
-    def test_chat_complete_api_failure_populates(mock_api_call,
-                                                 openai_llm,
+    def test_chat_complete_api_failure_populates(openai_llm,
                                                  messages):
-        mock_api_call.side_effect = Exception("API call failed")
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.side_effect = Exception(
+            "API call failed")
 
         with pytest.raises(Exception, match="API call failed"):
             openai_llm.chat_completion(messages=messages)
 
     @staticmethod
-    @patch("openai.ChatCompletion.create")
-    def test_enforce_function_api_failure_populates(mock_api_call,
-                                                    openai_llm,
+    def test_enforce_function_api_failure_populates(openai_llm,
                                                     messages,
                                                     function_query_knowledgebase):
-        mock_api_call.side_effect = Exception("API call failed")
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.side_effect = Exception(
+            "API call failed")
 
         with pytest.raises(Exception, match="API call failed"):
             openai_llm.enforced_function_call(messages=messages,
                                               function=function_query_knowledgebase)
 
     @staticmethod
-    @patch("openai.ChatCompletion")
-    def test_enforce_function_wrong_output_schema(chat_completion,
-                                                  openai_llm,
+    def test_enforce_function_wrong_output_schema(openai_llm,
                                                   messages,
                                                   function_query_knowledgebase):
-        chat_completion.create.return_value = MagicMock(
+        openai_llm._client = MagicMock()
+        openai_llm._client.chat.completions.create.return_value = MagicMock(
             choices=[MagicMock(
                 message=MagicMock(
-                    function_call={"arguments": "{\"key\": \"value\"}"}))])
+                    tool_calls=[
+                        MagicMock(
+                            function=MagicMock(
+                                arguments="{\"key\": \"value\"}"))]))])
 
         with pytest.raises(jsonschema.ValidationError,
                            match="'queries' is a required property"):
             openai_llm.enforced_function_call(messages=messages,
                                               function=function_query_knowledgebase)
 
-        assert chat_completion.create.call_count == 3, \
+        assert openai_llm._client.chat.completions.create.call_count == 3, \
             "retry did not happen as expected"
+
+    @staticmethod
+    def test_available_models(openai_llm):
+        models = openai_llm.available_models
+        assert isinstance(models, list)
+        assert len(models) > 0
+        assert isinstance(models[0], str)
+        assert openai_llm.model_name in models

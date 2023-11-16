@@ -11,9 +11,11 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 
 from canopy.knowledge_base import KnowledgeBase
 
-from canopy_server.app import app
-from canopy_server.api_models import (HealthStatus, ContextUpsertRequest,
-                                      ContextQueryRequest, )
+from canopy_server.app import app, API_VERSION
+from canopy_server.models.v1.api_models import (
+    HealthStatus,
+    ContextUpsertRequest,
+    ContextQueryRequest)
 from .. import Tokenizer
 
 upsert_payload = ContextUpsertRequest(
@@ -61,13 +63,16 @@ def knowledge_base(index_name):
 def client(knowledge_base, index_name):
     index_name_before = os.getenv("INDEX_NAME")
     os.environ["INDEX_NAME"] = index_name
+    tokenizer_before = Tokenizer._tokenizer_instance
     Tokenizer.clear()
     with TestClient(app) as client:
+        client.base_url = f"{client.base_url}/{API_VERSION}"
         yield client
     if index_name_before:
         os.environ["INDEX_NAME"] = index_name_before
     else:
         os.unsetenv("INDEX_NAME")
+    Tokenizer.initialize(tokenizer_before.__class__)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -95,7 +100,9 @@ def test_health(client):
 
 def test_upsert(client):
     # Upsert a document to the index
-    upsert_response = client.post("/context/upsert", json=upsert_payload.dict())
+    upsert_response = client.post(
+        "/context/upsert",
+        json=upsert_payload.dict())
     assert upsert_response.is_success
 
 
@@ -114,7 +121,9 @@ def test_query(client):
         max_tokens=100,
     )
 
-    query_response = client.post("/context/query", json=query_payload.dict())
+    query_response = client.post(
+        "/context/query",
+        json=query_payload.dict())
     assert query_response.is_success
 
     query_response = query_response.json()
@@ -142,7 +151,9 @@ def test_chat_required_params(client):
             }
         ]
     }
-    chat_response = client.post("/context/chat/completions", json=chat_payload)
+    chat_response = client.post(
+        "/chat/completions",
+        json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
     assert chat_response_as_json["choices"][0]["message"]["role"] == "assistant"
@@ -170,7 +181,9 @@ def test_chat_openai_additional_params(client):
         "stop": "stop string",
         "top_p": 0.5,
     }
-    chat_response = client.post("/context/chat/completions", json=chat_payload)
+    chat_response = client.post(
+        "/chat/completions",
+        json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
     assert chat_response_as_json["choices"][0]["message"]["role"] == "assistant"
@@ -189,7 +202,9 @@ def test_delete(client, knowledge_base):
     delete_payload = {
         "document_ids": doc_ids
     }
-    delete_response = client.post("/context/delete", json=delete_payload)
+    delete_response = client.post(
+        "/context/delete",
+        json=delete_payload)
     assert delete_response.is_success
 
     assert_vector_ids_not_exist(vector_ids, knowledge_base)

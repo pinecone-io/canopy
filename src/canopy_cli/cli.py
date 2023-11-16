@@ -15,12 +15,13 @@ from tqdm import tqdm
 
 import pandas as pd
 import openai
-from openai.error import APIError as OpenAI_APIError
+from openai import APIError as OpenAI_APIError
 from urllib.parse import urljoin
 
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base import connect_to_pinecone
 from canopy.knowledge_base.chunker import Chunker
+from canopy.chat_engine import ChatEngine
 from canopy.models.data_models import Document
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
@@ -31,17 +32,23 @@ from canopy_cli.errors import CLIError
 
 from canopy import __version__
 
-from canopy_server.app import start as start_server
+from canopy_server.app import start as start_server, API_VERSION
 from .cli_spinner import Spinner
-from canopy_server.api_models import ChatDebugInfo
+from canopy_server.models.v1.api_models import ChatDebugInfo
 
 
 load_dotenv()
-if os.getenv("OPENAI_API_KEY"):
-    openai.api_key = os.getenv("OPENAI_API_KEY")
 
-spinner = Spinner()
+
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
+DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
+spinner = Spinner()
+
+OPENAI_AUTH_ERROR_MSG = (
+    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+    "environment variable is set correctly.\n"
+    "Please visit https://platform.openai.com/account/api-keys for more details"
+)
 
 
 def check_server_health(url: str):
@@ -72,28 +79,17 @@ def wait_for_server(chat_server_url: str):
     check_server_health(chat_server_url)
 
 
-def validate_connection():
+def validate_pinecone_connection():
     try:
         connect_to_pinecone()
     except RuntimeError as e:
         msg = (
             f"{str(e)}\n"
             "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
-            " environment variables. "
+            " environment variables.\n"
             "Please visit https://www.pinecone.io/docs/quickstart/ for more details."
         )
         raise CLIError(msg)
-    try:
-        openai.Model.list()
-    except Exception:
-        msg = (
-            "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-            "environment variable is set correctly.\n"
-            "Please visit https://platform.openai.com/account/api-keys for more details"
-        )
-        raise CLIError(msg)
-    click.echo("Canopy: ", nl=False)
-    click.echo(click.style("Ready\n", bold=True, fg="green"))
 
 
 def _initialize_tokenizer():
@@ -104,16 +100,24 @@ def _initialize_tokenizer():
         raise CLIError(msg)
 
 
-def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
+def _read_config_file(config_file: Optional[str]) -> Dict[str, Any]:
     if config_file is None:
         return {}
 
     try:
-        with open(os.path.join("config", config_file), 'r') as f:
+        with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
     except Exception as e:
         msg = f"Failed to load config file {config_file}. Reason:\n{e}"
         raise CLIError(msg)
+
+    return config
+
+
+def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
+    config = _read_config_file(config_file)
+    if not config:
+        return {}
 
     if "knowledge_base" in config:
         kb_config = config.get("knowledge_base", None)
@@ -130,6 +134,22 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
         click.confirm(click.style(msg, fg="red"), abort=True)
         kb_config = {}
     return kb_config
+
+
+def _validate_chat_engine(config_file: Optional[str]):
+    config = _read_config_file(config_file)
+    Tokenizer.initialize()
+    try:
+        ChatEngine.from_config(config.get("chat_engine", {}))
+    except openai.OpenAIError:
+        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+    except Exception as e:
+        msg = f"Failed to initialize Canopy server. Reason:\n{e}"
+        if config_file:
+            msg += f"\nPlease check the configuration file {config_file}"
+        raise CLIError(msg)
+    finally:
+        Tokenizer.clear()
 
 
 class CanopyCommandGroup(click.Group):
@@ -165,14 +185,13 @@ def cli(ctx):
     Visit https://www.pinecone.io/ to sign up for free.
     """
     if ctx.invoked_subcommand is None:
-        validate_connection()
         click.echo(ctx.get_help())
-        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default=DEFAULT_SERVER_URL,
+              help=("Canopy's server url. "
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
@@ -272,19 +291,21 @@ def upsert(index_name: str,
         )
         raise CLIError(msg)
 
+    validate_pinecone_connection()
+
     _initialize_tokenizer()
 
     kb_config = _load_kb_config(config)
-    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
+    try:
+        kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
+    except openai.OpenAIError:
+        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+
     try:
         kb.connect()
     except RuntimeError as e:
         # TODO: kb should throw a specific exception for each case
         msg = str(e)
-        if "credentials" in msg:
-            msg += ("\nCredentials should be set by the PINECONE_API_KEY and "
-                    "PINECONE_ENVIRONMENT environment variables. Please visit "
-                    "https://www.pinecone.io/docs/quickstart/ for more details.")
         raise CLIError(msg)
 
     click.echo("Canopy is going to upsert data from ", nl=False)
@@ -364,10 +385,12 @@ def _chat(
 ):
     output = ""
     history += [{"role": "user", "content": message}]
+    client = openai.OpenAI(base_url=api_base)
+
     start = time.time()
     try:
-        openai_response = openai.ChatCompletion.create(
-            model=model, messages=history, stream=stream, api_base=api_base
+        openai_response = client.chat.completions.create(
+            model=model, messages=history, stream=stream
         )
     except (Exception, OpenAI_APIError) as e:
         err = e.http_body if isinstance(e, OpenAI_APIError) else str(e)
@@ -380,7 +403,7 @@ def _chat(
         for chunk in openai_response:
             openai_response_id = chunk.id
             intenal_model = chunk.model
-            text = chunk.choices[0].delta.get("content", "")
+            text = chunk.choices[0].delta.content or ""
             output += text
             click.echo(text, nl=False)
         click.echo()
@@ -391,7 +414,7 @@ def _chat(
         )
     else:
         intenal_model = openai_response.model
-        text = openai_response.choices[0].message.get("content", "")
+        text = openai_response.choices[0].message.content or ""
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
@@ -432,8 +455,9 @@ def _chat(
               help="Print additional debugging information")
 @click.option("--rag/--no-rag", default=True,
               help="Compare RAG-infused Chatbot with vanilla LLM",)
-@click.option("--chat-server-url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
+              help=("URL of the Canopy server to use."
+                    f" Defaults to {DEFAULT_SERVER_URL}"))
 def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
@@ -488,7 +512,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
-            api_base=os.path.join(chat_server_url, "context"),
+            api_base=chat_server_url,
             print_debug_info=debug,
         )
 
@@ -527,7 +551,7 @@ def chat(chat_server_url, rag, debug, stream):
     )
 )
 @click.option("--host", default="0.0.0.0",
-              help="Hostname or ip address to bind the server to. Defaults to 0.0.0.0")
+              help="Hostname or address to bind the server to. Defaults to 0.0.0.0")
 @click.option("--port", default=8000,
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
@@ -539,14 +563,23 @@ def chat(chat_server_url, rag, debug, stream):
               help="Index name, if not provided already in as an environment variable")
 def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
+    validate_pinecone_connection()
+    _validate_chat_engine(config)
+
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production, run the command:"
+        "For debugging only. To run the Canopy server in production "
+    )
+    msg_suffix = (
+        "run the command:"
         "\n"
         "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker "
         f"--bind {host}:{port} --workers <num_workers>"
+    ) if os.name != "nt" else (
+        # TODO: Replace with proper instructions once we have a Dockerfile
+        "please use Docker with a Gunicorn server."
     )
-    for c in note_msg:
+    for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
         time.sleep(0.01)
     click.echo()
@@ -574,31 +607,33 @@ def start(host: str, port: str, reload: bool,
         """
     )
 )
-@click.option("url", "--url", default="http://0.0.0.0:8000",
-              help="URL of the Canopy server to use. Defaults to http://0.0.0.0:8000")
+@click.option("url", "--url", default=DEFAULT_SERVER_URL,
+              help=("URL of the Canopy server to use. "
+                    f"Defaults to {DEFAULT_SERVER_URL}"))
 def stop(url):
-    # Check if the server was started using Gunicorn
-    res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
-                         capture_output=True)
-    output = res.stdout.decode("utf-8").split()
+    if os.name != "nt":
+        # Check if the server was started using Gunicorn
+        res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
+                             capture_output=True)
+        output = res.stdout.decode("utf-8").split()
 
-    # If Gunicorn was used, kill all Gunicorn processes
-    if output:
-        msg = ("It seems that Canopy server was launched using Gunicorn.\n"
-               "Do you want to kill all Gunicorn processes?")
-        click.confirm(click.style(msg, fg="red"), abort=True)
-        try:
-            subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
-                           check=True)
-        except subprocess.CalledProcessError:
+        # If Gunicorn was used, kill all Gunicorn processes
+        if output:
+            msg = ("It seems that Canopy server was launched using Gunicorn.\n"
+                   "Do you want to kill all Gunicorn processes?")
+            click.confirm(click.style(msg, fg="red"), abort=True)
             try:
-                [os.kill(int(pid), signal.SIGINT) for pid in output]
-            except OSError:
-                msg = (
-                    "Could not kill Gunicorn processes. Please kill them manually."
-                    f"Found process ids: {output}"
-                )
-                raise CLIError(msg)
+                subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
+                               check=True)
+            except subprocess.CalledProcessError:
+                try:
+                    [os.kill(int(pid), signal.SIGINT) for pid in output]
+                except OSError:
+                    msg = (
+                        "Could not kill Gunicorn processes. Please kill them manually."
+                        f"Found process ids: {output}"
+                    )
+                    raise CLIError(msg)
 
     try:
         res = requests.get(urljoin(url, "/shutdown"))
@@ -619,8 +654,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://0.0.0.0:8000",
-              help="Canopy's server url. Defaults to http://0.0.0.0:8000")
+@click.option("--url", default="http://localhost:8000",
+              help="Canopy's server url. Defaults to http://localhost:8000")
 def api_docs(url):
     import webbrowser
 
@@ -636,9 +671,9 @@ def api_docs(url):
     if generated_docs:
         import json
         from canopy_server._redocs_template import HTML_TEMPLATE
-        from canopy_server.app import app
+        from canopy_server.app import app, _init_routes
         # generate docs
-
+        _init_routes(app)
         filename = "canopy-api-docs.html"
         msg = f"Generating docs to {filename}"
         click.echo(click.style(msg, fg="green"))
@@ -646,7 +681,7 @@ def api_docs(url):
             print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
         webbrowser.open('file://' + os.path.realpath(filename))
     else:
-        webbrowser.open('http://localhost:8000/redoc')
+        webbrowser.open(urljoin(url, "redoc"))
 
 
 if __name__ == "__main__":

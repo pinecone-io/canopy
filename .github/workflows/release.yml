@@ -38,6 +38,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.ref }}
+          token: ${{ secrets.VERSION_BUMP_PAT }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -52,7 +55,7 @@ jobs:
       - name: Bump version
         if: ${{ inputs.bumpVersion == true }}
         run: |
-          poetry version ${{ inputs.releaseLevel || 'patch' }}
+          poetry version ${{ inputs.versionLevel || 'patch' }}
 
       - name: Store version number
         id: store-version
@@ -80,6 +83,9 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.ref }}
+          token: ${{ secrets.VERSION_BUMP_PAT }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -122,7 +128,7 @@ jobs:
       - name: Create GH release
         uses: ncipollo/release-action@v1
         env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag: V${{ needs.build.outputs.new_version }}
           name: ${{ needs.build.outputs.new_version }}

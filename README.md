@@ -197,12 +197,12 @@ This will open a similar chat interface window, but will show both the RAG and n
 
 ### Migrating an existing OpenAI application to **Canopy**
 
-If you already have an application that uses the OpenAI API, you can migrate it to **Canopy** by simply changing the API endpoint to `http://host:port/context` as follows:
+If you already have an application that uses the OpenAI API, you can migrate it to **Canopy** by simply changing the API endpoint to `http://host:port/v1`, for example with the default configuration:
 
 ```python
 import openai
 
-openai.api_base = "http://host:port/"
+openai.api_base = "http://localhost:8000/v1"
 
 # now you can use the OpenAI API as usual
 ```
@@ -212,7 +212,7 @@ or without global state change:
 ```python
 import openai
 
-openai_response = openai.Completion.create(..., api_base="http://host:port/")
+openai_response = openai.Completion.create(..., api_base="http://localhost:8000/v1")
 ```
 
 ### Running Canopy server in production

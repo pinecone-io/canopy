@@ -8,7 +8,7 @@ from canopy.chat_engine.query_generator.function_calling \
     import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
             DEFAULT_SYSTEM_PROMPT, )
 from canopy.llm import BaseLLM
-from canopy.llm.models import (ModelParams, Function,
+from canopy.llm.models import (Function,
                                FunctionParameters, FunctionArrayProperty,
                                )
 from canopy.models.data_models import Query, UserMessage
@@ -28,12 +28,7 @@ class TestFunctionCallingQueryGenerator:
 
     @staticmethod
     @pytest.fixture
-    def mock_model_params():
-        return create_autospec(ModelParams)
-
-    @staticmethod
-    @pytest.fixture
-    def query_generator(mock_llm, mock_prompt_builder, mock_model_params):
+    def query_generator(mock_llm, mock_prompt_builder):
         query_gen = FunctionCallingQueryGenerator(
             llm=mock_llm,
         )
