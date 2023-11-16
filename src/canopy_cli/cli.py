@@ -86,7 +86,7 @@ def validate_pinecone_connection():
         msg = (
             f"{str(e)}\n"
             "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
-            " environment variables. "
+            " environment variables.\n"
             "Please visit https://www.pinecone.io/docs/quickstart/ for more details."
         )
         raise CLIError(msg)
@@ -563,6 +563,7 @@ def chat(chat_server_url, rag, debug, stream):
               help="Index name, if not provided already in as an environment variable")
 def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
+    validate_pinecone_connection()
     _validate_chat_engine(config)
 
     note_msg = (
