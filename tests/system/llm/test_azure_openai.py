@@ -1,3 +1,4 @@
+import os
 from unittest.mock import MagicMock
 
 import jsonschema
@@ -39,7 +40,7 @@ class TestAzureOpenAILLM:
 
     @staticmethod
     @pytest.fixture(scope="module")
-    def api_version():
+    def azure_api_version():
         return "some-version"
 
     @staticmethod
@@ -91,28 +92,33 @@ class TestAzureOpenAILLM:
 
     @staticmethod
     @pytest.fixture
-    def azure_openai_llm(model_name, api_version, azure_api_key, azure_endpoint):
-        return AzureOpenAILLM(model_name=model_name, openai_api_version=api_version, azure_api_key=azure_api_key,
+    def azure_openai_llm(model_name, azure_api_version, azure_api_key, azure_endpoint):
+        return AzureOpenAILLM(azure_api_version=azure_api_version,
+                              model_name=model_name,
+
+                              azure_api_key=azure_api_key,
                               base_url=azure_endpoint)
 
     @staticmethod
-    def test_init_with_custom_params(azure_openai_llm, model_name, api_version, azure_api_key, azure_endpoint):
+    def test_init_with_custom_params(azure_openai_llm, model_name, azure_api_version, azure_api_key, azure_endpoint):
+        # Set env var for `organization` manually
+        os.environ['OPENAI_ORG_ID'] = "test_organization"
+        organization = os.getenv('OPENAI_ORG_ID')
+
         llm = AzureOpenAILLM(model_name='test',
-                             openai_api_version='version-1',
+                             azure_api_version='version-1',
                              azure_api_key='some-key',
                              base_url='some-url',
-                             # organization="test_organization",  # why couldn't I add this if I wanted? Doesn't it
-                             # inherit from  the parent class?  is it bc i haven't set the env var? shouldn't there
-                             # be an error in that case?
+                             organization=organization,
                              temperature=0.9,
                              top_p=0.95,
                              n=3,)
 
         assert llm.model_name == 'test'
-        assert llm.openai_api_version == 'version-1'
+        assert llm.azure_api_version == 'version-1'
         assert llm._client.api_key == 'some-key'
         assert llm.base_url == 'some-url'
-        # assert llm._client.organization == "test_organization"
+        assert llm._client.organization == "test_organization"
         assert llm.default_model_params["temperature"] == 0.9
         assert llm.default_model_params["top_p"] == 0.95
         assert llm.default_model_params["n"] == 3
