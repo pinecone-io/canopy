@@ -21,6 +21,7 @@ from urllib.parse import urljoin
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base import connect_to_pinecone
 from canopy.knowledge_base.chunker import Chunker
+from canopy.chat_engine import ChatEngine
 from canopy.models.data_models import Document
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
@@ -42,6 +43,12 @@ load_dotenv()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
+
+OPENAI_AUTH_ERROR_MSG = (
+    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+    "environment variable is set correctly.\n"
+    "Please visit https://platform.openai.com/account/api-keys for more details"
+)
 
 
 def check_server_health(url: str):
@@ -72,28 +79,17 @@ def wait_for_server(chat_server_url: str):
     check_server_health(chat_server_url)
 
 
-def validate_connection():
+def validate_pinecone_connection():
     try:
         connect_to_pinecone()
     except RuntimeError as e:
         msg = (
             f"{str(e)}\n"
             "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
-            " environment variables. "
+            " environment variables.\n"
             "Please visit https://www.pinecone.io/docs/quickstart/ for more details."
         )
         raise CLIError(msg)
-    try:
-        openai.Model.list()
-    except Exception:
-        msg = (
-            "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-            "environment variable is set correctly.\n"
-            "Please visit https://platform.openai.com/account/api-keys for more details"
-        )
-        raise CLIError(msg)
-    click.echo("Canopy: ", nl=False)
-    click.echo(click.style("Ready\n", bold=True, fg="green"))
 
 
 def _initialize_tokenizer():
@@ -104,16 +100,24 @@ def _initialize_tokenizer():
         raise CLIError(msg)
 
 
-def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
+def _read_config_file(config_file: Optional[str]) -> Dict[str, Any]:
     if config_file is None:
         return {}
 
     try:
-        with open(os.path.join("config", config_file), 'r') as f:
+        with open(config_file, 'r') as f:
             config = yaml.safe_load(f)
     except Exception as e:
         msg = f"Failed to load config file {config_file}. Reason:\n{e}"
         raise CLIError(msg)
+
+    return config
+
+
+def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
+    config = _read_config_file(config_file)
+    if not config:
+        return {}
 
     if "knowledge_base" in config:
         kb_config = config.get("knowledge_base", None)
@@ -130,6 +134,22 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
         click.confirm(click.style(msg, fg="red"), abort=True)
         kb_config = {}
     return kb_config
+
+
+def _validate_chat_engine(config_file: Optional[str]):
+    config = _read_config_file(config_file)
+    Tokenizer.initialize()
+    try:
+        ChatEngine.from_config(config.get("chat_engine", {}))
+    except openai.OpenAIError:
+        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+    except Exception as e:
+        msg = f"Failed to initialize Canopy server. Reason:\n{e}"
+        if config_file:
+            msg += f"\nPlease check the configuration file {config_file}"
+        raise CLIError(msg)
+    finally:
+        Tokenizer.clear()
 
 
 class CanopyCommandGroup(click.Group):
@@ -165,9 +185,7 @@ def cli(ctx):
     Visit https://www.pinecone.io/ to sign up for free.
     """
     if ctx.invoked_subcommand is None:
-        validate_connection()
         click.echo(ctx.get_help())
-        # click.echo(command.get_help(ctx))
 
 
 @cli.command(help="Check if canopy server is running and healthy.")
@@ -273,19 +291,21 @@ def upsert(index_name: str,
         )
         raise CLIError(msg)
 
+    validate_pinecone_connection()
+
     _initialize_tokenizer()
 
     kb_config = _load_kb_config(config)
-    kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
+    try:
+        kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
+    except openai.OpenAIError:
+        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+
     try:
         kb.connect()
     except RuntimeError as e:
         # TODO: kb should throw a specific exception for each case
         msg = str(e)
-        if "credentials" in msg:
-            msg += ("\nCredentials should be set by the PINECONE_API_KEY and "
-                    "PINECONE_ENVIRONMENT environment variables. Please visit "
-                    "https://www.pinecone.io/docs/quickstart/ for more details.")
         raise CLIError(msg)
 
     click.echo("Canopy is going to upsert data from ", nl=False)
@@ -543,6 +563,9 @@ def chat(chat_server_url, rag, debug, stream):
               help="Index name, if not provided already in as an environment variable")
 def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
+    validate_pinecone_connection()
+    _validate_chat_engine(config)
+
     note_msg = (
         "🚨 Note 🚨\n"
         "For debugging only. To run the Canopy server in production "
