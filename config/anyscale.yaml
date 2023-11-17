@@ -23,8 +23,7 @@ query_builder_prompt: &query_builder_prompt |
 tokenizer:
   type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
   params:
-    hf_token: hf_YOUR_HUGGINGFACE_TOKENS
-    model_name: meta-llama/Llama-2-7b-chat-hf
+    model_name: openlm-research/open_llama_7b_v2
 
 
 # -------------------------------------------------------------------------------------------------------------
@@ -47,15 +46,9 @@ chat_engine:
   # Configuration of the LLM (Large Language Model)
   # -------------------------------------------------------------------------------------------------------------
   llm: &llm
-    type: AnyscaleLLM                     # Options: [OpenAILLM]
+    type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
     params:
-      api_key: esecret_YOUR_ANYSCALE_TOKENS
       model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
-  # llm: &llm
-  #   type: OpenAILLM                     # Options: [OpenAILLM]
-  #   params:
-  #     model_name: gpt-3.5-turbo         # The name of the model to use.
-
 
   # --------------------------------------------------------------------
   # Configuration for the QueryBuilder subcomponent of the chat engine.

@@ -30,6 +30,8 @@ jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
 pinecone-text = "^0.7.0"
+tokenizers = "^0.15.0"
+transformers = "^4.35.2"
 
 
 [tool.poetry.group.dev.dependencies]

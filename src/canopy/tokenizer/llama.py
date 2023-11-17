@@ -2,8 +2,8 @@ import tiktoken
 from typing import List
 from .base import BaseTokenizer
 from ..models.data_models import Messages
-from tokenizers import Tokenizer
-
+import os
+from transformers import LlamaTokenizerFast as HfTokenizer
 
 class LlamaTokenizer(BaseTokenizer):
     """
@@ -13,27 +13,30 @@ class LlamaTokenizer(BaseTokenizer):
     Initialize the singleton tokenizer with the LlamaTokenizer class:
     >>> from canopy.tokenizer import Tokenizer
     >>> Tokenizer.initialize(tokenizer_class=LlamaTokenizer, 
-                             hf_token="hf_YOUR_HUGGINGFACE_TOKEN",
-                             model_name="meta-llama/Llama-2-7b-chat-hf")
+                             model_name="openlm-research/open_llama_7b_v2",
+                             hf_token="hf_YOUR_HUGGINGFACE_TOKEN")
+                             
     You can then use the tokenizer instance from anywhere in the code:
     >>> from canopy.tokenizer import Tokenizer
     >>> tokenizer = Tokenizer()
-    >>> tokenizer.tokenize("Hello world!")
-    ['<s>', '▁Hello', '▁World', '!']
+    >>> tokenizer.tokenize("Hello World!")
+    ['<s>', 'Hello', 'World', '!']
     """  # noqa: E501
 
     MESSAGE_TOKENS_OVERHEAD = 3
     FIXED_PREFIX_TOKENS = 3
 
-    def __init__(self, hf_token: str, model_name: str = "meta-llama/Llama-2-7b-chat-hf"):
+    def __init__(self, model_name: str = "openlm-research/open_llama_7b_v2", hf_token: str=None):
         """
         Initialize the tokenizer.
 
         Args:
-            hf_token: Huggingface token
             model_name: The name of the model to use. Defaults to "meta-llama/Llama-2-7b-chat-hf".
+            hf_token: Huggingface token
         """  # noqa: E501
-        self._encoder = Tokenizer.from_pretrained(model_name, auth_token=hf_token)
+        hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN") 
+        #Add legacy=True to avoid extra printings
+        self._encoder = HfTokenizer.from_pretrained(model_name, token=hf_token, legacy=True)
 
     def tokenize(self, text: str) -> List[str]:
         """
@@ -45,7 +48,8 @@ class LlamaTokenizer(BaseTokenizer):
         Returns:
             The list of tokens.
         """
-        return self._encode(text).tokens
+        return [self._encoder.decode([encoded_token])
+                for encoded_token in self._encode(text)]
 
     def detokenize(self, tokens: List[str]) -> str:
         """
@@ -71,7 +75,7 @@ class LlamaTokenizer(BaseTokenizer):
         Returns:
             The number of tokens in the text.
         """
-        return len(self._encode(text).ids)
+        return len(self._encode(text))
 
     def _encode(self, text):
         # Return Encoding objects, which contains attributes ids and tokens
