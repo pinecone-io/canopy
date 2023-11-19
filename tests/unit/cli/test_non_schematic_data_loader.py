@@ -3,7 +3,6 @@ import pytest
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
-from canopy.models.data_models import Document
 from canopy_cli.data_loader.data_loader import (
     DataLoaderException,
     _load_multiple_txt_files
