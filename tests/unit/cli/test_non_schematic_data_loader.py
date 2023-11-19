@@ -1,3 +1,5 @@
+import pytest
+
 from canopy.models.data_models import Document
 from canopy_cli.data_loader.data_loader import (
     IDsNotUniqueError,
@@ -17,5 +19,5 @@ def two_valid_txt_files(tmpdir):
     return [file1, file2]
 
 
-@pytest.fixture
-def invalid_txt_file
+# @pytest.fixture
+# def invalid_txt_file

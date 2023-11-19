@@ -95,15 +95,22 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
 
     rows = []
     for file_path in file_paths:
-        with open(file_path, "r") as f:
-            text = f.read()
-            rows.append(
-                {
-                    "id": os.path.basename(file_path).replace(".txt", ""),
-                    "text": text,
-                    "source": file_path
-                }
-            )
+        try:
+            with open(file_path, "r", encoding='utf-8') as f:
+                text = f.read()
+                rows.append(
+                    {
+                        "id": os.path.basename(file_path).replace(".txt", ""),
+                        "text": text,
+                        "source": file_path
+                    }
+                )
+        except UnicodeDecodeError as e:
+            raise DataLoaderException(
+                file_name=file_path,
+                row_id="*",
+                err="File must be UTF-8 encoded"
+            ) from e
     df = pd.DataFrame(rows, columns=["id", "text", "source"])
     return df
 
