@@ -31,12 +31,12 @@ class LlamaTokenizer(BaseTokenizer):
         Initialize the tokenizer.
 
         Args:
-            model_name: The name of the model to use. Defaults to "meta-llama/Llama-2-7b-chat-hf".
+            model_name: The name of the model to use. Defaults to "openlm-research/open_llama_7b_v2".
             hf_token: Huggingface token
         """  # noqa: E501
-        hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN") 
+        hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN")
         #Add legacy=True to avoid extra printings
-        self._encoder = HfTokenizer.from_pretrained(model_name, token=hf_token, legacy=True)
+        self._encoder = HfTokenizer.from_pretrained(model_name, token=hf_token, legacy=True, add_bos_token=False)
 
     def tokenize(self, text: str) -> List[str]:
         """
@@ -48,8 +48,7 @@ class LlamaTokenizer(BaseTokenizer):
         Returns:
             The list of tokens.
         """
-        return [self._encoder.decode([encoded_token])
-                for encoded_token in self._encode(text)]
+        return self._encoder.tokenize(text)
 
     def detokenize(self, tokens: List[str]) -> str:
         """
@@ -61,9 +60,7 @@ class LlamaTokenizer(BaseTokenizer):
         Returns:
             The detokenized text as a string.
         """
-        if not isinstance(tokens, List):
-            raise TypeError(f"detokenize expect List[str], got f{type(tokens)}")
-        return "".join(tokens)
+        return self._encoder.convert_tokens_to_string(tokens)
 
     def token_count(self, text: str) -> int:
         """
