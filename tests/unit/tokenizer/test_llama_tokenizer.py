@@ -1,10 +1,9 @@
 import pytest
 from canopy.tokenizer import LlamaTokenizer
-from canopy.models.data_models import MessageBase, Role
-from .base_test_tokenizer import BaseTestTokenizer
+from .test_openai_tokenizer import TestOpenAITokenizer
 
 
-class TestLlamaTokenizer(BaseTestTokenizer):
+class TestLlamaTokenizer(TestOpenAITokenizer):
 
     @staticmethod
     @pytest.fixture(scope="class")
@@ -14,38 +13,21 @@ class TestLlamaTokenizer(BaseTestTokenizer):
     @staticmethod
     @pytest.fixture
     def expected_tokens(text):
-        return ['<s>', 'string', 'with', 'special', 'characters', 'like', '!', '@', 
-                '#', '$', '%', '^', '&', '*', '()', '_+', '', '日', '本', 'spaces',
-                '  ', '\n', '', '\n', '\n', 'C', 'ASE', 'c', 'A', 'se','']
-
-    @staticmethod
-    def test_token_count_empty_string(tokenizer):
-        assert tokenizer.token_count("") == 1
-        
-    @staticmethod
-    def test_tokenize_empty_string(tokenizer):
-        assert tokenizer.tokenize("") == ['<s>']
-        
-    @staticmethod
-    def test_messages_token_count(tokenizer):
-        messages = [MessageBase(role=Role.USER, content="Hello, assistant.")]
-        assert tokenizer.messages_token_count(messages) == 13
-
-        messages = [MessageBase(role=Role.USER,
-                                content="Hello, assistant."),
-                    MessageBase(role=Role.ASSISTANT,
-                                content="Hello, user. How can I assist you?")]
-        assert tokenizer.messages_token_count(messages) == 29
-        
-    @staticmethod
-    def test_messages_token_count_empty_messages(tokenizer):
-        assert tokenizer.messages_token_count([]) == 3
+        return ['▁string', '▁with', '▁special', '▁characters', '▁like', '▁!', '@',
+                '#', '$', '%', '^', '&', '*', '()', '_+', '▁', '日', '本', '▁spaces',
+                '▁▁▁', '<0x0A>', '▁', '<0x0A>', '<0x0A>', '▁C', 'ASE', '▁c', 'A', 'se',
+                '▁']
 
     @staticmethod
     def test_special_tokens_to_natural_text(tokenizer):
-        tokens = tokenizer.tokenize("<|endoftext|>")           
-        assert tokens == ['<s>', '<', '|', 'end', 'of', 'text', '|', '>']
+        input_text = "</s>_<0x0A>__ <unk><s>word"
+        tokens = tokenizer.tokenize(input_text)
+        expected_tokens = ['</s>', '▁_', '<', '0', 'x', '0', 'A', '>', '__', '▁',
+                           '<unk>', '<s>', '▁word']
+        assert tokens == expected_tokens
         
-        assert tokenizer.detokenize(tokens) == "<s><|endoftext|>"
+        # TODO: this currently fails since detokenize() adds a space after <s> and </s>.
+        #  We need to decide if this is the desired behavior or not.
+        assert tokenizer.detokenize(tokens) == input_text
         
-        assert tokenizer.token_count("<|endoftext|>") == 8
+        assert tokenizer.token_count(input_text) == len(tokens)
