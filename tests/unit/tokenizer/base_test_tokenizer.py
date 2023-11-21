@@ -29,6 +29,7 @@ class BaseTestTokenizer(ABC):
         tokens = tokenizer.tokenize(text)
         assert tokens == expected_tokens, f"\nExpected: {expected_tokens}" \
                                           f"\nActual: {tokens}"
+
     @staticmethod
     def test_tokenize_empty_string(tokenizer):
         assert tokenizer.tokenize("") == []
@@ -82,6 +83,7 @@ class BaseTestTokenizer(ABC):
     def test_tokenize_detokenize_compatibility(tokenizer, text, expected_tokens):
         retext = tokenizer.detokenize(tokenizer.tokenize(text))
         assert retext == text, f"\nExpected: {text}\nActual: {retext}"
-        reconstructed_expected_tokens = tokenizer.tokenize(tokenizer.detokenize(expected_tokens))
+        reconstructed_expected_tokens = tokenizer.tokenize(
+            tokenizer.detokenize(expected_tokens))
         assert reconstructed_expected_tokens == expected_tokens, \
             f"\nExpected: {expected_tokens}\nActual: {reconstructed_expected_tokens}"

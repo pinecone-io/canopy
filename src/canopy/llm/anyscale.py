@@ -35,7 +35,8 @@ class AnyscaleLLM(OpenAILLM):
         if not ae_api_key:
             raise ValueError(
                 "Anyscale API key is required to use Anyscale. "
-                "Please provide it as an argument or set the ANYSCALE_API_KEY environment variable."
+                "Please provide it as an argument "
+                "or set the ANYSCALE_API_KEY environment variable."
             )
         ae_base_url = base_url
         super().__init__(model_name, api_key=ae_api_key, base_url=ae_base_url, **kwargs)

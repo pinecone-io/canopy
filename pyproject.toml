@@ -62,7 +62,8 @@ exclude = ['tests', '.venv']
 module = [
     'pinecone_text.*',
     'pinecone_datasets',
-    'pinecone'
+    'pinecone',
+    'transformers.*'
 ]
 ignore_missing_imports = true
 
