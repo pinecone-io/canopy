@@ -1,9 +1,9 @@
-import tiktoken
 from typing import List
 from .base import BaseTokenizer
 from ..models.data_models import Messages
 import os
 from transformers import LlamaTokenizerFast as HfTokenizer
+
 
 class LlamaTokenizer(BaseTokenizer):
     """
@@ -12,9 +12,9 @@ class LlamaTokenizer(BaseTokenizer):
     Usage:
     Initialize the singleton tokenizer with the LlamaTokenizer class:
     >>> from canopy.tokenizer import Tokenizer
-    >>> Tokenizer.initialize(tokenizer_class=LlamaTokenizer, 
+    >>> Tokenizer.initialize(tokenizer_class=LlamaTokenizer,
                              model_name="hf-internal-testing/llama-tokenizer")
-                             
+
     You can then use the tokenizer instance from anywhere in the code:
     >>> from canopy.tokenizer import Tokenizer
     >>> tokenizer = Tokenizer()
@@ -25,7 +25,11 @@ class LlamaTokenizer(BaseTokenizer):
     MESSAGE_TOKENS_OVERHEAD = 3
     FIXED_PREFIX_TOKENS = 3
 
-    def __init__(self, model_name: str = "hf-internal-testing/llama-tokenizer", hf_token: str=""):
+    def __init__(
+        self,
+        model_name: str = "hf-internal-testing/llama-tokenizer",
+        hf_token: str = "",
+    ):
         """
         Initialize the tokenizer.
 
@@ -33,9 +37,11 @@ class LlamaTokenizer(BaseTokenizer):
             model_name: The name of the model to use. Defaults to "openlm-research/open_llama_7b_v2".
             hf_token: Huggingface token
         """  # noqa: E501
-        hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN","")
-        #Add legacy=True to avoid extra printings
-        self._encoder = HfTokenizer.from_pretrained(model_name, token=hf_token, legacy=True, add_bos_token=False)
+        hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN", "")
+        # Add legacy=True to avoid extra printings
+        self._encoder = HfTokenizer.from_pretrained(
+            model_name, token=hf_token, legacy=True, add_bos_token=False
+        )
 
     def tokenize(self, text: str) -> List[str]:
         """
