@@ -72,6 +72,7 @@ jobs:
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
         PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
       run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
     - name: Run e2e tests
       if: github.event_name == 'merge_group'
