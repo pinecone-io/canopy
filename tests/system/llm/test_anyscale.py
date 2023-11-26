@@ -6,11 +6,6 @@ import pytest
 from canopy.models.data_models import Role, MessageBase  # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk  # noqa
 from canopy.llm.anyscale import AnyscaleLLM  # noqa
-from canopy.llm.models import (
-    Function,
-    FunctionParameters,
-    FunctionArrayProperty,
-)  # noqa
 from openai import BadRequestError  # noqa
 
 
@@ -48,23 +43,6 @@ class TestAnyscaleLLM:
                 role=Role.ASSISTANT, content="Hello, user. How can I assist you?"
             ),
         ]
-
-    @staticmethod
-    @pytest.fixture
-    def function_query_knowledgebase():
-        return Function(
-            name="query_knowledgebase",
-            description="Query search engine for relevant information",
-            parameters=FunctionParameters(
-                required_properties=[
-                    FunctionArrayProperty(
-                        name="queries",
-                        items_type="string",
-                        description="List of queries to send to the search engine.",
-                    ),
-                ]
-            ),
-        )
 
     @staticmethod
     @pytest.fixture
@@ -139,11 +117,11 @@ class TestAnyscaleLLM:
         assert isinstance(response, ChatResponse)
         assert len(response.choices[0].message.content.split()) <= max_tokens
 
-    # To do: For now AE does not throw exceptions for missing messages
-    # @staticmethod
-    # def test_missing_messages(anyscale_llm):
-    #     with pytest.raises(BadRequestError):
-    #         anyscale_llm.chat_completion(messages=[])
+    @pytest.skip("For now AE does not throw exceptions for missing messages")
+    @staticmethod
+    def test_missing_messages(anyscale_llm):
+        with pytest.raises(BadRequestError):
+            anyscale_llm.chat_completion(messages=[])
 
     @staticmethod
     def test_negative_max_tokens(anyscale_llm, messages):
