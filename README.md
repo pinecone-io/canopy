@@ -1,5 +1,15 @@
 # Canopy
 
+<p align="center">
+<a href="https://pypi.org/project/fastapi" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
+</a>
+<a href="https://pypi.org/project/fastapi" target="_blank">
+    <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
+</a>
+</p>
+
+
 **Canopy** is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.   
 
 Canopy takes on the heavy lifting for building RAG applications: from chunking and embedding your text data to chat history management, query optimization, context retrieval (including prompt engineering), and augmented generation. 
@@ -110,34 +120,39 @@ You can load data into your Canopy index using the command:
 
 ```bash
 canopy upsert /path/to/data_directory
-
 # or
 canopy upsert /path/to/data_directory/file.parquet
-
 # or
 canopy upsert /path/to/data_directory/file.jsonl
-
 # or
 canopy upsert /path/to/directory_of_txt_files/
-
 # ...
 ```
 
-Canopy supports files in `jsonl`, `parquet` and `csv` formats. The documents should have the following schema:
+Canopy supports files in `jsonl`, `parquet` and `csv` formats. Additionally, you can load plaintext data files in `.txt` format. In this case, each file will be treated as a single document. The document id will be the filename, and the source will be the full path of the file. 
 
-```
+> **Note**: Document fields are used in the RAG flow and should comply with the following schema:
+
+```bash
 +----------+--------------+--------------+---------------+
 | id(str)  | text(str)    | source       | metadata      |
 |          |              | Optional[str]| Optional[dict]|
 |----------+--------------+--------------+---------------|
 | "id1"    | "some text"  | "some source"| {"key": "val"}|
 +----------+--------------+--------------+---------------+
+
+# id       - unique identifier for the document
+#
+# text     - the text of the document, in utf-8 encoding.
+#
+# source   - the source of the document, can be any string, or null.
+#            ** this will be used as a reference in the generated context. **
+#
+# metadata - optional metadata for the document, for filtering or additional context.
+#            Dict[str, Union[str, int, float, List[str]]]
 ```
-> [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format.
 
-Additionally, you can load plaintext data files in `.txt` format. In this case, each file will be treated as a single document. The document id will be the filename, and the source will be the full path of the file.
-
-Follow the instructions in the CLI to upload your data.
+[This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format, Follow the instructions in the CLI when you upload your data.
 
 ### 3. Start the Canopy server
 
