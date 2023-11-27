@@ -117,8 +117,8 @@ class TestAnyscaleLLM:
         assert isinstance(response, ChatResponse)
         assert len(response.choices[0].message.content.split()) <= max_tokens
 
-    @pytest.mark.skip("For now AE does not throw exceptions for missing messages")
     @staticmethod
+    @pytest.mark.skip("For now AE does not throw exceptions for missing messages")
     def test_missing_messages(anyscale_llm):
         with pytest.raises(BadRequestError):
             anyscale_llm.chat_completion(messages=[])
