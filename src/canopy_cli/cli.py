@@ -401,6 +401,8 @@ def _chat(
     click.echo(click.style(f"\n {speaker}:\n", fg=speaker_color))
     if stream:
         for chunk in openai_response:
+            if not chunk.choices:
+                continue
             openai_response_id = chunk.id
             intenal_model = chunk.model
             text = chunk.choices[0].delta.content or ""
