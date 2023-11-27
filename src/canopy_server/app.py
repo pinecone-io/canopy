@@ -44,7 +44,7 @@ from .models.v1.api_models import (
     ContextResponse,
 )
 
-from canopy.llm.openai import OpenAILLM
+from canopy.llm.openai import OpenAILLM, AzureOpenAILLM
 from canopy_cli.errors import ConfigError
 from canopy import __version__
 
@@ -332,7 +332,15 @@ def _init_engines():
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
-        llm = OpenAILLM()
+        if llm == "OpenAILLM":
+            llm = OpenAILLM()
+        elif llm == "AzureOpenAILLM":
+            llm = AzureOpenAILLM(
+                api_key=os.getenv("OPENAI_API_KEY"),
+                base_url=os.getenv("OPENAI_BASE_URL"),
+            )
+        else:
+            raise ValueError("Config issue: LLM must be either OpenAILLM or AzureOpenAILLM")
         chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
 
     kb.connect()
