@@ -1,0 +1,37 @@
+# ===========================================================
+#            Configuration file for Canopy Server
+# ===========================================================
+query_builder_prompt: &query_builder_prompt |
+  Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
+  You should break down complex questions into sub-queries if needed.
+# -------------------------------------------------------------------------------------------
+# Tokenizer configuration
+# A Tokenizer singleton instance must be initialized before initializing any other components
+# -------------------------------------------------------------------------------------------
+tokenizer:
+  type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
+  params:
+    model_name: openlm-research/open_llama_7b_v2
+
+chat_engine:
+  llm: &llm
+    type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
+    params:
+      model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
+      
+  # --------------------------------------------------------------------
+  # Configuration for the QueryBuilder subcomponent of the chat engine.
+  # The query builder is responsible for generating textual queries given user message history.
+  # --------------------------------------------------------------------
+  query_builder:
+    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator]
+    params:
+      prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
+      function_description:             # A function description passed to the LLM's `function_calling` API
+        Query search engine for relevant information
+
+    llm:  # The LLM that the query builder will use to generate queries.
+      #Use OpenAI for function call for now
+      type: OpenAILLM
+      params:
+        model_name: gpt-3.5-turbo

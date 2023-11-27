@@ -30,7 +30,9 @@ jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
 pinecone-text = "^0.7.0"
-
+tokenizers = "^0.15.0"
+transformers = "^4.35.2"
+sentencepiece = "^0.1.99"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
@@ -60,7 +62,8 @@ exclude = ['tests', '.venv']
 module = [
     'pinecone_text.*',
     'pinecone_datasets',
-    'pinecone'
+    'pinecone',
+    'transformers.*'
 ]
 ignore_missing_imports = true
 
