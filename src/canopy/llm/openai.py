@@ -214,7 +214,7 @@ class AzureOpenAILLM(BaseLLM):
     Azure OpenAI LLM wrapper built on top of the OpenAI Python client.
 
     Note: OpenAI requires a valid API key to use this class.
-          You can set the "OPENAI_API_KEY" environment variable to your API key.
+          You can set the "AZURE_OPENAI_KEY" environment variable to your API key.
           Or you can directly set it as follows:
           >>> import openai
           >>> openai.api_key = "YOUR_API_KEY"
@@ -223,12 +223,11 @@ class AzureOpenAILLM(BaseLLM):
                  model_name: str = "gpt-3.5-turbo",
                  *,
                  api_key: Optional[str] = None,
-                 organization: Optional[str] = None,
                  base_url: Optional[str] = None,
                  **kwargs: Any,
                  ):
         """
-        Initialize the OpenAI LLM.
+        Initialize the Azure OpenAI LLM.
 
         Args:
             model_name: The name of the model to use. See https://platform.openai.com/docs/models
@@ -295,9 +294,6 @@ class AzureOpenAILLM(BaseLLM):
                                                         stream=stream,
                                                         max_tokens=max_tokens,
                                                         **model_params_dict)
-        print("+++Reponse")
-        print(response)
-
         def streaming_iterator(response):
             for chunk in response:
                 yield StreamingChatChunk.parse_obj(chunk)
@@ -368,10 +364,7 @@ class AzureOpenAILLM(BaseLLM):
             model_params or {}
         )
 
-        function_dict = cast(ChatCompletionToolParam,
-                             {"type": "function", "function": function.dict()})
         function_dict = cast(ChatCompletionToolParam, function.dict())
-        print(function_dict)
 
         chat_completion = self._client.chat.completions.create(
             model=self.model_name,
@@ -382,9 +375,7 @@ class AzureOpenAILLM(BaseLLM):
             **model_params_dict
         )
 
-        print(chat_completion.choices[0].message.model_dump_json(indent=2))
         result = chat_completion.choices[0].message.function_call.arguments
-        print(result)
         arguments = json.loads(result)
 
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
