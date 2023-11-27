@@ -209,7 +209,7 @@ class OpenAILLM(BaseLLM):
         raise NotImplementedError()
 
 
-class AzureOpenAILLM(BaseLLM):
+class AzureOpenAILLM(OpenAILLM):
     """
     Azure OpenAI LLM wrapper built on top of the OpenAI Python client.
 
@@ -245,63 +245,6 @@ class AzureOpenAILLM(BaseLLM):
             azure_endpoint=base_url or os.getenv("OPENAI_BASE_URL")
         )
         self.default_model_params = kwargs
-
-    @property
-    def available_models(self):
-        return [k.id for k in self._client.models.list()]
-
-    def chat_completion(self,
-                        messages: Messages,
-                        *,
-                        stream: bool = False,
-                        max_tokens: Optional[int] = None,
-                        model_params: Optional[dict] = None,
-                        ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
-        """
-        Chat completion using the OpenAI API.
-
-        Note: this function is wrapped in a retry decorator to handle transient errors.
-
-        Args:
-            messages: Messages (chat history) to send to the model.
-            stream: Whether to stream the response or not.
-            max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
-            model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                          Dictonary of parametrs to override the default model parameters if set on initialization.
-                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
-                          see: https://platform.openai.com/docs/api-reference/chat/create
-        Returns:
-            ChatResponse or StreamingChatChunk
-
-        Usage:
-            >>> from canopy.llm import OpenAILLM
-            >>> from canopy.models.data_models import UserMessage
-            >>> llm = OpenAILLM()
-            >>> messages = [UserMessage(content="Hello! How are you?")]
-            >>> result = llm.chat_completion(messages)
-            >>> print(result.choices[0].message.content)
-            "I'm good, how are you?"
-        """  # noqa: E501
-
-        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
-
-        messages = [m.dict() for m in messages]
-        response = self._client.chat.completions.create(model=self.model_name,
-                                                        messages=messages,
-                                                        stream=stream,
-                                                        max_tokens=max_tokens,
-                                                        **model_params_dict)
-        def streaming_iterator(response):
-            for chunk in response:
-                yield StreamingChatChunk.parse_obj(chunk)
-
-        if stream:
-            return streaming_iterator(response)
-
-        return ChatResponse.parse_obj(response)
 
     @retry(
         reraise=True,
@@ -370,7 +313,7 @@ class AzureOpenAILLM(BaseLLM):
             model=self.model_name,
             messages=[m.dict() for m in messages],
             functions=[function_dict],
-            function_call={"name": "query_knowledgebase"},
+            function_call={"name": function.name},
             max_tokens=max_tokens,
             **model_params_dict
         )
