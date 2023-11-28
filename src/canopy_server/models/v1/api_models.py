@@ -23,6 +23,26 @@ class ChatRequest(BaseModel):
         default=None,
         description="A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Unused, reserved for future extensions",  # noqa: E501
     )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        description="The maximum number of tokens to generate in the chat completion.",
+    )
+    n: Optional[int] = Field(
+        default=None,
+        description="How many chat completion choices to generate for each input message.",
+    )
+    temperature: Optional[float] = Field(
+        default=None,
+        description="What sampling temperature to use.",
+    )
+    top_p: Optional[float] = Field(
+        default=None,
+        description="What nucleus sampling probability to use.",
+    )
+    presence_penalty: Optional[float] = Field(
+        default=None,
+        description="Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.",  # noqa: E501
+    )
 
     class Config:
         extra = "ignore"

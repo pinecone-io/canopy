@@ -74,7 +74,7 @@ class OpenAILLM(BaseLLM):
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                          Dictonary of parametrs to override the default model parameters if set on initialization.
+                          Dictonary of parameters to override the default model parameters if set on initialization.
                           For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
@@ -94,9 +94,11 @@ class OpenAILLM(BaseLLM):
         model_params_dict.update(
             model_params or {}
         )
+        model = model_params.get("model", self.model_name) if model_params else self.model_name
+        model_params_dict = {k: v for k, v in model_params_dict.items() if k != 'model' and v is not None} if model_params else None
 
         messages = [m.dict() for m in messages]
-        response = self._client.chat.completions.create(model=self.model_name,
+        response = self._client.chat.completions.create(model=model,
                                                         messages=messages,
                                                         stream=stream,
                                                         max_tokens=max_tokens,

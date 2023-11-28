@@ -197,8 +197,10 @@ class ChatEngine(BaseChatEngine):
             messages,
             max_tokens=self.max_prompt_tokens
         )
+        max_tokens = model_params.get("max_tokens", self.max_generated_tokens) if model_params else self.max_generated_tokens
+        model_params = {k: v for k, v in model_params.items() if k != 'max_tokens'} if model_params else None
         llm_response = self.llm.chat_completion(llm_messages,
-                                                max_tokens=self.max_generated_tokens,
+                                                max_tokens=max_tokens,
                                                 stream=stream,
                                                 model_params=model_params)
         debug_info = {}
