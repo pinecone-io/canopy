@@ -13,11 +13,13 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
     """  # noqa: E501
 
-    def __init__(self,
-                 *,
-                 model_name: str = "text-embedding-ada-002",
-                 batch_size: int = 400,
-                 **kwargs):
+    def __init__(
+        self,
+        *,
+        model_name: str = "text-embedding-ada-002",
+        batch_size: int = 400,
+        **kwargs
+    ):
         """
         Initialize the OpenAIRecordEncoder
 
@@ -42,9 +44,9 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         """  # noqa: E501
         return super().encode_documents(documents)
 
-    async def _aencode_documents_batch(self,
-                                       documents: List[KBDocChunk]
-                                       ) -> List[KBEncodedDocChunk]:
+    async def _aencode_documents_batch(
+        self, documents: List[KBDocChunk]
+    ) -> List[KBEncodedDocChunk]:
         raise NotImplementedError
 
     async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
@@ -53,19 +55,21 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
 class AzureOpenAIRecordEncoder(DenseRecordEncoder):
     """
-    OpenAIRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
-    The implementation uses the `OpenAIEncoder` class from the `pinecone-text` library.
+    AzureOpenAIRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
+    The implementation uses the `AzureOpenAIEncoder` class from the `pinecone-text` library.
     For more information about see: https://github.com/pinecone-io/pinecone-text
 
     """  # noqa: E501
 
-    def __init__(self,
-                 *,
-                 model_name: str = "text-embedding-ada-002",
-                 batch_size: int = 400,
-                 **kwargs):
+    def __init__(
+        self,
+        *,
+        model_name: str = "text-embedding-ada-002",
+        batch_size: int = 400,
+        **kwargs
+    ):
         """
-        Initialize the OpenAIRecordEncoder
+        Initialize the AzureOpenAIRecordEncoder
 
         Args:
             model_name: The name of the OpenAI embeddings model to use for encoding. See https://platform.openai.com/docs/models/embeddings
@@ -88,9 +92,9 @@ class AzureOpenAIRecordEncoder(DenseRecordEncoder):
         """  # noqa: E501
         return super().encode_documents(documents)
 
-    async def _aencode_documents_batch(self,
-                                       documents: List[KBDocChunk]
-                                       ) -> List[KBEncodedDocChunk]:
+    async def _aencode_documents_batch(
+        self, documents: List[KBDocChunk]
+    ) -> List[KBEncodedDocChunk]:
         raise NotImplementedError
 
     async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:

@@ -231,18 +231,17 @@ class AzureOpenAILLM(OpenAILLM):
 
         Args:
             model_name: The name of the model to use. See https://platform.openai.com/docs/models
-            api_key: Your OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
-            organization: Your OpenAI organization. Defaults to None (uses the "OPENAI_ORG" environment variable if set, otherwise uses the "default" organization).
-            base_url: The base URL to use for the OpenAI API. Defaults to None (uses the default OpenAI API URL).
+            api_key: Your Azure OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
+            base_url: The base URL to use for the Azure OpenAI API. Will use the AZURE_OPENAI_ENDPOINT environment variable if set.
             **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
                     For example, you can set the temperature, top_p etc
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
         """  # noqa: E501
         super().__init__(model_name)
         self._client = openai.AzureOpenAI(
-            api_key=api_key or os.getenv("OPENAI_API_KEY"),
+            api_key=api_key,
             api_version="2023-10-01-preview",
-            azure_endpoint=base_url or os.getenv("OPENAI_BASE_URL")
+            azure_endpoint=base_url,
         )
         self.default_model_params = kwargs
 
@@ -280,10 +279,10 @@ class AzureOpenAILLM(OpenAILLM):
             dict: Function call arguments as a dictionary.
 
         Usage:
-            >>> from canopy.llm import OpenAILLM
+            >>> from canopy.llm import AzureOpenAILLM
             >>> from canopy.llm.models import Function, FunctionParameters, FunctionArrayProperty
             >>> from canopy.models.data_models import UserMessage
-            >>> llm = OpenAILLM()
+            >>> llm = AzureOpenAILLM()
             >>> messages = [UserMessage(content="I was wondering what is the capital of France?")]
             >>> function = Function(
             ...     name="query_knowledgebase",
@@ -303,9 +302,7 @@ class AzureOpenAILLM(OpenAILLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
 
         function_dict = cast(ChatCompletionToolParam, function.dict())
 
@@ -315,7 +312,7 @@ class AzureOpenAILLM(OpenAILLM):
             functions=[function_dict],
             function_call={"name": function.name},
             max_tokens=max_tokens,
-            **model_params_dict
+            **model_params_dict,
         )
 
         result = chat_completion.choices[0].message.function_call.arguments
@@ -324,18 +321,21 @@ class AzureOpenAILLM(OpenAILLM):
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
         return arguments
 
-    async def achat_completion(self,
-                               messages: Messages, *, stream: bool = False,
-                               max_generated_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None,
-                               ) -> Union[ChatResponse,
-                                          Iterable[StreamingChatChunk]]:
+    async def achat_completion(
+        self,
+        messages: Messages,
+        *,
+        stream: bool = False,
+        max_generated_tokens: Optional[int] = None,
+        model_params: Optional[dict] = None,
+    ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
 
-    async def agenerate_queries(self,
-                                messages: Messages,
-                                *,
-                                max_generated_tokens: Optional[int] = None,
-                                model_params: Optional[dict] = None,
-                                ) -> List[Query]:
+    async def agenerate_queries(
+        self,
+        messages: Messages,
+        *,
+        max_generated_tokens: Optional[int] = None,
+        model_params: Optional[dict] = None,
+    ) -> List[Query]:
         raise NotImplementedError()

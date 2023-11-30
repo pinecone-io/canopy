@@ -18,12 +18,7 @@ from canopy.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
-from fastapi import (
-    FastAPI,
-    HTTPException,
-    Body,
-    APIRouter
-)
+from fastapi import FastAPI, HTTPException, Body, APIRouter
 import uvicorn
 from typing import cast, Union
 
@@ -44,7 +39,7 @@ from .models.v1.api_models import (
     ContextResponse,
 )
 
-from canopy.llm.openai import OpenAILLM, AzureOpenAILLM
+from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
 from canopy import __version__
 
@@ -161,8 +156,9 @@ async def query(
             queries=request.queries,
             max_context_tokens=request.max_tokens,
         )
-        return ContextResponse(content=context.content.to_text(),
-                               num_tokens=context.num_tokens)
+        return ContextResponse(
+            content=context.content.to_text(), num_tokens=context.num_tokens
+        )
 
     except Exception as e:
         logger.exception(e)
@@ -268,7 +264,7 @@ async def shutdown() -> ShutdownResponse:
             status_code=500,
             detail="Failed to locate parent process. Cannot shutdown server.",
         )
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         kill_signal = signal.CTRL_C_EVENT
     else:
         kill_signal = signal.SIGINT
@@ -332,15 +328,7 @@ def _init_engines():
         Tokenizer.initialize()
         kb = KnowledgeBase(index_name=index_name)
         context_engine = ContextEngine(knowledge_base=kb)
-        if llm == "OpenAILLM":
-            llm = OpenAILLM()
-        elif llm == "AzureOpenAILLM":
-            llm = AzureOpenAILLM(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                base_url=os.getenv("OPENAI_BASE_URL"),
-            )
-        else:
-            raise ValueError("Config issue: LLM must be either OpenAILLM or AzureOpenAILLM")
+        llm = OpenAILLM()
         chat_engine = ChatEngine(context_engine=context_engine, llm=llm)
 
     kb.connect()
