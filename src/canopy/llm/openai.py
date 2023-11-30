@@ -33,6 +33,7 @@ class OpenAILLM(BaseLLM):
                  api_key: Optional[str] = None,
                  organization: Optional[str] = None,
                  base_url: Optional[str] = None,
+                 request_params_passthrough: bool = True,
                  **kwargs: Any,
                  ):
         """
@@ -51,6 +52,7 @@ class OpenAILLM(BaseLLM):
         self._client = openai.OpenAI(api_key=api_key,
                                      organization=organization,
                                      base_url=base_url)
+        self.request_params_passthrough = request_params_passthrough
         self.default_model_params = kwargs
 
     @property
@@ -91,17 +93,19 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
-        model = model_params.get("model", self.model_name) if model_params else self.model_name
-        model_params_dict = {k: v for k, v in model_params_dict.items() if k != 'model' and v is not None} if model_params else None
+        if self.request_params_passthrough:
+            passthrough_params = {
+                k: v for k, v in (model_params or {}).items() if v is not None
+            }
+            model_params_dict.update(passthrough_params)
+        if model_params_dict.get("model", None) is None:
+            model_params_dict["model"] = self.model_name
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
 
         messages = [m.dict() for m in messages]
-        response = self._client.chat.completions.create(model=model,
-                                                        messages=messages,
+        response = self._client.chat.completions.create(messages=messages,
                                                         stream=stream,
-                                                        max_tokens=max_tokens,
                                                         **model_params_dict)
 
         def streaming_iterator(response):

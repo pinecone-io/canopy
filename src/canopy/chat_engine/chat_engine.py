@@ -105,6 +105,7 @@ class ChatEngine(BaseChatEngine):
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
             history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
             min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
+            request_params_passthrough: Whether to pass the request params to the LLM or not. Defaults to True.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
@@ -197,10 +198,10 @@ class ChatEngine(BaseChatEngine):
             messages,
             max_tokens=self.max_prompt_tokens
         )
-        max_tokens = model_params.get("max_tokens", self.max_generated_tokens) if model_params else self.max_generated_tokens
-        model_params = {k: v for k, v in model_params.items() if k != 'max_tokens'} if model_params else None
+        model_params_dict = model_params or {}
+        if model_params_dict.get("max_tokens", None) is None:
+            model_params["max_tokens"] = self.max_generated_tokens
         llm_response = self.llm.chat_completion(llm_messages,
-                                                max_tokens=max_tokens,
                                                 stream=stream,
                                                 model_params=model_params)
         debug_info = {}

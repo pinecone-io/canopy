@@ -49,8 +49,9 @@ chat_engine:
     type: OpenAILLM                     # Options: [OpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
+      request_params_passthrough: true  # Whether to pass through the request parameters to the LLM API call.
       # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
-      # here will be used in every LLM API call. For example:
+      # here will be used in every LLM API call unless `request_params_passthrough` is false. For example:
 #      temperature: 0.7
 #      top_p: 0.9
 
