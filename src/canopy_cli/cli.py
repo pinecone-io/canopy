@@ -264,7 +264,7 @@ def _batch_documents_by_chunks(chunker: Chunker,
         Upload local data files to the Canopy service.
 
         Load all the documents from a data file or a directory containing multiple data
-        files. The allowed formats are .jsonl and .parquet.
+        files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
         """  # noqa: E501
     )
 )
