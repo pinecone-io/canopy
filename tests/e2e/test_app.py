@@ -1,10 +1,10 @@
 import json
 import os
+import time
 from typing import List
 
 from datetime import datetime
 
-import pinecone
 import pytest
 from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
@@ -52,9 +52,9 @@ def index_name(testrun_uid):
 
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
-    pinecone.init()
     kb = KnowledgeBase(index_name=index_name)
-    kb.create_canopy_index(indexed_fields=["test"])
+    time.sleep(10)
+    kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
     return kb
 
@@ -79,10 +79,9 @@ def client(knowledge_base, index_name):
 def teardown_knowledge_base(knowledge_base):
     yield
 
-    pinecone.init()
     index_name = knowledge_base.index_name
-    if index_name in pinecone.list_indexes():
-        pinecone.delete_index(index_name)
+    if index_name in knowledge_base.list_canopy_indexes():
+        knowledge_base.delete_index()
 
 # TODO: the following test is a complete e2e test, this it not the final design
 # for the e2e tests, however there were some issues

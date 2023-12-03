@@ -1,9 +1,10 @@
 import os
 import random
+import time
 
 import pytest
-import pinecone
 import numpy as np
+from pinecone import Index
 from tenacity import (
     retry,
     stop_after_delay,
@@ -12,7 +13,7 @@ from tenacity import (
 )
 from dotenv import load_dotenv
 from datetime import datetime
-from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
+from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.chunker import Chunker
 from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
 from canopy.knowledge_base.models import DocumentWithScore
@@ -25,7 +26,6 @@ from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
 
 
-load_dotenv()
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
 RETRY_TIMEOUT = 120
@@ -64,14 +64,14 @@ def encoder():
 
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_full_name, index_name, chunker, encoder):
-    pinecone.init()
-    if index_full_name in pinecone.list_indexes():
-        pinecone.delete_index(index_full_name)
-
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
-    kb.create_canopy_index(indexed_fields=["my-key"])
+
+    if index_full_name in kb.list_canopy_indexes():
+        kb._pc.delete_index(index_full_name)
+
+    kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
     return kb
 
@@ -154,10 +154,8 @@ def assert_query_metadata_filter(knowledge_base: KnowledgeBase,
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
-
-    pinecone.init()
-    if index_full_name in pinecone.list_indexes():
-        pinecone.delete_index(index_full_name)
+    if index_full_name in knowledge_base.list_canopy_indexes():
+        knowledge_base._pc.delete_index(index_full_name)
 
 
 def _generate_text(num_words: int):
@@ -221,13 +219,12 @@ def encoded_chunks(documents, chunker, encoder):
 
 def test_create_index(index_full_name, knowledge_base):
     assert knowledge_base.index_name == index_full_name
-    assert index_full_name in pinecone.list_indexes()
-    assert index_full_name == index_full_name
+    assert index_full_name in knowledge_base.list_canopy_indexes()
     assert knowledge_base._index.describe_index_stats()
 
 
-def test_list_indexes(index_full_name):
-    index_list = list_canopy_indexes()
+def test_list_indexes(knowledge_base, index_full_name):
+    index_list = knowledge_base.list_canopy_indexes()
 
     assert len(index_list) > 0
     for item in index_list:
@@ -407,7 +404,7 @@ def test_init_defaults(knowledge_base):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name)
     new_kb.connect()
-    assert isinstance(new_kb._index, pinecone.Index)
+    assert isinstance(new_kb._index, Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(new_kb._chunker, KnowledgeBase._DEFAULT_COMPONENTS["chunker"])
@@ -422,7 +419,7 @@ def test_init_defaults_with_override(knowledge_base, chunker):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name, chunker=chunker)
     new_kb.connect()
-    assert isinstance(new_kb._index, pinecone.Index)
+    assert isinstance(new_kb._index, Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(new_kb._chunker, StubChunker)
@@ -444,8 +441,9 @@ def test_init_raise_wrong_type(knowledge_base, chunker):
 
 def test_delete_index_happy_path(knowledge_base):
     knowledge_base.delete_index()
-
-    assert knowledge_base._index_name not in pinecone.list_indexes()
+    # # There is a bug in delete_index, it takes time to complete.
+    # time.sleep(10)
+    assert knowledge_base._index_name not in knowledge_base.list_canopy_indexes()
     assert knowledge_base._index is None
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete(["doc_0"])
@@ -465,17 +463,6 @@ def test_connect_after_delete(knowledge_base):
 
     assert "does not exist or was deleted" in str(e.value)
 
-
-def test_create_with_text_in_indexed_field_raise(index_name,
-                                                 chunker,
-                                                 encoder):
-    with pytest.raises(ValueError) as e:
-        kb = KnowledgeBase(index_name=index_name,
-                           record_encoder=encoder,
-                           chunker=chunker)
-        kb.create_canopy_index(indexed_fields=["id", "text", "metadata"])
-
-    assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
 
 def test_create_with_index_encoder_dimension_none(index_name, chunker):
