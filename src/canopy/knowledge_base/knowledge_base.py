@@ -686,7 +686,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     @staticmethod
     def _is_starter_env():
-        # TODO: Fix this for v4!
+        # TODO: Fix this for serverless!
         # starter_env_suffixes = ("starter", "stage-gcp-0")
         # return os.getenv("PINECONE_ENVIRONMENT").lower().endswith(starter_env_suffixes)
         return True

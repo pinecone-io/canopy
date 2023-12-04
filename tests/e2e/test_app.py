@@ -53,7 +53,6 @@ def index_name(testrun_uid):
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
     kb = KnowledgeBase(index_name=index_name)
-    time.sleep(10)
     kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
     return kb
