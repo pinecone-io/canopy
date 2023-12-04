@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base.knowledge_base import PINECONE_CLIENT
 
 from canopy_server.app import app, API_VERSION
 from canopy_server.models.v1.api_models import (
@@ -79,7 +80,7 @@ def teardown_knowledge_base(knowledge_base):
     yield
 
     index_name = knowledge_base.index_name
-    if index_name in knowledge_base.list_canopy_indexes():
+    if index_name in PINECONE_CLIENT.list_canopy_indexes():
         knowledge_base.delete_index()
 
 # TODO: the following test is a complete e2e test, this it not the final design

@@ -1,6 +1,5 @@
 import os
 import random
-import time
 
 import pytest
 import numpy as np
@@ -15,7 +14,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.chunker import Chunker
-from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
+from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX, list_canopy_indexes, PINECONE_CLIENT
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
@@ -68,8 +67,8 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
                        record_encoder=encoder,
                        chunker=chunker)
 
-    if index_full_name in kb.list_canopy_indexes():
-        kb._pc.delete_index(index_full_name)
+    if index_full_name in list_canopy_indexes():
+        PINECONE_CLIENT.delete_index(index_full_name)
 
     kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
@@ -154,8 +153,8 @@ def assert_query_metadata_filter(knowledge_base: KnowledgeBase,
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
-    if index_full_name in knowledge_base.list_canopy_indexes():
-        knowledge_base._pc.delete_index(index_full_name)
+    if index_full_name in list_canopy_indexes():
+        PINECONE_CLIENT.delete_index(index_full_name)
 
 
 def _generate_text(num_words: int):
@@ -219,12 +218,12 @@ def encoded_chunks(documents, chunker, encoder):
 
 def test_create_index(index_full_name, knowledge_base):
     assert knowledge_base.index_name == index_full_name
-    assert index_full_name in knowledge_base.list_canopy_indexes()
+    assert index_full_name in list_canopy_indexes()
     assert knowledge_base._index.describe_index_stats()
 
 
 def test_list_indexes(knowledge_base, index_full_name):
-    index_list = knowledge_base.list_canopy_indexes()
+    index_list = list_canopy_indexes()
 
     assert len(index_list) > 0
     for item in index_list:
@@ -443,7 +442,7 @@ def test_delete_index_happy_path(knowledge_base):
     knowledge_base.delete_index()
     # # There is a bug in delete_index, it takes time to complete.
     # time.sleep(10)
-    assert knowledge_base._index_name not in knowledge_base.list_canopy_indexes()
+    assert knowledge_base._index_name not in list_canopy_indexes()
     assert knowledge_base._index is None
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete(["doc_0"])

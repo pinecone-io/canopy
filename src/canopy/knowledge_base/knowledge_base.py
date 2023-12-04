@@ -2,7 +2,7 @@ import os
 from copy import deepcopy
 import time
 
-from typing import List, Optional, Dict, Any, Tuple, Union
+from typing import List, Optional, Dict, Any, Union
 import pandas as pd
 from pinecone import ServerlessSpec, PodSpec
 from pinecone.exceptions import PineconeApiException
@@ -31,6 +31,33 @@ RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
 DELETE_STARTER_BATCH_SIZE = 30
 
 DELETE_STARTER_CHUNKS_PER_DOC = 32
+
+PINECONE_CLIENT = Pinecone()
+
+
+def connect_to_pinecone():
+    """
+    Connect to Pinecone.
+    This method is called automatically when creating a new KnowledgeBase object.
+    """
+    try:
+        # TODO: Replace this with whoami call when it is available
+        PINECONE_CLIENT.list_indexes()
+    except Exception as e:
+        raise RuntimeError("Failed to connect to Pinecone. "
+                           "Please check your credentials and try again") from e
+
+
+def list_canopy_indexes() -> List[str]:
+    """
+    List all Canopy indexes in the current Pinecone account.
+
+    Returns:
+        A list of Canopy index names.
+    """
+    index_names = [_['name'] for _ in PINECONE_CLIENT.list_indexes().index_list['indexes']]
+
+    return [index for index in index_names if index.startswith(INDEX_NAME_PREFIX)]
 
 
 class KnowledgeBase(BaseKnowledgeBase):
@@ -158,7 +185,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
-        self._pc = Pinecone()
         # Normally, index creation params are passed directly to the `.create_canopy_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
         # would be set by the `KnowledgeBase.from_config()` constructor.
@@ -168,36 +194,15 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-    def list_canopy_indexes(self) -> List[str]:
-        """
-        List all Canopy indexes in the current Pinecone account.
 
-        Returns:
-            A list of Canopy index names.
-        """
-        index_names = [_['name'] for _ in self._pc.list_indexes().index_list['indexes']]
-
-        return [index for index in index_names if index.startswith(INDEX_NAME_PREFIX)]
-
-    def connect_to_pinecone(self):
-        """
-        Connect to Pinecone.
-        This method is called automatically when creating a new KnowledgeBase object.
-        """
-        try:
-            # TODO: Replace this with whoami call when it is available
-            self._pc.list_indexes()
-        except Exception as e:
-            raise RuntimeError("Failed to connect to Pinecone. "
-                               "Please check your credentials and try again") from e
 
     def _connect_index(self,
                        connect_pinecone: bool = True
                        ) -> None:
         if connect_pinecone:
-            self.connect_to_pinecone()
+            connect_to_pinecone()
 
-        if self.index_name not in self.list_canopy_indexes():
+        if self.index_name not in list_canopy_indexes():
             raise RuntimeError(
                 f"The index {self.index_name} does not exist or was deleted. "
                 "Please create it by calling knowledge_base.create_canopy_index() or "
@@ -205,7 +210,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         try:
-            self._index = self._pc.Index(self.index_name)
+            self._index = PINECONE_CLIENT.Index(self.index_name)
             self.verify_index_connection()
         except Exception as e:
             self._index = None
@@ -282,7 +287,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
            spec: A dictionary containing configurations describing how the index should be deployed. For serverless indexes,
-            specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config, and source_collection.
+           specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config, and source_collection.
            
            dimension: The dimension of the vectors to index.
                        If `dimension` isn't explicitly provided,
@@ -307,9 +312,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
-        self.connect_to_pinecone()
+        connect_to_pinecone()
 
-        if self.index_name in self.list_canopy_indexes():
+        if self.index_name in list_canopy_indexes():
             raise RuntimeError(
                 f"Index {self.index_name} already exists. "
                 "If you wish to delete it, use `delete_index()`. "
@@ -478,7 +483,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 200,
-               show_progress_bar: bool = False):
+               show_progress_bar: bool = False) -> Dict:
         """
         Upsert documents into the knowledge base.
         Upsert operation stands for "update or insert".
@@ -530,7 +535,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
-        encoded_df = pd.DataFrame.from_records([c.to_db_record() for c in encoded_chunks])
+        # encoded_df = pd.DataFrame.from_records([c.to_db_record() for c in encoded_chunks])
 
         # The upsert operation may update documents which may already exist
         # int the index, as many individual chunks.
@@ -543,56 +548,10 @@ class KnowledgeBase(BaseKnowledgeBase):
             self.delete(document_ids=[doc.id for doc in documents],
                         namespace=namespace)
 
-        validated_df = self._validate_dataframe(encoded_df)
-
-        # Upsert to Pinecone index
-        return self._upsert_to_index(
-            df=validated_df,
-            namespace=namespace,
-            batch_size=batch_size,
-            show_progress=show_progress_bar
-        )
-
-    @classmethod
-    def _validate_dataframe(
-            cls,
-            df: pd.DataFrame,
-    ) -> pd.DataFrame:
-        """
-        Reads a pandas DataFrame and validates it against a schema.
-
-        Args:
-            df (pd.DataFrame): the pandas DataFrame to read
-            schema (List[Tuple[str, bool, Any]]): the schema to validate against (column_name, is_nullable, null_value)
-
-        Returns:
-            pd.DataFrame: the validated, renamed DataFrame
-        """
-        if df is None or df.empty:
-            return pd.DataFrame(columns=cls._VectorSetMetadata.fields())
-        else:
-            for column_name, is_nullable, null_value in cls._VectorSetMetadata.schema:
-                if column_name not in df.columns and not is_nullable:
-                    raise ValueError(
-                        f"Schema mismatch: {column_name} not found."
-                    )
-                elif column_name not in df.columns and is_nullable:
-                    df[column_name] = null_value
-            return df[cls._VectorSetMetadata.fields()]
-
-    def _upsert_to_index(self, df: pd.DataFrame,
-                         namespace: str, batch_size: int,
-                         show_progress: bool = False):
-
-        res = self._index.upsert_from_dataframe(
-            df[self._VectorSetMetadata.fields()].dropna(
-                axis=1, how="all"
-            ),
-            namespace=namespace,
-            batch_size=batch_size,
-            show_progress=show_progress
-        )
-        return {"upserted_count": res.upserted_count}
+        self._index.upsert(
+            [c.to_db_record() for c in encoded_chunks],
+            namespace=namespace, batch_size=batch_size,
+            show_progress=show_progress_bar)
 
     def delete(self,
                document_ids: List[str],
