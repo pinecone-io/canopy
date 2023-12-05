@@ -118,10 +118,10 @@ class AzureOpenAILLM(OpenAILLM):
             dict: Function call arguments as a dictionary.
 
         Usage:
-            >>> from canopy.llm import OpenAILLM
+            >>> from canopy.llm import AzureOpenAILLM
             >>> from canopy.llm.models import Function, FunctionParameters, FunctionArrayProperty
             >>> from canopy.models.data_models import UserMessage
-            >>> llm = OpenAILLM()
+            >>> llm = AzureOpenAILLM()
             >>> messages = [UserMessage(content="I was wondering what is the capital of France?")]
             >>> function = Function(
             ...     name="query_knowledgebase",
