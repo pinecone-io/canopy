@@ -1,20 +1,21 @@
-import os
 import random
 
 import pytest
 import numpy as np
 from pinecone import Index
+from pinecone.control.pinecone import Pinecone
 from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
     wait_chain,
 )
-from dotenv import load_dotenv
 from datetime import datetime
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.chunker import Chunker
-from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX, list_canopy_indexes, PINECONE_CLIENT
+from canopy.knowledge_base.knowledge_base import (INDEX_NAME_PREFIX,
+                                                  list_canopy_indexes,
+                                                  PINECONE_CLIENT)
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
@@ -23,8 +24,6 @@ from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
-
-
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
 RETRY_TIMEOUT = 120
@@ -293,7 +292,6 @@ def test_update_documents(encoder,
                           documents,
                           encoded_chunks,
                           knowledge_base):
-
     index_name = knowledge_base._index_name
 
     # chunker/kb that produces fewer chunks per doc
@@ -463,7 +461,6 @@ def test_connect_after_delete(knowledge_base):
     assert "does not exist or was deleted" in str(e.value)
 
 
-
 def test_create_with_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
@@ -477,31 +474,29 @@ def test_create_with_index_encoder_dimension_none(index_name, chunker):
 
 
 @pytest.fixture
-def set_bad_credentials():
-    original_api_key = os.environ.get(PINECONE_API_KEY_ENV_VAR)
-
-    os.environ[PINECONE_API_KEY_ENV_VAR] = "bad-key"
-
-    yield
-
-    # Restore the original API key after test execution
-    os.environ[PINECONE_API_KEY_ENV_VAR] = original_api_key
+def unauthorized_pinecone_client():
+    yield Pinecone(api_key="bad-key")
 
 
-def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+def test_create_bad_credentials(unauthorized_pinecone_client,
+                                index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
-                       chunker=chunker)
+                       chunker=chunker,
+                       pinecone_client=unauthorized_pinecone_client)
+
     with pytest.raises(RuntimeError) as e:
         kb.create_canopy_index()
 
     assert "Please check your credentials" in str(e.value)
 
 
-def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+def test_init_bad_credentials(unauthorized_pinecone_client,
+                              index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
-                       chunker=chunker)
+                       chunker=chunker,
+                       pinecone_client=unauthorized_pinecone_client)
     with pytest.raises(RuntimeError) as e:
         kb.connect()
 

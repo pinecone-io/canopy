@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from canopy.knowledge_base import KnowledgeBase
-from canopy.knowledge_base.knowledge_base import PINECONE_CLIENT
+from canopy.knowledge_base.knowledge_base import list_canopy_indexes
 
 from canopy_server.app import app, API_VERSION
 from canopy_server.models.v1.api_models import (
@@ -54,6 +54,14 @@ def index_name(testrun_uid):
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
     kb = KnowledgeBase(index_name=index_name)
+
+    # System and E2E tests are running in parallel and try to create
+    # indexes at the same time.
+    # DB raises an exception when we create two indexes at the same time.
+    # In order to avoid the exception, we create the index here a second
+    # later than the system tests.
+    # TODO: Remove the sleep after the DB is fixed.
+    time.sleep(1)
     kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
     return kb
@@ -80,7 +88,7 @@ def teardown_knowledge_base(knowledge_base):
     yield
 
     index_name = knowledge_base.index_name
-    if index_name in PINECONE_CLIENT.list_canopy_indexes():
+    if index_name in list_canopy_indexes():
         knowledge_base.delete_index()
 
 # TODO: the following test is a complete e2e test, this it not the final design

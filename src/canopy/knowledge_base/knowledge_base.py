@@ -3,10 +3,8 @@ from copy import deepcopy
 import time
 
 from typing import List, Optional, Dict, Any, Union
-import pandas as pd
 from pinecone import ServerlessSpec, PodSpec
-from pinecone.exceptions import PineconeApiException
-from pinecone import Pinecone
+from pinecone import Pinecone, PineconeApiException
 
 try:
     from pinecone import GRPCIndex as Index
@@ -35,27 +33,37 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 PINECONE_CLIENT = Pinecone()
 
 
-def connect_to_pinecone():
+def connect_to_pinecone(pinecone_client=None):
     """
     Connect to Pinecone.
     This method is called automatically when creating a new KnowledgeBase object.
     """
+    pinecone_client = pinecone_client or PINECONE_CLIENT
     try:
         # TODO: Replace this with whoami call when it is available
-        PINECONE_CLIENT.list_indexes()
+        pinecone_client.list_indexes()
     except Exception as e:
         raise RuntimeError("Failed to connect to Pinecone. "
                            "Please check your credentials and try again") from e
 
 
-def list_canopy_indexes() -> List[str]:
+def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
     """
     List all Canopy indexes in the current Pinecone account.
+
+    Args:
+        pinecone_client: Pinecone client used to query indexes. If not passed
+                         the global client will be used.
 
     Returns:
         A list of Canopy index names.
     """
-    index_names = [_['name'] for _ in PINECONE_CLIENT.list_indexes().index_list['indexes']]
+    pinecone_client = pinecone_client or PINECONE_CLIENT
+
+    connect_to_pinecone(pinecone_client)
+
+    indexes = pinecone_client.list_indexes()
+    index_names = [_['name'] for _ in indexes.index_list['indexes']]
 
     return [index for index in index_names if index.startswith(INDEX_NAME_PREFIX)]
 
@@ -93,25 +101,14 @@ class KnowledgeBase(BaseKnowledgeBase):
         'reranker': TransparentReranker
     }
 
-    class _VectorSetMetadata:
-        schema = [
-            ("id", False, None),
-            ("values", False, None),
-            ("sparse_values", True, None),
-            ("metadata", True, None),
-        ]
-
-        @classmethod
-        def fields(cls) -> List[str]:
-            return [field_name for field_name, _, _ in cls.schema]
-
     def __init__(self,
                  index_name: str,
                  *,
                  record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 5
+                 default_top_k: int = 5,
+                 pinecone_client: Optional[Pinecone] = None
                  ):
         """
         Initilize the knowledge base object.
@@ -143,12 +140,13 @@ class KnowledgeBase(BaseKnowledgeBase):
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
-
+            pinecone_client: An instance of Pinecone to be used as a client.
         Raises:
             ValueError: If default_top_k is not a positive integer.
             TypeError: If record_encoder is not an instance of RecordEncoder.
             TypeError: If chunker is not an instance of Chunker.
             TypeError: If reranker is not an instance of Reranker.
+            TypeError: If pinecone_client is not an instance of Pinecone.
 
         """  # noqa: E501
         if default_top_k < 1:
@@ -185,6 +183,16 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS['reranker']()
 
+        if pinecone_client:
+            if not isinstance(pinecone_client, Pinecone):
+                raise TypeError(
+                    f"pinecone client must be an instance of Pinecone, "
+                    f"not {type(pinecone_client)}"
+                )
+            self._pinecone_client = pinecone_client
+        else:
+            self._pinecone_client = PINECONE_CLIENT
+
         # Normally, index creation params are passed directly to the `.create_canopy_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
         # would be set by the `KnowledgeBase.from_config()` constructor.
@@ -194,15 +202,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-
-
     def _connect_index(self,
                        connect_pinecone: bool = True
                        ) -> None:
         if connect_pinecone:
             connect_to_pinecone()
 
-        if self.index_name not in list_canopy_indexes():
+        if self.index_name not in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
                 f"The index {self.index_name} does not exist or was deleted. "
                 "Please create it by calling knowledge_base.create_canopy_index() or "
@@ -210,7 +216,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
 
         try:
-            self._index = PINECONE_CLIENT.Index(self.index_name)
+            self._index = self._pinecone_client.Index(self.index_name)
             self.verify_index_connection()
         except Exception as e:
             self._index = None
@@ -264,8 +270,10 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
 
     def create_canopy_index(self,
-                            spec: Union[Dict, ServerlessSpec, PodSpec] = ServerlessSpec(cloud='aws',
-                                                                                        region='us-west-2'),
+                            spec: Union[Dict, ServerlessSpec, PodSpec] = ServerlessSpec(
+                                cloud='aws',
+                                region='us-west-2'
+                            ),
                             dimension: Optional[int] = None,
                             index_params: Optional[dict] = None
                             ):
@@ -287,8 +295,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
            spec: A dictionary containing configurations describing how the index should be deployed. For serverless indexes,
-           specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config, and source_collection.
-           
+                 specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config,
+                 and source_collection.
            dimension: The dimension of the vectors to index.
                        If `dimension` isn't explicitly provided,
                        Canopy would try to infer the embedding's dimension based on the configured `Encoder`
@@ -314,7 +322,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         connect_to_pinecone()
 
-        if self.index_name in list_canopy_indexes():
+        if self.index_name in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
                 f"Index {self.index_name} already exists. "
                 "If you wish to delete it, use `delete_index()`. "
@@ -323,7 +331,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # create index
         index_params = index_params or self._index_params
         try:
-            self._pc.create_index(
+            self._pinecone_client.create_index(
                 name=self.index_name,
                 dimension=dimension,
                 spec=spec,
@@ -384,7 +392,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         """  # noqa: E501
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
-        self._pc.delete_index(self._index_name)
+        self._pinecone_client.delete_index(self._index_name)
         self._index = None
 
     def query(self,
@@ -483,7 +491,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                documents: List[Document],
                namespace: str = "",
                batch_size: int = 200,
-               show_progress_bar: bool = False) -> Dict:
+               show_progress_bar: bool = False):
         """
         Upsert documents into the knowledge base.
         Upsert operation stands for "update or insert".
@@ -535,7 +543,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
-        # encoded_df = pd.DataFrame.from_records([c.to_db_record() for c in encoded_chunks])
 
         # The upsert operation may update documents which may already exist
         # int the index, as many individual chunks.
@@ -647,7 +654,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _is_starter_env():
         # TODO: Fix this for serverless!
         # starter_env_suffixes = ("starter", "stage-gcp-0")
-        # return os.getenv("PINECONE_ENVIRONMENT").lower().endswith(starter_env_suffixes)
+        # return (os.getenv("PINECONE_ENVIRONMENT").lower()
+        #        .endswith(starter_env_suffixes))
         return True
 
     async def aquery(self,
