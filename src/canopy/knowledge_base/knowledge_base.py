@@ -4,8 +4,8 @@ import time
 from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
-from pinecone import ServerlessSpec, PodSpec
-from pinecone import Pinecone, PineconeApiException
+from pinecone import (ServerlessSpec, PodSpec, PineconeConfigurationError,
+                      Pinecone, PineconeApiException)
 
 try:
     from pinecone import GRPCIndex as Index
@@ -37,25 +37,6 @@ def _get_global_client() -> Pinecone:
     return Pinecone()
 
 
-def connect_to_pinecone(pinecone_client: Pinecone = None):
-    """
-    Connects to Pinecone.
-
-    This method is called automatically when creating a new KnowledgeBase object.
-
-    Args:
-         pinecone_client: Pinecone client used to connect to Pinecone. If not passed,
-                          the global client will be used.
-    """
-    pinecone_client = pinecone_client or _get_global_client()
-    try:
-        # TODO: Replace this with whoami call when it is available
-        pinecone_client.list_indexes()
-    except Exception as e:
-        raise RuntimeError("Failed to connect to Pinecone. "
-                           "Please check your credentials and try again") from e
-
-
 def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
     """
     List all Canopy indexes in the current Pinecone account.
@@ -73,9 +54,12 @@ def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
     """
     pinecone_client = pinecone_client or _get_global_client()
 
-    connect_to_pinecone(pinecone_client)
+    try:
+        indexes = pinecone_client.list_indexes()
+    except Exception as e:
+        raise RuntimeError("Failed to connect to Pinecone. "
+                           "Please check your credentials and try again") from e
 
-    indexes = pinecone_client.list_indexes()
     index_names = [_['name'] for _ in indexes.index_list['indexes']]
 
     return [index for index in index_names if index.startswith(INDEX_NAME_PREFIX)]
@@ -215,12 +199,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-    def _connect_index(self,
-                       connect_pinecone: bool = True
-                       ) -> None:
-        if connect_pinecone:
-            connect_to_pinecone()
-
+    def _connect_index(self) -> None:
         if self.index_name not in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
                 f"The index {self.index_name} does not exist or was deleted. "
@@ -333,8 +312,6 @@ class KnowledgeBase(BaseKnowledgeBase):
                 raise ValueError("Could not infer dimension from encoder. "
                                  "Please provide the vectors' dimension")
 
-        connect_to_pinecone()
-
         if self.index_name in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
                 f"Index {self.index_name} already exists. "
@@ -363,7 +340,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         start_time = time.time()
         while True:
             try:
-                self._connect_index(connect_pinecone=False)
+                self._connect_index()
                 break
             except RuntimeError:
                 pass
