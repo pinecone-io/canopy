@@ -405,24 +405,24 @@ def _chat(
     if stream:
         for chunk in openai_response:
             openai_response_id = chunk.id
-            intenal_model = chunk.model
+            internal_model = chunk.model
             text = chunk.choices[0].delta.content or ""
             output += text
             click.echo(text, nl=False)
         click.echo()
         debug_info = ChatDebugInfo(
             id=openai_response_id,
-            intenal_model=intenal_model,
+            internal_model=internal_model,
             duration_in_sec=round(duration_in_sec, 2),
         )
     else:
-        intenal_model = openai_response.model
+        internal_model = openai_response.model
         text = openai_response.choices[0].message.content or ""
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
             id=openai_response.id,
-            intenal_model=intenal_model,
+            internal_model=internal_model,
             duration_in_sec=duration_in_sec,
             prompt_tokens=openai_response.usage.prompt_tokens,
             generated_tokens=openai_response.usage.completion_tokens,
@@ -469,10 +469,11 @@ def chat(chat_server_url, rag, debug, stream):
     )
     for c in note_msg:
         click.echo(click.style(c, fg="red"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
     note_white_message = (
-        "This method should be used by developers to test the RAG data and model"
+        "This method should be used by developers to test the RAG data and model "
         "during development. "
         "When you are ready to deploy, run the Canopy server as a REST API "
         "backend for your chatbot UI. \n\n"
@@ -480,7 +481,8 @@ def chat(chat_server_url, rag, debug, stream):
     )
     for c in note_white_message:
         click.echo(click.style(c, fg="white"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
 
     history_with_pinecone = []
@@ -523,7 +525,7 @@ def chat(chat_server_url, rag, debug, stream):
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
-                model=dubug_info.intenal_model,
+                model=dubug_info.internal_model,
                 history=history_without_pinecone,
                 message=message,
                 stream=stream,
@@ -554,6 +556,8 @@ def chat(chat_server_url, rag, debug, stream):
         """
     )
 )
+@click.option("--stream/--no-stream", default=True,
+              help="Stream the response from the RAG chatbot word by word.")
 @click.option("--host", default="0.0.0.0",
               help="Hostname or address to bind the server to. Defaults to 0.0.0.0")
 @click.option("--port", default=8000,
@@ -565,7 +569,7 @@ def chat(chat_server_url, rag, debug, stream):
                    "defaults will be used.")
 @click.option("--index-name", default=None,
               help="Index name, if not provided already as an environment variable.")
-def start(host: str, port: str, reload: bool,
+def start(host: str, port: str, reload: bool, stream:bool,
           config: Optional[str], index_name: Optional[str]):
     validate_pinecone_connection()
     _validate_chat_engine(config)
@@ -585,7 +589,8 @@ def start(host: str, port: str, reload: bool,
     )
     for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
 
     if index_name:
