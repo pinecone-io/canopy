@@ -92,7 +92,7 @@ class TestAzureOpenAILLM:
         assert llm.default_model_params["temperature"] == 0.9
         assert llm.default_model_params["top_p"] == 0.95
         assert llm.default_model_params["n"] == 3
-        assert llm._client.api_key == "d5e870aabbb14cb09a52038215c0fb37"  # todo: remove
+        assert llm._client.api_key == "<>"
         assert llm._client.organization == "test_organization"
 
     @staticmethod
