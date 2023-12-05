@@ -61,7 +61,7 @@ def knowledge_base(index_name):
     # In order to avoid the exception, we create the index here a second
     # later than the system tests.
     # TODO: Remove the sleep after the DB is fixed.
-    time.sleep(1)
+    time.sleep(5)
     kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
     return kb
