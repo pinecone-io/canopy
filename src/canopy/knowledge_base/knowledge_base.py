@@ -51,6 +51,10 @@ def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
     """
     List all Canopy indexes in the current Pinecone account.
 
+    Example:
+        >>> from canopy.knowledge_base import list_canopy_indexes
+        >>> list_canopy_indexes()
+            ['canopy--my_index', 'canopy--my_index2']
     Args:
         pinecone_client: Pinecone client used to query indexes. If not passed
                          the global client will be used.
