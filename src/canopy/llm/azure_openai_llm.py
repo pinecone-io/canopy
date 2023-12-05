@@ -1,5 +1,6 @@
 import json
 import os
+from os import environ
 from typing import Optional, Any, Dict, Union, Iterable, List
 
 import jsonschema
@@ -52,25 +53,25 @@ class AzureOpenAILLM(OpenAILLM):
         """
         super().__init__(model_name)
 
-        if os.environ['AZURE_OPENAI_API_KEY'] is None:
+        if not environ.get('AZURE_OPENAI_API_KEY'):
             raise EnvironmentError('Please set your Azure OpenAI API key environment variable ('
                                    'export AZURE_OPENAI_API_KEY=<your azure openai api key>). See here for more '
                                    'information: '
                                    'https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python')
 
-        if os.environ['AZURE_OPENAI_ENDPOINT'] is None:
+        if not environ.get('AZURE_OPENAI_ENDPOINT'):
             raise EnvironmentError("Please set your Azure OpenAI endpoint environment variable ('export "
                                    "AZURE_OPENAI_ENDPOINT=<your endpoint>'). See here for more information "
                                    "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
 
-        if os.environ['OPENAI_API_VERSION'] is None:
+        if not environ.get('OPENAI_API_VERSION'):
             raise EnvironmentError("Please set your Azure OpenAI API version. ('export OPENAI_API_VERSION=<your API "
                                    "version"
                                    ">'). See here for more information "
                                    "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
 
         if azure_deployment is None:
-            if os.getenv('AZURE_DEPLOYMENT') is None:
+            if not environ.get('AZURE_DEPLOYMENT') is None:
                 raise EnvironmentError('You need to set an environment variable for AZURE_DEPLOYMENT to the name of '
                                        'your Azure deployment')
             azure_deployment = os.getenv('AZURE_DEPLOYMENT')
