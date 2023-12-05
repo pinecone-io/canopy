@@ -86,6 +86,10 @@ class AzureOpenAILLM(OpenAILLM):
                        )
         self.default_model_params = kwargs
 
+    @property
+    def available_models(self):
+        raise NotImplementedError()
+
     @retry(
         reraise=True,
         stop=stop_after_attempt(3),
