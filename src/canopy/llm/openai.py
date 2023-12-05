@@ -33,7 +33,6 @@ class OpenAILLM(BaseLLM):
                  api_key: Optional[str] = None,
                  organization: Optional[str] = None,
                  base_url: Optional[str] = None,
-                 request_params_passthrough: bool = True,
                  **kwargs: Any,
                  ):
         """
@@ -52,8 +51,9 @@ class OpenAILLM(BaseLLM):
         self._client = openai.OpenAI(api_key=api_key,
                                      organization=organization,
                                      base_url=base_url)
-        self.request_params_passthrough = request_params_passthrough
         self.default_model_params = kwargs
+        if self.default_model_params.get("model", None) is None:
+            self.default_model_params["model"] = self.model_name
 
     @property
     def available_models(self):
@@ -93,13 +93,7 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        if self.request_params_passthrough:
-            passthrough_params = {
-                k: v for k, v in (model_params or {}).items() if v is not None
-            }
-            model_params_dict.update(passthrough_params)
-        if model_params_dict.get("model", None) is None:
-            model_params_dict["model"] = self.model_name
+        model_params_dict.update(model_params or {})
         if max_tokens is not None:
             model_params_dict["max_tokens"] = max_tokens
 
@@ -183,7 +177,6 @@ class OpenAILLM(BaseLLM):
 
         chat_completion = self._client.chat.completions.create(
             messages=[m.dict() for m in messages],
-            model=self.model_name,
             tools=[function_dict],
             tool_choice={"type": "function",
                          "function": {"name": function.name}},
