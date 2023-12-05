@@ -71,7 +71,7 @@ class AzureOpenAILLM(OpenAILLM):
                                    "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
 
         if azure_deployment is None:
-            if not environ.get('AZURE_DEPLOYMENT') is None:
+            if not environ.get('AZURE_DEPLOYMENT'):
                 raise EnvironmentError('You need to set an environment variable for AZURE_DEPLOYMENT to the name of '
                                        'your Azure deployment')
             azure_deployment = os.getenv('AZURE_DEPLOYMENT')
