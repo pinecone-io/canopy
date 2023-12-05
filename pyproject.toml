@@ -5,14 +5,13 @@ description = "Retrieval Augmented Generation (RAG) framework and context engine
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
 license = "Apache-2.0"
-packages = [{include = "canopy", from = "src"},
-            {include = "canopy_cli", from = "src"},
-            {include = "canopy_server", from = "src"},]
+packages = [{ include = "canopy", from = "src" },
+    { include = "canopy_cli", from = "src" },
+    { include = "canopy_server", from = "src" }, ]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
 pinecone-client = "3.0.0.dev4"
-pandas = "^2.0.0"
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
 tiktoken = "^0.3.3"
@@ -33,7 +32,8 @@ pinecone-text = "^0.7.0"
 tokenizers = "^0.15.0"
 transformers = "^4.35.2"
 sentencepiece = "^0.1.99"
-pyarrow = "^11.0.0"
+pandas = "2.0.0"
+pyarrow = "^14.0.1"
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
