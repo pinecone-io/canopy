@@ -10,12 +10,22 @@ ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
 
 class AnyscaleRecordEncoder(DenseRecordEncoder):
     """
-    OpenAIRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
+    AnyscaleRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
     The implementation uses the `OpenAIEncoder` class from the `pinecone-text` library.
     For more information about see: https://github.com/pinecone-io/pinecone-text
 
     """  # noqa: E501
+    """
+    Initialize the AnyscaleRecordEncoder
 
+    Args:
+        api_key: The Anyscale Endpoint API Key
+        base_url: The Base URL for Anyscale Endpoint
+        model_name: The name of the Anyscale embeddings model to use for encoding. See https://docs.endpoints.anyscale.com/category/supported-models
+        batch_size: The number of documents or queries to encode at once.
+                    Defaults to 400.
+        **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
+    """  # noqa: E501
     def __init__(self,
                  *,
                  api_key: str = "",
@@ -23,15 +33,7 @@ class AnyscaleRecordEncoder(DenseRecordEncoder):
                  model_name: str = "thenlper/gte-large",
                  batch_size: int = 400,
                  **kwargs):
-        """
-        Initialize the OpenAIRecordEncoder
 
-        Args:
-            model_name: The name of the OpenAI embeddings model to use for encoding. See https://platform.openai.com/docs/models/embeddings
-            batch_size: The number of documents or queries to encode at once.
-                        Defaults to 400.
-            **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
-        """  # noqa: E501
         ae_api_key = api_key or os.environ.get("ANYSCALE_API_KEY")
         if not ae_api_key:
             raise ValueError(
