@@ -4,13 +4,18 @@ from unittest.mock import MagicMock
 import jsonschema
 import pytest
 
-
-from canopy.models.data_models import Role, MessageBase # noqa
-from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
+from canopy.models.data_models import Role, MessageBase  # noqa
+from canopy.models.api_models import ChatResponse, StreamingChatChunk  # noqa
 from canopy.llm.azure_openai_llm import AzureOpenAILLM  # noqa
 from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty  # noqa
-from openai import BadRequestError # noqa
+from openai import BadRequestError  # noqa
+
+os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'  # tried 2023-03-15-preview too but still resource not found
+os.environ['AZURE_OPENAI_ENDPOINT'] = "https://devrel.openai.azure.com"
+os.environ['AZURE_OPENAI_API_KEY'] = "d5e870aabbb14cb09a52038215c0fb37"
+os.environ['AZURE_DEPLOYMENT'] = "audrey-dec-test"
+os.environ['INDEX_NAME'] = "canopy-test-3"
 
 
 def assert_chat_completion(response, num_choices=1):
@@ -37,21 +42,6 @@ class TestAzureOpenAILLM:
     @pytest.fixture
     def model_name():
         return "gpt-3.5-turbo-0613"
-
-    @staticmethod
-    @pytest.fixture(scope="module")
-    def azure_api_version():
-        return "some-version"
-
-    @staticmethod
-    @pytest.fixture(scope="module")
-    def azure_api_key():
-        return "some-azure-api-key"
-
-    @staticmethod
-    @pytest.fixture(scope="module")
-    def azure_endpoint():
-        return 'https://something.openai.azure.com/'
 
     @staticmethod
     @pytest.fixture
@@ -92,36 +82,24 @@ class TestAzureOpenAILLM:
 
     @staticmethod
     @pytest.fixture
-    def azure_openai_llm(model_name, azure_api_version, azure_api_key, azure_endpoint):
-        return AzureOpenAILLM(azure_api_version=azure_api_version,
-                              model_name=model_name,
-
-                              azure_api_key=azure_api_key,
-                              base_url=azure_endpoint)
+    def azure_openai_llm(model_name):
+        return AzureOpenAILLM(model_name=model_name)
 
     @staticmethod
-    def test_init_with_custom_params(azure_openai_llm, model_name, azure_api_version, azure_api_key, azure_endpoint):
-        # Set env var for `organization` manually
-        os.environ['OPENAI_ORG_ID'] = "test_organization"
-        organization = os.getenv('OPENAI_ORG_ID')
-
-        llm = AzureOpenAILLM(model_name='test',
-                             azure_api_version='version-1',
-                             azure_api_key='some-key',
-                             base_url='some-url',
-                             organization=organization,
+    def test_init_with_custom_params(azure_openai_llm):
+        llm = AzureOpenAILLM(model_name="test_model_name",
+                             api_key="test_api_key",
+                             organization="test_organization",
                              temperature=0.9,
                              top_p=0.95,
-                             n=3,)
+                             n=3, )
 
-        assert llm.model_name == 'test'
-        assert llm.azure_api_version == 'version-1'
-        assert llm._client.api_key == 'some-key'
-        assert llm.base_url == 'some-url'
-        assert llm._client.organization == "test_organization"
+        assert llm.model_name == "test_model_name"
         assert llm.default_model_params["temperature"] == 0.9
         assert llm.default_model_params["top_p"] == 0.95
         assert llm.default_model_params["n"] == 3
+        assert llm._client.api_key == "d5e870aabbb14cb09a52038215c0fb37"  # todo: remove
+        assert llm._client.organization == "test_organization"
 
     @staticmethod
     def test_chat_completion(azure_openai_llm, messages):
@@ -153,7 +131,7 @@ class TestAzureOpenAILLM:
                                              messages,
                                              model_params_low_temperature):
         response = azure_openai_llm.chat_completion(messages=messages,
-                                              model_params=model_params_low_temperature)
+                                                    model_params=model_params_low_temperature)
         assert_chat_completion(response,
                                num_choices=model_params_low_temperature["n"])
 
@@ -185,7 +163,7 @@ class TestAzureOpenAILLM:
     def test_chat_streaming(azure_openai_llm, messages):
         stream = True
         response = azure_openai_llm.chat_completion(messages=messages,
-                                              stream=stream)
+                                                    stream=stream)
         messages_received = [message for message in response]
         assert len(messages_received) > 0
         for message in messages_received:
@@ -195,7 +173,7 @@ class TestAzureOpenAILLM:
     def test_max_tokens(azure_openai_llm, messages):
         max_tokens = 2
         response = azure_openai_llm.chat_completion(messages=messages,
-                                              max_tokens=max_tokens)
+                                                    max_tokens=max_tokens)
         assert isinstance(response, ChatResponse)
         assert len(response.choices[0].message.content.split()) <= max_tokens
 
@@ -229,7 +207,7 @@ class TestAzureOpenAILLM:
 
         with pytest.raises(Exception, match="API call failed"):
             azure_openai_llm.enforced_function_call(messages=messages,
-                                              function=function_query_knowledgebase)
+                                                    function=function_query_knowledgebase)
 
     @staticmethod
     def test_enforce_function_wrong_output_schema(azure_openai_llm,
@@ -247,7 +225,15 @@ class TestAzureOpenAILLM:
         with pytest.raises(jsonschema.ValidationError,
                            match="'queries' is a required property"):
             azure_openai_llm.enforced_function_call(messages=messages,
-                                              function=function_query_knowledgebase)
+                                                    function=function_query_knowledgebase)
 
         assert azure_openai_llm._client.chat.completions.create.call_count == 3, \
             "retry did not happen as expected"
+
+    @staticmethod
+    def test_available_models(azure_openai_llm):
+        models = azure_openai_llm.available_models
+        assert isinstance(models, list)
+        assert len(models) > 0
+        assert isinstance(models[0], str)
+        assert azure_openai_llm.model_name in models
