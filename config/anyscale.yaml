@@ -11,13 +11,13 @@ query_builder_prompt: &query_builder_prompt |
 tokenizer:
   type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
   params:
-    model_name: openlm-research/open_llama_7b_v2
+    model_name: hf-internal-testing/llama-tokenizer
 
 chat_engine:
   llm: &llm
     type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
     params:
-      model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
+      model_name: HuggingFaceH4/zephyr-7b-beta         # The name of the model to use.
       
   # --------------------------------------------------------------------
   # Configuration for the QueryBuilder subcomponent of the chat engine.
@@ -35,3 +35,24 @@ chat_engine:
       type: OpenAILLM
       params:
         model_name: gpt-3.5-turbo
+
+  # -------------------------------------------------------------------------------------------------------------
+  # ContextEngine configuration
+  # The context engine is responsible for generating textual context for the `/query` API calls.
+  # -------------------------------------------------------------------------------------------------------------
+  context_engine:
+    # -----------------------------------------------------------------------------------------------------------
+    # KnowledgeBase configuration
+    # The KnowledgeBase is a responsible for storing and indexing the user's documents
+    # -----------------------------------------------------------------------------------------------------------
+    knowledge_base:
+      # --------------------------------------------------------------------------
+      # Configuration for the RecordEncoder subcomponent of the knowledge base.
+      # The record encoder is responsible for encoding document chunks to a vector representation
+      # --------------------------------------------------------------------------
+      record_encoder:
+        type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder]
+        params:
+          model_name:                   # The name of the model to use for encoding
+            thenlper/gte-large
+          batch_size: 400               # The number of document chunks to encode in each call to the encoding model
