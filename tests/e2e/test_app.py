@@ -58,7 +58,7 @@ def knowledge_base(index_name):
     # System and E2E tests are running in parallel and try to create
     # indexes at the same time.
     # DB raises an exception when we create two indexes at the same time.
-    # In order to avoid the exception, we create the index here a second
+    # In order to avoid the exception, we create the index here five seconds
     # later than the system tests.
     # TODO: Remove the sleep after the DB is fixed.
     time.sleep(5)

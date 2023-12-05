@@ -15,7 +15,7 @@ from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.chunker import Chunker
 from canopy.knowledge_base.knowledge_base import (INDEX_NAME_PREFIX,
                                                   list_canopy_indexes,
-                                                  PINECONE_CLIENT)
+                                                  _get_global_client)
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
@@ -67,7 +67,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
                        chunker=chunker)
 
     if index_full_name in list_canopy_indexes():
-        PINECONE_CLIENT.delete_index(index_full_name)
+        _get_global_client().delete_index(index_full_name)
 
     kb.create_canopy_index(index_params={"metric": "dotproduct"})
 
@@ -153,7 +153,7 @@ def assert_query_metadata_filter(knowledge_base: KnowledgeBase,
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
     if index_full_name in list_canopy_indexes():
-        PINECONE_CLIENT.delete_index(index_full_name)
+        _get_global_client().delete_index(index_full_name)
 
 
 def _generate_text(num_words: int):

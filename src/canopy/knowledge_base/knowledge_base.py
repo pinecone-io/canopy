@@ -1,6 +1,7 @@
 import os
 from copy import deepcopy
 import time
+from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
 from pinecone import ServerlessSpec, PodSpec
@@ -30,15 +31,23 @@ DELETE_STARTER_BATCH_SIZE = 30
 
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
-PINECONE_CLIENT = Pinecone()
+
+@lru_cache(maxsize=1)
+def _get_global_client():
+    return Pinecone()
 
 
 def connect_to_pinecone(pinecone_client=None):
     """
-    Connect to Pinecone.
+    Connects to Pinecone.
+
     This method is called automatically when creating a new KnowledgeBase object.
+
+    Args:
+        pinecone_client: Pinecone client used to connect to Pinecone. If not passed,
+        the default one will be used.
     """
-    pinecone_client = pinecone_client or PINECONE_CLIENT
+    pinecone_client = pinecone_client or _get_global_client()
     try:
         # TODO: Replace this with whoami call when it is available
         pinecone_client.list_indexes()
@@ -62,7 +71,7 @@ def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
     Returns:
         A list of Canopy index names.
     """
-    pinecone_client = pinecone_client or PINECONE_CLIENT
+    pinecone_client = pinecone_client or _get_global_client()
 
     connect_to_pinecone(pinecone_client)
 
@@ -195,7 +204,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                 )
             self._pinecone_client = pinecone_client
         else:
-            self._pinecone_client = PINECONE_CLIENT
+            self._pinecone_client = _get_global_client()
 
         # Normally, index creation params are passed directly to the `.create_canopy_index()` method.  # noqa: E501
         # However, when KnowledgeBase is initialized from a config file, these params
