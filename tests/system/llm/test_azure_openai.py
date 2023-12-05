@@ -11,12 +11,6 @@ from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty  # noqa
 from openai import BadRequestError  # noqa
 
-os.environ['OPENAI_API_VERSION'] = '2023-07-01-preview'  # tried 2023-03-15-preview too but still resource not found
-os.environ['AZURE_OPENAI_ENDPOINT'] = "https://devrel.openai.azure.com"
-os.environ['AZURE_OPENAI_API_KEY'] = "d5e870aabbb14cb09a52038215c0fb37"
-os.environ['AZURE_DEPLOYMENT'] = "audrey-dec-test"
-os.environ['INDEX_NAME'] = "canopy-test-3"
-
 
 def assert_chat_completion(response, num_choices=1):
     assert len(response.choices) == num_choices
