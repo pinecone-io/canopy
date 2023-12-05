@@ -33,19 +33,19 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
 @lru_cache(maxsize=1)
-def _get_global_client():
+def _get_global_client() -> Pinecone:
     return Pinecone()
 
 
-def connect_to_pinecone(pinecone_client=None):
+def connect_to_pinecone(pinecone_client: Pinecone = None):
     """
     Connects to Pinecone.
 
     This method is called automatically when creating a new KnowledgeBase object.
 
     Args:
-        pinecone_client: Pinecone client used to connect to Pinecone. If not passed,
-        the default one will be used.
+         pinecone_client: Pinecone client used to connect to Pinecone. If not passed,
+                          the global client will be used.
     """
     pinecone_client = pinecone_client or _get_global_client()
     try:
@@ -65,7 +65,7 @@ def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
         >>> list_canopy_indexes()
             ['canopy--my_index', 'canopy--my_index2']
     Args:
-        pinecone_client: Pinecone client used to query indexes. If not passed
+        pinecone_client: Pinecone client used to query indexes. If not passed,
                          the global client will be used.
 
     Returns:
