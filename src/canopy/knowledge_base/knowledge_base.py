@@ -101,11 +101,11 @@ class KnowledgeBase(BaseKnowledgeBase):
     def __init__(self,
                  index_name: str,
                  *,
+                 pinecone_client: Optional[Pinecone] = None,
                  record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 5,
-                 pinecone_client: Optional[Pinecone] = None
+                 default_top_k: int = 5
                  ):
         """
         Initilize the knowledge base object.

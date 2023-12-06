@@ -221,7 +221,7 @@ def test_create_index(index_full_name, knowledge_base):
     assert knowledge_base._index.describe_index_stats()
 
 
-def test_list_indexes(knowledge_base, index_full_name):
+def test_list_indexes(index_full_name):
     index_list = list_canopy_indexes()
 
     assert len(index_list) > 0
@@ -457,6 +457,18 @@ def test_connect_after_delete(knowledge_base):
         knowledge_base.connect()
 
     assert "does not exist or was deleted" in str(e.value)
+
+
+@pytest.mark.skip
+def test_create_with_text_in_indexed_field_raise(index_name, chunker,
+                                                 encoder):
+    with pytest.raises(ValueError) as e:
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_canopy_index(indexed_fields=["id", "text", "metadata"])
+
+    assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
 
 
 def test_create_with_index_encoder_dimension_none(index_name, chunker):
