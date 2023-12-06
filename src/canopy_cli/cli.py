@@ -569,7 +569,7 @@ def chat(chat_server_url, rag, debug, stream):
                    "defaults will be used.")
 @click.option("--index-name", default=None,
               help="Index name, if not provided already as an environment variable.")
-def start(host: str, port: str, reload: bool, stream:bool,
+def start(host: str, port: str, reload: bool, stream: bool,
           config: Optional[str], index_name: Optional[str]):
     validate_pinecone_connection()
     _validate_chat_engine(config)
