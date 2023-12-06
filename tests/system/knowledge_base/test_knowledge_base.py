@@ -438,8 +438,6 @@ def test_init_raise_wrong_type(knowledge_base, chunker):
 
 def test_delete_index_happy_path(knowledge_base):
     knowledge_base.delete_index()
-    # # There is a bug in delete_index, it takes time to complete.
-    # time.sleep(10)
     assert knowledge_base._index_name not in list_canopy_indexes()
     assert knowledge_base._index is None
     with pytest.raises(RuntimeError) as e:
