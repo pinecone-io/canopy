@@ -132,12 +132,12 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Args:
             index_name: The name of the underlying Pinecone index.
+            pinecone_client: An instance of Pinecone to be used as a client.
             record_encoder: An instance of RecordEncoder to use for encoding documents and queries.
                                                       Defaults to OpenAIRecordEncoder.
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            pinecone_client: An instance of Pinecone to be used as a client.
         Raises:
             ValueError: If default_top_k is not a positive integer.
             TypeError: If record_encoder is not an instance of RecordEncoder.

@@ -8,7 +8,7 @@ from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
-    wait_chain,
+    wait_chain, stop_after_attempt, wait_random,
 )
 from datetime import datetime
 from canopy.knowledge_base import KnowledgeBase
@@ -60,6 +60,11 @@ def encoder():
         StubDenseEncoder())
 
 
+@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
+def try_create_canopy_index(kb: KnowledgeBase):
+    kb.create_canopy_index(index_params={"metric": "dotproduct"})
+
+
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_full_name, index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
@@ -69,7 +74,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     if index_full_name in list_canopy_indexes():
         _get_global_client().delete_index(index_full_name)
 
-    kb.create_canopy_index(index_params={"metric": "dotproduct"})
+    try_create_canopy_index(kb)
 
     return kb
 

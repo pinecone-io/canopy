@@ -1,13 +1,12 @@
 import json
 import os
-import time
 from typing import List
 
 from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.knowledge_base import list_canopy_indexes
@@ -45,6 +44,11 @@ def assert_vector_ids_not_exist(vector_ids: List[str],
     assert len(fetch_response["vectors"]) == 0
 
 
+@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
+def try_create_canopy_index(kb: KnowledgeBase):
+    kb.create_canopy_index(index_params={"metric": "dotproduct"})
+
+
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
     today = datetime.today().strftime("%Y-%m-%d")
@@ -58,11 +62,9 @@ def knowledge_base(index_name):
     # System and E2E tests are running in parallel and try to create
     # indexes at the same time.
     # DB raises an exception when we create two indexes at the same time.
-    # In order to avoid the exception, we create the index here five seconds
-    # later than the system tests.
-    # TODO: Remove the sleep after the DB is fixed.
-    time.sleep(5)
-    kb.create_canopy_index(index_params={"metric": "dotproduct"})
+    # So we need to retry for now in order to overcome this.
+    # TODO: Remove the retries after the DB is fixed.
+    try_create_canopy_index(kb)
 
     return kb
 

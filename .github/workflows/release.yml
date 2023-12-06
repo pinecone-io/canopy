@@ -137,6 +137,7 @@ jobs:
           name: ${{ needs.build.outputs.new_version }}
           artifacts: "dist/*"
           bodyFile: "CHANGELOG.md"
+          prerelease: ${{ startsWith(inputs.versionLevel, 'pre') }}
 
       - name: Publish to test pypi
         if: ${{ inputs.useTestPyPI == true }}
