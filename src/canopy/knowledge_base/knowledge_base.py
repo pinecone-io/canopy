@@ -4,7 +4,7 @@ import time
 from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
-from pinecone import (ServerlessSpec, PodSpec, PineconeConfigurationError,
+from pinecone import (ServerlessSpec, PodSpec,
                       Pinecone, PineconeApiException)
 
 try:
