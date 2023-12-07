@@ -28,7 +28,6 @@ INDEX_PROVISION_TIME_INTERVAL = 3
 RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
 
 DELETE_STARTER_BATCH_SIZE = 30
-
 DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 
@@ -190,14 +189,13 @@ class KnowledgeBase(BaseKnowledgeBase):
         else:
             self._pinecone_client = _get_global_client()
 
-        # Normally, index creation params are passed directly to the `.create_canopy_index()` method.  # noqa: E501
-        # However, when KnowledgeBase is initialized from a config file, these params
-        # would be set by the `KnowledgeBase.from_config()` constructor.
-        self._index_params: Dict[str, Any] = {}
-
         # The index object is initialized lazily, when the user calls `connect()` or
         # `create_canopy_index()`
         self._index: Optional[Index] = None
+        self._default_spec = ServerlessSpec(
+            cloud='aws',
+            region='us-west-2'
+        )
 
     def _connect_index(self) -> None:
         if self.index_name not in list_canopy_indexes(self._pinecone_client):
@@ -262,12 +260,9 @@ class KnowledgeBase(BaseKnowledgeBase):
             ) from e
 
     def create_canopy_index(self,
-                            spec: Union[Dict, ServerlessSpec, PodSpec] = ServerlessSpec(
-                                cloud='aws',
-                                region='us-west-2'
-                            ),
+                            spec: Union[Dict, ServerlessSpec, PodSpec] = None,
                             dimension: Optional[int] = None,
-                            index_params: Optional[dict] = None
+                            metric: Optional[str] = "cosine"
                             ):
         """
         Creates the underlying Pinecone index that will be used by the KnowledgeBase.
@@ -292,11 +287,13 @@ class KnowledgeBase(BaseKnowledgeBase):
            dimension: The dimension of the vectors to index.
                        If `dimension` isn't explicitly provided,
                        Canopy would try to infer the embedding's dimension based on the configured `Encoder`
-           index_params: A dictionary of parameters to pass to the index creation API.
-                         For example, you can set the index's number of replicas by passing {"replicas": 2}.
-                         see https://docs.pinecone.io/docs/python-client#create_index
+           metric: The distance metric to be used for similarity search: 'euclidean', 'cosine', or 'dotproduct'. The
+                   default is 'cosine'.
 
         """  # noqa: E501
+
+        if spec is None:
+            spec = self._default_spec
 
         if dimension is None:
             try:
@@ -318,15 +315,13 @@ class KnowledgeBase(BaseKnowledgeBase):
                 "If you wish to delete it, use `delete_index()`. "
             )
 
-        # create index
-        index_params = index_params or self._index_params
         try:
             self._pinecone_client.create_index(
                 name=self.index_name,
                 dimension=dimension,
                 spec=spec,
                 timeout=TIMEOUT_INDEX_CREATE,
-                **index_params)
+                metric=metric)
         except (Exception, PineconeApiException) as e:
             raise RuntimeError(
                 f"Failed to create index {self.index_name} due to error: "
@@ -633,11 +628,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             )
         config['params']['index_name'] = index_name
 
-        # If the config includes an 'index_params' key, they need to be saved until
-        # the index is created, and then passed to the index creation method.
-        index_params = config['params'].pop('index_params', {})
         kb = cls._from_config(config)
-        kb._index_params = index_params
         return kb
 
     @staticmethod

@@ -62,7 +62,7 @@ def encoder():
 
 @retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
 def try_create_canopy_index(kb: KnowledgeBase):
-    kb.create_canopy_index(index_params={"metric": "dotproduct"})
+    kb.create_canopy_index(metric="dotproduct")
 
 
 @pytest.fixture(scope="module", autouse=True)
