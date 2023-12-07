@@ -190,7 +190,7 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(help="Check if canopy server is running and healthy.")
+@cli.command(help="Check if the Canopy server is running and healthy.")
 @click.option("--url", default=DEFAULT_SERVER_URL,
               help=("Canopy's server url. "
                     f"Defaults to {DEFAULT_SERVER_URL}"))
@@ -202,13 +202,16 @@ def health(url):
 
 @cli.command(
     help=(
-        """Create a new Pinecone index that that will be used by Canopy.
+        """
         \b
-        A Canopy service can not be started without a Pinecone index which is configured to work with Canopy.
-        This command will create a new Pinecone index and configure it in the right schema.
+        Create a new Pinecone index that will be used by Canopy.
+
+        A Canopy service cannot be started without a Pinecone index that is configured
+        to work with Canopy. This command creates a new Pinecone index and configures
+        it in the right schema.
 
         If the embedding vectors' dimension is not explicitly configured in
-        the config file - the embedding model will be tapped with a single token to
+        the config file, the embedding model will be tapped with a single token to
         infer the dimensionality of the embedding space.
         """  # noqa: E501
     )
@@ -262,8 +265,8 @@ def _batch_documents_by_chunks(chunker: Chunker,
         \b
         Upload local data files to the Canopy service.
 
-        Load all the documents from data file or a directory containing multiple data files.
-        The allowed formats are .jsonl and .parquet.
+        Load all the documents from a data file or a directory containing multiple data
+        files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
         """  # noqa: E501
     )
 )
@@ -320,9 +323,9 @@ def upsert(index_name: str,
             data = load_from_path(data_path)
         except IDsNotUniqueError:
             msg = (
-                "The data contains duplicate IDs, please make sure that each document"
-                " has a unique ID, otherwise documents with the same ID will overwrite"
-                " each other"
+                "The data contains duplicate IDs. Please make sure that each document"
+                " has a unique ID; otherwise, documents with the same ID will overwrite"
+                " each other."
             )
             raise CLIError(msg)
         except DocumentsValidationError:
@@ -334,8 +337,8 @@ def upsert(index_name: str,
         except Exception:
             msg = (
                 f"A unexpected error while loading the data from files in {data_path}. "
-                "Please make sure the data is in valid `jsonl`, `parquet`, `csv` format"
-                " or plaintext `.txt` files."
+                "Please make sure the data is in valid `jsonl`, `parquet`, or `csv`"
+                " format, or plaintext `.txt` files."
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
@@ -453,11 +456,11 @@ def _chat(
     )
 )
 @click.option("--stream/--no-stream", default=True,
-              help="Stream the response from the RAG chatbot word by word")
+              help="Stream the response from the RAG chatbot word by word.")
 @click.option("--debug/--no-debug", default=False,
-              help="Print additional debugging information")
+              help="Print additional debugging information.")
 @click.option("--rag/--no-rag", default=True,
-              help="Compare RAG-infused Chatbot with vanilla LLM",)
+              help="Compare RAG-infused Chatbot with vanilla LLM.",)
 @click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
                     f" Defaults to {DEFAULT_SERVER_URL}"))
@@ -465,7 +468,7 @@ def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
         "🚨 Note 🚨\n"
-        "Chat is a debugging tool, it is not meant to be used for production!"
+        "Chat is a debugging tool; it is not meant to be used for production!"
     )
     for c in note_msg:
         click.echo(click.style(c, fg="red"), nl=False)
@@ -546,10 +549,11 @@ def chat(chat_server_url, rag, debug, stream):
         """
         \b
         Start the Canopy server.
-        This command will launch a uvicorn server that will serve the Canopy API.
 
-        If you like to try out the chatbot, run `canopy chat` in a separate terminal
-        window.
+        This command launches a Uvicorn server to serve the Canopy API.
+
+        If you would like to try out the chatbot, run `canopy chat` in a separate
+        terminal window.
         """
     )
 )
@@ -563,7 +567,7 @@ def chat(chat_server_url, rag, debug, stream):
               help="Path to a canopy config file. Optional, otherwise configuration "
                    "file specified in $CANOPY_CONFIG_FILE will be used.")
 @click.option("--index-name", default=None,
-              help="Index name, if not provided already in as an environment variable")
+              help="Index name, if not provided already as an environment variable.")
 def start(host: str, port: str, reload: bool,
           config: Optional[str], index_name: Optional[str]):
     validate_pinecone_connection()
@@ -571,7 +575,7 @@ def start(host: str, port: str, reload: bool,
 
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production "
+        "For debugging only. To run the Canopy server in production, "
     )
     msg_suffix = (
         "run the command:"
@@ -606,7 +610,8 @@ def start(host: str, port: str, reload: bool,
         """
         \b
         Stop the Canopy server.
-        This command will send a shutdown request to the Canopy server.
+
+        This command sends a shutdown request to the Canopy server.
         """
     )
 )
@@ -653,7 +658,7 @@ def stop(url):
     help=(
         """
         \b
-        Open the Canopy Server docs
+        Open the Canopy server docs.
         """
     )
 )

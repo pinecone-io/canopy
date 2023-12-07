@@ -1,10 +1,10 @@
 # Canopy
 
 <p align="center">
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
 </a>
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
 </a>
 </p>
@@ -64,7 +64,7 @@ pip install canopy-sdk
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export INDEX_NAME=<INDEX_NAME>
+export INDEX_NAME="<INDEX_NAME>"
 ```
 
 <details>
