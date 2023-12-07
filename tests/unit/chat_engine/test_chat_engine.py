@@ -118,7 +118,8 @@ class TestChatEngine:
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
             messages,
-            max_prompt_tokens=MAX_PROMPT_TOKENS
+            max_prompt_tokens=MAX_PROMPT_TOKENS,
+            api_key=None
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
@@ -126,9 +127,9 @@ class TestChatEngine:
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             expected['prompt'],
-            max_tokens=200,
             stream=False,
-            model_params=None
+            model_params={'max_tokens': 200},
+            api_key=None
         )
 
         assert response == expected['response']
@@ -166,7 +167,8 @@ class TestChatEngine:
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
             messages,
-            max_prompt_tokens=max_prompt_tokens
+            max_prompt_tokens=max_prompt_tokens,
+            api_key=None
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
@@ -174,9 +176,119 @@ class TestChatEngine:
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             expected['prompt'],
-            max_tokens=max_generated_tokens,
             stream=False,
-            model_params=None
+            model_params={'max_tokens': max_generated_tokens},
+            api_key=None
+        )
+
+        assert response == expected['response']
+
+    def test_chat_engine_param_override(self,
+                                        system_prompt_length=10,
+                                        max_prompt_tokens=80,
+                                        max_context_tokens=60,
+                                        max_generated_tokens=150,
+                                        should_raise=False,
+                                        snippet_length=15,
+                                        history_length=3,
+                                        ):
+
+        system_prompt = self._generate_text(system_prompt_length)
+        chat_engine = self._init_chat_engine(system_prompt=system_prompt,
+                                             max_prompt_tokens=max_prompt_tokens,
+                                             max_context_tokens=max_context_tokens,
+                                             max_generated_tokens=max_generated_tokens)
+
+        # Mock input and expected output
+        messages, expected = self._get_inputs_and_expected(history_length,
+                                                           snippet_length,
+                                                           system_prompt)
+
+        # Call the method under test
+        if should_raise:
+            with pytest.raises(ValueError):
+                chat_engine.chat(messages)
+            return
+
+        response = chat_engine.chat(
+            messages,
+            model_params={'temperature': 0.99, 'top_p': 0.5},
+            api_key="test_api_key"
+        )
+
+        # Assertions
+        self.mock_query_builder.generate.assert_called_once_with(
+            messages,
+            max_prompt_tokens=max_prompt_tokens,
+            api_key="test_api_key"
+        )
+        self.mock_context_engine.query.assert_called_once_with(
+            expected['queries'],
+            max_context_tokens=max_context_tokens
+        )
+        self.mock_llm.chat_completion.assert_called_once_with(
+            expected['prompt'],
+            stream=False,
+            model_params={
+                'max_tokens': max_generated_tokens,
+                'temperature': 0.99,
+                'top_p': 0.5
+            },
+            api_key="test_api_key"
+        )
+
+        assert response == expected['response']
+
+    def test_chat_engine_disable_param_override(self,
+                                        system_prompt_length=10,
+                                        max_prompt_tokens=80,
+                                        max_context_tokens=60,
+                                        max_generated_tokens=150,
+                                        should_raise=False,
+                                        snippet_length=15,
+                                        history_length=3,
+                                        ):
+
+        system_prompt = self._generate_text(system_prompt_length)
+        chat_engine = self._init_chat_engine(system_prompt=system_prompt,
+                                             max_prompt_tokens=max_prompt_tokens,
+                                             max_context_tokens=max_context_tokens,
+                                             max_generated_tokens=max_generated_tokens,
+                                             allow_model_params_override=False,
+                                             allow_api_key_override=False)
+
+        # Mock input and expected output
+        messages, expected = self._get_inputs_and_expected(history_length,
+                                                           snippet_length,
+                                                           system_prompt)
+
+        # Call the method under test
+        if should_raise:
+            with pytest.raises(ValueError):
+                chat_engine.chat(messages)
+            return
+
+        response = chat_engine.chat(
+            messages,
+            model_params={'temperature': 0.99, 'top_p': 0.5},
+            api_key="test_api_key"
+        )
+
+        # Assertions
+        self.mock_query_builder.generate.assert_called_once_with(
+            messages,
+            max_prompt_tokens=max_prompt_tokens,
+            api_key=None
+        )
+        self.mock_context_engine.query.assert_called_once_with(
+            expected['queries'],
+            max_context_tokens=max_context_tokens
+        )
+        self.mock_llm.chat_completion.assert_called_once_with(
+            expected['prompt'],
+            stream=False,
+            model_params={'max_tokens': max_generated_tokens},
+            api_key=None
         )
 
         assert response == expected['response']
@@ -195,7 +307,8 @@ class TestChatEngine:
 
         self.mock_query_builder.generate.assert_called_once_with(
             messages,
-            max_prompt_tokens=MAX_PROMPT_TOKENS
+            max_prompt_tokens=MAX_PROMPT_TOKENS,
+            api_key=None
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],

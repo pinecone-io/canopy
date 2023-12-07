@@ -240,9 +240,10 @@ class ChatEngine(BaseChatEngine):
                      messages: Messages,
                      api_key: Optional[str] = None,
                      ) -> Context:
+        query_api_key = api_key if self.allow_api_key_override else None
         queries = self._query_builder.generate(messages,
                                                self.max_prompt_tokens,
-                                               api_key=api_key)
+                                               api_key=query_api_key)
         context = self.context_engine.query(queries, self.max_context_tokens)
         return context
 
