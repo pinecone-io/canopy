@@ -4,12 +4,12 @@ from typing import List
 
 from datetime import datetime
 
-import pinecone
 import pytest
 from fastapi.testclient import TestClient
-from tenacity import retry, stop_after_attempt, wait_fixed
+from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
 
 from canopy.knowledge_base import KnowledgeBase
+from canopy.knowledge_base.knowledge_base import list_canopy_indexes
 
 from canopy_server.app import app, API_VERSION
 from canopy_server.models.v1.api_models import (
@@ -44,6 +44,11 @@ def assert_vector_ids_not_exist(vector_ids: List[str],
     assert len(fetch_response["vectors"]) == 0
 
 
+@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
+def try_create_canopy_index(kb: KnowledgeBase):
+    kb.create_canopy_index(metric="dotproduct")
+
+
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
     today = datetime.today().strftime("%Y-%m-%d")
@@ -52,9 +57,14 @@ def index_name(testrun_uid):
 
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name):
-    pinecone.init()
     kb = KnowledgeBase(index_name=index_name)
-    kb.create_canopy_index(indexed_fields=["test"])
+
+    # System and E2E tests are running in parallel and try to create
+    # indexes at the same time.
+    # DB raises an exception when we create two indexes at the same time.
+    # So we need to retry for now in order to overcome this.
+    # TODO: Remove the retries after the DB is fixed.
+    try_create_canopy_index(kb)
 
     return kb
 
@@ -79,10 +89,9 @@ def client(knowledge_base, index_name):
 def teardown_knowledge_base(knowledge_base):
     yield
 
-    pinecone.init()
     index_name = knowledge_base.index_name
-    if index_name in pinecone.list_indexes():
-        pinecone.delete_index(index_name)
+    if index_name in list_canopy_indexes():
+        knowledge_base.delete_index()
 
 # TODO: the following test is a complete e2e test, this it not the final design
 # for the e2e tests, however there were some issues

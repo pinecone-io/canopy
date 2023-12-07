@@ -93,10 +93,6 @@ chat_engine:
     knowledge_base:
       params:
         default_top_k: 5                # The default number of document chunks to retrieve for each query
-#        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
-#          metric: cosine
-#          pod_type: p1
-
 
       # --------------------------------------------------------------------------
       # Configuration for the Chunker subcomponent of the knowledge base.

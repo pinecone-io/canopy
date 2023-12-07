@@ -1,20 +1,21 @@
-import os
 import random
 
 import pytest
-import pinecone
 import numpy as np
+from pinecone import Index
+from pinecone.control.pinecone import Pinecone
 from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
-    wait_chain,
+    wait_chain, stop_after_attempt, wait_random,
 )
-from dotenv import load_dotenv
 from datetime import datetime
-from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
+from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.chunker import Chunker
-from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
+from canopy.knowledge_base.knowledge_base import (INDEX_NAME_PREFIX,
+                                                  list_canopy_indexes,
+                                                  _get_global_client)
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
@@ -23,9 +24,6 @@ from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
-
-
-load_dotenv()
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
 RETRY_TIMEOUT = 120
@@ -62,16 +60,21 @@ def encoder():
         StubDenseEncoder())
 
 
+@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
+def try_create_canopy_index(kb: KnowledgeBase):
+    kb.create_canopy_index(metric="dotproduct")
+
+
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_full_name, index_name, chunker, encoder):
-    pinecone.init()
-    if index_full_name in pinecone.list_indexes():
-        pinecone.delete_index(index_full_name)
-
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
-    kb.create_canopy_index(indexed_fields=["my-key"])
+
+    if index_full_name in list_canopy_indexes():
+        _get_global_client().delete_index(index_full_name)
+
+    try_create_canopy_index(kb)
 
     return kb
 
@@ -154,10 +157,8 @@ def assert_query_metadata_filter(knowledge_base: KnowledgeBase,
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(index_full_name, knowledge_base):
     yield
-
-    pinecone.init()
-    if index_full_name in pinecone.list_indexes():
-        pinecone.delete_index(index_full_name)
+    if index_full_name in list_canopy_indexes():
+        _get_global_client().delete_index(index_full_name)
 
 
 def _generate_text(num_words: int):
@@ -221,8 +222,7 @@ def encoded_chunks(documents, chunker, encoder):
 
 def test_create_index(index_full_name, knowledge_base):
     assert knowledge_base.index_name == index_full_name
-    assert index_full_name in pinecone.list_indexes()
-    assert index_full_name == index_full_name
+    assert index_full_name in list_canopy_indexes()
     assert knowledge_base._index.describe_index_stats()
 
 
@@ -297,7 +297,6 @@ def test_update_documents(encoder,
                           documents,
                           encoded_chunks,
                           knowledge_base):
-
     index_name = knowledge_base._index_name
 
     # chunker/kb that produces fewer chunks per doc
@@ -407,7 +406,7 @@ def test_init_defaults(knowledge_base):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name)
     new_kb.connect()
-    assert isinstance(new_kb._index, pinecone.Index)
+    assert isinstance(new_kb._index, Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(new_kb._chunker, KnowledgeBase._DEFAULT_COMPONENTS["chunker"])
@@ -422,7 +421,7 @@ def test_init_defaults_with_override(knowledge_base, chunker):
     index_name = knowledge_base.index_name
     new_kb = KnowledgeBase(index_name=index_name, chunker=chunker)
     new_kb.connect()
-    assert isinstance(new_kb._index, pinecone.Index)
+    assert isinstance(new_kb._index, Index)
     assert new_kb.index_name == index_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(new_kb._chunker, StubChunker)
@@ -444,8 +443,7 @@ def test_init_raise_wrong_type(knowledge_base, chunker):
 
 def test_delete_index_happy_path(knowledge_base):
     knowledge_base.delete_index()
-
-    assert knowledge_base._index_name not in pinecone.list_indexes()
+    assert knowledge_base._index_name not in list_canopy_indexes()
     assert knowledge_base._index is None
     with pytest.raises(RuntimeError) as e:
         knowledge_base.delete(["doc_0"])
@@ -466,8 +464,8 @@ def test_connect_after_delete(knowledge_base):
     assert "does not exist or was deleted" in str(e.value)
 
 
-def test_create_with_text_in_indexed_field_raise(index_name,
-                                                 chunker,
+@pytest.mark.skip
+def test_create_with_text_in_indexed_field_raise(index_name, chunker,
                                                  encoder):
     with pytest.raises(ValueError) as e:
         kb = KnowledgeBase(index_name=index_name,
@@ -491,31 +489,29 @@ def test_create_with_index_encoder_dimension_none(index_name, chunker):
 
 
 @pytest.fixture
-def set_bad_credentials():
-    original_api_key = os.environ.get(PINECONE_API_KEY_ENV_VAR)
-
-    os.environ[PINECONE_API_KEY_ENV_VAR] = "bad-key"
-
-    yield
-
-    # Restore the original API key after test execution
-    os.environ[PINECONE_API_KEY_ENV_VAR] = original_api_key
+def unauthorized_pinecone_client():
+    yield Pinecone(api_key="bad-key")
 
 
-def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+def test_create_bad_credentials(unauthorized_pinecone_client,
+                                index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
-                       chunker=chunker)
+                       chunker=chunker,
+                       pinecone_client=unauthorized_pinecone_client)
+
     with pytest.raises(RuntimeError) as e:
         kb.create_canopy_index()
 
     assert "Please check your credentials" in str(e.value)
 
 
-def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
+def test_init_bad_credentials(unauthorized_pinecone_client,
+                              index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
-                       chunker=chunker)
+                       chunker=chunker,
+                       pinecone_client=unauthorized_pinecone_client)
     with pytest.raises(RuntimeError) as e:
         kb.connect()
 

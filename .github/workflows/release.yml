@@ -17,6 +17,10 @@ on:
           - 'patch' # bug fixes
           - 'minor' # new features, backwards compatible
           - 'major' # breaking changes
+          - 'prepatch' # bumps the patch and moves to a prerelease (1.0.2 -> 1.0.3a0)
+          - 'preminor' # bumps the minor and moves to a prerelease (1.0.2 -> 1.1.0a0)
+          - 'premajor' # bumps the major and moves to a prerelease (1.0.2 -> 2.0.0a0)
+          - 'prerelease' # bumps the prerelease version (1.0.3a0 -> 1.0.3a1)
       generateBranch:
         description: 'Whether to generate a release branch'
         required: true
@@ -27,7 +31,6 @@ on:
         required: true
         type: boolean
         default: false
-
 
 jobs:
   build:
@@ -134,6 +137,7 @@ jobs:
           name: ${{ needs.build.outputs.new_version }}
           artifacts: "dist/*"
           bodyFile: "CHANGELOG.md"
+          prerelease: ${{ startsWith(inputs.versionLevel, 'pre') }}
 
       - name: Publish to test pypi
         if: ${{ inputs.useTestPyPI == true }}
