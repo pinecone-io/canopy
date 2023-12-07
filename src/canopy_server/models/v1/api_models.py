@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -29,7 +29,7 @@ class ChatRequest(BaseModel):
     )
     n: Optional[int] = Field(
         default=None,
-        description="How many chat completion choices to generate for each input message.",
+        description="How many chat completion choices to generate for each input message.",  # noqa: E501
     )
     presence_penalty: Optional[float] = Field(
         default=None,
@@ -37,15 +37,15 @@ class ChatRequest(BaseModel):
     )
     response_format: Optional[Dict[str, str]] = Field(
         default=None,
-        description="The format of the returned response.",  # noqa: E501
+        description="The format of the returned response.",
     )
     seed: Optional[int] = Field(
         default=None,
-        description="When provided, OpenAI will make a best effort to sample results deterministically.",
+        description="When provided, OpenAI will make a best effort to sample results deterministically.",  # noqa: E501
     )
     stop: Optional[Union[List[str], str]] = Field(
         default=None,
-        description="One or more sequences where the API will stop generating further tokens.",
+        description="One or more sequences where the API will stop generating further tokens.",  # noqa: E501
     )
     stream: bool = Field(
         default=False,

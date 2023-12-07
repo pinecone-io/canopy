@@ -65,6 +65,7 @@ class OpenAILLM(BaseLLM):
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
                         model_params: Optional[dict] = None,
+                        api_key: Optional[str] = None,
                         ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         """
         Chat completion using the OpenAI API.
@@ -79,6 +80,7 @@ class OpenAILLM(BaseLLM):
                           Dictonary of parameters to override the default model parameters if set on initialization.
                           For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
+            api_key: An OpenAI API key to use for this request. Defaults to None and uses the API key set on initialization.
         Returns:
             ChatResponse or StreamingChatChunk
 
@@ -96,6 +98,11 @@ class OpenAILLM(BaseLLM):
         model_params_dict.update(model_params or {})
         if max_tokens is not None:
             model_params_dict["max_tokens"] = max_tokens
+        if api_key is not None:
+            model_params_dict["extra_headers"] = {
+                **(model_params_dict.get("extra_headers", {})),
+                "Authorization": f"Bearer {api_key}"
+            }
 
         messages = [m.dict() for m in messages]
         response = self._client.chat.completions.create(messages=messages,
@@ -124,7 +131,8 @@ class OpenAILLM(BaseLLM):
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None,) -> dict:
+                               model_params: Optional[dict] = None,
+                               api_key: Optional[str] = None,) -> dict:
         """
         This function enforces the model to respond with a specific function call.
 
@@ -140,6 +148,7 @@ class OpenAILLM(BaseLLM):
                           Overrides the default model parameters if set on initialization.
                           For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
+            api_key: An OpenAI API key to use for this request. Defaults to None and uses the API key set on initialization.
 
         Returns:
             dict: Function call arguments as a dictionary.
@@ -168,9 +177,14 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
+        if api_key is not None:
+            model_params_dict["extra_headers"] = {
+                **(model_params_dict.get("extra_headers", {})),
+                "Authorization": f"Bearer {api_key}"
+            }
 
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
@@ -194,6 +208,7 @@ class OpenAILLM(BaseLLM):
                                messages: Messages, *, stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,
+                               api_key: Optional[str] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
@@ -203,5 +218,6 @@ class OpenAILLM(BaseLLM):
                                 *,
                                 max_generated_tokens: Optional[int] = None,
                                 model_params: Optional[dict] = None,
+                                api_key: Optional[str] = None,
                                 ) -> List[Query]:
         raise NotImplementedError()

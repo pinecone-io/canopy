@@ -29,7 +29,8 @@ class BaseChatEngine(ABC, ConfigurableMixin):
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[dict] = None
+             model_params: Optional[dict] = None,
+             api_key: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
@@ -38,7 +39,8 @@ class BaseChatEngine(ABC, ConfigurableMixin):
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    model_params: Optional[dict] = None
+                    model_params: Optional[dict] = None,
+                    api_key: Optional[str] = None
                     ) -> Union[ChatResponse, StreamingChatResponse]:
         pass
 
@@ -92,6 +94,7 @@ class ChatEngine(BaseChatEngine):
                  history_pruning: str = "recent",
                  min_history_messages: int = 1,
                  allow_model_params_override: bool = True,
+                 allow_api_key_override: bool = True,
                  ):
         """
         Initialize a chat engine.
@@ -107,6 +110,7 @@ class ChatEngine(BaseChatEngine):
             history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
             min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
             allow_model_params_override: Whether to allow overriding the LLM's parameters in an API call. Defaults to True.
+            allow_api_key_override: Whether to allow overriding the API key in an API call. Defaults to True.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
@@ -158,12 +162,14 @@ class ChatEngine(BaseChatEngine):
         self.max_context_tokens = max_context_tokens
 
         self.allow_model_params_override = allow_model_params_override
+        self.allow_api_key_override = allow_api_key_override
 
     def chat(self,
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[dict] = None
+             model_params: Optional[dict] = None,
+             api_key: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -178,6 +184,7 @@ class ChatEngine(BaseChatEngine):
             messages: A list of messages (history) to generate the next response from.
             stream: A boolean flag to indicate if the chat should be streamed or not. Defaults to False.
             model_params: A dictionary of model parameters to use for the LLM. Defaults to None, which means the LLM will use its default values.
+            api_key: An API key to use for the LLM. Defaults to None, which means the LLM will use the API key it was initialized with.
 
         Returns:
             A ChatResponse object if stream is False, or a StreamingChatResponse object if stream is True.
@@ -194,7 +201,7 @@ class ChatEngine(BaseChatEngine):
             >>> for chunk in response.chunks:
             ...     print(chunk.json())
         """  # noqa: E501
-        context = self._get_context(messages)
+        context = self._get_context(messages, api_key=api_key)
         system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
         llm_messages = self._prompt_builder.build(
             system_prompt,
@@ -208,9 +215,11 @@ class ChatEngine(BaseChatEngine):
             }
         if model_params_dict.get("max_tokens", None) is None:
             model_params_dict["max_tokens"] = self.max_generated_tokens
+        chat_api_key = api_key if self.allow_api_key_override else None
 
         llm_response = self.llm.chat_completion(llm_messages,
                                                 stream=stream,
+                                                api_key=chat_api_key,
                                                 model_params=model_params_dict)
         debug_info = {}
         if CE_DEBUG_INFO:
@@ -229,8 +238,11 @@ class ChatEngine(BaseChatEngine):
 
     def _get_context(self,
                      messages: Messages,
+                     api_key: Optional[str] = None,
                      ) -> Context:
-        queries = self._query_builder.generate(messages, self.max_prompt_tokens)
+        queries = self._query_builder.generate(messages,
+                                               self.max_prompt_tokens,
+                                               api_key=api_key)
         context = self.context_engine.query(queries, self.max_context_tokens)
         return context
 
@@ -238,7 +250,8 @@ class ChatEngine(BaseChatEngine):
                     messages: Messages,
                     *,
                     stream: bool = False,
-                    model_params: Optional[dict] = None
+                    model_params: Optional[dict] = None,
+                    api_key: Optional[str] = None
                     ) -> Union[ChatResponse, StreamingChatResponse]:
         raise NotImplementedError
 

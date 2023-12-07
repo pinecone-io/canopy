@@ -22,6 +22,7 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Body,
+    Header,
     APIRouter
 )
 import uvicorn
@@ -102,6 +103,7 @@ logger: logging.Logger
 )
 async def chat(
     request: ChatRequest = Body(...),
+    authorization: str = Header(None),
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
@@ -110,13 +112,24 @@ async def chat(
     Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
 
     """  # noqa: E501
+    api_key = None
+    if authorization:
+        authorization_parts = authorization.split("Bearer ")
+        if len(authorization_parts) != 2:
+            raise HTTPException(status_code=400, detail="Invalid authorization header")
+        api_key = authorization_parts[1]
+
     try:
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
         model_params = request.dict(exclude={"messages", "stream"})
         answer = await run_in_threadpool(
-            chat_engine.chat, messages=request.messages, stream=request.stream, model_params=model_params
+            chat_engine.chat,
+            messages=request.messages,
+            stream=request.stream,
+            model_params=model_params,
+            api_key=api_key,
         )
 
         if request.stream:

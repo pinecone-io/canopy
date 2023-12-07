@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from canopy.models.data_models import Messages, Query
 from canopy.utils.config import ConfigurableMixin
@@ -10,6 +10,7 @@ class QueryGenerator(ABC, ConfigurableMixin):
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int,
+                 api_key: Optional[str] = None,
                  ) -> List[Query]:
         pass
 
@@ -17,5 +18,6 @@ class QueryGenerator(ABC, ConfigurableMixin):
     async def agenerate(self,
                         messages: Messages,
                         max_prompt_tokens: int,
+                        api_key: Optional[str] = None,
                         ) -> List[Query]:
         raise NotImplementedError

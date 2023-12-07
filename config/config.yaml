@@ -40,6 +40,7 @@ chat_engine:
     history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
     min_history_messages: 1             # Minimal number of messages to keep in history
     allow_model_params_override: true   # Whether to allow overriding the LLM's parameters in an API call
+    allow_api_key_override: true        # Whether to allow overriding the LLM's API key in an API call
 
 
   # -------------------------------------------------------------------------------------------------------------
