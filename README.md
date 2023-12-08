@@ -198,6 +198,8 @@ This will open a chat interface in your terminal. You can ask questions and the 
 
 To compare the chat response with and without RAG use the `--no-rag` flag
 
+> **Note**: This method is only supported with OpenAI at the moment.
+
 ```bash
 canopy chat --no-rag
 ```
