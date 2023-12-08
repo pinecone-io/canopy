@@ -382,13 +382,23 @@ def _chat(
     model,
     history,
     message,
+    openai_api_key=None,
     api_base=None,
     stream=True,
     print_debug_info=False,
 ):
+    if openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if openai_api_key is None and api_base is None:
+        raise CLIError(
+            "No OpenAI API key provided. When using the `--no-rag` flag "
+            "You will need to have a valid OpenAI API key. "
+            "Please set the OPENAI_API_KEY environment "
+            "variable."
+        )
     output = ""
     history += [{"role": "user", "content": message}]
-    client = openai.OpenAI(base_url=api_base)
+    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 
     start = time.time()
     try:
@@ -517,6 +527,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
+            openai_api_key="canopy",
             api_base=chat_server_url,
             print_debug_info=debug,
         )
