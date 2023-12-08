@@ -37,7 +37,7 @@ runs:
   - name: Install dependencies
     shell: bash
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-    run: poetry install --no-interaction --no-root --with dev
+    run: poetry install --no-interaction --no-root --all-extras --with dev
   - name: Install project
     if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
