@@ -12,7 +12,11 @@ tokenizer:
   type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
   params:
     model_name: hf-internal-testing/llama-tokenizer
-
+# -------------------------------------------------------------------------------------------
+# Chat engine configuration
+# Use Anyscale Endpoint as the open source LLM provider
+# You can find the list of supported LLM at https://docs.endpoints.anyscale.com/category/supported-models
+# -------------------------------------------------------------------------------------------
 chat_engine:
   llm: &llm
     type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
@@ -51,7 +55,7 @@ chat_engine:
       # The record encoder is responsible for encoding document chunks to a vector representation
       # --------------------------------------------------------------------------
       record_encoder:
-        type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder]
+        type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder, AnyscaleRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding
             thenlper/gte-large
