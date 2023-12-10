@@ -21,8 +21,9 @@ class LastMessageQueryGenerator(QueryGenerator):
         user_messages = [message for message in messages if message.role == Role.USER]
 
         if len(user_messages) == 0:
-            raise ValueError("Passed chat history does not contain any user messages."
-                             " Please include at least one user message in the history.")
+            raise ValueError("Passed chat history does not contain any user "
+                             "messages. Please include at least one user message"
+                             " in the history.")
 
         return [Query(text=user_messages[-1].content)]
 

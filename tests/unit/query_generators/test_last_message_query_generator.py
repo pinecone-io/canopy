@@ -38,8 +38,9 @@ async def test_agenerate(query_generator, sample_user_messages):
 
 
 def test_generate_with_user_and_assistant(query_generator, sample_messages):
-    last_user_message = next(message for message in sample_messages if message.role == Role.USER)
-    expected = [Query(text=last_user_message.content)]
+    user_messages = (msg for msg in sample_messages if msg.role == Role.USER)
+    last_user_msg = next(user_messages)
+    expected = [Query(text=last_user_msg.content)]
     actual = query_generator.generate(sample_messages, 0)
     assert actual == expected
 
@@ -51,4 +52,6 @@ def test_generate_fails_with_empty_history(query_generator):
 
 def test_generate_fails_with_no_user_message(query_generator):
     with pytest.raises(ValueError):
-        query_generator.generate([AssistantMessage(content="Hi! How can I help you?")], 0)
+        query_generator.generate([
+            AssistantMessage(content="Hi! How can I help you?")
+        ], 0)
