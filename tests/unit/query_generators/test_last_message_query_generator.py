@@ -1,21 +1,13 @@
 import pytest
 
 from canopy.chat_engine.query_generator import LastMessageQueryGenerator
-from canopy.models.data_models import UserMessage, Query, AssistantMessage, Role
+from canopy.models.data_models import UserMessage, Query, AssistantMessage
 
 
 @pytest.fixture
 def sample_user_messages():
     return [
         UserMessage(content="What is photosynthesis?")
-    ]
-
-
-@pytest.fixture
-def sample_messages():
-    return [
-        UserMessage(content="What is photosynthesis?"),
-        AssistantMessage(content="Oh! I don't know.")
     ]
 
 
@@ -34,14 +26,6 @@ def test_generate(query_generator, sample_user_messages):
 async def test_agenerate(query_generator, sample_user_messages):
     expected = [Query(text=sample_user_messages[-1].content)]
     actual = await query_generator.agenerate(sample_user_messages, 0)
-    assert actual == expected
-
-
-def test_generate_with_user_and_assistant(query_generator, sample_messages):
-    user_messages = (msg for msg in sample_messages if msg.role == Role.USER)
-    last_user_msg = next(user_messages)
-    expected = [Query(text=last_user_msg.content)]
-    actual = query_generator.generate(sample_messages, 0)
     assert actual == expected
 
 

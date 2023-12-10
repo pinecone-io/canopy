@@ -6,7 +6,7 @@ from canopy.models.data_models import Messages, Query, Role
 
 class LastMessageQueryGenerator(QueryGenerator):
     """
-        Returns the last user message as a query without running any LLMs. This can be
+        Returns the last message as a query without running any LLMs. This can be
         considered as the most basic query generation. Please use other query generators
         for more accurate results.
     """
@@ -18,14 +18,17 @@ class LastMessageQueryGenerator(QueryGenerator):
             max_prompt_token is dismissed since we do not consume any token for
             generating the queries.
         """
-        user_messages = [message for message in messages if message.role == Role.USER]
 
-        if len(user_messages) == 0:
-            raise ValueError("Passed chat history does not contain any user "
-                             "messages. Please include at least one user message"
-                             " in the history.")
+        if len(messages) == 0:
+            raise ValueError("Passed chat history does not contain any messages. "
+                             "Please include at least one message in the history.")
 
-        return [Query(text=user_messages[-1].content)]
+        last_message = messages[-1]
+
+        if last_message.role != Role.USER:
+            raise ValueError(f"Expected a UserMessage, got {type(last_message)}.")
+
+        return [Query(text=last_message.content)]
 
     async def agenerate(self,
                         messages: Messages,
