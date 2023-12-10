@@ -301,7 +301,6 @@ def upsert(index_name: str,
     _initialize_tokenizer()
 
     kb_config = _load_kb_config(config)
-    print(kb_config)
     try:
         kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     except openai.OpenAIError:
