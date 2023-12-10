@@ -64,4 +64,3 @@ class FunctionCallingQueryGenerator(QueryGenerator):
                 ]
             ),
         )
-
