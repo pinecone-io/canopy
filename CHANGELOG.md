@@ -1,4 +1,4 @@
-## [0.2.1] - 2023-12-10
+## [0.3.0] - 2023-12-10
 
 ### Bug fixes
 * Fix some typos, add dev container, faux streaming [#200](https://github.com/pinecone-io/canopy/pull/200) (Thanks @eburnette!)
@@ -18,6 +18,7 @@
 
 ### Added
 * Add Anyscale Endpoint support and Llama Tokenizer [#173](https://github.com/pinecone-io/canopy/pull/173) (Thanks @kylehh!)
+* Add last message query generator [#210](https://github.com/pinecone-io/canopy/pull/210)
 
 
 **Full Changelog**: https://github.com/pinecone-io/canopy/compare/V0.2.0...V0.2.1
