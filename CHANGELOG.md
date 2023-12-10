@@ -21,7 +21,7 @@
 * Add last message query generator [#210](https://github.com/pinecone-io/canopy/pull/210)
 
 
-**Full Changelog**: https://github.com/pinecone-io/canopy/compare/V0.2.0...V0.2.1
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/V0.2.0...V0.3.0
 
 ## [0.2.0] - 2023-11-15
 
