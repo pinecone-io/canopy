@@ -1,10 +1,10 @@
 # Canopy
 
 <p align="center">
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
 </a>
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
 </a>
 </p>
@@ -197,6 +197,8 @@ canopy chat
 This will open a chat interface in your terminal. You can ask questions and the RAG-infused chatbot will try to answer them using the data you uploaded.
 
 To compare the chat response with and without RAG use the `--no-rag` flag
+
+> **Note**: This method is only supported with OpenAI at the moment.
 
 ```bash
 canopy chat --no-rag

@@ -1,12 +1,9 @@
 # ===========================================================
 #            Configuration file for Canopy Server
 # ===========================================================
-query_builder_prompt: &query_builder_prompt |
-  Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
-  You should break down complex questions into sub-queries if needed.
 # -------------------------------------------------------------------------------------------
 # Tokenizer configuration
-# A Tokenizer singleton instance must be initialized before initializing any other components
+# Use LLamaTokenizer from HuggingFace with the relevant OSS model (e.g. LLama2)
 # -------------------------------------------------------------------------------------------
 tokenizer:
   type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
@@ -21,38 +18,26 @@ chat_engine:
   llm: &llm
     type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
     params:
-      model_name: HuggingFaceH4/zephyr-7b-beta         # The name of the model to use.
+      model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
       
   # --------------------------------------------------------------------
   # Configuration for the QueryBuilder subcomponent of the chat engine.
-  # The query builder is responsible for generating textual queries given user message history.
+  # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the LastMessageQueryGenerator
   # --------------------------------------------------------------------
   query_builder:
-    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator]
-    params:
-      prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
-      function_description:             # A function description passed to the LLM's `function_calling` API
-        Query search engine for relevant information
-
-    llm:  # The LLM that the query builder will use to generate queries.
-      #Use OpenAI for function call for now
-      type: OpenAILLM
-      params:
-        model_name: gpt-3.5-turbo
+    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
 
   # -------------------------------------------------------------------------------------------------------------
   # ContextEngine configuration
-  # The context engine is responsible for generating textual context for the `/query` API calls.
   # -------------------------------------------------------------------------------------------------------------
   context_engine:
     # -----------------------------------------------------------------------------------------------------------
     # KnowledgeBase configuration
-    # The KnowledgeBase is a responsible for storing and indexing the user's documents
     # -----------------------------------------------------------------------------------------------------------
     knowledge_base:
       # --------------------------------------------------------------------------
       # Configuration for the RecordEncoder subcomponent of the knowledge base.
-      # The record encoder is responsible for encoding document chunks to a vector representation
+      # Use Anyscale's Embedding endpoint for dense encoding
       # --------------------------------------------------------------------------
       record_encoder:
         type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder, AnyscaleRecordEncoder]
