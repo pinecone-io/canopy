@@ -60,7 +60,7 @@ def test_loading_files_bad(invalid_txt_file):
     with pytest.raises(DataLoaderException) as e:
         _load_multiple_txt_files(invalid_txt_file)
     assert str(e.value) == f"""
-        [ERROR] {invalid_txt_file[0]} - * - File must be UTF-8 encoded
+        {invalid_txt_file[0]}, line * - File must be UTF-8 encoded
         """
 
 
@@ -80,7 +80,7 @@ def test_loading_file_one_is_corrupted(one_invalid_rest_is_valid):
     with pytest.raises(DataLoaderException) as e:
         _load_multiple_txt_files(one_invalid_rest_is_valid)
     assert str(e.value) == f"""
-        [ERROR] {one_invalid_rest_is_valid[2]} - * - File must be UTF-8 encoded
+        {one_invalid_rest_is_valid[2]}, line * - File must be UTF-8 encoded
         """
     remaining = _load_multiple_txt_files(one_invalid_rest_is_valid[:-1])
     assert isinstance(remaining, pd.DataFrame)
