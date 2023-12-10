@@ -6,7 +6,7 @@ from canopy.models.data_models import Messages, Query
 
 class LastMessageQueryGenerator(QueryGenerator):
     """
-        Just returns the last message as a query without running any LLMs. This can be
+        Returns the last message as a query without running any LLMs. This can be
         considered as the most basic query generation. Please use other query generators
         for more accurate results.
     """
