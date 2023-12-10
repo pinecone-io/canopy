@@ -27,3 +27,8 @@ async def test_agenerate(query_generator, sample_messages):
     expected = [Query(text=sample_messages[-1].content)]
     actual = await query_generator.agenerate(sample_messages, 0)
     assert actual == expected
+
+
+def test_generate_fails_with_empty_history(query_generator):
+    with pytest.raises(ValueError):
+        query_generator.generate([], 0)
