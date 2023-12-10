@@ -102,9 +102,7 @@ def _initialize_tokenizer():
 
 def _read_config_file(config_file: Optional[str]) -> Dict[str, Any]:
     if config_file is None:
-        config_file = os.getenv("CANOPY_CONFIG_FILE", None)
-        if config_file is None:
-            return {}
+        return {}
 
     try:
         with open(config_file, 'r') as f:
@@ -217,9 +215,10 @@ def health(url):
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "file specified in $CANOPY_CONFIG_FILE will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
     kb_config = _load_kb_config(config)
@@ -282,9 +281,10 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "be uploaded. "
                    "When set to True, the upsert process will continue on failure, as "
                    "long as less than 10% of the documents have failed to be uploaded.")
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "file specified in $CANOPY_CONFIG_FILE will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 def upsert(index_name: str,
            data_path: str,
            allow_failures: bool,
@@ -563,9 +563,10 @@ def chat(chat_server_url, rag, debug, stream):
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "file specified in $CANOPY_CONFIG_FILE will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 @click.option("--index-name", default=None,
               help="Index name, if not provided already as an environment variable.")
 def start(host: str, port: str, reload: bool,
