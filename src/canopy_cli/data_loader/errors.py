@@ -19,7 +19,7 @@ class DataLoaderException(Exception):
 
     def __init__(self, file_name: str, row_id: str, err: str) -> None:
         message = f"""
-        [ERROR] {file_name} - {row_id} - {err}
+        {file_name}, line {row_id} - {err}
         """
         super().__init__(message)
         self.message = message
@@ -34,4 +34,4 @@ class DataLoaderException(Exception):
         if file is None:
             file = get_text_stderr()
 
-        echo("Error: {message}".format(message=self.format_message()), file=file)
+        echo("{message}".format(message=self.format_message()), file=file)
