@@ -24,14 +24,4 @@ chat_engine:
   # The query builder is responsible for generating textual queries given user message history.
   # --------------------------------------------------------------------
   query_builder:
-    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator]
-    params:
-      prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
-      function_description:             # A function description passed to the LLM's `function_calling` API
-        Query search engine for relevant information
-
-    llm:  # The LLM that the query builder will use to generate queries.
-      #Use OpenAI for function call for now
-      type: OpenAILLM
-      params:
-        model_name: gpt-3.5-turbo
+    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
