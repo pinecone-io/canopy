@@ -16,7 +16,6 @@ DEFAULT_FUNCTION_DESCRIPTION = """Query search engine for relevant information""
 
 
 class FunctionCallingQueryGenerator(QueryGenerator):
-
     _DEFAULT_COMPONENTS = {
         "llm": OpenAILLM,
     }
@@ -64,3 +63,5 @@ class FunctionCallingQueryGenerator(QueryGenerator):
                 ]
             ),
         )
+
+
