@@ -22,13 +22,18 @@ class DataLoaderException(Exception):
         {file_name}, line {row_id} - {err}
         """
         super().__init__(message)
-        self.message = message
+        self.file_name = file_name
+        self.row_id = row_id
+        self.err = err
 
     def format_message(self) -> str:
-        return self.message
+        message = f"""
+        {self.file_name}, line {self.row_id} - {self.err}
+        """
+        return message
 
     def __str__(self) -> str:
-        return self.message
+        return self.format_message()
 
     def show(self, file: t.Optional[t.IO] = None) -> None:
         if file is None:
