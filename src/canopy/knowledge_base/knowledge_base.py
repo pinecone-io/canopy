@@ -19,7 +19,8 @@ from pinecone_datasets import DenseModelMetadata, DatasetMetadata
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
-                                                  OpenAIRecordEncoder)
+                                                  OpenAIRecordEncoder,
+                                                  JinaRecordEncoder)
 from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                           KBDocChunkWithScore, DocumentWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
