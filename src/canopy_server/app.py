@@ -281,7 +281,7 @@ async def startup():
     _init_logging()
     _init_engines()
     _init_routes(app)
-
+    await health_check()
 
 def _init_routes(app):
     # Include the application level router (health, shutdown, ...)
