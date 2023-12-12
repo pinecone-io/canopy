@@ -22,7 +22,7 @@ from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base import connect_to_pinecone
 from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
-from canopy.models.data_models import Document
+from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
     load_from_path,
@@ -43,13 +43,6 @@ load_dotenv()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
-
-OPENAI_AUTH_ERROR_MSG = (
-    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-    "environment variable is set correctly.\n"
-    "Please visit https://platform.openai.com/account/api-keys for more details"
-)
-
 
 def check_server_health(url: str):
     try:
@@ -140,9 +133,11 @@ def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
     Tokenizer.initialize()
     try:
-        ChatEngine.from_config(config.get("chat_engine", {}))
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+        # If the server itself will fail, we can't except the error, since it's running
+        # in a different process. Try to load and run the ChatEngine so we can catch
+        # any errors and print a nice message.
+        chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
+        chat_engine.chat([UserMessage(content="hello")])
     except Exception as e:
         msg = f"Failed to initialize Canopy server. Reason:\n{e}"
         if config_file:
@@ -303,8 +298,8 @@ def upsert(index_name: str,
     kb_config = _load_kb_config(config)
     try:
         kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+    except Exception as e:
+        raise CLIError(e)
 
     try:
         kb.connect()
