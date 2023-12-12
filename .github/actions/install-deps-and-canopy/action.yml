@@ -41,4 +41,4 @@ runs:
   - name: Install project
     if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
-    run: poetry install --no-interaction
+    run: poetry install --no-interaction --all-extras --with dev
