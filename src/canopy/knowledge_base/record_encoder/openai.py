@@ -6,6 +6,11 @@ from canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
 from canopy.models.data_models import Query
 
+OPENAI_AUTH_ERROR_MSG = (
+    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+    "environment variable is set correctly.\n"
+)
+
 
 def _format_openai_error(e):
     try:
@@ -36,7 +41,12 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                         Defaults to 400.
             **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
         """  # noqa: E501
-        encoder = OpenAIEncoder(model_name, **kwargs)
+        try:
+            encoder = OpenAIEncoder(model_name, **kwargs)
+        except APIError as e:
+            raise RuntimeError(
+                OPENAI_AUTH_ERROR_MSG + f"Error: {_format_openai_error(e)}"
+            )
         super().__init__(dense_encoder=encoder, batch_size=batch_size)
 
     def _encode_documents_batch(self,
