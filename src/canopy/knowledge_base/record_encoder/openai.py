@@ -10,7 +10,7 @@ from canopy.models.data_models import Query
 def _format_openai_error(e):
     try:
         return e.response.json()['error']['message']
-    except:
+    except Exception:
         return str(e)
 
 
@@ -56,7 +56,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
     def _format_error(self, err):
         if isinstance(err, RateLimitError):
-            return (f"Your OpenAI account seem to have reached the rate limit. " 
+            return (f"Your OpenAI account seem to have reached the rate limit. "
                     f"Details: {_format_openai_error(err)}")
         elif isinstance(err, (AuthenticationError, APIConnectionError)):
             return (f"Failed to connect to OpenAI, please make sure that the "
@@ -64,4 +64,3 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                     f"Details: {_format_openai_error(err)}")
         else:
             return _format_openai_error(err)
-

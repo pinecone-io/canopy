@@ -44,6 +44,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
 
+
 def check_server_health(url: str):
     try:
         res = requests.get(urljoin(url, "/health"))
@@ -300,7 +301,7 @@ def upsert(index_name: str,
     try:
         kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
     except Exception as e:
-        raise CLIError(e)
+        raise CLIError(str(e))
 
     try:
         kb.connect()

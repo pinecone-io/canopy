@@ -20,7 +20,7 @@ from canopy.models.data_models import Messages, Query
 def _format_openai_error(e):
     try:
         return e.response.json()['error']['message']
-    except:
+    except Exception:
         return str(e)
 
 
@@ -63,8 +63,8 @@ class OpenAILLM(BaseLLM):
             raise RuntimeError(
                 "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
                 "environment variable is set correctly.\n"
-                 f"Error: {_format_openai_error(e)}"
-            ) 
+                f"Error: {_format_openai_error(e)}"
+            )
 
         self.default_model_params = kwargs
 

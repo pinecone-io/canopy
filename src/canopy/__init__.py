@@ -2,11 +2,13 @@ import importlib.metadata
 import warnings
 import logging
 import os
+from typing import List
 
 # Taken from https://stackoverflow.com/a/67097076
 __version__ = importlib.metadata.version("canopy-sdk")
 
-IGNORED_WARNINGS = [
+
+IGNORED_WARNINGS: List[str] = [
 ]
 
 IGNORED_WARNING_IN_MODULES = [

@@ -317,8 +317,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                 raise RuntimeError(
                     f"Canopy has failed to infer vectors' dimensionality using the "
                     f"selected encoder: {self._encoder.__class__.__name__}. You can "
-                    f"provide the dimension manually, try using a different encoder, or "
-                    f"fix the underlying error:\n{e}"
+                    f"provide the dimension manually, try using a different encoder, or"
+                    f" fix the underlying error:\n{e}"
                 ) from e
 
         # connect to pinecone and create index

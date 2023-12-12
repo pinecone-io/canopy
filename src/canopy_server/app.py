@@ -283,6 +283,7 @@ async def startup():
     _init_routes(app)
     await health_check()
 
+
 def _init_routes(app):
     # Include the application level router (health, shutdown, ...)
     app.include_router(application_router, include_in_schema=False)
