@@ -29,10 +29,14 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = "^0.7.0"
+pinecone-text = "^0.7.1"
 tokenizers = "^0.15.0"
 transformers = "^4.35.2"
 sentencepiece = "^0.1.99"
+cohere = { version = ">=4.37", optional = true }
+
+[tool.poetry.extras]
+cohere = ["cohere"]
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
