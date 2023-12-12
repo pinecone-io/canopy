@@ -115,8 +115,7 @@ chat_engine:
       # The record encoder is responsible for encoding document chunks to a vector representation
       # --------------------------------------------------------------------------
       record_encoder:
-        type: CohereRecordEncoder       # Options: [OpenAIRecordEncoder]
-#        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder]
+        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding
             text-embedding-ada-002
