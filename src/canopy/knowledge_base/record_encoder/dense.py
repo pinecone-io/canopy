@@ -65,7 +65,7 @@ class DenseRecordEncoder(RecordEncoder):
             dimension(int): the dimension of the encoder
         """  # noqa: E501
         dummy_doc = KBDocChunk(text="hello", id="dummy_doc", document_id="dummy_doc")
-        return len(self.encode_documents([dummy_doc])[0])
+        return len(self.encode_documents([dummy_doc])[0].values)
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]
