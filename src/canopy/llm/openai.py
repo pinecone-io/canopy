@@ -17,12 +17,6 @@ from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
 
-OPENAI_AUTH_ERROR_MSG = (
-    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-    "environment variable is set correctly.\n"
-)
-
-
 def _format_openai_error(e):
     try:
         return e.response.json()['error']['message']
@@ -67,8 +61,10 @@ class OpenAILLM(BaseLLM):
                                          base_url=base_url)
         except openai.OpenAIError as e:
             raise RuntimeError(
-                OPENAI_AUTH_ERROR_MSG + f"Error: {_format_openai_error(e)}"
-            )
+                "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+                "environment variable is set correctly.\n"
+                 f"Error: {_format_openai_error(e)}"
+            ) 
 
         self.default_model_params = kwargs
 

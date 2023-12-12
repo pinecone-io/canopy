@@ -1,15 +1,10 @@
 from typing import List
 
-from openai import APIError, RateLimitError
+from openai import OpenAIError, RateLimitError, APIConnectionError, AuthenticationError
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
 from canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
 from canopy.models.data_models import Query
-
-OPENAI_AUTH_ERROR_MSG = (
-    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-    "environment variable is set correctly.\n"
-)
 
 
 def _format_openai_error(e):
@@ -43,41 +38,13 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         """  # noqa: E501
         try:
             encoder = OpenAIEncoder(model_name, **kwargs)
-        except APIError as e:
+        except OpenAIError as e:
             raise RuntimeError(
-                OPENAI_AUTH_ERROR_MSG + f"Error: {_format_openai_error(e)}"
-            )
+                "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+                "environment variable is set correctly.\n"
+                f"Error: {_format_openai_error(e)}"
+            ) from e
         super().__init__(dense_encoder=encoder, batch_size=batch_size)
-
-    def _encode_documents_batch(self,
-                                documents: List[KBDocChunk]
-                                ) -> List[KBEncodedDocChunk]:
-        try:
-            return super()._encode_documents_batch(documents)
-        except RateLimitError as e:
-            raise RuntimeError(
-                f"Your OpenAI account seem to have reached the rate limit. "
-                f"Error: {_format_openai_error(e)}"
-            )
-        except APIError as e:
-            raise RuntimeError(
-                f"Failed to encode documents using OpenAI embeddings model. "
-                f"Error: {_format_openai_error(e)}"
-            )
-
-    def _encode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
-        try:
-            return super()._encode_queries_batch(queries)
-        except RateLimitError as e:
-            raise RuntimeError(
-                f"Your OpenAI account seem to have reached the rate limit. "
-                f"Error: {_format_openai_error(e)}"
-            )
-        except APIError as e:
-            raise RuntimeError(
-                f"Failed to encode queries using OpenAI embeddings model. "
-                f"Error: {_format_openai_error(e)}"
-            )
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]
@@ -86,3 +53,15 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
     async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
         raise NotImplementedError
+
+    def _format_error(self, err):
+        if isinstance(err, RateLimitError):
+            return (f"Your OpenAI account seem to have reached the rate limit. " 
+                    f"Details: {_format_openai_error(err)}")
+        elif isinstance(err, (AuthenticationError, APIConnectionError)):
+            return (f"Failed to connect to OpenAI, please make sure that the "
+                    f"OPENAI_API_KEY environment variable is set correctly. "
+                    f"Details: {_format_openai_error(err)}")
+        else:
+            return _format_openai_error(err)
+
