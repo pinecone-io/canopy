@@ -355,7 +355,8 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for batch in _batch_documents_by_chunks(kb._chunker, data):
+    for batch in _batch_documents_by_chunks(kb._chunker, data,
+                                            batch_size=kb._encoder.batch_size):
         try:
             kb.upsert(batch)
         except Exception as e:
