@@ -138,8 +138,11 @@ def _validate_chat_engine(config_file: Optional[str]):
         # in a different process. Try to load and run the ChatEngine so we can catch
         # any errors and print a nice message.
         chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
+        chat_engine.max_generated_tokens = 5
         chat_engine.context_engine.knowledge_base.connect()
-        chat_engine.chat([UserMessage(content="hello")])
+        chat_engine.chat(
+            [UserMessage(content="This is a health check. Are you alive? Be concise")]
+        )
     except Exception as e:
         msg = f"Failed to initialize Canopy server. Reason:\n{e}"
         if config_file:
