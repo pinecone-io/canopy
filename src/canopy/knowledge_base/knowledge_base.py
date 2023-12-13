@@ -309,7 +309,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                 encoder_dimension = self._encoder.dimension
                 if encoder_dimension is None:
                     raise RuntimeError(
-                        f"The selected encoder {self._encoder.__class__.__name__} does"
+                        f"The selected encoder {self._encoder.__class__.__name__} does "
                         f"not support inferring the vectors' dimensionality."
                     )
                 dimension = encoder_dimension
