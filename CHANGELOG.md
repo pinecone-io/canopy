@@ -6,7 +6,7 @@
 * Slightly improve error handling for external errors [#222](https://github.com/pinecone-io/canopy/pull/220)
 
 ## Added
-* Cohere Encoder integration [#203](https://github.com/pinecone-io/canopy/pull/203) Thanks @jamescalam!
+* Cohere Embedding model support [#203](https://github.com/pinecone-io/canopy/pull/203) Thanks @jamescalam!
 * Add Anyscale Embedding model support [#198](https://github.com/pinecone-io/canopy/pull/198)
 * change max prompt tokens for Anyacle config [#222](https://github.com/pinecone-io/canopy/pull/222)
 
