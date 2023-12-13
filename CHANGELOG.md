@@ -1,3 +1,19 @@
+## [0.5.0] - 2023-12-13
+
+## Bug fixes
+* Bump pytest-html version [#213](https://github.com/pinecone-io/canopy/pull/213)
+* Improve dataloader error handling [#182](https://github.com/pinecone-io/canopy/pull/182)
+* Slightly improve error handling for external errors [#222](https://github.com/pinecone-io/canopy/pull/220)
+
+## Added
+* Cohere Embedding model support [#203](https://github.com/pinecone-io/canopy/pull/203) Thanks @jamescalam!
+* Add Anyscale Embedding model support [#198](https://github.com/pinecone-io/canopy/pull/198)
+* change max prompt tokens for Anyacle config [#222](https://github.com/pinecone-io/canopy/pull/222)
+
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/V0.3.0...v0.5.0
+
+
 ## [0.3.0] - 2023-12-10
 
 ### Bug fixes
