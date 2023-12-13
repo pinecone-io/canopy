@@ -15,11 +15,13 @@ tokenizer:
 # You can find the list of supported LLM at https://docs.endpoints.anyscale.com/category/supported-models
 # -------------------------------------------------------------------------------------------
 chat_engine:
+  params:
+    max_prompt_tokens: 2048             # The maximum number of tokens to use for input prompt to the LLM.
   llm: &llm
     type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
     params:
       model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
-      
+
   # --------------------------------------------------------------------
   # Configuration for the QueryBuilder subcomponent of the chat engine.
   # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the LastMessageQueryGenerator
