@@ -226,9 +226,15 @@ def new(index_name: str, config: Optional[str]):
     with spinner:
         try:
             kb.create_canopy_index()
-        # TODO: kb should throw a specific exception for each case
+        # TODO: kb should throw a specific exception for failure
         except Exception as e:
-            msg = f"Failed to create a new index. Reason:\n{e}"
+            already_exists_str = f"Index {kb.index_name} already exists"
+            if isinstance(e, RuntimeError) and already_exists_str in str(e):
+                msg = (f"{already_exists_str}, please use a different name."
+                       f"If you wish to delete the index, log in to Pinecone's "
+                       f"Console: https://app.pinecone.io/")
+            else:
+                msg = f"Failed to create a new index. Reason:\n{e}"
             raise CLIError(msg)
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name

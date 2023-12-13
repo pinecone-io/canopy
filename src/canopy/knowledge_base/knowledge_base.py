@@ -326,8 +326,9 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         if self.index_name in list_indexes():
             raise RuntimeError(
-                f"Index {self.index_name} already exists. "
-                "If you wish to delete it, use `delete_index()`. "
+                f"Index {self.index_name} already exists. To connect to an "
+                f"existing index, use `knowledge_base.connect()`. "
+                "If you wish to delete it call `knowledge_base.delete_index()`. "
             )
 
         # create index
