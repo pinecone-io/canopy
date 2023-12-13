@@ -103,7 +103,6 @@ logger: logging.Logger
 )
 async def chat(
     request: ChatRequest = Body(...),
-    authorization: str = Header(None),
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
@@ -112,12 +111,6 @@ async def chat(
     Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
 
     """  # noqa: E501
-    api_key = None
-    if authorization:
-        authorization_parts = authorization.split("Bearer ")
-        if len(authorization_parts) != 2:
-            raise HTTPException(status_code=400, detail="Invalid authorization header")
-        api_key = authorization_parts[1]
 
     try:
         session_id = request.user or "None"  # noqa: F841
@@ -129,7 +122,6 @@ async def chat(
             messages=request.messages,
             stream=request.stream,
             model_params=model_params,
-            api_key=api_key,
         )
 
         if request.stream:

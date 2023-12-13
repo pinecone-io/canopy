@@ -19,7 +19,6 @@ class BaseLLM(ABC, ConfigurableMixin):
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
                         model_params: Optional[dict] = None,
-                        api_key: Optional[str] = None,
                         ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
         pass
 
@@ -30,7 +29,6 @@ class BaseLLM(ABC, ConfigurableMixin):
                                *,
                                max_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,
-                               api_key: Optional[str] = None,
                                ) -> dict:
         pass
 
@@ -41,7 +39,6 @@ class BaseLLM(ABC, ConfigurableMixin):
                                stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,
-                               api_key: Optional[str] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         pass
