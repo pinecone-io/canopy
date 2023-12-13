@@ -120,7 +120,8 @@ class OpenAILLM(BaseLLM):
         except openai.OpenAIError as e:
             provider_name = self.__class__.__name__.replace("LLM", "")
             raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for chat completion.\n"
+                f"Failed to use {provider_name}'s {self.model_name} model for chat "
+                f"completion.\n"
                 f"Error: {_format_openai_error(e)}"
             )
 
@@ -210,7 +211,8 @@ class OpenAILLM(BaseLLM):
         except openai.OpenAIError as e:
             provider_name = self.__class__.__name__.replace("LLM", "")
             raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for chat completion.\n"
+                f"Failed to use {provider_name}'s {self.model_name} model for "
+                f"chat completion with enforced function calling.\n"
                 f"Error: {_format_openai_error(e)}"
             )
 

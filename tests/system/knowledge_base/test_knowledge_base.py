@@ -1,6 +1,5 @@
 import os
 import random
-from unittest.mock import create_autospec, Mock, PropertyMock
 
 import pytest
 import pinecone
