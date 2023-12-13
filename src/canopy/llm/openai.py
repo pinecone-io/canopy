@@ -118,8 +118,9 @@ class OpenAILLM(BaseLLM):
                                                             max_tokens=max_tokens,
                                                             **model_params_dict)
         except openai.OpenAIError as e:
+            provider_name = self.__class__.__name__.replace("LLM", "")
             raise RuntimeError(
-                f"Failed to use OepnAI's {self.model_name} model for chat completion.\n"
+                f"Failed to use {provider_name}'s {self.model_name} model for chat completion.\n"
                 f"Error: {_format_openai_error(e)}"
             )
 
@@ -207,8 +208,9 @@ class OpenAILLM(BaseLLM):
                 **model_params_dict
             )
         except openai.OpenAIError as e:
+            provider_name = self.__class__.__name__.replace("LLM", "")
             raise RuntimeError(
-                f"Failed to use OepnAI's {self.model_name} model for chat completion.\n"
+                f"Failed to use {provider_name}'s {self.model_name} model for chat completion.\n"
                 f"Error: {_format_openai_error(e)}"
             )
 
