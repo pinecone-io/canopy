@@ -25,7 +25,7 @@ class AnyscaleLLM(OpenAILLM):
 
     def __init__(
         self,
-        model_name: str = "meta-llama/Llama-2-7b-chat-hf",
+        model_name: str = "meta-llama/Llama-2-70b-chat-hf",
         *,
         base_url: Optional[str] = ANYSCALE_BASE_URL,
         api_key: Optional[str] = None,

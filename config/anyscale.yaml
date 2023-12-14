@@ -24,4 +24,4 @@ chat_engine:
   # The query builder is responsible for generating textual queries given user message history.
   # --------------------------------------------------------------------
   query_builder:
-    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
+    type: CondensedQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, CondensedQueryGenerator]
