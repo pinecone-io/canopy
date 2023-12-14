@@ -1,14 +1,6 @@
 from typing import Union, Iterable, Optional, Any, List
-import jsonschema
-import json
 import os
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    retry_if_exception_type,
-)
 from canopy.llm import OpenAILLM
-from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
