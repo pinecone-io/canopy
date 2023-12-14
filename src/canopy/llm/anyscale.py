@@ -41,23 +41,6 @@ class AnyscaleLLM(OpenAILLM):
         ae_base_url = base_url
         super().__init__(model_name, api_key=ae_api_key, base_url=ae_base_url, **kwargs)
 
-    @retry(
-        reraise=True,
-        stop=stop_after_attempt(3),
-        retry=retry_if_exception_type(
-            (json.decoder.JSONDecodeError, jsonschema.ValidationError)
-        ),
-    )
-    def enforced_function_call(
-        self,
-        messages: Messages,
-        function: Function,
-        *,
-        max_tokens: Optional[int] = None,
-        model_params: Optional[dict] = None,
-    ) -> dict:
-        raise NotImplementedError()
-
     async def achat_completion(
         self,
         messages: Messages,
