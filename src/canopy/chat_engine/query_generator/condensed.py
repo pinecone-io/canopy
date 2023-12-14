@@ -108,7 +108,6 @@ class CondensedQueryGenerator(QueryGenerator):
     def _get_answer(self, messages: Messages) -> str:
         llm_response = self._llm.chat_completion(messages)
         response = cast(ChatResponse, llm_response)
-
         return response.choices[0].message.content
 
     @retry(stop=stop_after_attempt(3),
