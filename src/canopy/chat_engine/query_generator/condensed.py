@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
@@ -9,6 +9,7 @@ from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import QueryGenerator, LastMessageQueryGenerator
 from canopy.llm import BaseLLM, AnyscaleLLM
 from canopy.models.data_models import Messages, Query, UserMessage
+from canopy.models.api_models import ChatResponse
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +106,9 @@ class CondensedQueryGenerator(QueryGenerator):
             return [Query(text=question)]
 
     def _get_answer(self, messages: Messages) -> str:
-        response = self._llm.chat_completion(messages)
+        llm_response = self._llm.chat_completion(messages)
+        response = cast(ChatResponse, llm_response)
+
         return response.choices[0].message.content
 
     @retry(stop=stop_after_attempt(3),
