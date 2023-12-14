@@ -48,10 +48,10 @@ class TestCondensedQueryGenerator:
                       response,
                       query):
         mock_llm.chat_completion.return_value = ChatResponse(
-            id="meta-llama/Llama-2-70b-chat-hf-HTQ-4",
+            id="meta-llama/Llama-2-7b-chat-hf-HTQ-4",
             object="text_completion",
             created=1702569324,
-            model='meta-llama/Llama-2-70b-chat-hf',
+            model='meta-llama/Llama-2-7b-chat-hf',
             usage=TokenCounts(
                 prompt_tokens=367,
                 completion_tokens=19,
