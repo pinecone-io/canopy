@@ -17,6 +17,13 @@ from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
 
+def _format_openai_error(e):
+    try:
+        return e.response.json()['error']['message']
+    except Exception:
+        return str(e)
+
+
 class OpenAILLM(BaseLLM):
     """
     OpenAI LLM wrapper built on top of the OpenAI Python client.
@@ -48,9 +55,17 @@ class OpenAILLM(BaseLLM):
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
         """  # noqa: E501
         super().__init__(model_name)
-        self._client = openai.OpenAI(api_key=api_key,
-                                     organization=organization,
-                                     base_url=base_url)
+        try:
+            self._client = openai.OpenAI(api_key=api_key,
+                                         organization=organization,
+                                         base_url=base_url)
+        except openai.OpenAIError as e:
+            raise RuntimeError(
+                "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+                "environment variable is set correctly.\n"
+                f"Error: {_format_openai_error(e)}"
+            )
+
         self.default_model_params = kwargs
 
     @property
@@ -96,11 +111,19 @@ class OpenAILLM(BaseLLM):
         )
 
         messages = [m.dict() for m in messages]
-        response = self._client.chat.completions.create(model=self.model_name,
-                                                        messages=messages,
-                                                        stream=stream,
-                                                        max_tokens=max_tokens,
-                                                        **model_params_dict)
+        try:
+            response = self._client.chat.completions.create(model=self.model_name,
+                                                            messages=messages,
+                                                            stream=stream,
+                                                            max_tokens=max_tokens,
+                                                            **model_params_dict)
+        except openai.OpenAIError as e:
+            provider_name = self.__class__.__name__.replace("LLM", "")
+            raise RuntimeError(
+                f"Failed to use {provider_name}'s {self.model_name} model for chat "
+                f"completion.\n"
+                f"Error: {_format_openai_error(e)}"
+            )
 
         def streaming_iterator(response):
             for chunk in response:
@@ -175,15 +198,23 @@ class OpenAILLM(BaseLLM):
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
 
-        chat_completion = self._client.chat.completions.create(
-            messages=[m.dict() for m in messages],
-            model=self.model_name,
-            tools=[function_dict],
-            tool_choice={"type": "function",
-                         "function": {"name": function.name}},
-            max_tokens=max_tokens,
-            **model_params_dict
-        )
+        try:
+            chat_completion = self._client.chat.completions.create(
+                messages=[m.dict() for m in messages],
+                model=self.model_name,
+                tools=[function_dict],
+                tool_choice={"type": "function",
+                             "function": {"name": function.name}},
+                max_tokens=max_tokens,
+                **model_params_dict
+            )
+        except openai.OpenAIError as e:
+            provider_name = self.__class__.__name__.replace("LLM", "")
+            raise RuntimeError(
+                f"Failed to use {provider_name}'s {self.model_name} model for "
+                f"chat completion with enforced function calling.\n"
+                f"Error: {_format_openai_error(e)}"
+            )
 
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)

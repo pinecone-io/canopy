@@ -125,7 +125,7 @@ class TestAnyscaleLLM:
 
     @staticmethod
     def test_negative_max_tokens(anyscale_llm, messages):
-        with pytest.raises(BadRequestError):
+        with pytest.raises(RuntimeError):
             anyscale_llm.chat_completion(messages=messages, max_tokens=-5)
 
     @staticmethod

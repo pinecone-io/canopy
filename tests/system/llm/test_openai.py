@@ -173,12 +173,12 @@ class TestOpenAILLM:
 
     @staticmethod
     def test_missing_messages(openai_llm):
-        with pytest.raises(BadRequestError):
+        with pytest.raises(RuntimeError):
             openai_llm.chat_completion(messages=[])
 
     @staticmethod
     def test_negative_max_tokens(openai_llm, messages):
-        with pytest.raises(BadRequestError):
+        with pytest.raises(RuntimeError):
             openai_llm.chat_completion(messages=messages, max_tokens=-5)
 
     @staticmethod

@@ -224,6 +224,8 @@ def test_create_index(index_full_name, knowledge_base):
     assert index_full_name in pinecone.list_indexes()
     assert index_full_name == index_full_name
     assert knowledge_base._index.describe_index_stats()
+    index_description = pinecone.describe_index(index_full_name)
+    assert index_description.dimension == knowledge_base._encoder.dimension
 
 
 def test_list_indexes(index_full_name):
@@ -481,13 +483,39 @@ def test_create_with_text_in_indexed_field_raise(index_name,
 def test_create_with_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(RuntimeError) as e:
         kb = KnowledgeBase(index_name=index_name,
                            record_encoder=encoder,
                            chunker=chunker)
         kb.create_canopy_index()
 
-    assert "Could not infer dimension from encoder" in str(e.value)
+    assert "failed to infer" in str(e.value)
+    assert "dimension" in str(e.value)
+    assert f"{encoder.__class__.__name__} does not support" in str(e.value)
+
+
+# TODO: Add unit tests that verify that `pinecone.create_index()` is called with
+#  correct `dimension` in all cases (inferred from encoder, directly passed, etc.)
+
+# TODO: This test should be part of KnowledgeBase unit tests, which we don't have yet.
+def test_create_encoder_err(index_name, chunker):
+    class RaisesStubRecordEncoder(StubRecordEncoder):
+        @property
+        def dimension(self):
+            raise ValueError("mock error")
+
+    encoder = RaisesStubRecordEncoder(StubDenseEncoder(dimension=3))
+
+    with pytest.raises(RuntimeError) as e:
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_canopy_index()
+
+    assert "failed to infer" in str(e.value)
+    assert "dimension" in str(e.value)
+    assert "mock error" in str(e.value)
+    assert encoder.__class__.__name__ in str(e.value)
 
 
 @pytest.fixture
