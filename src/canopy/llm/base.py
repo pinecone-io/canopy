@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Optional, List
+from typing import Union, Iterable, Optional
 
 from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Query
+from canopy.models.data_models import Messages, Context
 from canopy.utils.config import ConfigurableMixin
 
 
@@ -14,7 +14,9 @@ class BaseLLM(ABC, ConfigurableMixin):
 
     @abstractmethod
     def chat_completion(self,
-                        messages: Messages,
+                        system_prompt: str,
+                        chat_history: Messages,
+                        context: Optional[Context] = None,
                         *,
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
@@ -24,7 +26,8 @@ class BaseLLM(ABC, ConfigurableMixin):
 
     @abstractmethod
     def enforced_function_call(self,
-                               messages: Messages,
+                               system_prompt: str,
+                               chat_history: Messages,
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
@@ -34,7 +37,9 @@ class BaseLLM(ABC, ConfigurableMixin):
 
     @abstractmethod
     async def achat_completion(self,
-                               messages: Messages,
+                               system_prompt: str,
+                               chat_history: Messages,
+                               context: Optional[Context] = None,
                                *,
                                stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
@@ -44,10 +49,12 @@ class BaseLLM(ABC, ConfigurableMixin):
         pass
 
     @abstractmethod
-    async def agenerate_queries(self,
-                                messages: Messages,
-                                *,
-                                max_generated_tokens: Optional[int] = None,
-                                model_params: Optional[dict] = None,
-                                ) -> List[Query]:
+    async def aenforced_function_call(self,
+                                      system_prompt: str,
+                                      chat_history: Messages,
+                                      function: Function,
+                                      *,
+                                      max_tokens: Optional[int] = None,
+                                      model_params: Optional[dict] = None
+                                      ) -> dict:
         pass
