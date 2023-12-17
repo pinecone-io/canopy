@@ -7,15 +7,14 @@ from tenacity import retry, stop_after_attempt, retry_if_exception_type
 from canopy.chat_engine.models import HistoryPruningMethod
 from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import QueryGenerator, LastMessageQueryGenerator
-from canopy.llm import BaseLLM, AnyscaleLLM
-from canopy.models.data_models import Messages, Query, UserMessage
+from canopy.llm import BaseLLM, OpenAILLM
 from canopy.models.api_models import ChatResponse
+from canopy.models.data_models import Messages, Query, UserMessage
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """
-You are an expert on formulating a search query for a search engine, to assist
- in responding to the user's question.
+SYSTEM_PROMPT = """You are an expert on formulating a search query for a search engine,
+to assist in responding to the user's question.
 
 Given the following conversation, create a standalone question summarizing
  the user's last question, in its original language.
@@ -50,7 +49,7 @@ Reply to me in JSON in this format:
 
 """  # noqa: E501
 
-USER_PROMPT = "Return only a JSON that has 'question' as a key and the value."
+USER_PROMPT = "Return only a JSON containing a single key 'question' and the value."
 
 
 class ExtractionException(ValueError):
@@ -59,19 +58,19 @@ class ExtractionException(ValueError):
 
 class CondensedQueryGenerator(QueryGenerator):
     _DEFAULT_COMPONENTS = {
-        "llm": AnyscaleLLM,
+        "llm": OpenAILLM,
     }
 
     def __init__(self,
                  *,
                  llm: Optional[BaseLLM] = None):
         """
-             Tries to build a question out of all the chat history.
-             In order to do that, the system first tries to make LLM return
-             a JSON object with a key "question" and the value representing
-             the question the user was intending to ask. If LLM response
-             cannot be parsed it falls back to last message query generator,
-             meaning it returns the last message of the history as a query.
+             This `QueryGenerator` uses an LLM to formulate a knowledge base query
+             from the full chat history. It does so by prompting the LLM to reply
+             with a JSON containing a single key `question`, containing the query
+             for the knowledge base. If LLM response cannot be parsed
+             (after multiple retries), it falls back to returning the last message
+             from the history as a query, much like `LastMessageQueryGenerator`
         """
         self._llm = llm or self._DEFAULT_COMPONENTS["llm"]()
         self._system_prompt = SYSTEM_PROMPT
@@ -115,14 +114,9 @@ class CondensedQueryGenerator(QueryGenerator):
            retry_error_callback=lambda _: None)
     def _try_generate_question(self, messages: Messages) -> Optional[str]:
         content = self._get_answer(messages)
-        question = self._try_extract_question(content)
+        return self._extract_question(content)
 
-        if question is None:
-            raise ExtractionException("Failed to extract the question.")
-        else:
-            return question
-
-    def _try_extract_question(self, text: str) -> Optional[str]:
+    def _extract_question(self, text: str) -> str:
 
         # Search for the pattern in the text
         match = re.search(self._question_regex, text)
@@ -131,7 +125,7 @@ class CondensedQueryGenerator(QueryGenerator):
         if match:
             return match.group(1)
 
-        return None
+        raise ExtractionException("Failed to extract the question.")
 
     async def agenerate(self,
                         messages: Messages,

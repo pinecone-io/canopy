@@ -32,13 +32,17 @@ class TestCondensedQueryGenerator:
                 UserMessage(content="A pinecone client.")]
 
     @staticmethod
-    @pytest.mark.parametrize(("response", "query"), [
+    @pytest.mark.parametrize(("response", "query", "call_count"), [
         (
                 '{"question": "How do I init a pinecone client?"}',
-                "How do I init a pinecone client?"),
+                "How do I init a pinecone client?",
+                1
+        ),
+
         (
-                '...',
-                "A pinecone client."
+                'Unparseable JSON response from LLM, falling back to the last message',
+                "A pinecone client.",
+                3
         )
 
     ])
@@ -46,7 +50,8 @@ class TestCondensedQueryGenerator:
                       mock_llm,
                       sample_messages,
                       response,
-                      query):
+                      query,
+                      call_count):
         mock_llm.chat_completion.return_value = ChatResponse(
             id="meta-llama/Llama-2-7b-chat-hf-HTQ-4",
             object="text_completion",
@@ -70,6 +75,7 @@ class TestCondensedQueryGenerator:
         result = query_generator.generate(messages=sample_messages,
                                           max_prompt_tokens=4096)
 
+        assert mock_llm.chat_completion.call_count == call_count
         assert isinstance(result, List)
         assert len(result) == 1
         assert result[0] == Query(text=query)
