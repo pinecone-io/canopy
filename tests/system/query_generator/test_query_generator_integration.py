@@ -2,6 +2,7 @@ from unittest.mock import create_autospec
 
 import pytest
 
+from canopy.tokenizer.tokenizer import Tokenizer # noqa
 from canopy.llm.openai import OpenAILLM # noqa
 from canopy.models.data_models import MessageBase, Query # noqa
 from canopy.chat_engine.query_generator import FunctionCallingQueryGenerator # noqa
@@ -14,6 +15,7 @@ class TestFunctionCallingQueryGeneratorSystem:
     @staticmethod
     @pytest.fixture
     def openai_llm():
+        Tokenizer.initialize()
         return OpenAILLM(model_name="gpt-3.5-turbo")
 
     @staticmethod

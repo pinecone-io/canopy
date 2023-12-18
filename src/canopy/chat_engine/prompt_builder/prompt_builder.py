@@ -28,7 +28,7 @@ class BasePromptBuilder(ABC):
     @abstractmethod
     def build(self,
               system_prompt: str,
-              history: Messages,
+              chat_history: Messages,
               max_tokens: int
               ) -> Messages:
         pass
@@ -48,7 +48,7 @@ class PromptBuilder(BasePromptBuilder):
 
     def build(self,
               system_prompt: str,
-              history: Messages,
+              chat_history: Messages,
               max_tokens: int
               ) -> Messages:
         system_massage = [MessageBase(role=Role.SYSTEM,
@@ -60,7 +60,7 @@ class PromptBuilder(BasePromptBuilder):
             )
 
         max_history_tokens = max_tokens - prompt_tokens
-        pruned_history, num_tokens = self._history_pruner.build(history,
+        pruned_history, num_tokens = self._history_pruner.build(chat_history,
                                                                 max_history_tokens)
 
         return system_massage + pruned_history

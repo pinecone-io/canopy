@@ -3,7 +3,7 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.chat_engine.history_pruner.base import HistoryPruner
 from canopy.chat_engine.query_generator.function_calling \
     import (FunctionCallingQueryGenerator, DEFAULT_FUNCTION_DESCRIPTION,
             DEFAULT_SYSTEM_PROMPT, )
@@ -23,16 +23,16 @@ class TestFunctionCallingQueryGenerator:
 
     @staticmethod
     @pytest.fixture
-    def mock_prompt_builder():
-        return create_autospec(PromptBuilder)
+    def mock_history_builder():
+        return create_autospec(HistoryPruner)
 
     @staticmethod
     @pytest.fixture
-    def query_generator(mock_llm, mock_prompt_builder):
+    def query_generator(mock_llm, mock_history_builder):
         query_gen = FunctionCallingQueryGenerator(
             llm=mock_llm,
         )
-        query_gen._prompt_builder = mock_prompt_builder
+        query_gen._history_pruner = mock_history_builder
         return query_gen
 
     @staticmethod
@@ -45,18 +45,18 @@ class TestFunctionCallingQueryGenerator:
     @staticmethod
     def test_generate_with_default_params(query_generator,
                                           mock_llm,
-                                          mock_prompt_builder,
+                                          mock_history_builder,
                                           sample_messages
                                           ):
-        mock_prompt_builder.build.return_value = sample_messages
+        mock_history_builder.build.return_value = (sample_messages, 3)
         mock_llm.enforced_function_call.return_value = {"queries": ["query1", "query2"]}
 
         result = query_generator.generate(messages=sample_messages,
                                           max_prompt_tokens=100)
 
-        mock_prompt_builder.build.assert_called_once_with(
+        mock_history_builder.build.assert_called_once_with(
             system_prompt=DEFAULT_SYSTEM_PROMPT,
-            history=sample_messages,
+            chat_history=sample_messages,
             max_tokens=100
         )
 
@@ -86,7 +86,7 @@ class TestFunctionCallingQueryGenerator:
     @staticmethod
     def test_generate_with_non_defaults(query_generator,
                                         mock_llm,
-                                        mock_prompt_builder,
+                                        mock_history_builder,
                                         sample_messages
                                         ):
         custom_system_prompt = "Custom system prompt"
@@ -97,9 +97,9 @@ class TestFunctionCallingQueryGenerator:
             prompt=custom_system_prompt,
             function_description=custom_function_description,
         )
-        gen_custom._prompt_builder = mock_prompt_builder
+        gen_custom._history_pruner = mock_history_builder
 
-        mock_prompt_builder.build.return_value = sample_messages
+        mock_history_builder.build.return_value = (sample_messages, 3)
         mock_llm.enforced_function_call.return_value = {"queries": ["query1"]}
 
         result = gen_custom.generate(messages=sample_messages,
@@ -108,9 +108,9 @@ class TestFunctionCallingQueryGenerator:
         expected_result = [Query(text="query1")]
         assert result == expected_result
 
-        mock_prompt_builder.build.assert_called_once_with(
+        mock_history_builder.build.assert_called_once_with(
             system_prompt=custom_system_prompt,
-            history=sample_messages,
+            chat_history=sample_messages,
             max_tokens=100
         )
 
@@ -135,10 +135,10 @@ class TestFunctionCallingQueryGenerator:
     @staticmethod
     def test_generate_invalid_return_from_llm(query_generator,
                                               mock_llm,
-                                              mock_prompt_builder,
+                                              mock_history_builder,
                                               sample_messages
                                               ):
-        mock_prompt_builder.build.return_value = sample_messages
+        mock_history_builder.build.return_value = (sample_messages, 3)
         mock_llm.enforced_function_call.return_value = {}
 
         with pytest.raises(KeyError):
@@ -149,7 +149,7 @@ class TestFunctionCallingQueryGenerator:
     @pytest.mark.asyncio
     async def test_agenerate_not_implemented(query_generator,
                                              mock_llm,
-                                             mock_prompt_builder,
+                                             mock_history_builder,
                                              sample_messages
                                              ):
         with pytest.raises(NotImplementedError):
