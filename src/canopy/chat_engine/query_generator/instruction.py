@@ -56,7 +56,7 @@ class ExtractionException(ValueError):
     pass
 
 
-class CondensedQueryGenerator(QueryGenerator):
+class InstructionQueryGenerator(QueryGenerator):
     _DEFAULT_COMPONENTS = {
         "llm": OpenAILLM,
     }

@@ -3,7 +3,7 @@ from unittest.mock import create_autospec
 
 import pytest
 
-from canopy.chat_engine.query_generator import CondensedQueryGenerator
+from canopy.chat_engine.query_generator import InstructionQueryGenerator
 from canopy.llm import BaseLLM
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import Query, UserMessage, AssistantMessage
@@ -16,7 +16,7 @@ def mock_llm():
 
 @pytest.fixture
 def query_generator(mock_llm):
-    query_gen = CondensedQueryGenerator(
+    query_gen = InstructionQueryGenerator(
         llm=mock_llm,
     )
     return query_gen

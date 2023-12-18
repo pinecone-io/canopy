@@ -27,7 +27,7 @@ chat_engine:
   # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the LastMessageQueryGenerator
   # --------------------------------------------------------------------
   query_builder:
-    type: CondensedQueryGenerator     # Options: [CondensedQueryGenerator, LastMessageQueryGenerator]
+    type: InstructionQueryGenerator     # Options: [InstructionQueryGenerator, LastMessageQueryGenerator]
 
   # -------------------------------------------------------------------------------------------------------------
   # ContextEngine configuration
