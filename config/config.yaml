@@ -37,15 +37,15 @@ chat_engine:
     max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
-    history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
-    min_history_messages: 1             # Minimal number of messages to keep in history
-
-
-  # -------------------------------------------------------------------------------------------------------------
-  # LLM configuration
-  # Configuration of the LLM (Large Language Model)
-  # -------------------------------------------------------------------------------------------------------------
+  history_pruner:             # How to prune messages if chat history is too long. Options: [raise, recent]
+    type: RecentHistoryPruner
+    params:
+      min_history_messages: 1             # Minimal number of messages to keep in history
   llm: &llm
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
     type: OpenAILLM                     # Options: [OpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
@@ -53,12 +53,11 @@ chat_engine:
       # here will be used in every LLM API call. For example:
 #      temperature: 0.7
 #      top_p: 0.9
-
-  # --------------------------------------------------------------------
-  # Configuration for the QueryBuilder subcomponent of the chat engine.
-  # The query builder is responsible for generating textual queries given user message history.
-  # --------------------------------------------------------------------
   query_builder:
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
     type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
     params:
       prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM

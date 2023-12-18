@@ -3,9 +3,10 @@ from typing import Tuple, Optional
 
 from canopy.tokenizer import Tokenizer
 from canopy.models.data_models import Messages, SystemMessage
+from canopy.utils.config import ConfigurableMixin
 
 
-class HistoryPruner(ABC):
+class HistoryPruner(ABC, ConfigurableMixin):
 
     def __init__(self):
         self._tokenizer = Tokenizer()
