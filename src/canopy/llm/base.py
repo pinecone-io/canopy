@@ -56,5 +56,5 @@ class BaseLLM(ABC, ConfigurableMixin):
                                       *,
                                       max_tokens: Optional[int] = None,
                                       model_params: Optional[dict] = None
-                                      ) -> dict:
+                                      ):
         pass

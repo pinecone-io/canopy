@@ -51,5 +51,5 @@ class AnyscaleLLM(OpenAILLM):
                                 *,
                                 max_tokens: Optional[int] = None,
                                 model_params: Optional[dict] = None
-                                ) -> dict:
+                                ):
         raise NotImplementedError()

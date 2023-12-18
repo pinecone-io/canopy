@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Union, Iterable, Optional, Any, Dict, List, cast
+from typing import Union, Iterable, Optional, Any, Dict, cast
 
 import jsonschema
 import openai
@@ -254,5 +254,5 @@ class OpenAILLM(BaseLLM):
                                       chat_history: Messages,
                                       function: Function, *,
                                       max_tokens: Optional[int] = None,
-                                      model_params: Optional[dict] = None) -> dict:
+                                      model_params: Optional[dict] = None):
         raise NotImplementedError()
