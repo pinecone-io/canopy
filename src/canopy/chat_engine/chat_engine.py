@@ -4,8 +4,6 @@ from typing import Iterable, Union, Optional, cast
 
 from canopy.chat_engine.history_pruner import RecentHistoryPruner
 from canopy.chat_engine.history_pruner.base import HistoryPruner
-from canopy.chat_engine.models import HistoryPruningMethod
-from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import (QueryGenerator,
                                                 FunctionCallingQueryGenerator, )
 from canopy.context_engine import ContextEngine
