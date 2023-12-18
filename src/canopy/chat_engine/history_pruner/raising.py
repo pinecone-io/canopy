@@ -10,16 +10,16 @@ class RaisingHistoryPruner(HistoryPruner):
               chat_history: Messages,
               max_tokens: int,
               system_prompt: Optional[str] = None,
-              context: Optional[str] = None, ) -> Tuple[Messages, int]:
+              context: Optional[str] = None, ) -> Messages:
         max_tokens_history = self._max_tokens_history(max_tokens, system_prompt, context)
         token_count = self._tokenizer.messages_token_count(chat_history)
         if token_count > max_tokens:
             raise ValueError(f"The history require {token_count} tokens, "
                              f"which exceeds the calculated limit for history "
                              f"of {max_tokens_history} tokens left for history out of {max_tokens} tokens allowed in context window.")
-        return chat_history, token_count
+        return chat_history
 
     async def abuild(self,
                      chat_history: Messages,
-                     max_tokens: int) -> Tuple[Messages, int]:
+                     max_tokens: int) -> Messages:
         raise NotImplementedError()

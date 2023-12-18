@@ -17,12 +17,12 @@ class HistoryPruner(ABC, ConfigurableMixin):
               max_tokens: int,
               system_prompt: Optional[str] = None,
               context: Optional[str] = None,
-              ) -> Tuple[Messages, int]:
+              ) -> Messages:
         raise NotImplementedError
 
     async def abuild(self,
                      chat_history: Messages,
-                     max_tokens: int) -> Tuple[Messages, int]:
+                     max_tokens: int) -> Messages:
         raise NotImplementedError()
 
     def _max_tokens_history(self,

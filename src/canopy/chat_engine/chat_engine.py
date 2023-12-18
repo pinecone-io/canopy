@@ -196,7 +196,7 @@ class ChatEngine(BaseChatEngine):
             ...     print(chunk.json())
         """  # noqa: E501
         context = self._get_context(messages)
-        llm_messages, _ = self._history_pruner.build(
+        llm_messages = self._history_pruner.build(
             chat_history=messages,
             max_tokens=self.max_prompt_tokens,
             system_prompt=self.system_prompt,

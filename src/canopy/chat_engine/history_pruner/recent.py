@@ -16,11 +16,11 @@ class RecentHistoryPruner(HistoryPruner):
               max_tokens: int,
               system_prompt: Optional[str] = None,
               context: Optional[str] = None,
-              ) -> Tuple[Messages, int]:
+              ) -> Messages:
         max_tokens_history = self._max_tokens_history(max_tokens, system_prompt, context)
         token_count = self._tokenizer.messages_token_count(chat_history)
         if token_count < max_tokens:
-            return chat_history, token_count
+            return chat_history
 
         truncated_history = chat_history[-self._min_history_messages:]
         token_count = self._tokenizer.messages_token_count(truncated_history)
@@ -40,11 +40,9 @@ class RecentHistoryPruner(HistoryPruner):
 
             truncated_history.insert(0, message)
 
-        token_count = self._tokenizer.messages_token_count(truncated_history)
-
-        return truncated_history, token_count
+        return truncated_history
 
     async def abuild(self,
                      chat_history: Messages,
-                     max_tokens: int) -> Tuple[Messages, int]:
+                     max_tokens: int) -> Messages:
         raise NotImplementedError()

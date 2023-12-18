@@ -48,7 +48,7 @@ class TestFunctionCallingQueryGenerator:
                                           mock_history_builder,
                                           sample_messages
                                           ):
-        mock_history_builder.build.return_value = (sample_messages, 3)
+        mock_history_builder.build.return_value = sample_messages
         mock_llm.enforced_function_call.return_value = {"queries": ["query1", "query2"]}
 
         result = query_generator.generate(messages=sample_messages,
@@ -99,7 +99,7 @@ class TestFunctionCallingQueryGenerator:
         )
         gen_custom._history_pruner = mock_history_builder
 
-        mock_history_builder.build.return_value = (sample_messages, 3)
+        mock_history_builder.build.return_value = sample_messages
         mock_llm.enforced_function_call.return_value = {"queries": ["query1"]}
 
         result = gen_custom.generate(messages=sample_messages,
@@ -138,7 +138,7 @@ class TestFunctionCallingQueryGenerator:
                                               mock_history_builder,
                                               sample_messages
                                               ):
-        mock_history_builder.build.return_value = (sample_messages, 3)
+        mock_history_builder.build.return_value = sample_messages
         mock_llm.enforced_function_call.return_value = {}
 
         with pytest.raises(KeyError):

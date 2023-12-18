@@ -2,6 +2,7 @@ import pytest
 
 from canopy.chat_engine.history_pruner import RecentHistoryPruner
 from canopy.models.data_models import UserMessage, AssistantMessage
+from canopy.tokenizer import Tokenizer
 
 
 @pytest.fixture
@@ -40,9 +41,9 @@ def test_build(recent_history_builder,
                expected_tail,
                expected_token_count
                ):
-    messages, token_count = recent_history_builder.build(sample_messages, token_limit)
+    messages = recent_history_builder.build(sample_messages, token_limit)
     assert messages == sample_messages[-expected_tail:]
-    assert token_count == expected_token_count
+    assert Tokenizer().messages_token_count(messages) == expected_token_count
 
 
 def test_min_history_messages(sample_messages):
@@ -50,9 +51,9 @@ def test_min_history_messages(sample_messages):
         min_history_messages=2
     )
     token_limit = 18
-    messages, token_count = recent_history_builder.build(sample_messages, token_limit)
+    messages = recent_history_builder.build(sample_messages, token_limit)
     assert messages == sample_messages[-2:]
-    assert token_count == 11
+    assert Tokenizer().messages_token_count(messages) == 11
 
     token_limit = 10
     with pytest.raises(ValueError) as e:
@@ -64,9 +65,9 @@ def test_min_history_messages(sample_messages):
 
 
 def test_build_with_empty_history(recent_history_builder):
-    messages, token_count = recent_history_builder.build([], 15)
+    messages = recent_history_builder.build([], 15)
     assert messages == []
-    assert token_count == 0
+    assert Tokenizer().messages_token_count(messages) == 0
 
 
 @pytest.mark.asyncio
