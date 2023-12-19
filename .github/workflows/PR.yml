@@ -109,7 +109,6 @@ jobs:
         cleanup_indexes("${{ steps.e2e_tests.outputs.run_id }}")
         cleanup_indexes("${{ steps.system_tests.outputs.run_id }}")
         EOF
-      shell: bash
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
