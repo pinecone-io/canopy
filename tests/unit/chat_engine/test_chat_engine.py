@@ -193,7 +193,8 @@ class TestChatEngine:
         chat_engine = self._init_chat_engine(system_prompt=system_prompt,
                                              max_prompt_tokens=max_prompt_tokens,
                                              max_context_tokens=max_context_tokens,
-                                             max_generated_tokens=max_generated_tokens)
+                                             max_generated_tokens=max_generated_tokens,
+                                             allow_model_params_override=True)
 
         # Mock input and expected output
         messages, expected = self._get_inputs_and_expected(history_length,
