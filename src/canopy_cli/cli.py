@@ -22,7 +22,7 @@ from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base import connect_to_pinecone
 from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
-from canopy.models.data_models import Document
+from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
     load_from_path,
@@ -43,12 +43,6 @@ load_dotenv()
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
-
-OPENAI_AUTH_ERROR_MSG = (
-    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-    "environment variable is set correctly.\n"
-    "Please visit https://platform.openai.com/account/api-keys for more details"
-)
 
 
 def check_server_health(url: str):
@@ -140,9 +134,15 @@ def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
     Tokenizer.initialize()
     try:
-        ChatEngine.from_config(config.get("chat_engine", {}))
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+        # If the server itself will fail, we can't except the error, since it's running
+        # in a different process. Try to load and run the ChatEngine so we can catch
+        # any errors and print a nice message.
+        chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
+        chat_engine.max_generated_tokens = 5
+        chat_engine.context_engine.knowledge_base.connect()
+        chat_engine.chat(
+            [UserMessage(content="This is a health check. Are you alive? Be concise")]
+        )
     except Exception as e:
         msg = f"Failed to initialize Canopy server. Reason:\n{e}"
         if config_file:
@@ -188,7 +188,7 @@ def cli(ctx):
         click.echo(ctx.get_help())
 
 
-@cli.command(help="Check if canopy server is running and healthy.")
+@cli.command(help="Check if the Canopy server is running and healthy.")
 @click.option("--url", default=DEFAULT_SERVER_URL,
               help=("Canopy's server url. "
                     f"Defaults to {DEFAULT_SERVER_URL}"))
@@ -200,21 +200,25 @@ def health(url):
 
 @cli.command(
     help=(
-        """Create a new Pinecone index that that will be used by Canopy.
+        """
         \b
-        A Canopy service can not be started without a Pinecone index which is configured to work with Canopy.
-        This command will create a new Pinecone index and configure it in the right schema.
+        Create a new Pinecone index that will be used by Canopy.
+
+        A Canopy service cannot be started without a Pinecone index that is configured
+        to work with Canopy. This command creates a new Pinecone index and configures
+        it in the right schema.
 
         If the embedding vectors' dimension is not explicitly configured in
-        the config file - the embedding model will be tapped with a single token to
+        the config file, the embedding model will be tapped with a single token to
         infer the dimensionality of the embedding space.
         """  # noqa: E501
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "defaults will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
     kb_config = _load_kb_config(config)
@@ -225,9 +229,15 @@ def new(index_name: str, config: Optional[str]):
     with spinner:
         try:
             kb.create_canopy_index()
-        # TODO: kb should throw a specific exception for each case
+        # TODO: kb should throw a specific exception for failure
         except Exception as e:
-            msg = f"Failed to create a new index. Reason:\n{e}"
+            already_exists_str = f"Index {kb.index_name} already exists"
+            if isinstance(e, RuntimeError) and already_exists_str in str(e):
+                msg = (f"{already_exists_str}, please use a different name."
+                       f"If you wish to delete the index, log in to Pinecone's "
+                       f"Console: https://app.pinecone.io/")
+            else:
+                msg = f"Failed to create a new index. Reason:\n{e}"
             raise CLIError(msg)
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
@@ -260,8 +270,8 @@ def _batch_documents_by_chunks(chunker: Chunker,
         \b
         Upload local data files to the Canopy service.
 
-        Load all the documents from data file or a directory containing multiple data files.
-        The allowed formats are .jsonl and .parquet.
+        Load all the documents from a data file or a directory containing multiple data
+        files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
         """  # noqa: E501
     )
 )
@@ -277,9 +287,10 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "be uploaded. "
                    "When set to True, the upsert process will continue on failure, as "
                    "long as less than 10% of the documents have failed to be uploaded.")
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "defaults will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 def upsert(index_name: str,
            data_path: str,
            allow_failures: bool,
@@ -298,8 +309,8 @@ def upsert(index_name: str,
     kb_config = _load_kb_config(config)
     try:
         kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+    except Exception as e:
+        raise CLIError(str(e))
 
     try:
         kb.connect()
@@ -317,9 +328,9 @@ def upsert(index_name: str,
             data = load_from_path(data_path)
         except IDsNotUniqueError:
             msg = (
-                "The data contains duplicate IDs, please make sure that each document"
-                " has a unique ID, otherwise documents with the same ID will overwrite"
-                " each other"
+                "The data contains duplicate IDs. Please make sure that each document"
+                " has a unique ID; otherwise, documents with the same ID will overwrite"
+                " each other."
             )
             raise CLIError(msg)
         except DocumentsValidationError:
@@ -331,8 +342,8 @@ def upsert(index_name: str,
         except Exception:
             msg = (
                 f"A unexpected error while loading the data from files in {data_path}. "
-                "Please make sure the data is in valid `jsonl`, `parquet`, `csv` format"
-                " or plaintext `.txt` files."
+                "Please make sure the data is in valid `jsonl`, `parquet`, or `csv`"
+                " format, or plaintext `.txt` files."
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
@@ -344,7 +355,8 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for batch in _batch_documents_by_chunks(kb._chunker, data):
+    for batch in _batch_documents_by_chunks(kb._chunker, data,
+                                            batch_size=kb._encoder.batch_size):
         try:
             kb.upsert(batch)
         except Exception as e:
@@ -379,13 +391,23 @@ def _chat(
     model,
     history,
     message,
+    openai_api_key=None,
     api_base=None,
     stream=True,
     print_debug_info=False,
 ):
+    if openai_api_key is None:
+        openai_api_key = os.environ.get("OPENAI_API_KEY")
+    if openai_api_key is None and api_base is None:
+        raise CLIError(
+            "No OpenAI API key provided. When using the `--no-rag` flag "
+            "You will need to have a valid OpenAI API key. "
+            "Please set the OPENAI_API_KEY environment "
+            "variable."
+        )
     output = ""
     history += [{"role": "user", "content": message}]
-    client = openai.OpenAI(base_url=api_base)
+    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 
     start = time.time()
     try:
@@ -402,24 +424,24 @@ def _chat(
     if stream:
         for chunk in openai_response:
             openai_response_id = chunk.id
-            intenal_model = chunk.model
+            internal_model = chunk.model
             text = chunk.choices[0].delta.content or ""
             output += text
             click.echo(text, nl=False)
         click.echo()
         debug_info = ChatDebugInfo(
             id=openai_response_id,
-            intenal_model=intenal_model,
+            internal_model=internal_model,
             duration_in_sec=round(duration_in_sec, 2),
         )
     else:
-        intenal_model = openai_response.model
+        internal_model = openai_response.model
         text = openai_response.choices[0].message.content or ""
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(
             id=openai_response.id,
-            intenal_model=intenal_model,
+            internal_model=internal_model,
             duration_in_sec=duration_in_sec,
             prompt_tokens=openai_response.usage.prompt_tokens,
             generated_tokens=openai_response.usage.completion_tokens,
@@ -450,11 +472,11 @@ def _chat(
     )
 )
 @click.option("--stream/--no-stream", default=True,
-              help="Stream the response from the RAG chatbot word by word")
+              help="Stream the response from the RAG chatbot word by word.")
 @click.option("--debug/--no-debug", default=False,
-              help="Print additional debugging information")
+              help="Print additional debugging information.")
 @click.option("--rag/--no-rag", default=True,
-              help="Compare RAG-infused Chatbot with vanilla LLM",)
+              help="Compare RAG-infused Chatbot with vanilla LLM.",)
 @click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
                     f" Defaults to {DEFAULT_SERVER_URL}"))
@@ -462,14 +484,15 @@ def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
         "🚨 Note 🚨\n"
-        "Chat is a debugging tool, it is not meant to be used for production!"
+        "Chat is a debugging tool; it is not meant to be used for production!"
     )
     for c in note_msg:
         click.echo(click.style(c, fg="red"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
     note_white_message = (
-        "This method should be used by developers to test the RAG data and model"
+        "This method should be used by developers to test the RAG data and model "
         "during development. "
         "When you are ready to deploy, run the Canopy server as a REST API "
         "backend for your chatbot UI. \n\n"
@@ -477,7 +500,8 @@ def chat(chat_server_url, rag, debug, stream):
     )
     for c in note_white_message:
         click.echo(click.style(c, fg="white"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
 
     history_with_pinecone = []
@@ -512,6 +536,7 @@ def chat(chat_server_url, rag, debug, stream):
             history=history_with_pinecone,
             message=message,
             stream=stream,
+            openai_api_key="canopy",
             api_base=chat_server_url,
             print_debug_info=debug,
         )
@@ -520,7 +545,7 @@ def chat(chat_server_url, rag, debug, stream):
             _ = _chat(
                 speaker="Without Context (No RAG)",
                 speaker_color="yellow",
-                model=dubug_info.intenal_model,
+                model=dubug_info.internal_model,
                 history=history_without_pinecone,
                 message=message,
                 stream=stream,
@@ -543,32 +568,36 @@ def chat(chat_server_url, rag, debug, stream):
         """
         \b
         Start the Canopy server.
-        This command will launch a uvicorn server that will serve the Canopy API.
 
-        If you like to try out the chatbot, run `canopy chat` in a separate terminal
-        window.
+        This command launches a Uvicorn server to serve the Canopy API.
+
+        If you would like to try out the chatbot, run `canopy chat` in a separate
+        terminal window.
         """
     )
 )
+@click.option("--stream/--no-stream", default=True,
+              help="Stream the response from the RAG chatbot word by word.")
 @click.option("--host", default="0.0.0.0",
               help="Hostname or address to bind the server to. Defaults to 0.0.0.0")
 @click.option("--port", default=8000,
               help="TCP port to bind the server to. Defaults to 8000")
 @click.option("--reload/--no-reload", default=False,
               help="Set the server to reload on code changes. Defaults to False")
-@click.option("--config", "-c", default=None,
-              help="Path to a canopy config file. Optional, otherwise configuration "
-                   "defaults will be used.")
+@click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
+              help="Path to a canopy config file. Can also be set by the "
+                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
+                   "defualt configuration will be used.")
 @click.option("--index-name", default=None,
-              help="Index name, if not provided already in as an environment variable")
-def start(host: str, port: str, reload: bool,
+              help="Index name, if not provided already as an environment variable.")
+def start(host: str, port: str, reload: bool, stream: bool,
           config: Optional[str], index_name: Optional[str]):
     validate_pinecone_connection()
     _validate_chat_engine(config)
 
     note_msg = (
         "🚨 Note 🚨\n"
-        "For debugging only. To run the Canopy server in production "
+        "For debugging only. To run the Canopy server in production, "
     )
     msg_suffix = (
         "run the command:"
@@ -581,7 +610,8 @@ def start(host: str, port: str, reload: bool,
     )
     for c in note_msg + msg_suffix:
         click.echo(click.style(c, fg="red"), nl=False)
-        time.sleep(0.01)
+        if (stream):
+            time.sleep(0.01)
     click.echo()
 
     if index_name:
@@ -603,7 +633,8 @@ def start(host: str, port: str, reload: bool,
         """
         \b
         Stop the Canopy server.
-        This command will send a shutdown request to the Canopy server.
+
+        This command sends a shutdown request to the Canopy server.
         """
     )
 )
@@ -650,7 +681,7 @@ def stop(url):
     help=(
         """
         \b
-        Open the Canopy Server docs
+        Open the Canopy server docs.
         """
     )
 )

@@ -1,5 +1,15 @@
 # Canopy
 
+<p align="center">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
+    <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
+</a>
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
+    <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
+</a>
+</p>
+
+
 **Canopy** is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.   
 
 Canopy takes on the heavy lifting for building RAG applications: from chunking and embedding your text data to chat history management, query optimization, context retrieval (including prompt engineering), and augmented generation. 
@@ -54,7 +64,7 @@ pip install canopy-sdk
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export INDEX_NAME=<INDEX_NAME>
+export INDEX_NAME="<INDEX_NAME>"
 ```
 
 <details>
@@ -68,6 +78,8 @@ export INDEX_NAME=<INDEX_NAME>
 | `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
+| `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
 </details>
@@ -110,34 +122,39 @@ You can load data into your Canopy index using the command:
 
 ```bash
 canopy upsert /path/to/data_directory
-
 # or
 canopy upsert /path/to/data_directory/file.parquet
-
 # or
 canopy upsert /path/to/data_directory/file.jsonl
-
 # or
 canopy upsert /path/to/directory_of_txt_files/
-
 # ...
 ```
 
-Canopy supports files in `jsonl`, `parquet` and `csv` formats. The documents should have the following schema:
+Canopy supports files in `jsonl`, `parquet` and `csv` formats. Additionally, you can load plaintext data files in `.txt` format. In this case, each file will be treated as a single document. The document id will be the filename, and the source will be the full path of the file. 
 
-```
+> **Note**: Document fields are used in the RAG flow and should comply with the following schema:
+
+```bash
 +----------+--------------+--------------+---------------+
 | id(str)  | text(str)    | source       | metadata      |
 |          |              | Optional[str]| Optional[dict]|
 |----------+--------------+--------------+---------------|
 | "id1"    | "some text"  | "some source"| {"key": "val"}|
 +----------+--------------+--------------+---------------+
+
+# id       - unique identifier for the document
+#
+# text     - the text of the document, in utf-8 encoding.
+#
+# source   - the source of the document, can be any string, or null.
+#            ** this will be used as a reference in the generated context. **
+#
+# metadata - optional metadata for the document, for filtering or additional context.
+#            Dict[str, Union[str, int, float, List[str]]]
 ```
-> [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format.
 
-Additionally, you can load plaintext data files in `.txt` format. In this case, each file will be treated as a single document. The document id will be the filename, and the source will be the full path of the file.
-
-Follow the instructions in the CLI to upload your data.
+[This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format, Follow the instructions in the CLI when you upload your data.
 
 ### 3. Start the Canopy server
 
@@ -181,6 +198,8 @@ canopy chat
 This will open a chat interface in your terminal. You can ask questions and the RAG-infused chatbot will try to answer them using the data you uploaded.
 
 To compare the chat response with and without RAG use the `--no-rag` flag
+
+> **Note**: This method is only supported with OpenAI at the moment.
 
 ```bash
 canopy chat --no-rag

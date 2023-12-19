@@ -307,24 +307,28 @@ class KnowledgeBase(BaseKnowledgeBase):
         if dimension is None:
             try:
                 encoder_dimension = self._encoder.dimension
+                if encoder_dimension is None:
+                    raise RuntimeError(
+                        f"The selected encoder {self._encoder.__class__.__name__} does "
+                        f"not support inferring the vectors' dimensionality."
+                    )
+                dimension = encoder_dimension
             except Exception as e:
                 raise RuntimeError(
-                    f"Failed to infer vectors' dimension from encoder due to error: "
-                    f"{e}. Please fix the error or provide the dimension manually"
+                    f"Canopy has failed to infer vectors' dimensionality using the "
+                    f"selected encoder: {self._encoder.__class__.__name__}. You can "
+                    f"provide the dimension manually, try using a different encoder, or"
+                    f" fix the underlying error:\n{e}"
                 ) from e
-            if encoder_dimension is not None:
-                dimension = encoder_dimension
-            else:
-                raise ValueError("Could not infer dimension from encoder. "
-                                 "Please provide the vectors' dimension")
 
         # connect to pinecone and create index
         connect_to_pinecone()
 
         if self.index_name in list_indexes():
             raise RuntimeError(
-                f"Index {self.index_name} already exists. "
-                "If you wish to delete it, use `delete_index()`. "
+                f"Index {self.index_name} already exists. To connect to an "
+                f"existing index, use `knowledge_base.connect()`. "
+                "If you wish to delete it call `knowledge_base.delete_index()`. "
             )
 
         # create index

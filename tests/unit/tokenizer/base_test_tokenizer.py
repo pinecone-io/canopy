@@ -27,7 +27,8 @@ class BaseTestTokenizer(ABC):
     @staticmethod
     def test_tokenize(tokenizer, text, expected_tokens):
         tokens = tokenizer.tokenize(text)
-        assert tokens == expected_tokens
+        assert tokens == expected_tokens, f"\nExpected: {expected_tokens}" \
+                                          f"\nActual: {tokens}"
 
     @staticmethod
     def test_tokenize_empty_string(tokenizer):
@@ -70,6 +71,7 @@ class BaseTestTokenizer(ABC):
     def test_token_count(tokenizer, text, expected_tokens):
         token_count = tokenizer.token_count(text)
         assert token_count == len(expected_tokens)
+        assert token_count == len(tokenizer.tokenize(text))
 
     @staticmethod
     def test_token_count_empty_string(tokenizer):
@@ -79,7 +81,9 @@ class BaseTestTokenizer(ABC):
 
     @staticmethod
     def test_tokenize_detokenize_compatibility(tokenizer, text, expected_tokens):
-        assert tokenizer.detokenize(tokenizer.tokenize(text)) \
-               == text
-        assert tokenizer.tokenize(tokenizer.detokenize(expected_tokens))\
-               == expected_tokens
+        retext = tokenizer.detokenize(tokenizer.tokenize(text))
+        assert retext == text, f"\nExpected: {text}\nActual: {retext}"
+        reconstructed_expected_tokens = tokenizer.tokenize(
+            tokenizer.detokenize(expected_tokens))
+        assert reconstructed_expected_tokens == expected_tokens, \
+            f"\nExpected: {expected_tokens}\nActual: {reconstructed_expected_tokens}"
