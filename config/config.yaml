@@ -39,7 +39,7 @@ chat_engine:
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
     history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
     min_history_messages: 1             # Minimal number of messages to keep in history
-    allow_model_params_override: true   # Whether to allow overriding the LLM's parameters in an API call
+    allow_model_params_override: false  # Whether to allow overriding the LLM's parameters in an API call
 
 
   # -------------------------------------------------------------------------------------------------------------
@@ -50,8 +50,8 @@ chat_engine:
     type: OpenAILLM                     # Options: [OpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
-      # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
-      # here will be used in every LLM API call if `allow_model_params_override` is true. For example:
+      # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values
+      # set here will be used in every LLM API call, but may be overridden if `allow_model_params_override` is true.
 #      temperature: 0.7
 #      top_p: 0.9
 

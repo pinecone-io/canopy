@@ -91,7 +91,7 @@ class ChatEngine(BaseChatEngine):
                  system_prompt: Optional[str] = None,
                  history_pruning: str = "recent",
                  min_history_messages: int = 1,
-                 allow_model_params_override: bool = True
+                 allow_model_params_override: bool = False
                  ):
         """
         Initialize a chat engine.
@@ -106,7 +106,7 @@ class ChatEngine(BaseChatEngine):
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
             history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
             min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
-            allow_model_params_override: Whether to allow overriding the LLM's parameters in an API call. Defaults to True.
+            allow_model_params_override: Whether to allow individual `chat()` calls to override the pre-configured LLM params. Defaults to False.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
