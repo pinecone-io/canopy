@@ -66,6 +66,7 @@ jobs:
         echo "${SUFFIX}"
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
+      id: system_tests
       if: github.event_name == 'merge_group'
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
@@ -74,8 +75,13 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
-      run: poetry run pytest -n 3 --dist loadscope --html=report_system.html --self-contained-html tests/system
+      run: |
+        run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')
+        poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_system.html --self-contained-html tests/system
+        echo "Test Run ID: ${run_id}"
+        echo "run_id=${run_id}" >> $GITHUB_OUTPUT
     - name: Run e2e tests
+      id: e2e_tests
       if: github.event_name == 'merge_group'
       env:
         INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
@@ -84,7 +90,26 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
         CE_LOG_FILENAME: e2e.log
-      run: poetry run pytest -n 3 --dist loadscope --html=report_e2e.html --self-contained-html tests/e2e
+      run: |
+        run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')
+        poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_e2e.html --self-contained-html tests/e2e
+        echo "Test Run ID: ${run_id}"
+        echo "run_id=${run_id}" >> $GITHUB_OUTPUT
+    - name: Cleanup indexes
+      if: failure() && github.event_name == 'merge_group'
+      env:
+        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
+        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
+        CO_API_KEY: ${{ secrets.CO_API_KEY }}
+      run: |
+        python - <<EOF
+        from tests.util import cleanup_indexes
+        cleanup_indexes("${{ steps.e2e_tests.outputs.run_id }}")
+        cleanup_indexes("${{ steps.system_tests.outputs.run_id }}")
+        EOF
+      shell: bash
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
