@@ -10,7 +10,6 @@ from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
                                                             ContextQueryResult,
                                                             StuffingContextContent, )
 from canopy.llm import BaseLLM
-from canopy.models.data_models import SystemMessage
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
@@ -72,7 +71,6 @@ class TestChatEngine:
             ),
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )
-
 
         mock_chat_response = ChatResponse(
             id='chatcmpl-7xuuGZzniUGiqxDSTJnqwb0l1xtfp',

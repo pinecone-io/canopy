@@ -14,7 +14,7 @@ from tenacity import (
 from canopy.llm import BaseLLM
 from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Context, SystemMessage, StringContextContent
+from canopy.models.data_models import Messages, Context, SystemMessage
 
 
 def _format_openai_error(e):
@@ -121,7 +121,8 @@ class OpenAILLM(BaseLLM):
             system_message = system_prompt
         else:
             system_message = system_prompt + f"\nContext: {context.to_text()}"
-        messages = [SystemMessage(content=system_message).dict()] + [m.dict() for m in chat_history]
+        messages = [SystemMessage(content=system_message).dict()
+                    ] + [m.dict() for m in chat_history]
         try:
             response = self._client.chat.completions.create(model=self.model_name,
                                                             messages=messages,
@@ -211,7 +212,8 @@ class OpenAILLM(BaseLLM):
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
 
-        messages = [SystemMessage(content=system_prompt).dict()] + [m.dict() for m in chat_history]
+        messages = [SystemMessage(content=system_prompt).dict()
+                    ] + [m.dict() for m in chat_history]
         try:
             chat_completion = self._client.chat.completions.create(
                 messages=messages,
@@ -247,7 +249,6 @@ class OpenAILLM(BaseLLM):
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
-
 
     async def aenforced_function_call(self,
                                       system_prompt: str,

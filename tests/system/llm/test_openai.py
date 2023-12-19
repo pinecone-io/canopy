@@ -37,6 +37,7 @@ def assert_function_call_format(result):
 def model_name():
     return "gpt-3.5-turbo-0613"
 
+
 @pytest.fixture
 def messages():
     # Create a list of MessageBase objects
@@ -45,6 +46,7 @@ def messages():
         MessageBase(role=Role.ASSISTANT,
                     content="Hello, user. How can I assist you?")
     ]
+
 
 @pytest.fixture
 def function_query_knowledgebase():
@@ -104,7 +106,9 @@ def test_chat_completion_with_context(openai_llm, messages):
     response = openai_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
                                           chat_history=messages,
                                           context=Context(
-                                              content=StringContextContent(__root__="context from kb"),
+                                              content=StringContextContent(
+                                                  __root__="context from kb"
+                                              ),
                                               num_tokens=5
                                           ))
     assert_chat_completion(response)

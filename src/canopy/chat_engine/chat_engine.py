@@ -154,7 +154,8 @@ class ChatEngine(BaseChatEngine):
         if max_context_tokens + self._system_prompt_tokens > max_prompt_tokens:
             raise ValueError(
                 f"Not enough token budget for knowledge base context. The system prompt"
-                f" is taking {self._system_prompt_tokens } tokens, and together with the "
+                f" is taking {self._system_prompt_tokens } tokens,"
+                f" and together with the "
                 f"configured max context tokens {max_context_tokens} it exceeds "
                 f"max_prompt_tokens of {self.max_prompt_tokens}"
             )

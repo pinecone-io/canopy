@@ -88,9 +88,11 @@ def test_chat_completion_with_context(anyscale_llm, messages):
     response = anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
                                             chat_history=messages,
                                             context=Context(
-                                                content=StringContextContent(__root__="context from kb"),
-                                                num_tokens=5
-                                          ))
+                                                content=StringContextContent(
+                                                    __root__="context from kb"
+                                                ),
+                                                num_tokens=5)
+                                            )
     assert_chat_completion(response)
 
 

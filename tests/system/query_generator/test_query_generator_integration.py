@@ -1,5 +1,3 @@
-from unittest.mock import create_autospec
-
 import pytest
 
 from canopy.tokenizer.tokenizer import Tokenizer # noqa
