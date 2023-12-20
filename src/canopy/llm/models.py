@@ -20,6 +20,7 @@ class FunctionArrayProperty(BaseModel):
     def dict(self, *args, **kwargs):
         super_dict = super().dict(*args, **kwargs)
         if "items_type" in super_dict:
+            super_dict["type"] = "array"
             super_dict["items"] = {"type": super_dict.pop("items_type")}
         return super_dict
 
