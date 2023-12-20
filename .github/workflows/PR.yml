@@ -66,7 +66,7 @@ jobs:
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
       id: system_tests
-#      if: github.event_name == 'merge_group'
+      if: github.event_name == 'merge_group'
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
@@ -81,7 +81,7 @@ jobs:
         poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_system.html --self-contained-html tests/system
     - name: Run e2e tests
       id: e2e_tests
-#      if: github.event_name == 'merge_group'
+      if: github.event_name == 'merge_group'
       env:
         INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
@@ -95,15 +95,16 @@ jobs:
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
         echo "Test Run ID: ${run_id}"
         poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_e2e.html --self-contained-html tests/e2e
+        exit 1
     - name: Cleanup indexes
-      if: cancelled() || failure() #&& github.event_name == 'merge_group'
+      if: (cancelled() || failure()) && github.event_name == 'merge_group'
       env:
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
         PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
       run: |
         export PYTHONPATH=.
-        echo ${{ steps.e2e_tests.outputs.run_id }}
-        echo ${{ steps.system_tests.outputs.run_id }}
+        poetry run python scripts/cleanup_indexes.py "${{ steps.e2e_tests.outputs.run_id }}"
+        poetry run python scripts/cleanup_indexes.py "${{ steps.system_tests.outputs.run_id }}"
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()

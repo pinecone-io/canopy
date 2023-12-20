@@ -8,7 +8,11 @@ def main():
         sys.exit(1)
 
     testrun_uid = sys.argv[1]
-    cleanup_indexes(testrun_uid)
+    if testrun_uid:
+        print(f"Cleaning up indexes for testrun_uid: {testrun_uid}")
+        cleanup_indexes(testrun_uid)
+    else:
+        print("testrun_uid is not passed, index cleanup will not be run.")
 
 
 if __name__ == '__main__':
