@@ -26,9 +26,9 @@ chat_engine:
   query_builder:
     # --------------------------------------------------------------------
     # Configuration for the QueryBuilder subcomponent of the chat engine.
-    # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the LastMessageQueryGenerator
+    # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the InstructionQueryGenerator
     # --------------------------------------------------------------------
-    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
+    type: InstructionQueryGenerator     # Options: [InstructionQueryGenerator, LastMessageQueryGenerator]
 
   context_engine:
     # -------------------------------------------------------------------------------------------------------------
