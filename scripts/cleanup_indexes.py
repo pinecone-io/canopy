@@ -16,7 +16,7 @@ def main():
         logger.info(f"Cleaning up indexes for testrun_uid '{testrun_uid}'")
         cleanup_indexes(testrun_uid)
     else:
-        logger.info("testrun_uid is not passed, index cleanup will not be run.")
+        logger.info("Passed testrun_uid is empty.")
 
 
 if __name__ == '__main__':
