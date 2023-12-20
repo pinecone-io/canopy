@@ -96,7 +96,7 @@ jobs:
         echo "Test Run ID: ${run_id}"
         poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_e2e.html --self-contained-html tests/e2e
     - name: Cleanup indexes
-      if: cancelled() || failure() #&& github.event_name == 'merge_group'
+      if: cancelled() || failure() # && github.event_name == 'merge_group'
       env:
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
         PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
