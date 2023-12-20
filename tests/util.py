@@ -28,7 +28,8 @@ def cleanup_indexes(testrun_uid: str):
     current_indexes = pinecone.list_indexes()
     for index_name in index_names:
         if index_name in current_indexes:
-            logger.info(f"Deleting index: {index_name}")
+            logger.info(f"Deleting index '{index_name}'...")
             pinecone.delete_index(index_name)
+            logger.info(f"Index '{index_name}' deleted.")
         else:
-            logger.info(f"Index: {index_name} already deleted.")
+            logger.info(f"Index '{index_name}' does not exist.")
