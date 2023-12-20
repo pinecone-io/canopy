@@ -71,6 +71,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
                        record_encoder=encoder,
                        chunker=chunker)
     kb.create_canopy_index(indexed_fields=["my-key"])
+
     return kb
 
 
