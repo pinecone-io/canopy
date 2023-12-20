@@ -3,11 +3,8 @@ import sys
 from tests.util import cleanup_indexes
 
 
-
 def main():
-    # Set the logging level to INFO
     logging.basicConfig(level=logging.INFO)
-
     logger = logging.getLogger(__name__)
 
     if len(sys.argv) != 2:
