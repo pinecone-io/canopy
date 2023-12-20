@@ -79,6 +79,7 @@ jobs:
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
         echo "Test Run ID: ${run_id}"
         poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_system.html --self-contained-html tests/system
+        exit 1
     - name: Run e2e tests
       id: e2e_tests
       if: github.event_name == 'merge_group'
@@ -95,7 +96,6 @@ jobs:
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
         echo "Test Run ID: ${run_id}"
         poetry run pytest -n 3 --dist loadscope --testrunuid $run_id --html=report_e2e.html --self-contained-html tests/e2e
-        exit 1
     - name: Cleanup indexes
       if: (cancelled() || failure()) && github.event_name == 'merge_group'
       env:
