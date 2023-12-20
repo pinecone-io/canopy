@@ -164,7 +164,6 @@ class ChatEngine(BaseChatEngine):
              *,
              stream: bool = False,
              model_params: Optional[dict] = None,
-             api_key: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.

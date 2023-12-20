@@ -49,6 +49,5 @@ class BaseLLM(ABC, ConfigurableMixin):
                                 *,
                                 max_generated_tokens: Optional[int] = None,
                                 model_params: Optional[dict] = None,
-                                api_key: Optional[str] = None,
                                 ) -> List[Query]:
         pass

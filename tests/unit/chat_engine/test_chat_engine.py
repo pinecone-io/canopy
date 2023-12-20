@@ -234,14 +234,14 @@ class TestChatEngine:
         assert response == expected['response']
 
     def test_chat_engine_disable_param_override(self,
-                                        system_prompt_length=10,
-                                        max_prompt_tokens=80,
-                                        max_context_tokens=60,
-                                        max_generated_tokens=150,
-                                        should_raise=False,
-                                        snippet_length=15,
-                                        history_length=3,
-                                        ):
+                                                system_prompt_length=10,
+                                                max_prompt_tokens=80,
+                                                max_context_tokens=60,
+                                                max_generated_tokens=150,
+                                                should_raise=False,
+                                                snippet_length=15,
+                                                history_length=3,
+                                                ):
 
         system_prompt = self._generate_text(system_prompt_length)
         chat_engine = self._init_chat_engine(system_prompt=system_prompt,

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List
 
 from canopy.models.data_models import Messages, Query
 from canopy.utils.config import ConfigurableMixin

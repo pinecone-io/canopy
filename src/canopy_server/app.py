@@ -22,7 +22,6 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Body,
-    Header,
     APIRouter
 )
 import uvicorn
