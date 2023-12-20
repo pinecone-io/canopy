@@ -1,17 +1,17 @@
 import os
 import random
 
-import pytest
-import pinecone
 import numpy as np
+import pinecone
+import pytest
+from dotenv import load_dotenv
 from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
     wait_chain,
 )
-from dotenv import load_dotenv
-from datetime import datetime
+
 from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
 from canopy.knowledge_base.chunker import Chunker
 from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
@@ -19,11 +19,11 @@ from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
 from canopy.models.data_models import Document, Query
-from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
-from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
-
+from tests.unit.stubs.stub_chunker import StubChunker
+from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
+from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
+from tests.util import create_system_tests_index_name
 
 load_dotenv()
 
@@ -42,8 +42,7 @@ def retry_decorator():
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
-    today = datetime.today().strftime("%Y-%m-%d")
-    return f"test-kb-{testrun_uid[-6:]}-{today}"
+    return create_system_tests_index_name(testrun_uid)
 
 
 @pytest.fixture(scope="module")
@@ -299,7 +298,6 @@ def test_update_documents(encoder,
                           documents,
                           encoded_chunks,
                           knowledge_base):
-
     index_name = knowledge_base._index_name
 
     # chunker/kb that produces fewer chunks per doc
