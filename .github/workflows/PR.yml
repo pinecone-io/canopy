@@ -102,8 +102,10 @@ jobs:
         PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
       run: |
         export PYTHONPATH=.
-        poetry run python scripts/cleanup_indexes.py ${{ steps.e2e_tests.outputs.run_id }}
-        poetry run python scripts/cleanup_indexes.py ${{ steps.system_tests.outputs.run_id }}
+#        poetry run python scripts/cleanup_indexes.py ${{ steps.e2e_tests.outputs.run_id }}
+#        poetry run python scripts/cleanup_indexes.py ${{ steps.system_tests.outputs.run_id }}
+        poetry run python scripts/cleanup_indexes.py "aaaaaa"
+        poetry run python scripts/cleanup_indexes.py "bbbbbb"
     - name: upload pytest report.html
       uses: actions/upload-artifact@v3
       if: always()
