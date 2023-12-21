@@ -4,8 +4,7 @@ from typing import List, Optional, cast
 
 from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
-from canopy.chat_engine.models import HistoryPruningMethod
-from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.chat_engine.history_pruner.raising import RaisingHistoryPruner
 from canopy.chat_engine.query_generator import QueryGenerator, LastMessageQueryGenerator
 from canopy.llm import BaseLLM, OpenAILLM
 from canopy.models.api_models import ChatResponse
@@ -74,7 +73,7 @@ class InstructionQueryGenerator(QueryGenerator):
         """
         self._llm = llm or self._DEFAULT_COMPONENTS["llm"]()
         self._system_prompt = SYSTEM_PROMPT
-        self._prompt_builder = PromptBuilder(HistoryPruningMethod.RAISE, 2)
+        self._history_pruner = RaisingHistoryPruner()
         self._last_message_query_generator = LastMessageQueryGenerator()
 
         # Define a regex pattern to find the JSON object with the key "question"
@@ -92,11 +91,11 @@ class InstructionQueryGenerator(QueryGenerator):
                 ]
         )
 
-        new_messages = self._prompt_builder.build(system_prompt=self._system_prompt,
-                                                  history=new_history,
+        chat_history = self._history_pruner.build(system_prompt=self._system_prompt,
+                                                  chat_history=new_history,
                                                   max_tokens=max_prompt_tokens)
 
-        question = self._try_generate_question(new_messages)
+        question = self._try_generate_question(chat_history)
 
         if question is None:
             logger.warning("Falling back to the last message query generator.")
@@ -105,7 +104,8 @@ class InstructionQueryGenerator(QueryGenerator):
             return [Query(text=question)]
 
     def _get_answer(self, messages: Messages) -> str:
-        llm_response = self._llm.chat_completion(messages)
+        llm_response = self._llm.chat_completion(system_prompt=self._system_prompt,
+                                                 chat_history=messages)
         response = cast(ChatResponse, llm_response)
         return response.choices[0].message.content
 
