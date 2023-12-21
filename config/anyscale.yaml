@@ -27,7 +27,11 @@ chat_engine:
   # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the LastMessageQueryGenerator
   # --------------------------------------------------------------------
   query_builder:
-    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
+    type: FunctionCallingQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
+    llm: 
+      type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
+      params:
+        model_name: mistralai/Mistral-7B-Instruct-v0.1
 
   # -------------------------------------------------------------------------------------------------------------
   # ContextEngine configuration

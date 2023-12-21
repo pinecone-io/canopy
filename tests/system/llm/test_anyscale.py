@@ -6,6 +6,11 @@ import pytest
 from canopy.models.data_models import Role, MessageBase  # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk  # noqa
 from canopy.llm.anyscale import AnyscaleLLM  # noqa
+from canopy.llm.models import (
+    Function,
+    FunctionParameters,
+    FunctionArrayProperty,
+)  # noqa
 from openai import BadRequestError  # noqa
 
 
@@ -31,29 +36,44 @@ class TestAnyscaleLLM:
     @staticmethod
     @pytest.fixture
     def model_name():
-        return "meta-llama/Llama-2-7b-chat-hf"
+        return "mistralai/Mistral-7B-Instruct-v0.1"
 
     @staticmethod
     @pytest.fixture
     def messages():
         # Create a list of MessageBase objects
         return [
-            MessageBase(role=Role.USER, content="Hello, assistant."),
-            MessageBase(
-                role=Role.ASSISTANT, content="Hello, user. How can I assist you?"
-            ),
+            MessageBase(role=Role.SYSTEM, content="You are a helpful AI assistant."),
+            MessageBase(role=Role.USER, content="Hello, assistant. "),
         ]
+
+    @staticmethod
+    @pytest.fixture
+    def function_query_knowledgebase():
+        return Function(
+            name="query_knowledgebase",
+            description="Query search engine for relevant information",
+            parameters=FunctionParameters(
+                required_properties=[
+                    FunctionArrayProperty(
+                        name="queries",
+                        items_type="string",
+                        description="List of queries to send to the search engine.",
+                    ),
+                ]
+            ),
+        )
 
     @staticmethod
     @pytest.fixture
     def model_params_high_temperature():
         # `n` parameter is not supported yet. set to 1 always
-        return {"temperature": 0.9, "top_p": 0.95, "n": 1}
+        return {"temperature": 0.9, "n": 1}
 
     @staticmethod
     @pytest.fixture
     def model_params_low_temperature():
-        return {"temperature": 0.2, "top_p": 0.5, "n": 1}
+        return {"temperature": 0.2, "n": 1}
 
     @staticmethod
     @pytest.fixture
@@ -82,6 +102,15 @@ class TestAnyscaleLLM:
         assert_chat_completion(response)
 
     @staticmethod
+    def test_enforced_function_call(
+        anyscale_llm, messages, function_query_knowledgebase
+    ):
+        result = anyscale_llm.enforced_function_call(
+            messages=messages, function=function_query_knowledgebase
+        )
+        assert_function_call_format(result)
+
+    @staticmethod
     def test_chat_completion_high_temperature(
         anyscale_llm, messages, model_params_high_temperature
     ):
@@ -98,6 +127,34 @@ class TestAnyscaleLLM:
             messages=messages, model_params=model_params_low_temperature
         )
         assert_chat_completion(response, num_choices=model_params_low_temperature["n"])
+
+    @staticmethod
+    def test_enforced_function_call_high_temperature(
+        anyscale_llm,
+        messages,
+        function_query_knowledgebase,
+        model_params_high_temperature,
+    ):
+        result = anyscale_llm.enforced_function_call(
+            messages=messages,
+            function=function_query_knowledgebase,
+            model_params=model_params_high_temperature,
+        )
+        assert_function_call_format(result)
+
+    @staticmethod
+    def test_enforced_function_call_low_temperature(
+        anyscale_llm,
+        messages,
+        function_query_knowledgebase,
+        model_params_low_temperature,
+    ):
+        result = anyscale_llm.enforced_function_call(
+            messages=messages,
+            function=function_query_knowledgebase,
+            model_params=model_params_low_temperature,
+        )
+        assert_function_call_format(result)
 
     @staticmethod
     def test_chat_streaming(anyscale_llm, messages):
