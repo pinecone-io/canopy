@@ -1,7 +1,7 @@
 from typing import Optional
 
 from canopy.chat_engine.history_pruner.base import HistoryPruner
-from canopy.models.data_models import Messages
+from canopy.models.data_models import Messages, Context
 
 
 class RecentHistoryPruner(HistoryPruner):
@@ -15,11 +15,11 @@ class RecentHistoryPruner(HistoryPruner):
               chat_history: Messages,
               max_tokens: int,
               system_prompt: Optional[str] = None,
-              context: Optional[str] = None,
+              context: Optional[Context] = None,
               ) -> Messages:
-        max_tokens_history = self._max_tokens_history(max_tokens,
-                                                      system_prompt,
-                                                      context)
+        max_tokens = self._max_tokens_history(max_tokens,
+                                              system_prompt,
+                                              context)
         token_count = self._tokenizer.messages_token_count(chat_history)
         if token_count < max_tokens:
             return chat_history
@@ -29,7 +29,7 @@ class RecentHistoryPruner(HistoryPruner):
         if token_count > max_tokens:
             raise ValueError(f"The {self._min_history_messages} most recent messages in"
                              f" history require {token_count} tokens, which exceeds the"
-                             f" calculated limit for history of {max_tokens_history}"
+                             f" calculated limit for history of {max_tokens}"
                              f" tokens out of total {max_tokens} allowed"
                              f" in context window.")
 

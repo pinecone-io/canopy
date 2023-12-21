@@ -201,7 +201,7 @@ class ChatEngine(BaseChatEngine):
             chat_history=messages,
             max_tokens=self.max_prompt_tokens,
             system_prompt=self.system_prompt,
-            context=context.to_text()
+            context=context
         )
 
         llm_response = self.llm.chat_completion(system_prompt=self.system_prompt,

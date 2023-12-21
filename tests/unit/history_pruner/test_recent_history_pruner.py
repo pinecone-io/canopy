@@ -1,8 +1,15 @@
 import pytest
 
 from canopy.chat_engine.history_pruner import RecentHistoryPruner
-from canopy.models.data_models import UserMessage, AssistantMessage
+from canopy.models.data_models import UserMessage, \
+    AssistantMessage, Context, StringContextContent
 from canopy.tokenizer import Tokenizer
+
+
+SAMPLE_CONTEXT = Context(content=StringContextContent(
+    __root__="Some context information"), num_tokens=3
+)
+SYSTEM_PROMPT = "This is a system prompt."
 
 
 @pytest.fixture
@@ -22,26 +29,41 @@ def sample_messages():
 
 
 @pytest.mark.parametrize(
-    "token_limit, expected_tail, expected_token_count",
+    "token_limit, expected_tail, expected_token_count, context, prompt",
     [
-        (50, 5, 33),  # All messages fit
-        (18, 2, 11),  # Only last 2
-        (10, 1, 6),  # Only last one
-
+        (50, 5, 33, None, None),
+        (18, 2, 11, None, None),
+        (10, 1, 6, None, None),
+        (50, 5, 33, SAMPLE_CONTEXT, None),
+        (50, 5, 33, None, SYSTEM_PROMPT),
+        (50, 5, 33, SAMPLE_CONTEXT, SYSTEM_PROMPT),
+        (11, 1, 6, SAMPLE_CONTEXT, None),
+        (18, 1, 6, None, SYSTEM_PROMPT),
+        (19, 1, 6, SAMPLE_CONTEXT, SYSTEM_PROMPT),
     ],
     ids=[
-        "full_history_fit",
-        "truncated",
-        "multiple_message_truncation",
+        "full_history_fit_no_context_no_prompt",
+        "truncated_no_context_no_prompt",
+        "single_message_no_context_no_prompt",
+        "full_history_fit_with_context",
+        "full_history_fit_with_prompt",
+        "full_history_fit_with_context_and_prompt",
+        "truncated_with_context",
+        "truncated_with_prompt",
+        "truncated_with_context_and_prompt",
     ]
 )
 def test_build(recent_history_builder,
                sample_messages,
                token_limit,
                expected_tail,
-               expected_token_count
-               ):
-    messages = recent_history_builder.build(sample_messages, token_limit)
+               expected_token_count,
+               context,
+               prompt):
+    messages = recent_history_builder.build(sample_messages,
+                                            token_limit,
+                                            system_prompt=prompt,
+                                            context=context)
     assert messages == sample_messages[-expected_tail:]
     assert Tokenizer().messages_token_count(messages) == expected_token_count
 
