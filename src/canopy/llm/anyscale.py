@@ -1,10 +1,15 @@
 from typing import Union, Iterable, Optional, Any, List
 import os
 from canopy.llm import OpenAILLM
+from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Query
 
 ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
+FUNCTION_MODEL_LIST = [
+    "mistralai/Mistral-7B-Instruct-v0.1",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1",
+]
 
 
 class AnyscaleLLM(OpenAILLM):
@@ -32,6 +37,25 @@ class AnyscaleLLM(OpenAILLM):
             )
         ae_base_url = base_url
         super().__init__(model_name, api_key=ae_api_key, base_url=ae_base_url, **kwargs)
+
+    def enforced_function_call(
+        self,
+        messages: Messages,
+        function: Function,
+        *,
+        max_tokens: Optional[int] = None,
+        model_params: Optional[dict] = None,
+    ) -> dict:
+        if self.model_name not in FUNCTION_MODEL_LIST:
+            raise ValueError(
+                f"Model {self.model_name} doesn't support function calling. "
+                "To use function calling capability, please select a different model_name "
+                "Pleaes check following link for details: https://docs.endpoints.anyscale.com/guides/function-calling#supported-models"
+            )
+        else:
+            return super().enforced_function_call(
+                messages, function, max_tokens=max_tokens, model_params=model_params
+            )
 
     async def achat_completion(
         self,
