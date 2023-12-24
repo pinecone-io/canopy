@@ -2,28 +2,60 @@ IMAGE_NAME = canopy
 DOCKERFILE_DIR = .
 COMMON_BUILD_ARGS = --progress plain
 EXTRA_BUILD_ARGS =
+IMAGE_VERSION = $(shell poetry version -s)
+PORT = 8000
+ENV_FILE = .env
 
-.PHONY: build build-dev run run-dev help
+.PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
 
-build:
+lint:
+	poetry run flake8 .
+
+static:
+	poetry run mypy src
+
+test:
+	poetry run pytest -n 8 --dist loadscope
+
+test-unit:
+	poetry run pytest -n 8 --dist loadscope tests/unit
+
+test-system:
+	poetry run pytest -n 8 --dist loadscope tests/system
+
+test-e2e:
+	poetry run pytest -n 8 --dist loadscope tests/e2e
+
+docker-build:
 	@echo "Building Docker image..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME) $(DOCKERFILE_DIR)
+	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME):$(IMAGE_VERSION) $(DOCKERFILE_DIR)
 	@echo "Docker build complete."
 
-build-dev:
+docker-build-dev:
 	@echo "Building Docker image for development..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME)/dev --target=development $(DOCKERFILE_DIR)
+	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME)-dev:$(IMAGE_VERSION) --target=development $(DOCKERFILE_DIR)
 	@echo "Development Docker build complete."
 
-run:
-	docker run --env-file .env -p 8000:8000 $(IMAGE_NAME)
+docker-run:
+	docker run --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME):$(IMAGE_VERSION)
 
-run-dev:
-	docker run --env-file .env -p 8000:8000 $(IMAGE_NAME)/dev
+docker-run-dev:
+	docker run -it --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME)-dev:$(IMAGE_VERSION)
+
 
 help:
 	@echo "Available targets:"
-	@echo "  make build       - Build the Docker image."
-	@echo "  make build-dev   - Build the Docker image for development."
-	@echo "  make run         - Run the Docker image."
-	@echo "  make run-dev     - Run the Docker image for development."
+	@echo ""
+	@echo " -- DEV -- "
+	@echo "  make lint               - Lint the code."
+	@echo "  make static             - Run static type checks."
+	@echo "  make test               - Test the code."
+	@echo "  make test-unit          - Run unit tests."
+	@echo "  make test-system        - Run system tests."
+	@echo "  make test-e2e           - Run e2e tests."
+	@echo ""
+	@echo " -- DOCKER -- "
+	@echo "  make docker-build       - Build the Docker image."
+	@echo "  make docker-build-dev   - Build the Docker image for development."
+	@echo "  make docker-run         - Run the Docker image."
+	@echo "  make docker-run-dev     - Run the Docker image for development."

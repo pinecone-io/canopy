@@ -59,13 +59,11 @@ RUN --mount=type=cache,target=/root/.cache \
 # used to init dependencies
 WORKDIR /app
 COPY poetry.lock pyproject.toml ./
-COPY src/ src/
-COPY config/ config/
-
 
 # install runtime deps to VIRTUAL_ENV
 RUN --mount=type=cache,target=/root/.cache \
     poetry install --no-root --all-extras --only main
+
 
 ################################
 # DEVELOPMENT
@@ -74,10 +72,15 @@ RUN --mount=type=cache,target=/root/.cache \
 FROM builder-base as development
 
 WORKDIR /app
+COPY poetry.lock pyproject.toml ./
 
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
     poetry install --no-root --all-extras --with dev
+
+COPY . .
+RUN poetry install --all-extras --only-root
+
 
 EXPOSE 8000
 CMD ["bash"]
@@ -88,8 +91,8 @@ CMD ["bash"]
 # Final image used for runtime
 ################################
 FROM python-base as production
-ENV WORKER_COUNT=1
 
+ENV WORKER_COUNT=1
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -101,13 +104,16 @@ COPY --from=builder-base $POETRY_HOME $POETRY_HOME
 COPY --from=builder-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR /app
+
 COPY poetry.lock pyproject.toml ./
+
 COPY src/ src/
 COPY config/ config/
-
-COPY README.md .
+RUN touch README.md
 RUN poetry install --all-extras --only-root
 
 EXPOSE 8000
 
 CMD ["sh", "-c", "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers $WORKER_COUNT"]
+
+
