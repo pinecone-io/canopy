@@ -5,6 +5,7 @@ EXTRA_BUILD_ARGS =
 IMAGE_VERSION = $(shell poetry version -s)
 PORT = 8000
 ENV_FILE = .env
+TEST_WORKER_COUNT = 8
 
 .PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
 
@@ -15,16 +16,16 @@ static:
 	poetry run mypy src
 
 test:
-	poetry run pytest -n 8 --dist loadscope
+	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope
 
 test-unit:
-	poetry run pytest -n 8 --dist loadscope tests/unit
+	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope tests/unit
 
 test-system:
-	poetry run pytest -n 8 --dist loadscope tests/system
+	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope tests/system
 
 test-e2e:
-	poetry run pytest -n 8 --dist loadscope tests/e2e
+	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope tests/e2e
 
 docker-build:
 	@echo "Building Docker image..."
