@@ -36,16 +36,14 @@ from canopy_server.app import start as start_server, API_VERSION
 from .cli_spinner import Spinner
 from canopy_server.models.v1.api_models import ChatDebugInfo
 
-
 load_dotenv()
-
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
 
 
-def check_server_health(url: str, timeout_seconds: 30):
+def check_server_health(url: str, timeout_seconds: int = 30):
     try:
         res = requests.get(urljoin(url, "/health"), timeout=timeout_seconds)
         res.raise_for_status()
@@ -123,8 +121,8 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
     if "knowledge_base" in config:
         kb_config = config.get("knowledge_base", None)
     elif "chat_engine" in config:
-        kb_config = config["chat_engine"]\
-            .get("context_engine", {})\
+        kb_config = config["chat_engine"] \
+            .get("context_engine", {}) \
             .get("knowledge_base", None)
     else:
         kb_config = None
@@ -163,6 +161,7 @@ class CanopyCommandGroup(click.Group):
     """
     A custom click Group that lets us control the order of commands in the help menu.
     """
+
     def __init__(self, name=None, commands=None, **attrs):
         super().__init__(name, commands, **attrs)
         self._commands_order = {
@@ -207,18 +206,18 @@ def health(url):
 
 @cli.command(
     help=(
-        """
-        \b
-        Create a new Pinecone index that will be used by Canopy.
-
-        A Canopy service cannot be started without a Pinecone index that is configured
-        to work with Canopy. This command creates a new Pinecone index and configures
-        it in the right schema.
-
-        If the embedding vectors' dimension is not explicitly configured in
-        the config file, the embedding model will be tapped with a single token to
-        infer the dimensionality of the embedding space.
-        """  # noqa: E501
+            """
+            \b
+            Create a new Pinecone index that will be used by Canopy.
+    
+            A Canopy service cannot be started without a Pinecone index that is configured
+            to work with Canopy. This command creates a new Pinecone index and configures
+            it in the right schema.
+    
+            If the embedding vectors' dimension is not explicitly configured in
+            the config file, the embedding model will be tapped with a single token to
+            infer the dimensionality of the embedding space.
+            """  # noqa: E501
     )
 )
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
@@ -273,13 +272,13 @@ def _batch_documents_by_chunks(chunker: Chunker,
 
 @cli.command(
     help=(
-        """
-        \b
-        Upload local data files to the Canopy service.
-
-        Load all the documents from a data file or a directory containing multiple data
-        files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
-        """  # noqa: E501
+            """
+            \b
+            Upload local data files to the Canopy service.
+    
+            Load all the documents from a data file or a directory containing multiple data
+            files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
+            """  # noqa: E501
     )
 )
 @click.argument("data-path", type=click.Path(exists=True))
@@ -393,15 +392,15 @@ def upsert(index_name: str,
 
 
 def _chat(
-    speaker,
-    speaker_color,
-    model,
-    history,
-    message,
-    openai_api_key=None,
-    api_base=None,
-    stream=True,
-    print_debug_info=False,
+        speaker,
+        speaker_color,
+        model,
+        history,
+        message,
+        openai_api_key=None,
+        api_base=None,
+        stream=True,
+        print_debug_info=False,
 ):
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -464,17 +463,17 @@ def _chat(
 
 @cli.command(
     help=(
-        """
-        Debugging tool for chatting with the Canopy RAG service.
-
-        Run an interactive chat with the Canopy RAG service, for debugging and demo
-        purposes. A prompt is provided for the user to enter a message, and the
-        RAG-infused ChatBot will respond. You can continue the conversation by entering
-        more messages. Hit Ctrl+C to exit.
-
-        To compare RAG-infused ChatBot with the original LLM, run with the `--no-rag`
-        flag, which would display both models' responses side by side.
-        """
+            """
+            Debugging tool for chatting with the Canopy RAG service.
+    
+            Run an interactive chat with the Canopy RAG service, for debugging and demo
+            purposes. A prompt is provided for the user to enter a message, and the
+            RAG-infused ChatBot will respond. You can continue the conversation by entering
+            more messages. Hit Ctrl+C to exit.
+    
+            To compare RAG-infused ChatBot with the original LLM, run with the `--no-rag`
+            flag, which would display both models' responses side by side.
+            """
 
     )
 )
@@ -483,7 +482,7 @@ def _chat(
 @click.option("--debug/--no-debug", default=False,
               help="Print additional debugging information.")
 @click.option("--rag/--no-rag", default=True,
-              help="Compare RAG-infused Chatbot with vanilla LLM.",)
+              help="Compare RAG-infused Chatbot with vanilla LLM.", )
 @click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
                     f" Defaults to {DEFAULT_SERVER_URL}"))
@@ -572,15 +571,15 @@ def chat(chat_server_url, rag, debug, stream):
 
 @cli.command(
     help=(
-        """
-        \b
-        Start the Canopy server.
-
-        This command launches a Uvicorn server to serve the Canopy API.
-
-        If you would like to try out the chatbot, run `canopy chat` in a separate
-        terminal window.
-        """
+            """
+            \b
+            Start the Canopy server.
+    
+            This command launches a Uvicorn server to serve the Canopy API.
+    
+            If you would like to try out the chatbot, run `canopy chat` in a separate
+            terminal window.
+            """
     )
 )
 @click.option("--stream/--no-stream", default=True,
@@ -637,12 +636,12 @@ def start(host: str, port: str, reload: bool, stream: bool,
 
 @cli.command(
     help=(
-        """
-        \b
-        Stop the Canopy server.
-
-        This command sends a shutdown request to the Canopy server.
-        """
+            """
+            \b
+            Stop the Canopy server.
+    
+            This command sends a shutdown request to the Canopy server.
+            """
     )
 )
 @click.option("url", "--url", default=DEFAULT_SERVER_URL,
@@ -686,10 +685,10 @@ def stop(url):
 
 @cli.command(
     help=(
-        """
-        \b
-        Open the Canopy server docs.
-        """
+            """
+            \b
+            Open the Canopy server docs.
+            """
     )
 )
 @click.option("--url", default="http://localhost:8000",
