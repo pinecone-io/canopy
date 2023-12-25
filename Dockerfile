@@ -58,7 +58,8 @@ RUN --mount=type=cache,target=/root/.cache \
 
 # used to init dependencies
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
+COPY pyproject.toml ./
+RUN poetry lock
 
 # install runtime deps to VIRTUAL_ENV
 RUN --mount=type=cache,target=/root/.cache \
@@ -72,7 +73,9 @@ RUN --mount=type=cache,target=/root/.cache \
 FROM builder-base as development
 
 WORKDIR /app
-COPY poetry.lock pyproject.toml ./
+COPY --from=builder-base /app/pyproject.toml pyproject.toml
+COPY --from=builder-base /app/poetry.lock poetry.lock
+
 
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
@@ -105,7 +108,8 @@ COPY --from=builder-base $VIRTUAL_ENV $VIRTUAL_ENV
 
 WORKDIR /app
 
-COPY poetry.lock pyproject.toml ./
+COPY --from=builder-base /app/pyproject.toml pyproject.toml
+COPY --from=builder-base /app/poetry.lock poetry.lock
 
 COPY src/ src/
 COPY config/ config/
