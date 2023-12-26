@@ -38,10 +38,10 @@ chat_engine:
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
 
-  history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
-    type: RecentHistoryPruner
-    params:
-      min_history_messages: 1             # Minimal number of messages to keep in history
+  # history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
+  #   type: RecentHistoryPruner
+  #   params:
+  #     min_history_messages: 1             # Minimal number of messages to keep in history
 
   llm: &llm
     # -------------------------------------------------------------------------------------------------------------
