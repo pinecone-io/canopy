@@ -71,7 +71,7 @@ def check_server_health(url: str, timeout_seconds: int = 30):
         msg = f"""
         Canopy server did not send any data in the allotted
         amount of time ({timeout_seconds} seconds).
-        Try restarting the server.
+        Please check that the server is running on {url}.
         """
         raise CLIError(msg)
 
