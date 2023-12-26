@@ -67,7 +67,8 @@ def check_server_health(url: str, timeout_seconds: int = 30):
 
     except requests.exceptions.ReadTimeout:
         msg = f"""
-        Canopy server did not send any data in the allotted amount of time ({timeout_seconds} seconds). 
+        Canopy server did not send any data in the allotted
+        amount of time ({timeout_seconds} seconds).
         Try restarting the server.
         """
         raise CLIError(msg)
@@ -209,11 +210,11 @@ def health(url):
             """
             \b
             Create a new Pinecone index that will be used by Canopy.
-    
+
             A Canopy service cannot be started without a Pinecone index that is configured
             to work with Canopy. This command creates a new Pinecone index and configures
             it in the right schema.
-    
+
             If the embedding vectors' dimension is not explicitly configured in
             the config file, the embedding model will be tapped with a single token to
             infer the dimensionality of the embedding space.
@@ -275,7 +276,7 @@ def _batch_documents_by_chunks(chunker: Chunker,
             """
             \b
             Upload local data files to the Canopy service.
-    
+
             Load all the documents from a data file or a directory containing multiple data
             files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
             """  # noqa: E501
@@ -465,14 +466,14 @@ def _chat(
     help=(
             """
             Debugging tool for chatting with the Canopy RAG service.
-    
+
             Run an interactive chat with the Canopy RAG service, for debugging and demo
             purposes. A prompt is provided for the user to enter a message, and the
-            RAG-infused ChatBot will respond. You can continue the conversation by entering
-            more messages. Hit Ctrl+C to exit.
-    
-            To compare RAG-infused ChatBot with the original LLM, run with the `--no-rag`
-            flag, which would display both models' responses side by side.
+            RAG-infused ChatBot will respond. You can continue the conversation by
+            entering more messages. Hit Ctrl+C to exit.
+
+            To compare RAG-infused ChatBot with the original LLM, run with the
+            `--no-rag` flag, which would display both models' responses side by side.
             """
 
     )
@@ -574,9 +575,9 @@ def chat(chat_server_url, rag, debug, stream):
             """
             \b
             Start the Canopy server.
-    
+
             This command launches a Uvicorn server to serve the Canopy API.
-    
+
             If you would like to try out the chatbot, run `canopy chat` in a separate
             terminal window.
             """
@@ -639,7 +640,7 @@ def start(host: str, port: str, reload: bool, stream: bool,
             """
             \b
             Stop the Canopy server.
-    
+
             This command sends a shutdown request to the Canopy server.
             """
     )
