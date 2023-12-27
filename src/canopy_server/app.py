@@ -96,12 +96,18 @@ logger: logging.Logger
 
 
 @openai_api_router.post(
+    "/{namespace}/chat/completions",
+    response_model=None,
+    responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
+)
+@openai_api_router.post(
     "/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
     request: ChatRequest = Body(...),
+    namespace: str = None,
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
@@ -111,6 +117,7 @@ async def chat(
 
     """  # noqa: E501
     try:
+        print(f"The namespace is {namespace}")
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
@@ -284,13 +291,8 @@ async def startup():
 
 
 def _init_routes(app):
-    # Include the application level router (health, shutdown, ...)
-    app.include_router(application_router, include_in_schema=False)
-    app.include_router(application_router, prefix=f"/{API_VERSION}")
-    # Include the API without version == latest
-    app.include_router(context_api_router, include_in_schema=False)
-    app.include_router(openai_api_router, include_in_schema=False)
     # Include the API version in the path, API_VERSION should be the latest version.
+    app.include_router(application_router, prefix=f"/{API_VERSION}")
     app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
 
