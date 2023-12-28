@@ -1,11 +1,17 @@
-IMAGE_NAME = canopy
-DOCKERFILE_DIR = .
-COMMON_BUILD_ARGS = --progress plain
-EXTRA_BUILD_ARGS =
-IMAGE_VERSION = $(shell poetry version -s)
-PORT = 8000
-ENV_FILE = .env
 TEST_WORKER_COUNT = 8
+
+REGISTRY = ghcr.io
+NAMESPACE = pinecone-io
+IMAGE_NAME = canopy
+REPOSITORY = $(REGISTRY)/$(NAMESPACE)/$(IMAGE_NAME)
+
+IMAGE_TAG = $(shell poetry version -s)
+CONTAINER_PORT = 8000
+CONTAINER_ENV_FILE = .env
+CONTAINER_BUILD_DIR = .
+CONTAINER_COMMON_BUILD_ARGS = --progress plain
+CONTAINER_EXTRA_BUILD_ARGS =
+
 
 .PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
 
@@ -29,20 +35,19 @@ test-e2e:
 
 docker-build:
 	@echo "Building Docker image..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME):$(IMAGE_VERSION) $(DOCKERFILE_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) --build-arg PORT=$(CONTAINER_PORT) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
 	@echo "Docker build complete."
 
 docker-build-dev:
 	@echo "Building Docker image for development..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME)-dev:$(IMAGE_VERSION) --target=development $(DOCKERFILE_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) --build-arg PORT=$(CONTAINER_PORT) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
 	@echo "Development Docker build complete."
 
 docker-run:
-	docker run --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME):$(IMAGE_VERSION)
+	docker run --env-file $(CONTAINER_ENV_FILE) -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(REPOSITORY):$(IMAGE_TAG)
 
 docker-run-dev:
-	docker run -it --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME)-dev:$(IMAGE_VERSION)
-
+	docker run -it --env-file $(CONTAINER_ENV_FILE) -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 help:
 	@echo "Available targets:"
