@@ -1,9 +1,6 @@
 TEST_WORKER_COUNT = 8
 
-REGISTRY = ghcr.io
-NAMESPACE = pinecone-io
-IMAGE_NAME = canopy
-REPOSITORY = $(REGISTRY)/$(NAMESPACE)/$(IMAGE_NAME)
+REPOSITORY = ghcr.io/pinecone-io/canopy
 
 IMAGE_TAG = $(shell poetry version -s)
 CONTAINER_PORT = 8000
@@ -13,7 +10,8 @@ CONTAINER_BUILD_DIR = .
 CONTAINER_COMMON_BUILD_ARGS = --progress plain --platform linux/amd64
 CONTAINER_EXTRA_BUILD_ARGS =
 
-CONTAINER_COMMON_RUN_ARGS = --platform linux/amd64
+# Only add the env file if it exists
+CONTAINER_COMMON_RUN_ARGS = --platform linux/amd64 -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(shell [ -e "$(CONTAINER_ENV_FILE)" ] && echo "--env-file $(CONTAINER_ENV_FILE)")
 CONTAINER_EXTRA_RUN_ARGS =
 
 .PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
@@ -47,10 +45,10 @@ docker-build-dev:
 	@echo "Development Docker build complete."
 
 docker-run:
-	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) --env-file $(CONTAINER_ENV_FILE) -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(REPOSITORY):$(IMAGE_TAG)
+	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) $(REPOSITORY):$(IMAGE_TAG)
 
 docker-run-dev:
-	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) -it --env-file $(CONTAINER_ENV_FILE) -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(REPOSITORY)-dev:$(IMAGE_TAG)
+	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 help:
 	@echo "Available targets:"
