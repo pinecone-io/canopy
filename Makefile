@@ -6,8 +6,8 @@ IMAGE_TAG = $(shell poetry version -s)
 CONTAINER_PORT = 8000
 CONTAINER_ENV_FILE = .env
 CONTAINER_BUILD_DIR = .
-
-CONTAINER_COMMON_BUILD_ARGS = --progress plain --platform linux/amd64
+CONTAINER_BUILD_PLATFORM = linux/amd64
+CONTAINER_COMMON_BUILD_ARGS = --progress plain --platform $(CONTAINER_BUILD_PLATFORM) --build-arg PORT=$(CONTAINER_PORT)
 CONTAINER_EXTRA_BUILD_ARGS =
 
 # Only add the env file if it exists
@@ -36,12 +36,12 @@ test-e2e:
 
 docker-build:
 	@echo "Building Docker image..."
-	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) --build-arg PORT=$(CONTAINER_PORT) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
 	@echo "Docker build complete."
 
 docker-build-dev:
 	@echo "Building Docker image for development..."
-	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) --build-arg PORT=$(CONTAINER_PORT) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
 	@echo "Development Docker build complete."
 
 docker-run:
