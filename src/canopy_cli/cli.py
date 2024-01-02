@@ -4,6 +4,7 @@ import subprocess
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
+from openai.lib.azure import AzureOpenAI
 from prompt_toolkit import prompt
 import time
 
@@ -405,7 +406,13 @@ def _chat(
                 continue
             openai_response_id = chunk.id
             intenal_model = chunk.model
-            text = chunk.choices[0].delta.content or ""
+            text = ""
+            try:
+                text = chunk.choices[0].delta.content
+                if not text:
+                    text = ""
+            except IndexError:
+                pass
             output += text
             click.echo(text, nl=False)
         click.echo()
@@ -416,7 +423,10 @@ def _chat(
         )
     else:
         intenal_model = openai_response.model
-        text = openai_response.choices[0].message.content or ""
+        if len(openai_response.choices) == 0:
+            text = ""
+        else:
+            text = openai_response.choices[0].delta.content
         output = text
         click.echo(text, nl=False)
         debug_info = ChatDebugInfo(

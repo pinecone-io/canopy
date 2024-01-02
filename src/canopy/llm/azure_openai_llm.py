@@ -18,14 +18,14 @@ class AzureOpenAILLM(OpenAILLM):
     """
     Azure OpenAI LLM wrapper built on top of the OpenAI Python client.
 
-    Note: OpenAI requires a valid API key to use this class.
-          You can set the "AZURE_OPENAI_KEY" environment variable to your API key.
-          Or you can directly set it as follows:
-          >>> import openai
-          >>> openai.api_key = "YOUR_API_KEY"
+    Note: Azure OpenAI services require a valid API key, and an Azure endpoint
+          "AZURE_OPENAI_KEY" environment variable to your API key.
+    Note: If you want to pass an OpenAI organization, you need to set an environment variable "OPENAI_ORG_ID". Note
+          that this name is different from the environment variable name for passing an organization to the parent
+          class (OpenAILLM), which is "OPENAI_ORG".
     """
     def __init__(self,
-                 model_name: str = "gpt-3.5-turbo",
+                 model_name: Optional[str] = None,
                  *,
                  api_key: Optional[str] = None,
                  base_url: Optional[str] = None,
@@ -41,14 +41,58 @@ class AzureOpenAILLM(OpenAILLM):
             **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
                     For example, you can set the temperature, top_p etc
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
+
+        >>> import os
+        >>> os.environ['OPENAI_API_VERSION'] = "OPENAI API VERSION (FOUND IN AZURE RESTAPI DOCS)"
+        >>> os.environ['AZURE_OPENAI_ENDPOINT'] = "AZURE ENDPOINT"
+        >>> os.environ['AZURE_OPENAI_API_KEY'] = "YOUR KEY"
+        >>> os.environ['AZURE_DEPLOYMENT'] = "YOUR AZURE DEPLOYMENT'S NAME"
+
+
+        >>> from canopy.llm.azure_openai_llm import AzureOpenAILLM
+        >>> from canopy.models.data_models import UserMessage
+        >>> llm = AzureOpenAILLM()
+        >>> messages = [UserMessage(content="Hello! How are you?")]
+        >>> llm.chat_completion(messages)
+
         """  # noqa: E501
         super().__init__(model_name)
+
+        if not environ.get('AZURE_OPENAI_API_KEY'):
+            raise EnvironmentError('Please set your Azure OpenAI API key environment variable ('
+                                   'export AZURE_OPENAI_API_KEY=<your azure openai api key>). See here for more '
+                                   'information: '
+                                   'https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python')
+
+        if not environ.get('AZURE_OPENAI_ENDPOINT'):
+            raise EnvironmentError("Please set your Azure OpenAI endpoint environment variable ('export "
+                                   "AZURE_OPENAI_ENDPOINT=<your endpoint>'). See here for more information "
+                                   "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
+
+        if not environ.get('OPENAI_API_VERSION'):
+            raise EnvironmentError("Please set your Azure OpenAI API version. ('export OPENAI_API_VERSION=<your API "
+                                   "version"
+                                   ">'). See here for more information "
+                                   "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
+
+        if azure_deployment is None:
+            if not environ.get('AZURE_DEPLOYMENT'):
+                raise EnvironmentError('You need to set an environment variable for AZURE_DEPLOYMENT to the name of '
+                                       'your Azure deployment')
+            azure_deployment = os.getenv('AZURE_DEPLOYMENT')
+
+
+
         self._client = openai.AzureOpenAI(
             api_key=api_key,
             api_version="2023-10-01-preview",
             azure_endpoint=base_url,
         )
         self.default_model_params = kwargs
+
+    @property
+    def available_models(self):
+        raise NotImplementedError()
 
     @retry(
         reraise=True,
@@ -120,8 +164,8 @@ class AzureOpenAILLM(OpenAILLM):
             **model_params_dict,
         )
 
-        result = chat_completion.choices[0].message.function_call.arguments
-        arguments = json.loads(result)
+        result = chat_completion.choices[0].message.function_call
+        arguments = json.loads(result.arguments)
 
         jsonschema.validate(instance=arguments, schema=function.parameters.dict())
         return arguments
