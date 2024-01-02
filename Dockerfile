@@ -1,11 +1,13 @@
 # syntax=docker/dockerfile:1
 # Keep this syntax directive! It's used to enable Docker BuildKit
 
+ARG PYTHON_VERSION=3.11.7
+ARG PORT=8000
 ################################
 # PYTHON-BASE
 # Sets up all our shared environment variables
 ################################
-FROM python:3.11.7-slim as python-base
+FROM python:${PYTHON_VERSION}-slim as python-base
 
     # Python
 ENV PYTHONUNBUFFERED=1 \
@@ -84,8 +86,9 @@ RUN --mount=type=cache,target=/root/.cache \
 COPY . .
 RUN poetry install --all-extras --only-root
 
+ARG PORT
+EXPOSE $PORT
 
-EXPOSE 8000
 CMD ["bash"]
 
 
@@ -96,6 +99,10 @@ CMD ["bash"]
 FROM python-base as production
 
 ENV WORKER_COUNT=1
+
+LABEL org.opencontainers.image.source="https://github.com/pinecone-io/canopy"
+LABEL org.opencontainers.image.description="Image containing the canopy server."
+LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -116,8 +123,9 @@ COPY config/ config/
 RUN touch README.md
 RUN poetry install --all-extras --only-root
 
-EXPOSE 8000
-
-CMD ["sh", "-c", "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers $WORKER_COUNT"]
+ARG PORT
+EXPOSE $PORT
+ENV PORT $PORT
+CMD ["sh", "-c", "gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers $WORKER_COUNT"]
 
 

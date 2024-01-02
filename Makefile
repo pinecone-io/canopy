@@ -1,11 +1,18 @@
-IMAGE_NAME = canopy
-DOCKERFILE_DIR = .
-COMMON_BUILD_ARGS = --progress plain
-EXTRA_BUILD_ARGS =
-IMAGE_VERSION = $(shell poetry version -s)
-PORT = 8000
-ENV_FILE = .env
 TEST_WORKER_COUNT = 8
+
+REPOSITORY = ghcr.io/pinecone-io/canopy
+
+IMAGE_TAG = $(shell poetry version -s)
+CONTAINER_PORT = 8000
+CONTAINER_ENV_FILE = .env
+CONTAINER_BUILD_DIR = .
+CONTAINER_BUILD_PLATFORM = linux/amd64
+CONTAINER_COMMON_BUILD_ARGS = --progress plain --platform $(CONTAINER_BUILD_PLATFORM) --build-arg PORT=$(CONTAINER_PORT)
+CONTAINER_EXTRA_BUILD_ARGS =
+
+# Only add the env file if it exists
+CONTAINER_COMMON_RUN_ARGS = --platform linux/amd64 -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(shell [ -e "$(CONTAINER_ENV_FILE)" ] && echo "--env-file $(CONTAINER_ENV_FILE)")
+CONTAINER_EXTRA_RUN_ARGS =
 
 .PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
 
@@ -29,20 +36,19 @@ test-e2e:
 
 docker-build:
 	@echo "Building Docker image..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME):$(IMAGE_VERSION) $(DOCKERFILE_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
 	@echo "Docker build complete."
 
 docker-build-dev:
 	@echo "Building Docker image for development..."
-	docker build $(COMMON_BUILD_ARGS) $(EXTRA_BUILD_ARGS) -t $(IMAGE_NAME)-dev:$(IMAGE_VERSION) --target=development $(DOCKERFILE_DIR)
+	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
 	@echo "Development Docker build complete."
 
 docker-run:
-	docker run --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME):$(IMAGE_VERSION)
+	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) $(REPOSITORY):$(IMAGE_TAG)
 
 docker-run-dev:
-	docker run -it --env-file $(ENV_FILE) -p $(PORT):$(PORT) $(IMAGE_NAME)-dev:$(IMAGE_VERSION)
-
+	docker run $(CONTAINER_COMMON_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 help:
 	@echo "Available targets:"
