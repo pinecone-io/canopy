@@ -95,6 +95,7 @@ class CohereLLM(BaseLLM):
             model=self.model_name,
             message=messages[-1]['message'],
             chat_history=messages[:-1],
+            preamble_override=system_prompt,
             stream=stream,
             connectors=[
                 {"id": connector} for connector in connectors
