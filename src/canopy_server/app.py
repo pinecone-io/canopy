@@ -18,7 +18,12 @@ from canopy.chat_engine import ChatEngine
 from starlette.concurrency import run_in_threadpool
 from sse_starlette.sse import EventSourceResponse
 
-from fastapi import FastAPI, HTTPException, Body, APIRouter
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Body,
+    APIRouter
+)
 import uvicorn
 from typing import cast, Union
 
@@ -156,9 +161,8 @@ async def query(
             queries=request.queries,
             max_context_tokens=request.max_tokens,
         )
-        return ContextResponse(
-            content=context.content.to_text(), num_tokens=context.num_tokens
-        )
+        return ContextResponse(content=context.content.to_text(),
+                               num_tokens=context.num_tokens)
 
     except Exception as e:
         logger.exception(e)
@@ -264,7 +268,7 @@ async def shutdown() -> ShutdownResponse:
             status_code=500,
             detail="Failed to locate parent process. Cannot shutdown server.",
         )
-    if sys.platform == "win32":
+    if sys.platform == 'win32':
         kill_signal = signal.CTRL_C_EVENT
     else:
         kill_signal = signal.SIGINT
