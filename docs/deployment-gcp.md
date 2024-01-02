@@ -1,0 +1,134 @@
+# Deploying Canopy on Google Cloud Platform (GCP) - Step-by-Step Guide
+
+
+## Introduction
+In this guide, we'll walk through the process of deploying Canopy on Google Cloud Platform (`GCP`). 
+The steps include setting up GCP, creating a Docker repository, pulling and tagging the `Canopy` image, and finally deploying it using Google Cloud Run.
+
+## Prerequisites
+Before you begin, make sure you have the following installed:
+
+- [Docker](https://docs.docker.com/engine/install/)
+- [Google Cloud SDK](https://cloud.google.com/sdk/docs/install)
+
+and make sure you have a project set up in `GCP`.
+
+## Step 1: Install and Authenticate Google Cloud SDK
+Open your terminal and run the following commands:
+
+```bash
+# Authenticate with your Google Cloud account
+gcloud auth login
+
+# Set the GCP project
+gcloud config set project {project-name}
+```
+
+## Step 2: Create a Docker Repository on GCP (Optional)
+If you have a docker repository in `GCP` you can skip this step. If not run the following commands to create one:
+
+```bash
+# Create a Docker repository on GCP
+gcloud artifacts repositories create {repository-name} \
+    --repository-format docker \
+    --location us-west1 \
+    --description "Docker repository for storing images of Canopy."
+```
+
+## Step 3: Pull and Tag Canopy Docker Image
+We'll start by fetching the official `Canopy` image from GitHub Packages, and then we'll apply a tag to prepare the image
+for pushing it to Google Cloud Platform (`GCP`). You can access all the available images [here](https://github.com/pinecone-io/canopy/pkgs/container/canopy).
+
+```bash
+# Pull the Canopy Docker image
+docker pull ghcr.io/pinecone-io/canopy:{canopy-version}
+
+# Tag the image for GCP repository
+docker tag ghcr.io/pinecone-io/canopy:{canopy-version} us-west1-docker.pkg.dev/{project-name}/{repository-name}/canopy:{canopy-version}
+```
+
+## Step 4: Configure Docker for GCP
+```bash
+# Configure Docker to use GCP credentials
+gcloud auth configure-docker us-west1-docker.pkg.dev
+```
+
+## Step 5: Push Canopy Docker Image to GCP
+```bash
+# Push the Canopy Docker image to GCP repository
+docker push us-west1-docker.pkg.dev/{project-name}/{repository-name}/canopy:{canopy-version}
+```
+
+## Step 6: Deploy Canopy on Google Cloud Run
+Before running the following command make sure to create a `.env` file and include the environment variables mentioned
+in [README.md](https://github.com/pinecone-io/canopy/blob/main/README.md). 
+```text
+OPENAI_API_KEY={open-api-key}
+PINECONE_API_KEY={pinecone-api-key}
+PINECONE_ENVIRONMENT={pinecone-environment}
+
+# Other necessary environment variables if needed
+```
+
+In the same directory, run the following command:
+
+```bash
+# Deploy Canopy on Google Cloud Run
+gcloud run deploy canopy \
+  --image us-west1-docker.pkg.dev/{project-name}/{repository-name}/canopy:{canopy-version} \
+  --platform managed \
+  --region us-west1 \
+  --min-instances 1 \
+  --port 8000 \
+  --allow-unauthenticated \
+  --set-env-vars $(grep -v '^#' .env | tr '\n' ',' | sed 's/,$//')
+```
+
+Congratulations! You have successfully deployed `Canopy` on `GCP`. 
+
+You should now see an output similar to this:
+
+    Deploying container to Cloud Run service [canopy] in project [project-name] region [us-west1]
+    ✓ Deploying new service... Done.
+      ✓ Creating Revision...
+      ✓ Routing traffic...
+      ✓ Setting IAM Policy...
+    Done.
+    Service [canopy] revision [canopy-00001-6cf] has been deployed and is serving 100 percent of traffic.
+    Service URL: https://canopy-bxkpka-uw.a.run.app
+
+## Step 7 - Testing Access to the Service
+From your terminal run the following command using the service url you have received from `GCP`:
+
+```bash
+curl {service-url}/v1/health
+```
+
+If you see the following output your deployment is completed successfully!
+
+```json
+{"pinecone_status":"OK","llm_status":"OK"}
+```
+
+## Step 8 - Chatting with the Service (Optional)
+
+In order to chat with the service, clone the `Canopy` project and install the dependencies using `Poetry`.
+```bash
+# Clone the project
+git clone git@github.com:pinecone-io/canopy.git
+
+# Install the dependencies
+poetry install
+```
+
+Then run:
+```bash
+canopy chat
+```
+
+That's it! You can now chat with your own `Canopy` server.
+
+
+
+
+
