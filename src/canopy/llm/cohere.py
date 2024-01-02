@@ -13,7 +13,7 @@ from canopy.models.api_models import (
     StreamingChatChunk,
     TokenCounts,
 )
-from canopy.models.data_models import Messages, Role, Query
+from canopy.models.data_models import Context, Messages, Role, Query
 
 
 class CohereLLM(BaseLLM):
@@ -46,7 +46,9 @@ class CohereLLM(BaseLLM):
         self.default_model_params = kwargs
 
     def chat_completion(self,
-                        messages: Messages,
+                        system_prompt: str,
+                        chat_history: Messages,
+                        context: Optional[Context] = None,
                         *,
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
@@ -58,7 +60,9 @@ class CohereLLM(BaseLLM):
         Note: this function is wrapped in a retry decorator to handle transient errors.
 
         Args:
-            messages: Messages (chat history) to send to the model.
+            system_prompt: The system prompt to use for the chat completion (preamble).
+            chat_history: Messages (chat history) to send to the model.
+            context: Knowledge base context to use for the chat completion. Defaults to None (no context).
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
@@ -82,7 +86,7 @@ class CohereLLM(BaseLLM):
             model_params or {}
         )
         connectors = model_params_dict.pop('connectors', None)
-        messages: Dict[str: Any] = self.map_messages(messages)
+        messages: Dict[str: Any] = self.map_messages(chat_history)
 
         if not messages:
             raise cohere.error.CohereAPIError("No message provided")
@@ -170,6 +174,14 @@ class CohereLLM(BaseLLM):
                                max_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,) -> dict:
         return NotImplementedError()
+
+    async def aenforced_function_call(self,
+                                      system_prompt: str,
+                                      chat_history: Messages,
+                                      function: Function, *,
+                                      max_tokens: Optional[int] = None,
+                                      model_params: Optional[dict] = None):
+        raise NotImplementedError()
 
     async def achat_completion(self,
                                messages: Messages, *, stream: bool = False,

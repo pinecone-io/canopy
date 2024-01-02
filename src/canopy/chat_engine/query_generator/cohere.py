@@ -1,7 +1,5 @@
 from typing import List, Optional
 
-from canopy.chat_engine.models import HistoryPruningMethod
-from canopy.chat_engine.prompt_builder import PromptBuilder
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.llm import BaseLLM, CohereLLM
 from canopy.models.data_models import Messages, Query
@@ -20,7 +18,6 @@ class CohereQueryGenerator(QueryGenerator):
                  *,
                  llm: Optional[BaseLLM] = None):
         self._llm = llm or self._DEFAULT_COMPONENTS["llm"]()
-        self._prompt_builder = PromptBuilder(HistoryPruningMethod.RAISE, 1)
 
     def generate(self,
                  messages: Messages,

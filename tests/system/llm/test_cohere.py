@@ -71,7 +71,7 @@ class TestCohereLLM:
 
     @staticmethod
     def test_chat_completion(cohere_llm, messages):
-        response = cohere_llm.chat_completion(messages=messages)
+        response = cohere_llm.chat_completion(chat_history=messages, system_prompt='')
         assert_chat_completion(response)
 
     @staticmethod
@@ -79,8 +79,9 @@ class TestCohereLLM:
                                               messages,
                                               model_params_high_temperature):
         response = cohere_llm.chat_completion(
-            messages=messages,
-            model_params=model_params_high_temperature
+            chat_history=messages,
+            model_params=model_params_high_temperature,
+            system_prompt='',
         )
         assert_chat_completion(response)
 
@@ -88,15 +89,17 @@ class TestCohereLLM:
     def test_chat_completion_low_temperature(cohere_llm,
                                              messages,
                                              model_params_low_temperature):
-        response = cohere_llm.chat_completion(messages=messages,
-                                              model_params=model_params_low_temperature)
+        response = cohere_llm.chat_completion(chat_history=messages,
+                                              model_params=model_params_low_temperature,
+                                              system_prompt='')
         assert_chat_completion(response)
 
     @staticmethod
     def test_chat_streaming(cohere_llm, messages):
         stream = True
-        response = cohere_llm.chat_completion(messages=messages,
-                                              stream=stream)
+        response = cohere_llm.chat_completion(chat_history=messages,
+                                              stream=stream,
+                                              system_prompt='')
         messages_received = [message for message in response]
         assert len(messages_received) > 0
 
@@ -107,20 +110,21 @@ class TestCohereLLM:
     @staticmethod
     def test_max_tokens(cohere_llm, messages):
         max_tokens = 2
-        response = cohere_llm.chat_completion(messages=messages,
-                                              max_tokens=max_tokens)
+        response = cohere_llm.chat_completion(chat_history=messages,
+                                              max_tokens=max_tokens,
+                                              system_prompt='')
         assert isinstance(response, ChatResponse)
         assert len(response.choices[0].message.content.split()) <= max_tokens
 
     @staticmethod
     def test_missing_messages(cohere_llm):
         with pytest.raises(CohereAPIError):
-            cohere_llm.chat_completion(messages=[])
+            cohere_llm.chat_completion(chat_history=[], system_prompt='')
 
     @staticmethod
     def test_negative_max_tokens(cohere_llm, messages):
         with pytest.raises(CohereAPIError):
-            cohere_llm.chat_completion(messages=messages, max_tokens=-5)
+            cohere_llm.chat_completion(chat_history=messages, max_tokens=-5, system_prompt='')
 
     @staticmethod
     def test_chat_completion_api_failure_propagates(cohere_llm,
@@ -129,4 +133,4 @@ class TestCohereLLM:
         cohere_llm._client.chat.side_effect = CohereAPIError("API call failed")
 
         with pytest.raises(CohereAPIError, match="API call failed"):
-            cohere_llm.chat_completion(messages=messages)
+            cohere_llm.chat_completion(chat_history=messages, system_prompt='')
