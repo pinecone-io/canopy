@@ -33,7 +33,7 @@ jobs:
       - name: Git describe
         id: ghd
         uses: proudust/gh-describe@v1
-      - name: Export docker tag
+      - name: Export Docker tag
         env:
           INPUT_TAG: ${{ inputs.image-tag }}
           FALLBACK_TAG: ${{ steps.ghd.outputs.describe }}
