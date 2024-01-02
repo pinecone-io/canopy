@@ -31,11 +31,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Export docker tag
-        run:  echo "IMAGE_TAG=${{ inputs.image-tag || $(git describe --tags | sed 's/V//') }}" >> $GITHUB_ENV
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64,windows/amd64
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
+        env:
+          INPUT_TAG: ${{ inputs.image-tag }}
+        run: |
+          IMAGE_TAG = ${INPUT_TAG:-$(git describe --tags | sed 's/V//')}
+          echo $IMAGE_TAG
+          echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
+#      - name: Build and push
+#        uses: docker/build-push-action@v5
+#        with:
+#          context: .
+#          platforms: linux/amd64,linux/arm64,windows/amd64
+#          push: true
+#          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
