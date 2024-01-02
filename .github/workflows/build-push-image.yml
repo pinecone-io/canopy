@@ -38,7 +38,7 @@ jobs:
           INPUT_TAG: ${{ inputs.image-tag }}
           FALLBACK_TAG: ${{ steps.ghd.outputs.describe }}
         run: |
-          export IMAGE_TAG=${INPUT_TAG:-$($FALLBACK_TAG | sed 's/V//')}
+          export IMAGE_TAG=${INPUT_TAG:-($FALLBACK_TAG | sed 's/V//')}
           echo $IMAGE_TAG
           echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
 #      - name: Build and push
