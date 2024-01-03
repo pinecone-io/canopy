@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'feature/automatic_builds'
+      - 'main'
     tags:
-      - 'V*'
+      - 'v*'
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
