@@ -10,12 +10,9 @@ on:
         description: 'Whether not to use cache for building the image'
   push:
     branches:
-      - 'main'
+      - 'feature/automatic_builds'
     tags:
       - 'V*'
-  pull_request:
-    branches:
-      - 'main'
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository }}
@@ -57,7 +54,6 @@ jobs:
               ghcr.io/pinecone-io/canopy
           tags: |
             type=ref,event=branch
-            type=ref,event=pr
             type=semver,pattern={{version}}
       - name: Build and push
         uses: docker/build-push-action@v5
