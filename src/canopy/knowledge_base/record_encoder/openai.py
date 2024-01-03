@@ -53,7 +53,7 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         raise NotImplementedError
 
 
-class AzureOpenAIRecordEncoder(DenseRecordEncoder):
+class AzureOpenAIRecordEncoder(OpenAIRecordEncoder):
     """
     AzureOpenAIRecordEncoder is a type of DenseRecordEncoder that uses the OpenAI `embeddings` API.
     The implementation uses the `AzureOpenAIEncoder` class from the `pinecone-text` library.
@@ -79,23 +79,3 @@ class AzureOpenAIRecordEncoder(DenseRecordEncoder):
         """  # noqa: E501
         encoder = AzureOpenAIEncoder(model_name, **kwargs)
         super().__init__(dense_encoder=encoder, batch_size=batch_size)
-
-    def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
-        """
-        Encode a list of documents, takes a list of KBDocChunk and returns a list of KBEncodedDocChunk.
-
-        Args:
-            documents: A list of KBDocChunk to encode.
-
-        Returns:
-            encoded chunks: A list of KBEncodedDocChunk, with the `values` field populated by the generated embeddings vector.
-        """  # noqa: E501
-        return super().encode_documents(documents)
-
-    async def _aencode_documents_batch(
-        self, documents: List[KBDocChunk]
-    ) -> List[KBEncodedDocChunk]:
-        raise NotImplementedError
-
-    async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
-        raise NotImplementedError
