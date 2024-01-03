@@ -1,4 +1,4 @@
-# Deploying Canopy on Google Cloud Platform (GCP) - Step-by-Step Guide
+# Deploying Canopy on GCP Cloud Run - Step-by-Step Guide
 
 
 ## Introduction
@@ -59,18 +59,37 @@ gcloud auth configure-docker us-west1-docker.pkg.dev
 docker push us-west1-docker.pkg.dev/{project-name}/{repository-name}/canopy:{canopy-version}
 ```
 
-## Step 6: Deploy Canopy on Google Cloud Run
+## Step 6: Prepare environment variables
 Before running the following command make sure to create a `.env` file and include the environment variables mentioned
 in [README.md](https://github.com/pinecone-io/canopy/blob/main/README.md). 
 ```text
 OPENAI_API_KEY={open-api-key}
 PINECONE_API_KEY={pinecone-api-key}
 PINECONE_ENVIRONMENT={pinecone-environment}
+INDEX_NAME={index-name}
 
 # Other necessary environment variables if needed
 ```
 
-In the same directory, run the following command:
+## Step 7: Creating an Index (Feel free to skip if you already have an index name)
+
+To create a new index in Pinecone, run the following command:
+
+```bash
+docker run --env-file .env ghcr.io/pinecone-io/canopy:{canopy-version} yes | canopy new
+```
+
+## Step 8: Upserting documents (Feel free to skip if you already have documents)
+
+To upsert documents into Pinecone run:
+
+```bash
+docker run --env-file .env ghcr.io/pinecone-io/canopy:{canopy-version} yes | canopy upsert {parquet-file.parquet}
+```
+
+## Step 9: Deploy Canopy on Google Cloud Run
+
+To deploy Canopy on GCP, run the following command:
 
 ```bash
 # Deploy Canopy on Google Cloud Run
@@ -84,7 +103,7 @@ gcloud run deploy canopy \
   --set-env-vars $(grep -v '^#' .env | tr '\n' ',' | sed 's/,$//')
 ```
 
-Congratulations! You have successfully deployed `Canopy` on `GCP`. 
+Congratulations! You have successfully deployed `Canopy` on `Google Cloud Run`. 
 
 You should now see an output similar to this:
 
@@ -97,7 +116,7 @@ You should now see an output similar to this:
     Service [canopy] revision [canopy-00001-6cf] has been deployed and is serving 100 percent of traffic.
     Service URL: https://canopy-bxkpka-uw.a.run.app
 
-## Step 7 - Testing Access to the Service
+## Step 10 - Testing Access to the Service
 From your terminal run the following command using the service url you have received from `GCP`:
 
 ```bash
@@ -110,23 +129,29 @@ If you see the following output your deployment is completed successfully!
 {"pinecone_status":"OK","llm_status":"OK"}
 ```
 
-## Step 8 - Chatting with the Service (Optional)
+If you have an issue accessing the server, make sure you have an index. To create an index, follow `Step 7`.
 
-In order to chat with the service, clone the `Canopy` project and install the dependencies using `Poetry`.
+## Step 11 - Chatting with the Service (Optional)
+There are several options to interact with your service.
+
+### Canopy's built-in Chat CLI
+If you want to use Canopy's built-in Chat CLI, you can run:
 ```bash
-# Clone the project
-git clone git@github.com:pinecone-io/canopy.git
-
-# Install the dependencies
-poetry install
+docker run --env-file .env ghcr.io/pinecone-io/canopy:{canopy-version} canopy chat
 ```
+### An OpenAI compatible Chat UI
+You can use any OpenAI compatible chat UI to interact with the newly deployed server. 
 
-Then run:
-```bash
-canopy chat
-```
+Examples:
+ - [OpenChat](https://github.com/imoneoi/openchat-ui)
+ - [Chainlit](https://docs.chainlit.io/get-started/overview)
+ - [Hugging Face Chat UI](https://huggingface.co/spaces/huggingchat/chat-ui/blob/main/README.md)
 
-That's it! You can now chat with your own `Canopy` server.
+### Using OpenAI's Python Client
+You can also use OpenAI's python client to interact with the server. For more information, see
+ [Migrating Existing Application to Canopy](https://github.com/pinecone-io/canopy?tab=readme-ov-file#migrating-an-existing-openai-application-to-canopy)
+ 
+
 
 
 
