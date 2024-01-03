@@ -2,12 +2,6 @@ name: Create and publish a Docker image
 
 on:
   workflow_dispatch:
-    inputs:
-      no-cache:
-        type: boolean
-        required: true
-        default: false
-        description: 'Whether not to use cache for building the image'
   push:
     branches:
       - 'feature/automatic_builds'
@@ -60,7 +54,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          no-cache: ${{ inputs.no_cache }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
