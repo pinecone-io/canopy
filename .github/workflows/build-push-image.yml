@@ -1,5 +1,4 @@
 name: Create and publish a Docker image
-
 on:
   workflow_dispatch:
   push:
@@ -7,9 +6,6 @@ on:
       - 'feature/automatic_builds'
     tags:
       - 'V*'
-env:
-  REGISTRY: ghcr.io
-  REPOSITORY: ${{ github.repository }}
 jobs:
   build-and-push-image:
     runs-on: ubuntu-latest
@@ -29,17 +25,6 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-#      - name: Git describe
-#        id: ghd
-#        uses: proudust/gh-describe@v1
-#      - name: Export Docker tag
-#        env:
-#          INPUT_TAG: ${{ inputs.image-tag }}
-#          DESCRIBE_TAG: ${{ steps.ghd.outputs.describe }}
-#        run: |
-#          IMAGE_TAG=${INPUT_TAG:-$(echo $DESCRIBE_TAG | sed 's/V//')}
-#          echo $IMAGE_TAG
-#          echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -58,6 +43,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false
-#          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ env.REPOSITORY }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
