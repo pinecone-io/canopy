@@ -35,23 +35,23 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Git describe
-        id: ghd
-        uses: proudust/gh-describe@v1
-      - name: Export Docker tag
-        env:
-          INPUT_TAG: ${{ inputs.image-tag }}
-          DESCRIBE_TAG: ${{ steps.ghd.outputs.describe }}
-        run: |
-          IMAGE_TAG=${INPUT_TAG:-$(echo $DESCRIBE_TAG | sed 's/V//')}
-          echo $IMAGE_TAG
-          echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
+#      - name: Git describe
+#        id: ghd
+#        uses: proudust/gh-describe@v1
+#      - name: Export Docker tag
+#        env:
+#          INPUT_TAG: ${{ inputs.image-tag }}
+#          DESCRIBE_TAG: ${{ steps.ghd.outputs.describe }}
+#        run: |
+#          IMAGE_TAG=${INPUT_TAG:-$(echo $DESCRIBE_TAG | sed 's/V//')}
+#          echo $IMAGE_TAG
+#          echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
-              name=$REGISTRY/$REPOSITORY
+              ghcr.io/pinecone-io/canopy
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
