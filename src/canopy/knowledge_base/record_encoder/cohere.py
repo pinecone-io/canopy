@@ -17,7 +17,7 @@ class CohereRecordEncoder(DenseRecordEncoder):
         self,
         *,
         model_name: str = "embed-english-v3.0",
-        batch_size: int = 400,
+        batch_size: int = 100,
         **kwargs,
     ):
         """
