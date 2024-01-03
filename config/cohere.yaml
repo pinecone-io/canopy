@@ -39,8 +39,12 @@ chat_engine:
     max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
-    history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
-    min_history_messages: 1             # Minimal number of messages to keep in history
+
+  history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
+    type: RecentHistoryPruner
+    params:
+      min_history_messages: 1             # Minimal number of messages to keep in history
+
 
 
   # -------------------------------------------------------------------------------------------------------------
@@ -53,7 +57,6 @@ chat_engine:
       model_name: command-nightly       # The name of the model to use.
       # You can add any additional parameters which are supported by the Cohere Co.Chat API. The values set
       # here will be used in every Co.Chat API call. For example:
-      preamble_override: ""
       prompt_truncation: "AUTO"
       # Specifying connectors is contrary to Canopy's purpose of searching the Pinecone knowledge base only,
       # but technically can still be passed like this:
@@ -122,5 +125,5 @@ chat_engine:
         type: CohereRecordEncoder
         params:
           model_name:                   # The name of the model to use for encoding
-            embed-multilingual-v3.0
+            "embed-english-v3.0"
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model

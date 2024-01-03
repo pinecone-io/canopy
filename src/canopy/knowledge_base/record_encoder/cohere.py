@@ -16,7 +16,7 @@ class CohereRecordEncoder(DenseRecordEncoder):
     def __init__(
         self,
         *,
-        model_name: str = "embed-multilingual-v3.0",
+        model_name: str = "embed-english-v3.0",
         batch_size: int = 400,
         **kwargs,
     ):
