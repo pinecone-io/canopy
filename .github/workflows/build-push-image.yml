@@ -5,7 +5,7 @@ on:
     inputs:
       image-tag:
         type: string
-        required: true
+        required: false
         description: 'Docker image tag'
   push:
 env:
@@ -48,5 +48,5 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }}
-          cache-from: type=registry,ref=${{ env.REPOSITORY }}:buildcache
-          cache-to: type=registry,ref=${{ env.REPOSITORY }}:buildcache,mode=max
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
