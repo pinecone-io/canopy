@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - 'feature/automatic_builds'
+      - 'main'
     tags:
       - 'v*'
 jobs:
