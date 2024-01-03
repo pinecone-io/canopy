@@ -8,6 +8,11 @@ on:
         required: false
         description: 'Docker image tag'
   push:
+    branches:
+      - 'main'
+      - 'feature/automatic_builds'
+    tags:
+      - 'v*'
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository }}
@@ -41,12 +46,23 @@ jobs:
           IMAGE_TAG=${INPUT_TAG:-$(echo $DESCRIBE_TAG | sed 's/V//')}
           echo $IMAGE_TAG
           echo IMAGE_TAG=$IMAGE_TAG >> $GITHUB_ENV
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+              name=$REGISTRY/$REPOSITORY
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ env.REPOSITORY }}:main
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+#          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ env.REPOSITORY }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
