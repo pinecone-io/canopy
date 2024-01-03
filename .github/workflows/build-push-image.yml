@@ -1,4 +1,5 @@
 name: Create and publish a Docker image
+
 on:
   workflow_dispatch:
   push:
@@ -22,7 +23,7 @@ jobs:
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Docker meta
