@@ -3,16 +3,19 @@ name: Create and publish a Docker image
 on:
   workflow_dispatch:
     inputs:
-      image-tag:
-        type: string
-        required: false
-        description: 'Docker image tag'
+      no-cache:
+        type: boolean
+        required: true
+        default: false
+        description: 'Whether not to use cache for building the image'
   push:
     branches:
       - 'main'
-      - 'feature/automatic_builds'
     tags:
-      - 'v*'
+      - 'V*'
+  pull_request:
+    branches:
+      - 'main'
 env:
   REGISTRY: ghcr.io
   REPOSITORY: ${{ github.repository }}
@@ -54,15 +57,18 @@ jobs:
               ghcr.io/pinecone-io/canopy
           tags: |
             type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64
+          no-cache: ${{ inputs.no_cache }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          provenance: false
 #          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ env.REPOSITORY }}:main
           cache-from: type=gha
           cache-to: type=gha,mode=max
