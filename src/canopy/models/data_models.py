@@ -12,10 +12,6 @@ Metadata = Dict[str, Union[str, int, float, List[str]]]
 
 class Query(BaseModel):
     text: str = Field(description="The query text.")
-    namespace: str = Field(
-        default="",
-        description="The namespace of the query. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces",  # noqa: E501
-    )
     metadata_filter: Optional[dict] = Field(
         default=None,
         description="A Pinecone metadata filter, to learn more about metadata filters, see https://docs.pinecone.io/docs/metadata-filtering",  # noqa: E501

@@ -14,7 +14,8 @@ class BaseKnowledgeBase(ABC, ConfigurableMixin):
     @abstractmethod
     def query(self,
               queries: List[Query],
-              global_metadata_filter: Optional[dict] = None
+              global_metadata_filter: Optional[dict] = None,
+              namespace: str = None
               ) -> List[QueryResult]:
         pass
 
