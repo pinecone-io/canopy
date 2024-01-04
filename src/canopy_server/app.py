@@ -117,7 +117,7 @@ async def chat(
 
     """  # noqa: E501
     try:
-        print(f"The namespace is {namespace}")
+        logger.debug(f"The namespace is {namespace}")
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
