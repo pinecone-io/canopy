@@ -1,3 +1,4 @@
+import json
 import time
 from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List
@@ -95,6 +96,7 @@ class CohereLLM(BaseLLM):
             model=self.model_name,
             message=messages[-1]['message'],
             chat_history=messages[:-1],
+            documents=self.generate_documents_from_context(context),
             preamble_override=system_prompt,
             stream=stream,
             connectors=[
@@ -230,3 +232,31 @@ class CohereLLM(BaseLLM):
             })
 
         return mapped_messages
+
+    def generate_documents_from_context(self, context):
+        """
+        Generate document data to pass to Cohere Chat API from provided context data.
+
+        Args:
+            context: Knowledge base context to use for the chat completion.
+
+        Returns:
+            documents: list of document objects for Cohere API.
+        """
+        documents = []
+
+        if context:
+            try:
+                parsed_context = json.loads(context.content.to_text())
+            except json.decoder.JSONDecodeError:
+                documents.append({"text": context.content.to_text()})
+            else:
+                if isinstance(parsed_context, list):
+                    for item in parsed_context:
+                        if "snippets" in item:
+                            for snippet in item["snippets"]:
+                                documents.append(snippet)
+                        else:
+                            documents.append({"text": context.content.to_text()})
+
+        return documents
