@@ -437,7 +437,9 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError(self._connection_error_msg)
 
         queries = self._encoder.encode_queries(queries)
-        results = [self._query_index(q, global_metadata_filter, namespace) for q in queries]
+        results = [self._query_index(q,
+                                     global_metadata_filter,
+                                     namespace) for q in queries]
         results = self._reranker.rerank(results)
 
         return [

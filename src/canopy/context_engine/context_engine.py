@@ -81,7 +81,9 @@ class ContextEngine(BaseContextEngine):
 
         self.global_metadata_filter = global_metadata_filter
 
-    def query(self, queries: List[Query], max_context_tokens: int, namespace: str = None) -> Context:
+    def query(self, queries: List[Query],
+              max_context_tokens: int,
+              namespace: str = None) -> Context:
         """
         Query the knowledge base for relevant documents and build a context from the retrieved documents that can be injected into the LLM prompt.
 
