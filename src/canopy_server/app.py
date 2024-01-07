@@ -208,7 +208,10 @@ async def upsert(
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
         await run_in_threadpool(
-            kb.upsert, documents=request.documents, batch_size=request.batch_size, namespace=namespace
+            kb.upsert,
+            documents=request.documents,
+            batch_size=request.batch_size,
+            namespace=namespace
         )
 
         return SuccessUpsertResponse()

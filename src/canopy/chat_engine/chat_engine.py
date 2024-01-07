@@ -232,7 +232,8 @@ class ChatEngine(BaseChatEngine):
                      namespace: Optional[str] = None
                      ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
-        context = self.context_engine.query(queries, self.max_context_tokens, namespace=namespace)
+        context = self.context_engine.query(queries, self.max_context_tokens,
+                                            namespace=namespace)
         return context
 
     async def achat(self,

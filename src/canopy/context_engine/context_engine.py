@@ -15,11 +15,13 @@ CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 class BaseContextEngine(ABC, ConfigurableMixin):
 
     @abstractmethod
-    def query(self, queries: List[Query], max_context_tokens: int, *, namespace: Optional[str]) -> Context:
+    def query(self, queries: List[Query], max_context_tokens: int, *,
+              namespace: Optional[str]) -> Context:
         pass
 
     @abstractmethod
-    async def aquery(self, queries: List[Query], max_context_tokens: int,  *, namespace: Optional[str] ) -> Context:
+    async def aquery(self, queries: List[Query], max_context_tokens: int,  *,
+                     namespace: Optional[str]) -> Context:
         pass
 
 
