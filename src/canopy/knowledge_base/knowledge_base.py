@@ -400,7 +400,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def query(self,
               queries: List[Query],
               global_metadata_filter: Optional[dict] = None,
-              namespace: str = None
+              namespace: Optional[str] = None
               ) -> List[QueryResult]:
         """
         Query the knowledge base to retrieve document chunks.
@@ -459,7 +459,7 @@ class KnowledgeBase(BaseKnowledgeBase):
     def _query_index(self,
                      query: KBQuery,
                      global_metadata_filter: Optional[dict],
-                     namespace: str = None) -> KBQueryResult:
+                     namespace: Optional[str] = None) -> KBQueryResult:
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 

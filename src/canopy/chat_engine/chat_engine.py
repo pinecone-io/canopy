@@ -166,7 +166,7 @@ class ChatEngine(BaseChatEngine):
              *,
              stream: bool = False,
              model_params: Optional[dict] = None,
-             namespace: str = None
+             namespace: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -229,7 +229,7 @@ class ChatEngine(BaseChatEngine):
 
     def _get_context(self,
                      messages: Messages,
-                     namespace: str = None
+                     namespace: Optional[str] = None
                      ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
         context = self.context_engine.query(queries, self.max_context_tokens, namespace)

@@ -25,7 +25,7 @@ from fastapi import (
     APIRouter
 )
 import uvicorn
-from typing import cast, Union
+from typing import cast, Union, Optional
 
 from canopy.models.api_models import (
     StreamingChatResponse,
@@ -107,7 +107,7 @@ logger: logging.Logger
 )
 async def chat(
     request: ChatRequest = Body(...),
-    namespace: str = None,
+    namespace: Optional[str] = None,
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
