@@ -81,7 +81,7 @@ class TestContextEngine:
 
         assert result == mock_context
         mock_knowledge_base.query.assert_called_once_with(
-            queries, global_metadata_filter=None)
+            queries, global_metadata_filter=None, namespace=None)
         mock_context_builder.build.assert_called_once_with(
             mock_query_result, max_context_tokens)
 
@@ -112,7 +112,7 @@ class TestContextEngine:
 
         assert result == mock_context
         mock_knowledge_base.query.assert_called_once_with(
-            queries, global_metadata_filter=mock_global_metadata_filter)
+            queries, global_metadata_filter=mock_global_metadata_filter, namespace=None)
         mock_context_builder.build.assert_called_once_with(
             mock_query_result, max_context_tokens)
 

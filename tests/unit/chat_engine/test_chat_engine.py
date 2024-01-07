@@ -118,7 +118,8 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=70
+            max_context_tokens=70,
+            namespace=None
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
@@ -168,7 +169,8 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=max_context_tokens
+            max_context_tokens=max_context_tokens,
+            namespace=None
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
@@ -199,7 +201,8 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=70
+            max_context_tokens=70,
+            namespace=None
         )
 
         assert isinstance(context, Context)
