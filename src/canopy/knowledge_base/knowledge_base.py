@@ -682,7 +682,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     async def aquery(self,
                      queries: List[Query],
-                     global_metadata_filter: Optional[dict] = None
+                     global_metadata_filter: Optional[dict] = None,
+                     namespace: Optional[str] = None
                      ) -> List[QueryResult]:
         raise NotImplementedError()
 

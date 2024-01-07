@@ -197,7 +197,7 @@ async def query(
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
-    namespace: Optional[str] = ""
+    namespace: str = ""
 ) -> SuccessUpsertResponse:
     """
     Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
