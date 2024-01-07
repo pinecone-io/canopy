@@ -147,6 +147,13 @@ async def chat(
 
 
 @context_api_router.post(
+    "/{namespace}/query",
+    response_model=ContextResponse,
+    responses={
+        500: {"description": "Failed to query the knowledge base or build the context"}
+    },
+)
+@context_api_router.post(
     "/query",
     response_model=ContextResponse,
     responses={
@@ -155,6 +162,7 @@ async def chat(
 )
 async def query(
     request: ContextQueryRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
@@ -167,6 +175,7 @@ async def query(
             context_engine.query,
             queries=request.queries,
             max_context_tokens=request.max_tokens,
+            namespace=namespace
         )
         return ContextResponse(content=context.content.to_text(),
                                num_tokens=context.num_tokens)
@@ -177,12 +186,18 @@ async def query(
 
 
 @context_api_router.post(
+    "/{namespace}/upsert",
+    response_model=SuccessUpsertResponse,
+    responses={500: {"description": "Failed to upsert documents"}},
+)
+@context_api_router.post(
     "/upsert",
     response_model=SuccessUpsertResponse,
     responses={500: {"description": "Failed to upsert documents"}},
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
+    namespace: Optional[str] = ""
 ) -> SuccessUpsertResponse:
     """
     Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
@@ -193,7 +208,7 @@ async def upsert(
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
         await run_in_threadpool(
-            kb.upsert, documents=request.documents, batch_size=request.batch_size
+            kb.upsert, documents=request.documents, batch_size=request.batch_size, namespace=namespace
         )
 
         return SuccessUpsertResponse()

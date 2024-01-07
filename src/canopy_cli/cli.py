@@ -297,12 +297,17 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "long as less than 10% of the documents have failed to be uploaded.")
 @click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
               help="Path to a canopy config file. Can also be set by the "
-                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
-                   "defualt configuration will be used.")
+                   "`CANOPY_CONFIG_FILE` environment variable. Otherwise, the built-in"
+                   "default configuration will be used.")
+@click.option("--namespace", "-n", default="", envvar="INDEX_NAMESPACE",
+              help="The namespace of the index. Can also be set by the "
+                   "`INDEX_NAMESPACE` environment variable. If not set, the default"
+                   "namespace will be used.")
 def upsert(index_name: str,
            data_path: str,
            allow_failures: bool,
-           config: Optional[str]):
+           config: Optional[str],
+           namespace: str):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -366,7 +371,7 @@ def upsert(index_name: str,
     for batch in _batch_documents_by_chunks(kb._chunker, data,
                                             batch_size=kb._encoder.batch_size):
         try:
-            kb.upsert(batch)
+            kb.upsert(batch, namespace=namespace)
         except Exception as e:
             if allow_failures and len(failed_docs) < len(data) // 10:
                 failed_docs.extend([_.id for _ in batch])
@@ -403,6 +408,7 @@ def _chat(
     api_base=None,
     stream=True,
     print_debug_info=False,
+    namespace=None
 ):
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -413,9 +419,14 @@ def _chat(
             "Please set the OPENAI_API_KEY environment "
             "variable."
         )
+
+    if api_base is not None and namespace is not None:
+        api_base = os.path.join(api_base, namespace)
+
+    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
+
     output = ""
     history += [{"role": "user", "content": message}]
-    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 
     start = time.time()
     try:
@@ -488,7 +499,11 @@ def _chat(
 @click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
                     f" Defaults to {DEFAULT_SERVER_URL}"))
-def chat(chat_server_url, rag, debug, stream):
+@click.option("--namespace", "-n", default=None, envvar="INDEX_NAMESPACE",
+              help="The namespace of the index. Can also be set by the "
+                   "`INDEX_NAMESPACE` environment variable. If not set, the default"
+                   "namespace will be used.")
+def chat(chat_server_url, rag, debug, stream, namespace):
     check_server_health(chat_server_url)
     note_msg = (
         "🚨 Note 🚨\n"
@@ -547,6 +562,7 @@ def chat(chat_server_url, rag, debug, stream):
             openai_api_key="canopy",
             api_base=chat_server_url,
             print_debug_info=debug,
+            namespace=namespace
         )
 
         if not rag:

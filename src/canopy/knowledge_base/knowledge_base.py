@@ -416,7 +416,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             global_metadata_filter: A metadata filter to apply to all queries, in addition to any query-specific filters.
                                     For example, the filter {"website": "wiki"} will only return documents with the metadata {"website": "wiki"} (in case provided in upsert)
                                     see https://docs.pinecone.io/docs/metadata-filtering
-            namespace: The namespace of the index for context retreival. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+            namespace: The namespace that will be queried in the underlying index. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
 
         Returns:
             A list of QueryResult objects.
