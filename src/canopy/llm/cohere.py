@@ -1,4 +1,3 @@
-import json
 import time
 from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List
@@ -15,6 +14,7 @@ from canopy.models.api_models import (
     TokenCounts,
 )
 from canopy.models.data_models import Context, Messages, Role, Query
+from canopy.context_engine.context_builder.stuffing import StuffingContextContent
 
 
 class CohereLLM(BaseLLM):
@@ -87,7 +87,7 @@ class CohereLLM(BaseLLM):
             model_params or {}
         )
         connectors = model_params_dict.pop('connectors', None)
-        messages: Dict[str: Any] = self.map_messages(chat_history)
+        messages: Dict[str, Any] = self.map_messages(chat_history)
 
         if not messages:
             raise cohere.error.CohereAPIError("No message provided")
@@ -233,7 +233,7 @@ class CohereLLM(BaseLLM):
 
         return mapped_messages
 
-    def generate_documents_from_context(self, context):
+    def generate_documents_from_context(self, context: Optional[Context]) -> List[Dict[str, Any]]:
         """
         Generate document data to pass to Cohere Chat API from provided context data.
 
@@ -243,20 +243,34 @@ class CohereLLM(BaseLLM):
         Returns:
             documents: list of document objects for Cohere API.
         """
+        if not context:
+            return []
+
+        if isinstance(context.content, StuffingContextContent):
+            return (
+                self.generate_documents_from_stuffing_context_content(context.content)
+            )
+
+        raise NotImplementedError(
+            "Cohere LLM is currently supported only with StuffingContextBuilder."
+        )
+
+    def generate_documents_from_stuffing_context_content(
+            self,
+            content: StuffingContextContent) -> List[Dict[str, Any]]:
+        """
+        Generate document data to pass to Cohere Chat API from StuffingContextContent.
+
+        Args:
+            content: Stuffing context content from the context.
+
+        Returns:
+            documents: list of document objects for Cohere API.
+        """
         documents = []
 
-        if context:
-            try:
-                parsed_context = json.loads(context.content.to_text())
-            except json.decoder.JSONDecodeError:
-                documents.append({"text": context.content.to_text()})
-            else:
-                if isinstance(parsed_context, list):
-                    for item in parsed_context:
-                        if "snippets" in item:
-                            for snippet in item["snippets"]:
-                                documents.append(snippet)
-                        else:
-                            documents.append({"text": context.content.to_text()})
+        for result in content.__root__:
+            for snippet in result.snippets:
+                documents.append(snippet.dict())
 
         return documents
