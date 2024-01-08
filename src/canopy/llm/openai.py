@@ -68,6 +68,8 @@ class OpenAILLM(BaseLLM):
             )
 
         self.default_model_params = kwargs
+        if self.default_model_params.get("model", None) is None:
+            self.default_model_params["model"] = self.model_name
 
     @property
     def available_models(self):
@@ -94,7 +96,7 @@ class OpenAILLM(BaseLLM):
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                          Dictonary of parametrs to override the default model parameters if set on initialization.
+                          Dictonary of parameters to override the default model parameters if set on initialization.
                           For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
@@ -113,9 +115,9 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
 
         if context is None:
             system_message = system_prompt
@@ -124,10 +126,8 @@ class OpenAILLM(BaseLLM):
         messages = [SystemMessage(content=system_message).dict()
                     ] + [m.dict() for m in chat_history]
         try:
-            response = self._client.chat.completions.create(model=self.model_name,
-                                                            messages=messages,
+            response = self._client.chat.completions.create(messages=messages,
                                                             stream=stream,
-                                                            max_tokens=max_tokens,
                                                             **model_params_dict)
         except openai.OpenAIError as e:
             provider_name = self.__class__.__name__.replace("LLM", "")
@@ -205,9 +205,9 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
 
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
@@ -217,7 +217,6 @@ class OpenAILLM(BaseLLM):
         try:
             chat_completion = self._client.chat.completions.create(
                 messages=messages,
-                model=self.model_name,
                 tools=[function_dict],
                 tool_choice={"type": "function",
                              "function": {"name": function.name}},
