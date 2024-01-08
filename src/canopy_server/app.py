@@ -96,11 +96,6 @@ logger: logging.Logger
 
 
 @openai_api_router.post(
-    "/{namespace}/chat/completions",
-    response_model=None,
-    responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
-)
-@openai_api_router.post(
     "/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
@@ -147,13 +142,6 @@ async def chat(
 
 
 @context_api_router.post(
-    "/{namespace}/query",
-    response_model=ContextResponse,
-    responses={
-        500: {"description": "Failed to query the knowledge base or build the context"}
-    },
-)
-@context_api_router.post(
     "/query",
     response_model=ContextResponse,
     responses={
@@ -185,11 +173,6 @@ async def query(
         raise HTTPException(status_code=500, detail=f"Internal Service Error: {str(e)}")
 
 
-@context_api_router.post(
-    "/{namespace}/upsert",
-    response_model=SuccessUpsertResponse,
-    responses={500: {"description": "Failed to upsert documents"}},
-)
 @context_api_router.post(
     "/upsert",
     response_model=SuccessUpsertResponse,
@@ -228,13 +211,16 @@ async def upsert(
 )
 async def delete(
     request: ContextDeleteRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> SuccessDeleteResponse:
     """
     Delete documents from the knowledgebase. Deleting documents is done by their unique ID.
     """  # noqa: E501
     try:
         logger.info(f"Delete {len(request.document_ids)} documents")
-        await run_in_threadpool(kb.delete, document_ids=request.document_ids)
+        await run_in_threadpool(kb.delete,
+                                document_ids=request.document_ids,
+                                namespace=namespace)
         return SuccessDeleteResponse()
 
     except Exception as e:
@@ -315,6 +301,11 @@ async def startup():
 def _init_routes(app):
     # Include the API version in the path, API_VERSION should be the latest version.
     app.include_router(application_router, prefix=f"/{API_VERSION}")
+    app.include_router(context_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
+                       tags=["{Namespace}/"])
+    app.include_router(openai_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
+                       tags=["{Namespace}/"])
+
     app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
 
