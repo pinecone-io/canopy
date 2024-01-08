@@ -41,13 +41,13 @@ load_dotenv()
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
+DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}/"
 spinner = Spinner()
 
 
 def check_server_health(url: str, timeout_seconds: int = 30):
     try:
-        res = requests.get(urljoin(url, "/health"), timeout=timeout_seconds)
+        res = requests.get(urljoin(url, "health"), timeout=timeout_seconds)
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -691,7 +691,7 @@ def stop(url):
                     raise CLIError(msg)
 
     try:
-        res = requests.get(urljoin(url, "/shutdown"))
+        res = requests.get(urljoin(url, "shutdown"))
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
