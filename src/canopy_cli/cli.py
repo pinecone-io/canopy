@@ -709,8 +709,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://localhost:8000",
-              help="Canopy's server url. Defaults to http://localhost:8000")
+@click.option("--url", default=DEFAULT_SERVER_URL,
+              help=f"Canopy's server url. Defaults to {DEFAULT_SERVER_URL}")
 def api_docs(url):
     import webbrowser
 
@@ -736,7 +736,7 @@ def api_docs(url):
             print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
         webbrowser.open('file://' + os.path.realpath(filename))
     else:
-        webbrowser.open(urljoin(url, "redoc"))
+        webbrowser.open(urljoin(url, "/redoc"))
 
 
 if __name__ == "__main__":
