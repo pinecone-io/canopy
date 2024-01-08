@@ -114,5 +114,6 @@ class ContextEngine(BaseContextEngine):
             context.debug_info["query_results"] = [qr.dict() for qr in query_results]
         return context
 
-    async def aquery(self, queries: List[Query], max_context_tokens: int, namespace: Optional[str] = None) -> Context:
+    async def aquery(self, queries: List[Query], max_context_tokens: int,
+                     namespace: Optional[str] = None) -> Context:
         raise NotImplementedError()
