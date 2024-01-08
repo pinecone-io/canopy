@@ -243,7 +243,10 @@ async def health_check() -> HealthStatus:
 
     try:
         msg = UserMessage(content="This is a health check. Are you alive? Be concise")
-        await run_in_threadpool(llm.chat_completion, messages=[msg], max_tokens=5)
+        await run_in_threadpool(llm.chat_completion,
+                                system_prompt="hi",
+                                chat_history=[msg],
+                                max_tokens=5)
     except Exception as e:
         err_msg = f"Failed to communicate with {llm.__class__.__name__}"
         logger.exception(err_msg)

@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Union, Iterable, Optional, Any, Dict, List, cast
+from typing import Union, Iterable, Optional, Any, Dict, cast
 
 import jsonschema
 import openai
@@ -14,7 +14,7 @@ from tenacity import (
 from canopy.llm import BaseLLM
 from canopy.llm.models import Function
 from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Query
+from canopy.models.data_models import Messages, Context, SystemMessage
 
 
 def _format_openai_error(e):
@@ -34,6 +34,7 @@ class OpenAILLM(BaseLLM):
           >>> import openai
           >>> openai.api_key = "YOUR_API_KEY"
     """
+
     def __init__(self,
                  model_name: str = "gpt-3.5-turbo",
                  *,
@@ -75,7 +76,9 @@ class OpenAILLM(BaseLLM):
         return [k.id for k in self._client.models.list()]
 
     def chat_completion(self,
-                        messages: Messages,
+                        system_prompt: str,
+                        chat_history: Messages,
+                        context: Optional[Context] = None,
                         *,
                         stream: bool = False,
                         max_tokens: Optional[int] = None,
@@ -87,7 +90,9 @@ class OpenAILLM(BaseLLM):
         Note: this function is wrapped in a retry decorator to handle transient errors.
 
         Args:
-            messages: Messages (chat history) to send to the model.
+            system_prompt: The system prompt to use for the chat completion.
+            chat_history: Chat history to use for the chat completion as list of messages.
+            context: Knowledge base context to use for the chat completion. Defaults to None (no context).
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
@@ -101,10 +106,12 @@ class OpenAILLM(BaseLLM):
             >>> from canopy.llm import OpenAILLM
             >>> from canopy.models.data_models import UserMessage
             >>> llm = OpenAILLM()
-            >>> messages = [UserMessage(content="Hello! How are you?")]
-            >>> result = llm.chat_completion(messages)
+            >>> system_prompt = "Use the context to answer the user question."
+            >>> context = Context(content=StringContextContent("roses are red, violets are blue"), num_tokens=7)
+            >>> chat_history = [UserMessage(content="What is the color of roses?")]
+            >>> result = llm.chat_completion(system_prompt=system_prompt, chat_history=chat_history, context=context)
             >>> print(result.choices[0].message.content)
-            "I'm good, how are you?"
+            "roses are red"
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
@@ -112,8 +119,12 @@ class OpenAILLM(BaseLLM):
         if max_tokens is not None:
             model_params_dict["max_tokens"] = max_tokens
 
-        messages = [m.dict() for m in messages]
-
+        if context is None:
+            system_message = system_prompt
+        else:
+            system_message = system_prompt + f"\nContext: {context.to_text()}"
+        messages = [SystemMessage(content=system_message).dict()
+                    ] + [m.dict() for m in chat_history]
         try:
             response = self._client.chat.completions.create(messages=messages,
                                                             stream=stream,
@@ -144,11 +155,12 @@ class OpenAILLM(BaseLLM):
         ),
     )
     def enforced_function_call(self,
-                               messages: Messages,
+                               system_prompt: str,
+                               chat_history: Messages,
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None) -> dict:
+                               model_params: Optional[dict] = None, ) -> dict:
         """
         This function enforces the model to respond with a specific function call.
 
@@ -157,7 +169,8 @@ class OpenAILLM(BaseLLM):
         Note: this function is wrapped in a retry decorator to handle transient errors.
 
         Args:
-            messages: Messages (chat history) to send to the model.
+            system_prompt: The system prompt to use for the chat completion.
+            chat_history: Messages (chat history) to send to the model.
             function: Function to call. See canopy.llm.models.Function for more details.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
@@ -187,7 +200,7 @@ class OpenAILLM(BaseLLM):
             ...         ]
             ...     )
             ... )
-            >>> llm.enforced_function_call(messages, function)
+            >>> llm.enforced_function_call(chat_history, function)
             {'queries': ['capital of France']}
         """  # noqa: E501
 
@@ -199,9 +212,11 @@ class OpenAILLM(BaseLLM):
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
 
+        messages = [SystemMessage(content=system_prompt).dict()
+                    ] + [m.dict() for m in chat_history]
         try:
             chat_completion = self._client.chat.completions.create(
-                messages=[m.dict() for m in messages],
+                messages=messages,
                 tools=[function_dict],
                 tool_choice={"type": "function",
                              "function": {"name": function.name}},
@@ -223,17 +238,21 @@ class OpenAILLM(BaseLLM):
         return arguments
 
     async def achat_completion(self,
-                               messages: Messages, *, stream: bool = False,
+                               system_prompt: str,
+                               chat_history: Messages,
+                               context: Optional[Context] = None,
+                               *,
+                               stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
         raise NotImplementedError()
 
-    async def agenerate_queries(self,
-                                messages: Messages,
-                                *,
-                                max_generated_tokens: Optional[int] = None,
-                                model_params: Optional[dict] = None,
-                                ) -> List[Query]:
+    async def aenforced_function_call(self,
+                                      system_prompt: str,
+                                      chat_history: Messages,
+                                      function: Function, *,
+                                      max_tokens: Optional[int] = None,
+                                      model_params: Optional[dict] = None):
         raise NotImplementedError()

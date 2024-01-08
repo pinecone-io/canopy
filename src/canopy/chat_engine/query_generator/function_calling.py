@@ -1,7 +1,6 @@
 from typing import List, Optional
 
-from canopy.chat_engine.models import HistoryPruningMethod
-from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.chat_engine.history_pruner import RaisingHistoryPruner
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.llm import BaseLLM, OpenAILLM
 from canopy.llm.models import (Function, FunctionParameters,
@@ -30,15 +29,16 @@ class FunctionCallingQueryGenerator(QueryGenerator):
         self._system_prompt = prompt or DEFAULT_SYSTEM_PROMPT
         self._function_description = \
             function_description or DEFAULT_FUNCTION_DESCRIPTION
-        self._prompt_builder = PromptBuilder(HistoryPruningMethod.RAISE, 1)
+        self._history_pruner = RaisingHistoryPruner()
 
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int) -> List[Query]:
-        messages = self._prompt_builder.build(system_prompt=self._system_prompt,
-                                              history=messages,
+        messages = self._history_pruner.build(system_prompt=self._system_prompt,
+                                              chat_history=messages,
                                               max_tokens=max_prompt_tokens)
-        arguments = self._llm.enforced_function_call(messages,
+        arguments = self._llm.enforced_function_call(system_prompt=self._system_prompt,
+                                                     chat_history=messages,
                                                      function=self._function)
 
         return [Query(text=q)

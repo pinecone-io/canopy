@@ -18,8 +18,8 @@ tiktoken = "^0.3.3"
 pinecone-datasets = "^0.6.2"
 pydantic = "^1.10.7"
 pandas-stubs = "^2.0.3.230814"
-fastapi = "^0.92.0"
-uvicorn = "^0.20.0"
+fastapi = ">=0.92.0, <1.0.0"
+uvicorn = ">=0.20.0, <1.0.0"
 tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
 types-tqdm = "^4.61.0"
@@ -90,3 +90,5 @@ skip-checking-raises = true
 [tool.poetry.scripts]
 canopy = "canopy_cli.cli:cli"
 
+[tool.pytest.ini_options]
+log_cli = true
