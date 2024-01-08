@@ -421,7 +421,7 @@ def _chat(
         )
 
     if api_base is not None and namespace is not None:
-        api_base = os.path.join(api_base, namespace)
+        api_base = urljoin(api_base, namespace)
 
     client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 

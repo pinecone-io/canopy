@@ -77,11 +77,11 @@ class TestContextEngine:
         mock_knowledge_base.query.return_value = mock_query_result
         mock_context_builder.build.return_value = mock_context
 
-        result = context_engine.query(queries, max_context_tokens)
+        result = context_engine.query(queries, max_context_tokens, namespace="test")
 
         assert result == mock_context
         mock_knowledge_base.query.assert_called_once_with(
-            queries, global_metadata_filter=None, namespace=None)
+            queries, global_metadata_filter=None, namespace="test")
         mock_context_builder.build.assert_called_once_with(
             mock_query_result, max_context_tokens)
 
