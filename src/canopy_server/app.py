@@ -25,7 +25,7 @@ from fastapi import (
     APIRouter
 )
 import uvicorn
-from typing import cast, Union
+from typing import cast, Union, Optional
 
 from canopy.models.api_models import (
     StreamingChatResponse,
@@ -96,12 +96,18 @@ logger: logging.Logger
 
 
 @openai_api_router.post(
+    "/{namespace}/chat/completions",
+    response_model=None,
+    responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
+)
+@openai_api_router.post(
     "/chat/completions",
     response_model=None,
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
     request: ChatRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
@@ -111,6 +117,7 @@ async def chat(
 
     """  # noqa: E501
     try:
+        logger.debug(f"The namespace is {namespace}")
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
@@ -140,6 +147,13 @@ async def chat(
 
 
 @context_api_router.post(
+    "/{namespace}/query",
+    response_model=ContextResponse,
+    responses={
+        500: {"description": "Failed to query the knowledge base or build the context"}
+    },
+)
+@context_api_router.post(
     "/query",
     response_model=ContextResponse,
     responses={
@@ -148,6 +162,7 @@ async def chat(
 )
 async def query(
     request: ContextQueryRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
@@ -160,6 +175,7 @@ async def query(
             context_engine.query,
             queries=request.queries,
             max_context_tokens=request.max_tokens,
+            namespace=namespace
         )
         return ContextResponse(content=context.content.to_text(),
                                num_tokens=context.num_tokens)
@@ -170,12 +186,18 @@ async def query(
 
 
 @context_api_router.post(
+    "/{namespace}/upsert",
+    response_model=SuccessUpsertResponse,
+    responses={500: {"description": "Failed to upsert documents"}},
+)
+@context_api_router.post(
     "/upsert",
     response_model=SuccessUpsertResponse,
     responses={500: {"description": "Failed to upsert documents"}},
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
+    namespace: str = ""
 ) -> SuccessUpsertResponse:
     """
     Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
@@ -186,7 +208,10 @@ async def upsert(
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
         await run_in_threadpool(
-            kb.upsert, documents=request.documents, batch_size=request.batch_size
+            kb.upsert,
+            documents=request.documents,
+            batch_size=request.batch_size,
+            namespace=namespace
         )
 
         return SuccessUpsertResponse()
@@ -288,13 +313,8 @@ async def startup():
 
 
 def _init_routes(app):
-    # Include the application level router (health, shutdown, ...)
-    app.include_router(application_router, include_in_schema=False)
-    app.include_router(application_router, prefix=f"/{API_VERSION}")
-    # Include the API without version == latest
-    app.include_router(context_api_router, include_in_schema=False)
-    app.include_router(openai_api_router, include_in_schema=False)
     # Include the API version in the path, API_VERSION should be the latest version.
+    app.include_router(application_router, prefix=f"/{API_VERSION}")
     app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
 

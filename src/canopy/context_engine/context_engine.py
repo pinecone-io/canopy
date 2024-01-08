@@ -15,11 +15,13 @@ CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 class BaseContextEngine(ABC, ConfigurableMixin):
 
     @abstractmethod
-    def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
+    def query(self, queries: List[Query], max_context_tokens: int, *,
+              namespace: Optional[str]) -> Context:
         pass
 
     @abstractmethod
-    async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:
+    async def aquery(self, queries: List[Query], max_context_tokens: int, *,
+                     namespace: Optional[str]) -> Context:
         pass
 
 
@@ -81,13 +83,17 @@ class ContextEngine(BaseContextEngine):
 
         self.global_metadata_filter = global_metadata_filter
 
-    def query(self, queries: List[Query], max_context_tokens: int, ) -> Context:
+    def query(self, queries: List[Query],
+              max_context_tokens: int,
+              *,
+              namespace: Optional[str] = None) -> Context:
         """
         Query the knowledge base for relevant documents and build a context from the retrieved documents that can be injected into the LLM prompt.
 
         Args:
             queries: A list of queries to use for retrieving documents from the knowledge base
             max_context_tokens: The maximum number of tokens to use for the context
+            namespace: The namespace to query in the underlying `KnowledgeBase`. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
 
         Returns:
             A Context object containing the retrieved documents and metadata
@@ -100,12 +106,14 @@ class ContextEngine(BaseContextEngine):
         """  # noqa: E501
         query_results = self.knowledge_base.query(
             queries,
-            global_metadata_filter=self.global_metadata_filter)
+            global_metadata_filter=self.global_metadata_filter,
+            namespace=namespace)
         context = self.context_builder.build(query_results, max_context_tokens)
 
         if CE_DEBUG_INFO:
             context.debug_info["query_results"] = [qr.dict() for qr in query_results]
         return context
 
-    async def aquery(self, queries: List[Query], max_context_tokens: int, ) -> Context:
+    async def aquery(self, queries: List[Query], max_context_tokens: int,
+                     namespace: Optional[str] = None) -> Context:
         raise NotImplementedError()
