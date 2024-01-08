@@ -109,7 +109,7 @@ class TestChatEngine:
                                                            MOCK_SYSTEM_PROMPT)
 
         # Call the method under test
-        response = chat_engine.chat(messages)
+        response = chat_engine.chat(messages, namespace="test")
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -119,7 +119,7 @@ class TestChatEngine:
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
             max_context_tokens=70,
-            namespace=None
+            namespace="test"
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
@@ -160,7 +160,7 @@ class TestChatEngine:
                 chat_engine.chat(messages)
             return
 
-        response = chat_engine.chat(messages)
+        response = chat_engine.chat(messages, namespace="test")
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -170,7 +170,7 @@ class TestChatEngine:
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
             max_context_tokens=max_context_tokens,
-            namespace=None
+            namespace="test"
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
