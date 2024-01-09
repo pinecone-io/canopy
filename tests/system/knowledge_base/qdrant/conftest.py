@@ -28,14 +28,13 @@ def chunker():
 def encoder():
     return StubRecordEncoder(StubDenseEncoder())
 
-
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(collection_name, chunker, encoder):
     kb = QdrantKnowledgeBase(
         collection_name=collection_name,
         record_encoder=encoder,
         chunker=chunker,
-        location="http://localhost:6333",
+        location=":memory:",
     )
     kb.create_canopy_collection()
 

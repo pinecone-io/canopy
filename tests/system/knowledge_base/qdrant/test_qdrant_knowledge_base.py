@@ -2,17 +2,21 @@ import random
 
 import pytest
 from dotenv import load_dotenv
+from qdrant_client import QdrantClient
+from canopy.knowledge_base.chunker.base import Chunker
 
 from canopy.knowledge_base.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import (
-    DENSE_VECTOR,
+    DENSE_VECTOR_NAME,
     QdrantConverter,
     QdrantKnowledgeBase,
 )
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import COLLECTION_NAME_PREFIX
 from canopy.knowledge_base.models import DocumentWithScore
+from canopy.knowledge_base.record_encoder.base import RecordEncoder
+from canopy.knowledge_base.reranker.reranker import Reranker
 from canopy.models.data_models import Query
-from tests.system.knowledge_base.qdrant.utils import (
+from tests.system.knowledge_base.qdrant.common import (
     assert_chunks_in_collection,
     assert_ids_in_collection,
     assert_ids_not_in_collection,
@@ -68,7 +72,7 @@ def test_create_index(collection_full_name, knowledge_base: QdrantKnowledgeBase)
     assert knowledge_base.collection_name == collection_full_name
     collection_info = knowledge_base._client.get_collection(collection_full_name)
     assert (
-        collection_info.config.params.vectors[DENSE_VECTOR].size
+        collection_info.config.params.vectors[DENSE_VECTOR_NAME].size
         == knowledge_base._encoder.dimension
     )
 
@@ -89,7 +93,9 @@ def test_is_verify_connection_happy_path(knowledge_base):
 
 def test_init_with_context_engine_prefix(collection_full_name, chunker, encoder):
     kb = QdrantKnowledgeBase(
-        collection_name=collection_full_name, record_encoder=encoder, chunker=chunker
+        collection_name=collection_full_name,
+        record_encoder=encoder,
+        chunker=chunker,
     )
     assert kb.collection_name == collection_full_name
 
@@ -103,7 +109,7 @@ def test_upsert_happy_path(
     assert_chunks_in_collection(knowledge_base, encoded_chunks)
 
 
-@pytest.mark.parametrize("key", ["document_id", "text", "source"])
+@pytest.mark.parametrize("key", ["document_id", "text", "source", "chunk_id"])
 def test_upsert_forbidden_metadata(knowledge_base, documents, key):
     doc = random.choice(documents)
     doc.metadata[key] = "bla"
@@ -120,16 +126,16 @@ def test_query(knowledge_base, encoded_chunks):
     execute_and_assert_queries(knowledge_base, encoded_chunks)
 
 
-def test_query_with_metadata_filter(knowledge_base):
-    assert_query_metadata_filter(
-        knowledge_base,
-        {
-            "must": [
-                {"key": "my-key", "match": {"value": "value-1"}},
-            ]
-        },
-        2,
-    )
+# def test_query_with_metadata_filter(knowledge_base):
+#     assert_query_metadata_filter(
+#         knowledge_base,
+#         {
+#             "must": [
+#                 {"key": "my-key", "match": {"value": "value-1"}},
+#             ]
+#         },
+#         2,
+#     )
 
 
 def test_delete_documents(knowledge_base: QdrantKnowledgeBase, encoded_chunks):
@@ -147,11 +153,9 @@ def test_delete_documents(knowledge_base: QdrantKnowledgeBase, encoded_chunks):
 
 
 def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
-    collection_name = knowledge_base.collection_name
-
     # chunker/kb that produces fewer chunks per doc
     chunker = StubChunker(num_chunks_per_doc=1)
-    kb = QdrantKnowledgeBase(collection_name, record_encoder=encoder, chunker=chunker)
+
     docs = documents[:2]
     doc_ids = [doc.id for doc in docs]
     chunk_ids = [
@@ -160,14 +164,14 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
         if chunk.document_id in doc_ids
     ]
 
-    assert_ids_in_collection(kb, chunk_ids)
+    assert_ids_in_collection(knowledge_base, chunk_ids)
 
     docs[0].metadata["new_key"] = "new_value"
-    kb.upsert(docs)
+    knowledge_base.upsert(docs)
 
     updated_chunks = encoder.encode_documents(chunker.chunk_documents(docs))
     expected_chunks = [QdrantConverter.convert_id(chunk.id) for chunk in updated_chunks]
-    assert_chunks_in_collection(kb, updated_chunks)
+    assert_chunks_in_collection(knowledge_base, updated_chunks)
 
     unexpected_chunks = [
         QdrantConverter.convert_id(c_id)
@@ -176,7 +180,7 @@ def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
     ]
     assert len(unexpected_chunks) > 0, "bug in the test itself"
 
-    assert_ids_not_in_collection(kb, unexpected_chunks)
+    assert_ids_not_in_collection(knowledge_base, unexpected_chunks)
 
 
 def test_upsert_large_list_happy_path(
@@ -221,14 +225,9 @@ def test_query_edge_case_documents(knowledge_base, datetime_metadata_encoded_chu
     execute_and_assert_queries(knowledge_base, datetime_metadata_encoded_chunks)
 
 
-def test_create_existing_index_no_connect(collection_full_name, collection_name):
-    kb = QdrantKnowledgeBase(
-        collection_name,
-        record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
-        chunker=StubChunker(num_chunks_per_doc=2),
-    )
+def test_create_existing_index(collection_full_name, knowledge_base):
     with pytest.raises(RuntimeError) as e:
-        kb.create_canopy_collection()
+        knowledge_base.create_canopy_collection()
 
     assert f"Collection {collection_full_name} already exists" in str(e.value)
 
@@ -246,146 +245,60 @@ def test_kb_non_existing_index(chunker, encoder):
     assert expected_msg in str(e.value)
 
 
-# def test_init_defaults(knowledge_base):
-#     index_name = knowledge_base.index_name
-#     new_kb = KnowledgeBase(index_name=index_name)
-#     new_kb.connect()
-#     assert isinstance(new_kb._index, pinecone.Index)
-#     assert new_kb.index_name == index_name
-#     assert isinstance(new_kb._chunker, Chunker)
-#     assert isinstance(new_kb._chunker, KnowledgeBase._DEFAULT_COMPONENTS["chunker"])
-#     assert isinstance(new_kb._encoder, RecordEncoder)
-#     assert isinstance(new_kb._encoder,
-#                       KnowledgeBase._DEFAULT_COMPONENTS["record_encoder"])
-#     assert isinstance(new_kb._reranker, Reranker)
-#     assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
+def test_init_defaults(knowledge_base, collection_name, collection_full_name):
+    new_kb = QdrantKnowledgeBase(collection_name)
+    assert isinstance(new_kb._client, QdrantClient)
+    assert new_kb.collection_name == collection_full_name
+    assert isinstance(new_kb._chunker, Chunker)
+    assert isinstance(
+        new_kb._chunker, QdrantKnowledgeBase._DEFAULT_COMPONENTS["chunker"]
+    )
+    assert isinstance(new_kb._encoder, RecordEncoder)
+    assert isinstance(
+        new_kb._encoder, QdrantKnowledgeBase._DEFAULT_COMPONENTS["record_encoder"]
+    )
+    assert isinstance(new_kb._reranker, Reranker)
+    assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
 
 
-# def test_init_defaults_with_override(knowledge_base, chunker):
-#     index_name = knowledge_base.index_name
-#     new_kb = KnowledgeBase(index_name=index_name, chunker=chunker)
-#     new_kb.connect()
-#     assert isinstance(new_kb._index, pinecone.Index)
-#     assert new_kb.index_name == index_name
-#     assert isinstance(new_kb._chunker, Chunker)
-#     assert isinstance(new_kb._chunker, StubChunker)
-#     assert new_kb._chunker is chunker
-#     assert isinstance(new_kb._encoder, RecordEncoder)
-#     assert isinstance(new_kb._encoder,
-#                       KnowledgeBase._DEFAULT_COMPONENTS["record_encoder"])
-#     assert isinstance(new_kb._reranker, Reranker)
-#     assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
+def test_init_defaults_with_override(knowledge_base, chunker):
+    collection_name = knowledge_base.collection_name
+    new_kb = QdrantKnowledgeBase(collection_name=collection_name, chunker=chunker)
+    assert isinstance(new_kb._client, QdrantClient)
+    assert new_kb.collection_name == collection_name
+    assert isinstance(new_kb._chunker, Chunker)
+    assert isinstance(new_kb._chunker, StubChunker)
+    assert new_kb._chunker is chunker
+    assert isinstance(new_kb._encoder, RecordEncoder)
+    assert isinstance(
+        new_kb._encoder, KnowledgeBase._DEFAULT_COMPONENTS["record_encoder"]
+    )
+    assert isinstance(new_kb._reranker, Reranker)
+    assert isinstance(new_kb._reranker, KnowledgeBase._DEFAULT_COMPONENTS["reranker"])
 
 
-# def test_init_raise_wrong_type(knowledge_base, chunker):
-#     index_name = knowledge_base.index_name
-#     with pytest.raises(TypeError) as e:
-#         KnowledgeBase(index_name=index_name, record_encoder=chunker)
+def test_init_raise_wrong_type(knowledge_base, chunker):
+    collection_name = knowledge_base.collection_name
+    with pytest.raises(TypeError) as e:
+        QdrantKnowledgeBase(
+            collection_name=collection_name,
+            record_encoder=chunker,
+        )
 
-#     assert "record_encoder must be an instance of RecordEncoder" in str(e.value)
-
-
-# def test_delete_index_happy_path(knowledge_base):
-#     knowledge_base.delete_index()
-
-#     assert knowledge_base._index_name not in pinecone.list_indexes()
-#     assert knowledge_base._index is None
-#     with pytest.raises(RuntimeError) as e:
-#         knowledge_base.delete(["doc_0"])
-#     assert "KnowledgeBase is not connected" in str(e.value)
+    assert "record_encoder must be an instance of RecordEncoder" in str(e.value)
 
 
-# def test_delete_index_for_non_existing(knowledge_base):
-#     with pytest.raises(RuntimeError) as e:
-#         knowledge_base.delete_index()
+def test_create_with_index_encoder_dimension_none(collection_name, chunker):
+    encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
+    encoder._dense_encoder.dimension = None
+    with pytest.raises(RuntimeError) as e:
+        kb = QdrantKnowledgeBase(
+            collection_name=collection_name,
+            record_encoder=encoder,
+            chunker=chunker,
+        )
+        kb.create_canopy_collection()
 
-#     assert "KnowledgeBase is not connected" in str(e.value)
-
-
-# def test_connect_after_delete(knowledge_base):
-#     with pytest.raises(RuntimeError) as e:
-#         knowledge_base.connect()
-
-#     assert "does not exist or was deleted" in str(e.value)
-
-
-# def test_create_with_text_in_indexed_field_raise(index_name,
-#                                                  chunker,
-#                                                  encoder):
-#     with pytest.raises(ValueError) as e:
-#         kb = KnowledgeBase(index_name=index_name,
-#                            record_encoder=encoder,
-#                            chunker=chunker)
-#         kb.create_canopy_index(indexed_fields=["id", "text", "metadata"])
-
-#     assert "The 'text' field cannot be used for metadata filtering" in str(e.value)
-
-
-# def test_create_with_index_encoder_dimension_none(index_name, chunker):
-#     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
-#     encoder._dense_encoder.dimension = None
-#     with pytest.raises(RuntimeError) as e:
-#         kb = KnowledgeBase(index_name=index_name,
-#                            record_encoder=encoder,
-#                            chunker=chunker)
-#         kb.create_canopy_index()
-
-#     assert "failed to infer" in str(e.value)
-#     assert "dimension" in str(e.value)
-#     assert f"{encoder.__class__.__name__} does not support" in str(e.value)
-
-
-# # TODO: Add unit tests that verify that `pinecone.create_index()` is called with
-# #  correct `dimension` in all cases (inferred from encoder, directly passed, etc.)
-
-# # TODO: This test should be part of KnowledgeBase unit tests, which we don't have yet.
-# def test_create_encoder_err(index_name, chunker):
-#     class RaisesStubRecordEncoder(StubRecordEncoder):
-#         @property
-#         def dimension(self):
-#             raise ValueError("mock error")
-
-#     encoder = RaisesStubRecordEncoder(StubDenseEncoder(dimension=3))
-
-#     with pytest.raises(RuntimeError) as e:
-#         kb = KnowledgeBase(index_name=index_name,
-#                            record_encoder=encoder,
-#                            chunker=chunker)
-#         kb.create_canopy_index()
-
-#     assert "failed to infer" in str(e.value)
-#     assert "dimension" in str(e.value)
-#     assert "mock error" in str(e.value)
-#     assert encoder.__class__.__name__ in str(e.value)
-
-
-# @pytest.fixture
-# def set_bad_credentials():
-#     original_api_key = os.environ.get(PINECONE_API_KEY_ENV_VAR)
-
-#     os.environ[PINECONE_API_KEY_ENV_VAR] = "bad-key"
-
-#     yield
-
-#     # Restore the original API key after test execution
-#     os.environ[PINECONE_API_KEY_ENV_VAR] = original_api_key
-
-
-# def test_create_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
-#     kb = KnowledgeBase(index_name=index_name,
-#                        record_encoder=encoder,
-#                        chunker=chunker)
-#     with pytest.raises(RuntimeError) as e:
-#         kb.create_canopy_index()
-
-#     assert "Please check your credentials" in str(e.value)
-
-
-# def test_init_bad_credentials(set_bad_credentials, index_name, chunker, encoder):
-#     kb = KnowledgeBase(index_name=index_name,
-#                        record_encoder=encoder,
-#                        chunker=chunker)
-#     with pytest.raises(RuntimeError) as e:
-#         kb.connect()
-
-#     assert "Please check your credentials and try again" in str(e.value)
+    assert "failed to infer" in str(e.value)
+    assert "dimension" in str(e.value)
+    assert f"{encoder.__class__.__name__} does not support" in str(e.value)

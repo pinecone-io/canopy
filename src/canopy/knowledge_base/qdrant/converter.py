@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Dict, List, Any, Union
 import uuid
 from qdrant_client import models
@@ -10,8 +11,8 @@ from canopy.knowledge_base.models import (
 from pinecone_text.sparse import SparseVector
 
 from canopy.knowledge_base.qdrant.constants import (
-    DENSE_VECTOR,
-    SPARSE_VECTOR,
+    DENSE_VECTOR_NAME,
+    SPARSE_VECTOR_NAME,
     UUID_NAMESPACE,
 )
 
@@ -20,10 +21,12 @@ class QdrantConverter:
     @staticmethod
     def convert_id(_id: str) -> str:
         """
-        Converts any string into a UUID-like format in a deterministic way.
+        Converts any string into a UUID string in a deterministic way based on a seed.
 
-        Qdrant does not accept any string as an id, so an internal id has to be
-        generated for each point. This is a deterministic way of doing so.
+        Qdrant does not accept an arbitrary string as an id, so an internal UUID has to be
+        generated for each point.
+        We generate deterministic UUIDs based on the original id.
+        Thereby enabling overwriting of the same point with the original id.
         """
         return str(uuid.uuid5(uuid.UUID(UUID_NAMESPACE), _id))
 
@@ -41,18 +44,19 @@ class QdrantConverter:
             vector: Dict[str, models.Vector] = {}
 
             if dense_vector:
-                vector[DENSE_VECTOR] = dense_vector
+                vector[DENSE_VECTOR_NAME] = dense_vector
 
             if sparse_vector:
-                vector[SPARSE_VECTOR] = models.SparseVector(
+                vector[SPARSE_VECTOR_NAME] = models.SparseVector(
                     indices=sparse_vector["indices"],  # type: ignore
                     values=sparse_vector["values"],  # type: ignore
                 )
+
             points.append(
                 models.PointStruct(
                     id=QdrantConverter.convert_id(_id),
                     vector=vector,
-                    payload={**record["metadata"], "id": _id},
+                    payload={**record["metadata"], "chunk_id": _id},
                 )
             )
         return points
@@ -61,8 +65,8 @@ class QdrantConverter:
     def scored_point_to_scored_doc(
         scored_point: models.ScoredPoint,
     ) -> "KBDocChunkWithScore":
-        metadata: Dict[str, Any] = scored_point.payload  # type: ignore
-        _id = scored_point.payload.pop("id")  # type: ignore
+        metadata: Dict[str, Any] = deepcopy(scored_point.payload)  # type: ignore
+        _id = metadata.pop("chunk_id")  # type: ignore
         text = metadata.pop("text", "")
         document_id = metadata.pop("document_id")
         return KBDocChunkWithScore(
@@ -78,11 +82,12 @@ class QdrantConverter:
     def kb_query_to_search_vector(
         query: KBQuery,
     ) -> "Union[models.NamedVector, models.NamedSparseVector]":
+        # Use dense vector if available, otherwise use sparse vector
         query_vector: Union[models.NamedSparseVector, models.NamedVector] = (
-            models.NamedVector(name=DENSE_VECTOR, vector=query.values)
+            models.NamedVector(name=DENSE_VECTOR_NAME, vector=query.values)
             if query.values is not None
             else models.NamedSparseVector(
-                name=SPARSE_VECTOR,
+                name=SPARSE_VECTOR_NAME,
                 vector=models.SparseVector(
                     indices=query.sparse_values["indices"],  # type: ignore
                     values=query.sparse_values["values"],  # type: ignore

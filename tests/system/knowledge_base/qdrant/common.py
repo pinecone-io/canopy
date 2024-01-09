@@ -1,5 +1,5 @@
 import numpy as np
-from canopy.knowledge_base.qdrant.constants import DENSE_VECTOR
+from canopy.knowledge_base.qdrant.constants import DENSE_VECTOR_NAME
 from canopy.knowledge_base.qdrant.converter import QdrantConverter
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import QdrantKnowledgeBase
 
@@ -19,7 +19,7 @@ def assert_chunks_in_collection(knowledge_base: QdrantKnowledgeBase, encoded_chu
         assert id in points
         point = points[id]
         assert np.allclose(
-            point.vector[DENSE_VECTOR],
+            point.vector[DENSE_VECTOR_NAME],
             np.array(chunk.values, dtype=np.float32),
             atol=1e-8,
         )

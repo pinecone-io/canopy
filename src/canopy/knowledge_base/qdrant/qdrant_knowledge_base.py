@@ -5,9 +5,9 @@ from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.qdrant.constants import (
     COLLECTION_NAME_PREFIX,
-    DENSE_VECTOR,
+    DENSE_VECTOR_NAME,
     RESERVED_METADATA_KEYS,
-    SPARSE_VECTOR,
+    SPARSE_VECTOR_NAME,
 )
 from canopy.knowledge_base.qdrant.converter import QdrantConverter
 from canopy.knowledge_base.qdrant.utils import batched, generate_clients, sync_fallback
@@ -24,7 +24,6 @@ from canopy.knowledge_base.reranker import Reranker, TransparentReranker
 from canopy.models.data_models import Query, Document
 
 from qdrant_client import models as models
-from qdrant_client.local.async_qdrant_local import AsyncQdrantLocal
 from qdrant_client.http.exceptions import UnexpectedResponse
 from grpc import RpcError  # type: ignore
 from tqdm import tqdm
@@ -121,7 +120,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         self, queries: List[Query], global_metadata_filter: Optional[dict] = None
     ) -> List[QueryResult]:
         queries = self._encoder.encode_queries(queries)
-        results = [self.query_collection(q, global_metadata_filter) for q in queries]
+        results = [self._query_collection(q, global_metadata_filter) for q in queries]
         results = self._reranker.rerank(results)
 
         return [
@@ -141,16 +140,9 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
     async def aquery(
         self, queries: List[Query], global_metadata_filter: Optional[dict] = None
     ) -> List[QueryResult]:
-        if self._async_client is None or isinstance(
-            self._async_client._client, AsyncQdrantLocal
-        ):
-            raise NotImplementedError(
-                "QdrantLocal cannot interoperate with sync and async clients"
-            )
-
-        queries = await self._encoder.aencode_queries(queries)
+        queries = self._encoder.encode_queries(queries)
         results = [
-            await self.aquery_collection(q, global_metadata_filter) for q in queries
+            await self._aquery_collection(q, global_metadata_filter) for q in queries
         ]
         results = self._reranker.rerank(results)
 
@@ -186,7 +178,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
 
-        self.upsert_collection(encoded_chunks, batch_size, show_progress_bar)
+        self._upsert_collection(encoded_chunks, batch_size, show_progress_bar)
 
     @sync_fallback
     async def aupsert(
@@ -196,13 +188,6 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         batch_size: int = 200,
         show_progress_bar: bool = False,
     ):
-        if self._async_client is None or isinstance(
-            self._async_client._client, AsyncQdrantLocal
-        ):
-            raise NotImplementedError(
-                "QdrantLocal cannot interoperate with sync and async clients"
-            )
-
         for doc in documents:
             metadata_keys = set(doc.metadata.keys())
             forbidden_keys = metadata_keys.intersection(RESERVED_METADATA_KEYS)
@@ -212,10 +197,10 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                     f"{forbidden_keys}. Please remove them and try again."
                 )
 
-        chunks = await self._chunker.achunk_documents(documents)
-        encoded_chunks = await self._encoder.aencode_documents(chunks)
+        chunks = self._chunker.chunk_documents(documents)
+        encoded_chunks = self._encoder.encode_documents(chunks)
 
-        await self.aupsert_collection(encoded_chunks, batch_size, show_progress_bar)
+        await self._aupsert_collection(encoded_chunks, batch_size, show_progress_bar)
 
     def delete(self, document_ids: List[str], namespace: str = "") -> None:
         self._client.delete(
@@ -231,13 +216,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
 
     @sync_fallback
     async def adelete(self, document_ids: List[str], namespace: str = "") -> None:
-        if self._async_client is None or isinstance(
-            self._async_client._client, AsyncQdrantLocal
-        ):
-            raise NotImplementedError(
-                "QdrantLocal cannot interoperate with sync and async clients"
-            )
-        await self._async_client.delete(
+        await self._async_client.delete(  # type: ignore
             self.collection_name,
             points_selector=models.Filter(
                 must=[
@@ -292,12 +271,12 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             self._client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config={
-                    DENSE_VECTOR: models.VectorParams(
+                    DENSE_VECTOR_NAME: models.VectorParams(
                         size=dimension, distance=distance, on_disk=on_disk
                     )
                 },
                 sparse_vectors_config={
-                    SPARSE_VECTOR: models.SparseVectorParams(
+                    SPARSE_VECTOR_NAME: models.SparseVectorParams(
                         index=models.SparseIndexParams(
                             on_disk=on_disk,
                         )
@@ -314,12 +293,19 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                 init_from=init_from,
             )
 
-    @staticmethod
-    def _get_full_collection_name(collection_name: str) -> str:
-        if collection_name.startswith(COLLECTION_NAME_PREFIX):
-            return collection_name
-        else:
-            return COLLECTION_NAME_PREFIX + collection_name
+    def list_canopy_collections(self) -> List[str]:
+        collections = [
+            collection.name
+            for collection in self._client.get_collections().collections
+            if collection.name.startswith(COLLECTION_NAME_PREFIX)
+        ]
+        return collections
+
+    def delete_canopy_collection(self):
+        successful = self._client.delete_collection(self.collection_name)
+
+        if not successful:
+            raise RuntimeError(f"Failed to delete collection {self.collection_name}")
 
     @property
     def collection_name(self) -> str:
@@ -328,7 +314,14 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         """
         return self._collection_name
 
-    def query_collection(
+    @staticmethod
+    def _get_full_collection_name(collection_name: str) -> str:
+        if collection_name.startswith(COLLECTION_NAME_PREFIX):
+            return collection_name
+        else:
+            return COLLECTION_NAME_PREFIX + collection_name
+
+    def _query_collection(
         self, query: KBQuery, global_metadata_filter: Optional[dict]
     ) -> KBQueryResult:
         metadata_filter = deepcopy(query.metadata_filter)
@@ -340,7 +333,6 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
 
         query_params = deepcopy(query.query_params)
 
-        # Use dense vector if available, otherwise use sparse vector
         query_vector = QdrantConverter.kb_query_to_search_vector(query)
 
         results = self._client.search(
@@ -351,12 +343,14 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             with_payload=True,
             **query_params,
         )
+
         documents: List[KBDocChunkWithScore] = []
+
         for result in results:
             documents.append(QdrantConverter.scored_point_to_scored_doc(result))
         return KBQueryResult(query=query.text, documents=documents)
 
-    async def aquery_collection(
+    async def _aquery_collection(
         self, query: KBQuery, global_metadata_filter: Optional[dict]
     ) -> KBQueryResult:
         metadata_filter = deepcopy(query.metadata_filter)
@@ -384,7 +378,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             documents.append(QdrantConverter.scored_point_to_scored_doc(result))
         return KBQueryResult(query=query.text, documents=documents)
 
-    def upsert_collection(
+    def _upsert_collection(
         self,
         encoded_chunks: List[KBEncodedDocChunk],
         batch_size: int,
@@ -406,7 +400,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
 
                 progress_bar.update(batch_size)
 
-    async def aupsert_collection(
+    async def _aupsert_collection(
         self,
         encoded_chunks: List[KBEncodedDocChunk],
         batch_size: int,
@@ -427,20 +421,6 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                 )
 
                 progress_bar.update(batch_size)
-
-    def list_canopy_collections(self) -> List[str]:
-        collections = [
-            collection.name
-            for collection in self._client.get_collections().collections
-            if collection.name.startswith(COLLECTION_NAME_PREFIX)
-        ]
-        return collections
-
-    def delete_canopy_collection(self):
-        successful = self._client.delete_collection(self.collection_name)
-
-        if not successful:
-            raise RuntimeError(f"Failed to delete collection {self.collection_name}")
 
     async def close(self) -> None:
         self._client.close()
