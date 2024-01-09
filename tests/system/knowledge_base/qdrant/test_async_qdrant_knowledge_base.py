@@ -18,6 +18,9 @@ from tests.system.knowledge_base.qdrant.utils import (
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.models.data_models import Query
 from tests.unit import random_words
+from tests.unit.stubs.stub_chunker import StubChunker
+from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
+from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 
 load_dotenv()
 
@@ -122,106 +125,87 @@ async def test_delete_documents(knowledge_base: QdrantKnowledgeBase, encoded_chu
     assert_ids_not_in_collection(knowledge_base, chunk_ids)
 
 
-# def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
-#     collection_name = knowledge_base.collection_name
+@pytest.mark.asyncio
+async def test_update_documents(encoder, documents, encoded_chunks, knowledge_base):
+    collection_name = knowledge_base.collection_name
 
-#     # chunker/kb that produces fewer chunks per doc
-#     chunker = StubChunker(num_chunks_per_doc=1)
-#     kb = QdrantKnowledgeBase(collection_name, record_encoder=encoder, chunker=chunker)
-#     docs = documents[:2]
-#     doc_ids = [doc.id for doc in docs]
-#     chunk_ids = [
-#         QdrantConverter.convert_id(chunk.id)
-#         for chunk in encoded_chunks
-#         if chunk.document_id in doc_ids
-#     ]
+    # chunker/kb that produces fewer chunks per doc
+    chunker = StubChunker(num_chunks_per_doc=1)
+    kb = QdrantKnowledgeBase(collection_name, record_encoder=encoder, chunker=chunker)
+    docs = documents[:2]
+    doc_ids = [doc.id for doc in docs]
+    chunk_ids = [
+        QdrantConverter.convert_id(chunk.id)
+        for chunk in encoded_chunks
+        if chunk.document_id in doc_ids
+    ]
 
-#     assert_ids_in_collection(kb, chunk_ids)
+    assert_ids_in_collection(kb, chunk_ids)
 
-#     docs[0].metadata["new_key"] = "new_value"
-#     kb.upsert(docs)
+    docs[0].metadata["new_key"] = "new_value"
+    await kb.aupsert(docs)
 
-#     updated_chunks = encoder.encode_documents(chunker.chunk_documents(docs))
-#     expected_chunks = [QdrantConverter.convert_id(chunk.id) for chunk in updated_chunks]
-#     assert_chunks_in_collection(kb, updated_chunks)
+    updated_chunks = encoder.encode_documents(chunker.chunk_documents(docs))
+    expected_chunks = [QdrantConverter.convert_id(chunk.id) for chunk in updated_chunks]
+    assert_chunks_in_collection(kb, updated_chunks)
 
-#     unexpected_chunks = [
-#         QdrantConverter.convert_id(c_id)
-#         for c_id in chunk_ids
-#         if c_id not in expected_chunks
-#     ]
-#     assert len(unexpected_chunks) > 0, "bug in the test itself"
+    unexpected_chunks = [
+        QdrantConverter.convert_id(c_id)
+        for c_id in chunk_ids
+        if c_id not in expected_chunks
+    ]
+    assert len(unexpected_chunks) > 0, "bug in the test itself"
 
-#     assert_ids_not_in_collection(kb, unexpected_chunks)
-
-
-# def test_upsert_large_list_happy_path(
-#     knowledge_base, documents_large, encoded_chunks_large
-# ):
-#     knowledge_base.upsert(documents_large)
-
-#     chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
-#     assert_ids_in_collection(
-#         knowledge_base,
-#         [QdrantConverter.convert_id(chunk.id) for chunk in chunks_for_validation],
-#     )
+    assert_ids_not_in_collection(kb, unexpected_chunks)
 
 
-# def test_delete_large_df_happy_path(
-#     knowledge_base, documents_large, encoded_chunks_large
-# ):
-#     knowledge_base.delete([doc.id for doc in documents_large])
+@pytest.mark.asyncio
+async def test_upsert_large_list_happy_path(
+    knowledge_base, documents_large, encoded_chunks_large
+):
+    await knowledge_base.aupsert(documents_large)
 
-#     chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
-#     assert_ids_not_in_collection(
-#         knowledge_base,
-#         [QdrantConverter.convert_id(chunk.id) for chunk in chunks_for_validation],
-#     )
-
-
-# def test_upsert_documents_with_datetime_metadata(
-#     knowledge_base, documents_with_datetime_metadata, datetime_metadata_encoded_chunks
-# ):
-#     knowledge_base.upsert(documents_with_datetime_metadata)
-
-#     assert_ids_in_collection(
-#         knowledge_base,
-#         [
-#             QdrantConverter.convert_id(chunk.id)
-#             for chunk in datetime_metadata_encoded_chunks
-#         ],
-#     )
+    chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
+    assert_ids_in_collection(
+        knowledge_base,
+        [QdrantConverter.convert_id(chunk.id) for chunk in chunks_for_validation],
+    )
 
 
-# def test_query_edge_case_documents(knowledge_base, datetime_metadata_encoded_chunks):
-#     execute_and_assert_queries(knowledge_base, datetime_metadata_encoded_chunks)
+@pytest.mark.asyncio
+async def test_delete_large_df_happy_path(
+    knowledge_base, documents_large, encoded_chunks_large
+):
+    await knowledge_base.adelete([doc.id for doc in documents_large])
+
+    chunks_for_validation = encoded_chunks_large[:10] + encoded_chunks_large[-10:]
+    assert_ids_not_in_collection(
+        knowledge_base,
+        [QdrantConverter.convert_id(chunk.id) for chunk in chunks_for_validation],
+    )
 
 
-# def test_create_existing_index_no_connect(collection_full_name, collection_name):
-#     kb = QdrantKnowledgeBase(
-#         collection_name,
-#         record_encoder=StubRecordEncoder(StubDenseEncoder(dimension=3)),
-#         chunker=StubChunker(num_chunks_per_doc=2),
-#     )
-#     with pytest.raises(RuntimeError) as e:
-#         kb.create_canopy_collection()
+@pytest.mark.asyncio
+async def test_upsert_documents_with_datetime_metadata(
+    knowledge_base, documents_with_datetime_metadata, datetime_metadata_encoded_chunks
+):
+    await knowledge_base.aupsert(documents_with_datetime_metadata)
 
-#     assert f"Collection {collection_full_name} already exists" in str(e.value)
+    assert_ids_in_collection(
+        knowledge_base,
+        [
+            QdrantConverter.convert_id(chunk.id)
+            for chunk in datetime_metadata_encoded_chunks
+        ],
+    )
 
 
-# def test_kb_non_existing_index(chunker, encoder):
-#     kb = QdrantKnowledgeBase(
-#         "non-existing-collection", record_encoder=encoder, chunker=chunker
-#     )
+@pytest.mark.asyncio
+async def test_query_edge_case_documents(
+    knowledge_base, datetime_metadata_encoded_chunks
+):
+    await execute_and_assert_queries(knowledge_base, datetime_metadata_encoded_chunks)
 
-#     with pytest.raises(RuntimeError) as e:
-#         kb.verify_index_connection()
-#     expected_msg = (
-#         f"Collection {COLLECTION_NAME_PREFIX}non-existing-collection does not exist!"
-#     )
-#     assert expected_msg in str(e.value)
-
-# Async
 
 # def test_init_defaults(knowledge_base):
 #     index_name = knowledge_base.index_name
