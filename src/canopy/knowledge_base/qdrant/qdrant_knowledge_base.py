@@ -264,7 +264,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
 
             raise RuntimeError(
                 f"Collection {self.collection_name} already exists!"
-                "If you wish to delete it call `knowledge_base.delete_canopy_collection()`. "
+                "To delete it call `knowledge_base.delete_canopy_collection()`. "
             )
 
         except (UnexpectedResponse, RpcError, ValueError):

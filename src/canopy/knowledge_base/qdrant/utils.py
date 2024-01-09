@@ -16,15 +16,15 @@ def sync_fallback(method: Callable) -> Callable:
         if self._async_client is None or isinstance(
             self._async_client._client, AsyncQdrantLocal
         ):
+            sync_method_name = method.__name__[1:]
+
             logger.warning(
                 f"{method.__name__}() cannot be used for QdrantLocal. "
-                f"Falling back to {method.__name__[1:]}()"
+                f"Falling back to {sync_method_name}()"
             )
             loop = asyncio.get_event_loop()
 
-            call = functools.partial(
-                getattr(self, method.__name__[1:]), *args, **kwargs
-            )
+            call = functools.partial(getattr(self, sync_method_name), *args, **kwargs)
             return await loop.run_in_executor(None, call)
         else:
             return await method(self, *args, **kwargs)

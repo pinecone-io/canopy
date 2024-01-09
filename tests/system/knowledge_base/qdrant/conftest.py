@@ -28,6 +28,7 @@ def chunker():
 def encoder():
     return StubRecordEncoder(StubDenseEncoder())
 
+
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(collection_name, chunker, encoder):
     kb = QdrantKnowledgeBase(
@@ -39,6 +40,7 @@ def knowledge_base(collection_name, chunker, encoder):
     kb.create_canopy_collection()
 
     return kb
+
 
 @pytest.fixture
 def documents_large():
@@ -87,6 +89,7 @@ def datetime_metadata_encoded_chunks(
 def encoded_chunks(documents, chunker, encoder):
     chunks = chunker.chunk_documents(documents)
     return encoder.encode_documents(chunks)
+
 
 @pytest.fixture(scope="module", autouse=True)
 def teardown_knowledge_base(collection_full_name, knowledge_base):

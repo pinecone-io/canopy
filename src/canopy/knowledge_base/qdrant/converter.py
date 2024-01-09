@@ -23,7 +23,7 @@ class QdrantConverter:
         """
         Converts any string into a UUID string in a deterministic way based on a seed.
 
-        Qdrant does not accept an arbitrary string as an id, so an internal UUID has to be
+        Qdrant does not accept an arbitrary string as id, so an internal UUID has to be
         generated for each point.
         We generate deterministic UUIDs based on the original id.
         Thereby enabling overwriting of the same point with the original id.
