@@ -1,9 +1,10 @@
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Union
 import uuid
 from qdrant_client import models
 from canopy.knowledge_base.models import (
     KBDocChunkWithScore,
     KBEncodedDocChunk,
+    KBQuery,
     VectorValues,
 )
 from pinecone_text.sparse import SparseVector
@@ -72,3 +73,21 @@ class QdrantConverter:
             source=metadata.pop("source", ""),
             metadata=metadata,
         )
+
+    @staticmethod
+    def kb_query_to_search_vector(
+        query: KBQuery,
+    ) -> "Union[models.NamedVector, models.NamedSparseVector]":
+        query_vector: Union[models.NamedSparseVector, models.NamedVector] = (
+            models.NamedVector(name=DENSE_VECTOR, vector=query.values)
+            if query.values is not None
+            else models.NamedSparseVector(
+                name=SPARSE_VECTOR,
+                vector=models.SparseVector(
+                    indices=query.sparse_values["indices"],  # type: ignore
+                    values=query.sparse_values["values"],  # type: ignore
+                ),
+            )
+        )
+
+        return query_vector

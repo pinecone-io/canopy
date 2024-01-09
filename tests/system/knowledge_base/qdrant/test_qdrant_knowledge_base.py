@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import pytest
 from dotenv import load_dotenv
 
@@ -12,101 +11,19 @@ from canopy.knowledge_base.qdrant.qdrant_knowledge_base import (
 )
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import COLLECTION_NAME_PREFIX
 from canopy.knowledge_base.models import DocumentWithScore
-from canopy.models.data_models import Document, Query
-from tests.unit import random_words
+from canopy.models.data_models import Query
+from tests.system.knowledge_base.qdrant.utils import (
+    assert_chunks_in_collection,
+    assert_ids_in_collection,
+    assert_ids_not_in_collection,
+    assert_num_points_in_collection,
+    total_vectors_in_collection,
+)
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-from tests.util import create_system_tests_index_name
 
 load_dotenv()
-
-PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
-
-
-@pytest.fixture(scope="module")
-def collection_name(testrun_uid):
-    return create_system_tests_index_name(testrun_uid)
-
-
-@pytest.fixture(scope="module")
-def collection_full_name(collection_name):
-    return COLLECTION_NAME_PREFIX + collection_name
-
-
-@pytest.fixture(scope="module")
-def chunker():
-    return StubChunker(num_chunks_per_doc=2)
-
-
-@pytest.fixture(scope="module")
-def encoder():
-    return StubRecordEncoder(StubDenseEncoder())
-
-
-@pytest.fixture(scope="module", autouse=True)
-def knowledge_base(collection_name, chunker, encoder):
-    kb = QdrantKnowledgeBase(
-        collection_name=collection_name,
-        record_encoder=encoder,
-        chunker=chunker,
-        location="http://localhost:6333",
-    )
-    kb.create_canopy_collection()
-
-    return kb
-
-
-def total_vectors_in_collection(knowledge_base: QdrantKnowledgeBase):
-    return knowledge_base._client.count(knowledge_base.collection_name).count
-
-
-def assert_chunks_in_collection(knowledge_base: QdrantKnowledgeBase, encoded_chunks):
-    ids = [QdrantConverter.convert_id(c.id) for c in encoded_chunks]
-    fetch_result = knowledge_base._client.retrieve(
-        knowledge_base.collection_name, ids=ids, with_payload=True, with_vectors=True
-    )
-    points = {p.id: p for p in fetch_result}
-    for chunk in encoded_chunks:
-        id = QdrantConverter.convert_id(chunk.id)
-        assert id in points
-        point = points[id]
-        assert np.allclose(
-            point.vector[DENSE_VECTOR],
-            np.array(chunk.values, dtype=np.float32),
-            atol=1e-8,
-        )
-
-        assert point.payload["text"] == chunk.text
-        assert point.payload["document_id"] == chunk.document_id
-        assert point.payload["source"] == chunk.source
-        for key, value in chunk.metadata.items():
-            assert point.payload[key] == value
-
-
-def assert_ids_in_collection(knowledge_base, ids):
-    fetch_result = knowledge_base._client.retrieve(
-        knowledge_base.collection_name,
-        ids=ids,
-    )
-    assert len(fetch_result) == len(
-        ids
-    ), f"Expected {len(ids)} ids, got {len(fetch_result)}"
-
-
-def assert_num_points_in_collection(knowledge_base, num_vectors):
-    points_in_index = total_vectors_in_collection(knowledge_base)
-    assert (
-        points_in_index == num_vectors
-    ), f"Expected {num_vectors} vectors in index, got {points_in_index}"
-
-
-def assert_ids_not_in_collection(knowledge_base, ids):
-    fetch_result = knowledge_base._client.retrieve(
-        knowledge_base.collection_name,
-        ids=ids,
-    )
-    assert len(fetch_result) == 0, f"Found {len(fetch_result)} unexpected ids"
 
 
 def execute_and_assert_queries(knowledge_base: QdrantKnowledgeBase, chunks_to_query):
@@ -145,84 +62,6 @@ def assert_query_metadata_filter(
     query_results = knowledge_base.query([query])
     assert len(query_results) == 1
     assert len(query_results[0].documents) == num_vectors_expected
-
-
-@pytest.fixture(scope="module", autouse=True)
-def teardown_knowledge_base(collection_full_name, knowledge_base):
-    yield
-
-    knowledge_base._client.delete_collection(collection_full_name)
-
-
-def _generate_text(num_words: int):
-    return " ".join(random.choices(random_words, k=num_words))
-
-
-@pytest.fixture(scope="module")
-def random_texts():
-    return [_generate_text(10) for _ in range(5)]
-
-
-@pytest.fixture
-def documents(random_texts):
-    return [
-        Document(
-            id=f"doc_{i}",
-            text=random_texts[i],
-            source=f"source_{i}",
-            metadata={"my-key": f"value-{i}"},
-        )
-        for i in range(5)
-    ]
-
-
-@pytest.fixture
-def documents_large():
-    return [
-        Document(
-            id=f"doc_{i}_large",
-            text=f"Sample document {i}",
-            metadata={"my-key-large": f"value-{i}"},
-        )
-        for i in range(1000)
-    ]
-
-
-@pytest.fixture
-def encoded_chunks_large(documents_large, chunker, encoder):
-    chunks = chunker.chunk_documents(documents_large)
-    return encoder.encode_documents(chunks)
-
-
-@pytest.fixture
-def documents_with_datetime_metadata():
-    return [
-        Document(
-            id="doc_1_metadata",
-            text="document with datetime metadata",
-            source="source_1",
-            metadata={
-                "datetime": "2021-01-01T00:00:00Z",
-                "datetime_other_format": "January 1, 2021 00:00:00",
-                "datetime_other_format_2": "2210.03945",
-            },
-        ),
-        Document(id="2021-01-01T00:00:00Z", text="id is datetime", source="source_1"),
-    ]
-
-
-@pytest.fixture
-def datetime_metadata_encoded_chunks(
-    documents_with_datetime_metadata, chunker, encoder
-):
-    chunks = chunker.chunk_documents(documents_with_datetime_metadata)
-    return encoder.encode_documents(chunks)
-
-
-@pytest.fixture
-def encoded_chunks(documents, chunker, encoder):
-    chunks = chunker.chunk_documents(documents)
-    return encoder.encode_documents(chunks)
 
 
 def test_create_index(collection_full_name, knowledge_base: QdrantKnowledgeBase):
