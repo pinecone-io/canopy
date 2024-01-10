@@ -19,10 +19,16 @@ class CohereQueryGenerator(QueryGenerator):
                  llm: Optional[BaseLLM] = None):
         self._llm = llm or self._DEFAULT_COMPONENTS["llm"]()
 
+        if not isinstance(self._llm, CohereLLM):
+            raise NotImplementedError(
+                "CohereQueryGenerator only compatible with CohereLLM"
+            )
+
     def generate(self,
                  messages: Messages,
                  max_prompt_tokens: int) -> List[Query]:
-        queries = self._llm.generate_search_queries(messages)
+        queries = self._llm.generate_search_queries(  # type: ignore[union-attr]
+            messages)
         return [Query(text=query) for query in queries]
 
     async def agenerate(self,

@@ -2,18 +2,19 @@ import time
 from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List
 
-import cohere
+import cohere  # type: ignore
 from tenacity import retry, stop_after_attempt
 
 from canopy.llm import BaseLLM
 from canopy.llm.models import Function
 from canopy.models.api_models import (
+    _Choice,
     _StreamChoice,
     ChatResponse,
     StreamingChatChunk,
     TokenCounts,
 )
-from canopy.models.data_models import Context, Messages, Role, Query
+from canopy.models.data_models import Context, MessageBase, Messages, Role, Query
 from canopy.context_engine.context_builder.stuffing import StuffingContextContent
 
 
@@ -25,7 +26,7 @@ class CohereLLM(BaseLLM):
           You can set the "CO_API_KEY" environment variable to your API key.
     """
     def __init__(self,
-                 model_name: Optional[str] = "command-nightly",
+                 model_name: str = "command-nightly",
                  *,
                  api_key: Optional[str] = None,
                  base_url: Optional[str] = None,
@@ -87,7 +88,7 @@ class CohereLLM(BaseLLM):
             model_params or {}
         )
         connectors = model_params_dict.pop('connectors', None)
-        messages: Dict[str, Any] = self.map_messages(chat_history)
+        messages: List[Dict[str, Any]] = self.map_messages(chat_history)
 
         if not messages:
             raise cohere.error.CohereAPIError("No message provided")
@@ -138,14 +139,14 @@ class CohereLLM(BaseLLM):
         return ChatResponse(
             id=response.id,
             created=int(time.time()),
-            choices=[{
-                "index": 0,
-                "message": {
-                    "role": "assistant",
-                    "content": response.text,
-                },
-                "finish_reason": "stop",
-            }],
+            choices=[_Choice(
+                index=0,
+                message=MessageBase(
+                    role=Role.ASSISTANT,
+                    content=response.text,
+                ),
+                finish_reason="stop",
+            )],
             object="chat.completion",
             model=self.model_name,
             usage=TokenCounts(
@@ -171,12 +172,14 @@ class CohereLLM(BaseLLM):
         return [search_query['text'] for search_query in response.search_queries]
 
     def enforced_function_call(self,
-                               messages: Messages,
+                               system_prompt: str,
+                               chat_history: Messages,
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None,) -> dict:
-        return NotImplementedError()
+                               model_params: Optional[dict] = None
+                               ) -> dict:
+        return NotImplementedError()  # type: ignore[return-value]
 
     async def aenforced_function_call(self,
                                       system_prompt: str,
@@ -187,7 +190,11 @@ class CohereLLM(BaseLLM):
         raise NotImplementedError()
 
     async def achat_completion(self,
-                               messages: Messages, *, stream: bool = False,
+                               system_prompt: str,
+                               chat_history: Messages,
+                               context: Optional[Context] = None,
+                               *,
+                               stream: bool = False,
                                max_generated_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None,
                                ) -> Union[ChatResponse,
@@ -202,7 +209,7 @@ class CohereLLM(BaseLLM):
                                 ) -> List[Query]:
         raise NotImplementedError()
 
-    def map_messages(self, messages: Messages) -> List[dict]:
+    def map_messages(self, messages: Messages) -> List[dict[str, Any]]:
         """
         Map the messages to format expected by Cohere.
 
@@ -233,7 +240,8 @@ class CohereLLM(BaseLLM):
 
         return mapped_messages
 
-    def generate_documents_from_context(self, context: Optional[Context]) -> List[Dict[str, Any]]:
+    def generate_documents_from_context(
+            self, context: Optional[Context]) -> List[Dict[str, Any]]:
         """
         Generate document data to pass to Cohere Chat API from provided context data.
 

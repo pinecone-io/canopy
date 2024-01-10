@@ -1,4 +1,4 @@
-import cohere
+import cohere  # type: ignore
 
 from typing import List, Optional
 from .base import BaseTokenizer
