@@ -44,6 +44,7 @@ def generate_clients(
     timeout: Optional[float] = None,
     host: Optional[str] = None,
     path: Optional[str] = None,
+    force_disable_check_same_thread: bool = False,
     **kwargs: Any,
 ) -> Tuple[QdrantClient, Union[AsyncQdrantClient, None]]:
     sync_client = QdrantClient(
@@ -58,12 +59,13 @@ def generate_clients(
         timeout=timeout,
         host=host,
         path=path,
+        force_disable_check_same_thread=force_disable_check_same_thread,
         **kwargs,
     )
 
     if location == ":memory:" or path is not None:
         # In-memory Qdrant doesn't interoperate with Sync and Async clients
-        # We fallback to sync operations in this case
+        # We fallback to sync operations in this case using @utils.sync_fallback
         async_client = None
     else:
         async_client = AsyncQdrantClient(
@@ -78,6 +80,7 @@ def generate_clients(
             timeout=timeout,
             host=host,
             path=path,
+            force_disable_check_same_thread=force_disable_check_same_thread,
             **kwargs,
         )
 

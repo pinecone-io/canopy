@@ -2,6 +2,7 @@ import pytest
 from canopy.knowledge_base.qdrant.constants import COLLECTION_NAME_PREFIX
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import QdrantKnowledgeBase
 from canopy.models.data_models import Document
+from tests.system.knowledge_base.qdrant.common import qdrant_locations
 from tests.system.knowledge_base.test_knowledge_base import _generate_text
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
@@ -29,13 +30,13 @@ def encoder():
     return StubRecordEncoder(StubDenseEncoder())
 
 
-@pytest.fixture(scope="module", autouse=True)
-def knowledge_base(collection_name, chunker, encoder):
+@pytest.fixture(scope="module", autouse=True, params=qdrant_locations())
+def knowledge_base(collection_name, chunker, encoder, request):
     kb = QdrantKnowledgeBase(
         collection_name=collection_name,
         record_encoder=encoder,
         chunker=chunker,
-        location=":memory:",
+        location=request.param,
     )
     kb.create_canopy_collection()
 

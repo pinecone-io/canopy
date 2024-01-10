@@ -21,12 +21,11 @@ class QdrantConverter:
     @staticmethod
     def convert_id(_id: str) -> str:
         """
-        Converts any string into a UUID string in a deterministic way based on a seed.
+        Converts any string into a UUID string based on a seed.
 
-        Qdrant does not accept an arbitrary string as id, so an internal UUID has to be
-        generated for each point.
-        We generate deterministic UUIDs based on the original id.
-        Thereby enabling overwriting of the same point with the original id.
+        Qdrant accepts UUID strings and unsigned integers as point ID.
+        We use a seed to convert each string into a UUID string deterministically.
+        This allows us to overwrite the same point with the original ID.
         """
         return str(uuid.uuid5(uuid.UUID(UUID_NAMESPACE), _id))
 

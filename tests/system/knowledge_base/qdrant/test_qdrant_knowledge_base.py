@@ -1,3 +1,4 @@
+import copy
 import random
 
 import pytest
@@ -16,6 +17,8 @@ from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder.base import RecordEncoder
 from canopy.knowledge_base.reranker.reranker import Reranker
 from canopy.models.data_models import Query
+
+from qdrant_client.qdrant_remote import QdrantRemote
 from tests.system.knowledge_base.qdrant.common import (
     assert_chunks_in_collection,
     assert_ids_in_collection,
@@ -68,7 +71,7 @@ def assert_query_metadata_filter(
     assert len(query_results[0].documents) == num_vectors_expected
 
 
-def test_create_index(collection_full_name, knowledge_base: QdrantKnowledgeBase):
+def test_create_collection(collection_full_name, knowledge_base: QdrantKnowledgeBase):
     assert knowledge_base.collection_name == collection_full_name
     collection_info = knowledge_base._client.get_collection(collection_full_name)
     assert (
@@ -77,7 +80,7 @@ def test_create_index(collection_full_name, knowledge_base: QdrantKnowledgeBase)
     )
 
 
-def test_list_indexes(collection_full_name, knowledge_base: QdrantKnowledgeBase):
+def test_list_collections(collection_full_name, knowledge_base: QdrantKnowledgeBase):
     collections_list = knowledge_base.list_canopy_collections()
 
     assert len(collections_list) > 0
@@ -126,16 +129,22 @@ def test_query(knowledge_base, encoded_chunks):
     execute_and_assert_queries(knowledge_base, encoded_chunks)
 
 
-# def test_query_with_metadata_filter(knowledge_base):
-#     assert_query_metadata_filter(
-#         knowledge_base,
-#         {
-#             "must": [
-#                 {"key": "my-key", "match": {"value": "value-1"}},
-#             ]
-#         },
-#         2,
-#     )
+def test_query_with_metadata_filter(knowledge_base):
+    if not isinstance(knowledge_base._client._client, QdrantRemote):
+        pytest.skip(
+            "Dict filter is not supported for QdrantLocal"
+            "Use qdrant_client.models.Filter instead"
+        )
+
+    assert_query_metadata_filter(
+        knowledge_base,
+        {
+            "must": [
+                {"key": "my-key", "match": {"value": "value-1"}},
+            ]
+        },
+        2,
+    )
 
 
 def test_delete_documents(knowledge_base: QdrantKnowledgeBase, encoded_chunks):
@@ -225,17 +234,17 @@ def test_query_edge_case_documents(knowledge_base, datetime_metadata_encoded_chu
     execute_and_assert_queries(knowledge_base, datetime_metadata_encoded_chunks)
 
 
-def test_create_existing_index(collection_full_name, knowledge_base):
+def test_create_existing_collection(collection_full_name, knowledge_base):
     with pytest.raises(RuntimeError) as e:
         knowledge_base.create_canopy_collection()
 
     assert f"Collection {collection_full_name} already exists" in str(e.value)
 
 
-def test_kb_non_existing_index(chunker, encoder):
-    kb = QdrantKnowledgeBase(
-        "non-existing-collection", record_encoder=encoder, chunker=chunker
-    )
+def test_kb_non_existing_collection(knowledge_base):
+    kb = copy.copy(knowledge_base)
+
+    kb._collection_name = f"{COLLECTION_NAME_PREFIX}non-existing-collection"
 
     with pytest.raises(RuntimeError) as e:
         kb.verify_index_connection()
@@ -245,7 +254,7 @@ def test_kb_non_existing_index(chunker, encoder):
     assert expected_msg in str(e.value)
 
 
-def test_init_defaults(knowledge_base, collection_name, collection_full_name):
+def test_init_defaults(collection_name, collection_full_name):
     new_kb = QdrantKnowledgeBase(collection_name)
     assert isinstance(new_kb._client, QdrantClient)
     assert new_kb.collection_name == collection_full_name
@@ -288,7 +297,7 @@ def test_init_raise_wrong_type(knowledge_base, chunker):
     assert "record_encoder must be an instance of RecordEncoder" in str(e.value)
 
 
-def test_create_with_index_encoder_dimension_none(collection_name, chunker):
+def test_create_with_collection_encoder_dimension_none(collection_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
     with pytest.raises(RuntimeError) as e:

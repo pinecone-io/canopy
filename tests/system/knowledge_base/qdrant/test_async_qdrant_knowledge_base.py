@@ -17,8 +17,10 @@ from tests.system.knowledge_base.qdrant.common import (
 )
 from canopy.knowledge_base.models import DocumentWithScore
 from canopy.models.data_models import Query
+from qdrant_client.async_qdrant_remote import AsyncQdrantRemote
 from tests.unit import random_words
 from tests.unit.stubs.stub_chunker import StubChunker
+
 
 load_dotenv()
 
@@ -57,6 +59,7 @@ async def assert_query_metadata_filter(
     assert (
         top_k > num_vectors_expected
     ), "the test might return false positive if top_k is not > num_vectors_expected"
+
     query = Query(text="test", top_k=top_k, metadata_filter=metadata_filter)
     query_results = await knowledge_base.aquery([query])
     assert len(query_results) == 1
@@ -95,17 +98,25 @@ async def test_query(knowledge_base, encoded_chunks):
     await execute_and_assert_queries(knowledge_base, encoded_chunks)
 
 
-# @pytest.mark.asyncio
-# async def test_query_with_metadata_filter(knowledge_base):
-#     await assert_query_metadata_filter(
-#         knowledge_base,
-#         {
-#             "must": [
-#                 {"key": "my-key", "match": {"value": "value-1"}},
-#             ]
-#         },
-#         2,
-#     )
+@pytest.mark.asyncio
+async def test_query_with_metadata_filter(knowledge_base):
+    if knowledge_base._async_client is None or not isinstance(
+        knowledge_base._async_client._client, AsyncQdrantRemote
+    ):
+        pytest.skip(
+            "Dict filter is not supported for QdrantLocal"
+            "Use qdrant_client.models.Filter instead"
+        )
+
+    await assert_query_metadata_filter(
+        knowledge_base,
+        {
+            "must": [
+                {"key": "my-key", "match": {"value": "value-1"}},
+            ]
+        },
+        2,
+    )
 
 
 @pytest.mark.asyncio
