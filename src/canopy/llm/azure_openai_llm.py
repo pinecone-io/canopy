@@ -32,7 +32,7 @@ class AzureOpenAILLM(OpenAILLM):
                  model_name: str = "gpt-3.5-turbo",
                  *,
                  api_key: Optional[str] = None,
-                 api_version: str = "2023-10-01-preview",
+                 api_version: str = "2023-12-01-preview",
                  azure_endpoint: Optional[str] = None,
                  organization: Optional[str] = None,
                  base_url: Optional[str] = None,
@@ -43,7 +43,7 @@ class AzureOpenAILLM(OpenAILLM):
 
         Args:
             model_name: Either your custom model deployment, or the name of a public OpenAI model to use 
-            api_key: Your Azure OpenAI API key. Defaults to None (uses the "OPENAI_API_KEY" environment variable).
+            api_key: Your Azure OpenAI API key. Defaults to None (uses the "AZURE_OPENAI_API_KEY" environment variable).
             base_url: The base URL to use for the Azure OpenAI API. Will use the AZURE_OPENAI_ENDPOINT environment variable if set.
             **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
                     For example, you can set the temperature, top_p etc
@@ -57,7 +57,7 @@ class AzureOpenAILLM(OpenAILLM):
         >>> llm.chat_completion(messages)
 
         """  # noqa: E501
-        super().__init__(model_name)
+        self.model_name = model_name
 
         # if not environ.get('AZURE_OPENAI_API_KEY'):
         #     raise EnvironmentError('Please set your Azure OpenAI API key environment variable ('
@@ -77,9 +77,8 @@ class AzureOpenAILLM(OpenAILLM):
         #                                'your Azure deployment')
         #     azure_deployment = os.getenv('AZURE_DEPLOYMENT')
 
-
-
         self._client = openai.AzureOpenAI(
+            azure_deployment=model_name,
             api_key=api_key,
             api_version=api_version,
             azure_endpoint=azure_endpoint,
@@ -90,84 +89,16 @@ class AzureOpenAILLM(OpenAILLM):
 
     @property
     def available_models(self):
-        raise NotImplementedError()
+        raise NotImplementedError("Azure OpenAI LLM does not support listing available models")
 
-    @retry(
-        reraise=True,
-        stop=stop_after_attempt(3),
-        retry=retry_if_exception_type(
-            (json.decoder.JSONDecodeError,
-             jsonschema.ValidationError)
-        ),
-    )
-    def enforced_function_call(self,
-                               messages: Messages,
-                               function: Function,
-                               *,
-                               max_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None,) -> dict:
-        """
-        This function enforces the model to respond with a specific function call.
-
-        To read more about this feature, see: https://platform.openai.com/docs/guides/gpt/function-calling
-
-        Note: this function is wrapped in a retry decorator to handle transient errors.
-
-        Args:
-            messages: Messages (chat history) to send to the model.
-            function: Function to call. See canopy.llm.models.Function for more details.
-            max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
-            model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                          Overrides the default model parameters if set on initialization.
-                          For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
-                          see: https://platform.openai.com/docs/api-reference/chat/create
-
-        Returns:
-            dict: Function call arguments as a dictionary.
-
-        Usage:
-            >>> from canopy.llm import AzureOpenAILLM
-            >>> from canopy.llm.models import Function, FunctionParameters, FunctionArrayProperty
-            >>> from canopy.models.data_models import UserMessage
-            >>> llm = AzureOpenAILLM()
-            >>> messages = [UserMessage(content="I was wondering what is the capital of France?")]
-            >>> function = Function(
-            ...     name="query_knowledgebase",
-            ...     description="Query search engine for relevant information",
-            ...     parameters=FunctionParameters(
-            ...         required_properties=[
-            ...             FunctionArrayProperty(
-            ...                 name="queries",
-            ...                 items_type="string",
-            ...                 description='List of queries to send to the search engine.',
-            ...             ),
-            ...         ]
-            ...     )
-            ... )
-            >>> llm.enforced_function_call(messages, function)
-            {'queries': ['capital of France']}
-        """  # noqa: E501
-
-        model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(model_params or {})
-
-        function_dict = cast(ChatCompletionToolParam, function.dict())
-
-        chat_completion = self._client.chat.completions.create(
-            model=self.model_name,
-            messages=[m.dict() for m in messages],
-            functions=[function_dict],
-            function_call={"name": function.name},
-            max_tokens=max_tokens,
-            **model_params_dict,
-        )
-
-        result = chat_completion.choices[0].message.tool_calls[0].function.arguments
-        arguments = json.loads(result)
-
-        jsonschema.validate(instance=arguments, schema=function.parameters.dict())
-        return arguments
-
+    # @retry(
+    #     reraise=True,
+    #     stop=stop_after_attempt(3),
+    #     retry=retry_if_exception_type(
+    #         (json.decoder.JSONDecodeError,
+    #          jsonschema.ValidationError)
+    #     ),
+    # )
     async def achat_completion(
         self,
         messages: Messages,
