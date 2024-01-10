@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from cohere.error import CohereAPIError
-from pydantic.error_wrappers import ValidationError
 
 from canopy.models.data_models import Context, ContextContent, Role, MessageBase # noqa
 from canopy.context_engine.context_builder.stuffing import (
@@ -47,6 +46,25 @@ def messages():
 
 
 @pytest.fixture
+def system_prompt():
+    return "Use only the provided documents to answer."
+
+
+@pytest.fixture
+def expected_chat_kwargs():
+    return {
+        "model": "command",
+        "message": 'Hello, user. How can I assist you?',
+        "chat_history": [{'role': 'USER', 'message': 'Hello, assistant.'}],
+        "connectors": None,
+        "documents": [],
+        "preamble_override": "Use only the provided documents to answer.",
+        "stream": False,
+        "max_tokens": None,
+    }
+
+
+@pytest.fixture
 def model_params_high_temperature():
     return {"temperature": 0.9, "p": 0.95}
 
@@ -80,8 +98,11 @@ def test_init_with_custom_params():
     assert llm._client.api_key == "test_api_key"
 
 
-def test_chat_completion(cohere_llm, messages):
-    response = cohere_llm.chat_completion(chat_history=messages, system_prompt='')
+def test_chat_completion(cohere_llm, messages, system_prompt, expected_chat_kwargs):
+    cohere_llm._client = MagicMock(wraps=cohere_llm._client)
+    response = cohere_llm.chat_completion(
+        chat_history=messages, system_prompt=system_prompt)
+    cohere_llm._client.chat.assert_called_once_with(**expected_chat_kwargs)
     assert_chat_completion(response)
 
 
@@ -159,41 +180,44 @@ def test_chat_completion_with_unsupported_context_engine(cohere_llm,
 
 
 def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
-                                                        messages):
-    cohere_llm._client = MagicMock()
+                                                        messages,
+                                                        expected_chat_kwargs,
+                                                        system_prompt):
+    cohere_llm._client = MagicMock(wraps=cohere_llm._client)
     content = StuffingContextContent(__root__=[
-            ContextQueryResult(query="", snippets=[
-                ContextSnippet(
-                    source="http://www.example.com/document",
-                    text="Document text",
-                )
-            ])
+        ContextQueryResult(query="", snippets=[
+            ContextSnippet(
+                source="https://www.example.com/document",
+                text="Document text",
+            ),
+            ContextSnippet(
+                source="https://www.example.com/second_document",
+                text="Second document text",
+            )
+        ])
     ])
     stuffing_context = Context(
         content=content,
         num_tokens=123)
 
-    try:
-        cohere_llm.chat_completion(chat_history=messages,
-                                   system_prompt="Only use documents to answer.",
-                                   context=stuffing_context)
-    except ValidationError:
-        # We want to test what was passed to the Cohere client, and don't
-        # care about the chat response object.
-        pass
+    response = cohere_llm.chat_completion(
+        chat_history=messages,
+        system_prompt=system_prompt,
+        context=stuffing_context)
 
-    cohere_llm._client.chat.assert_called_once_with(
-        model="command",
-        message='Hello, user. How can I assist you?',
-        chat_history=[{'role': 'USER', 'message': 'Hello, assistant.'}],
-        connectors=None,
-        documents=[
-            {
-                "source": "http://www.example.com/document",
-                "text": "Document text",
-            },
-        ],
-        preamble_override="Only use documents to answer.",
-        stream=False,
-        max_tokens=None,
-    )
+    # Check that we got a valid chat response - details tested in other tests
+    assert isinstance(response, ChatResponse)
+    assert response.object == "chat.completion"
+
+    # Check that Cohere client was called with the snippets
+    expected_chat_kwargs["documents"] = [
+        {
+            "source": "https://www.example.com/document",
+            "text": "Document text",
+        },
+        {
+            "source": "https://www.example.com/second_document",
+            "text": "Second document text",
+        },
+    ]
+    cohere_llm._client.chat.assert_called_once_with(**expected_chat_kwargs)
