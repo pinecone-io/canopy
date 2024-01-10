@@ -175,7 +175,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
 
     try:
         cohere_llm.chat_completion(chat_history=messages,
-                                   system_prompt="",
+                                   system_prompt="Only use documents to answer.",
                                    context=stuffing_context)
     except ValidationError:
         # We want to test what was passed to the Cohere client, and don't
@@ -193,7 +193,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
                 "text": "Document text",
             },
         ],
-        preamble_override="",
+        preamble_override="Only use documents to answer.",
         stream=False,
         max_tokens=None,
     )
