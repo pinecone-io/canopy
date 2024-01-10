@@ -175,8 +175,6 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         else:
             self._reranker = self._DEFAULT_COMPONENTS["reranker"]()
 
-        self._collection_params: Dict[str, Any] = {}
-
         self._client, self._async_client = generate_clients(
             location=location,
             url=url,
@@ -293,6 +291,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                                 )]
             >>> results = await kb.aquery(queries)
         """  # noqa: E501
+        # TODO: Use aencode_queries() when implemented for the defaults
         queries = self._encoder.encode_queries(queries)
         results = [
             await self._aquery_collection(q, global_metadata_filter) for q in queries
@@ -360,6 +359,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                     f"{forbidden_keys}. Please remove them and try again."
                 )
 
+        # TODO: Use achunk_documents, encode_documents when implemented for the defaults
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
 
@@ -624,6 +624,23 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         The name of the collection the knowledge base is connected to.
         """
         return self._collection_name
+
+    @classmethod
+    def from_config(cls, config: Dict[str, Any]) -> "QdrantKnowledgeBase":
+        """
+        Create a QdrantKnowledgeBase object from a configuration dictionary.
+
+        Args:
+            config: A dictionary containing the configuration for the Qdrant knowledge base.
+        Returns:
+            A QdrantKnowledgeBase object.
+        """  # noqa: E501
+
+        config = deepcopy(config)
+        config["params"] = config.get("params", {})
+        # TODO: Add support for collection creation config for use in the CLI
+        kb = cls._from_config(config)
+        return kb
 
     @staticmethod
     def _get_full_collection_name(collection_name: str) -> str:

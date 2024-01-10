@@ -1,5 +1,6 @@
-import copy
 import random
+from copy import copy
+from pathlib import Path
 
 import pytest
 from dotenv import load_dotenv
@@ -19,6 +20,7 @@ from canopy.knowledge_base.reranker.reranker import Reranker
 from canopy.models.data_models import Query
 
 from qdrant_client.qdrant_remote import QdrantRemote
+from canopy_cli.cli import _load_kb_config
 from tests.system.knowledge_base.qdrant.common import (
     assert_chunks_in_collection,
     assert_ids_in_collection,
@@ -242,7 +244,7 @@ def test_create_existing_collection(collection_full_name, knowledge_base):
 
 
 def test_kb_non_existing_collection(knowledge_base):
-    kb = copy.copy(knowledge_base)
+    kb = copy(knowledge_base)
 
     kb._collection_name = f"{COLLECTION_NAME_PREFIX}non-existing-collection"
 
@@ -311,3 +313,11 @@ def test_create_with_collection_encoder_dimension_none(collection_name, chunker)
     assert "failed to infer" in str(e.value)
     assert "dimension" in str(e.value)
     assert f"{encoder.__class__.__name__} does not support" in str(e.value)
+
+
+def test_knowlege_base_from_config():
+    config_path = Path(__file__).with_name("test_config.yml")
+    kb_config = _load_kb_config(config_path)
+    kb = QdrantKnowledgeBase.from_config(kb_config)
+    assert kb.collection_name == COLLECTION_NAME_PREFIX + "test-config-collection"
+    assert kb._default_top_k == 10
