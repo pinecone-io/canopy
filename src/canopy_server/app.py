@@ -106,9 +106,16 @@ async def chat(
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
-
     The request schema follows OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.
-    Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
+    Note that all fields other than `messages`, `stream` and `namespace` are currently ignored.
+    The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
+
+    Args:
+        request: Chat request containing the messages
+        namespace: The namespace to query in the underlying `KnowledgeBase`. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+
+    Returns:
+        OpenAI compatible chat response
 
     """  # noqa: E501
     try:
@@ -117,7 +124,10 @@ async def chat(
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
         answer = await run_in_threadpool(
-            chat_engine.chat, messages=request.messages, stream=request.stream
+            chat_engine.chat,
+            messages=request.messages,
+            stream=request.stream,
+            namespace=namespace
         )
 
         if request.stream:
@@ -157,6 +167,14 @@ async def query(
     The returned text may be structured or unstructured, depending on the Canopy configuration.
     Query allows limiting the context length in tokens to control LLM costs.
     This method does not pass through the LLM and uses only retrieval and construction from Pinecone DB.
+
+    Args:
+        request: Request containing the queries for the knowledge base
+        namespace: The namespace to query in the underlying `KnowledgeBase`. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+
+    Returns:
+        Context content with the token count
+
     """  # noqa: E501
     try:
         context: Context = await run_in_threadpool(
@@ -220,7 +238,7 @@ async def delete(
         logger.info(f"Delete {len(request.document_ids)} documents")
         await run_in_threadpool(kb.delete,
                                 document_ids=request.document_ids,
-                                namespace=namespace)
+                                namespace=namespace or "")
         return SuccessDeleteResponse()
 
     except Exception as e:
@@ -302,9 +320,9 @@ def _init_routes(app):
     # Include the API version in the path, API_VERSION should be the latest version.
     app.include_router(application_router, prefix=f"/{API_VERSION}")
     app.include_router(context_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
-                       tags=["{Namespace}/"])
+                       tags=["Context (Namespace)"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
-                       tags=["{Namespace}/"])
+                       tags=["LLM (Namespace)"])
 
     app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])

@@ -10,12 +10,12 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 from canopy.knowledge_base import KnowledgeBase
 from canopy_server.app import app, API_VERSION
 from canopy_server.models.v1.api_models import (
-    HealthStatus,
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
-from ..util import create_e2e_tests_index_name
+from ..util import create_e2e_ns_tests_index_name
 
+namespace = "test-namespace"
 upsert_payload = ContextUpsertRequest(
     documents=[
         {
@@ -31,20 +31,20 @@ upsert_payload = ContextUpsertRequest(
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_exist(vector_ids: List[str],
                             knowledge_base: KnowledgeBase):
-    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids, namespace=namespace)
     assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
 
 
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
 def assert_vector_ids_not_exist(vector_ids: List[str],
                                 knowledge_base: KnowledgeBase):
-    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids, namespace=namespace)
     assert len(fetch_response["vectors"]) == 0
 
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid: str):
-    return create_e2e_tests_index_name(testrun_uid)
+    return create_e2e_ns_tests_index_name(testrun_uid)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -62,7 +62,7 @@ def client(knowledge_base, index_name):
     tokenizer_before = Tokenizer._tokenizer_instance
     Tokenizer.clear()
     with TestClient(app) as client:
-        client.base_url = f"{client.base_url}/{API_VERSION}"
+        client.base_url = f"{client.base_url}/{API_VERSION}/{namespace}"
         yield client
     if index_name_before:
         os.environ["INDEX_NAME"] = index_name_before
@@ -79,20 +79,6 @@ def teardown_knowledge_base(knowledge_base):
     index_name = knowledge_base.index_name
     if index_name in pinecone.list_indexes():
         pinecone.delete_index(index_name)
-
-
-# TODO: the following test is a complete e2e test, this it not the final design
-# for the e2e tests, however there were some issues
-# with the fixtures that will be resovled
-
-
-def test_health(client):
-    health_response = client.get("health")
-    assert health_response.is_success
-    assert (
-            health_response.json()
-            == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
-    )
 
 
 def test_upsert(client):

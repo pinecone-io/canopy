@@ -280,6 +280,9 @@ def _batch_documents_by_chunks(chunker: Chunker,
 
         Load all the documents from a data file or a directory containing multiple data
         files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
+
+        If you would like partition your data into namespaces, you can use the namespace parameter.
+        For more information see: https://docs.pinecone.io/docs/namespaces
         """  # noqa: E501
     )
 )
@@ -297,11 +300,11 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "long as less than 10% of the documents have failed to be uploaded.")
 @click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
               help="Path to a canopy config file. Can also be set by the "
-                   "`CANOPY_CONFIG_FILE` environment variable. Otherwise, the built-in"
+                   "`CANOPY_CONFIG_FILE` environment variable. Otherwise, the built-in "
                    "default configuration will be used.")
 @click.option("--namespace", "-n", default="", envvar="INDEX_NAMESPACE",
               help="The namespace of the index. Can also be set by the "
-                   "`INDEX_NAMESPACE` environment variable. If not set, the default"
+                   "`INDEX_NAMESPACE` environment variable. If not set, the default "
                    "namespace will be used.")
 def upsert(index_name: str,
            data_path: str,
@@ -335,7 +338,10 @@ def upsert(index_name: str,
     click.echo("Canopy is going to upsert data from ", nl=False)
     click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
-    click.echo(click.style(f'{kb.index_name} \n', fg='green'))
+    click.echo(click.style(f'{kb.index_name}', fg='green'), nl=False)
+    click.echo(" using namespace: ", nl=False)
+    click.echo(click.style(f'{namespace or "default"} \n', fg='cyan'))
+
     with spinner:
         try:
             data = load_from_path(data_path)
@@ -407,8 +413,7 @@ def _chat(
     openai_api_key=None,
     api_base=None,
     stream=True,
-    print_debug_info=False,
-    namespace=None
+    print_debug_info=False
 ):
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -419,9 +424,6 @@ def _chat(
             "Please set the OPENAI_API_KEY environment "
             "variable."
         )
-
-    if api_base is not None and namespace is not None:
-        api_base = urljoin(api_base, namespace)
 
     client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 
@@ -489,6 +491,7 @@ def _chat(
         """
 
     )
+
 )
 @click.option("--stream/--no-stream", default=True,
               help="Stream the response from the RAG chatbot word by word.")
@@ -499,11 +502,7 @@ def _chat(
 @click.option("--chat-server-url", default=DEFAULT_SERVER_URL,
               help=("URL of the Canopy server to use."
                     f" Defaults to {DEFAULT_SERVER_URL}"))
-@click.option("--namespace", "-n", default=None, envvar="INDEX_NAMESPACE",
-              help="The namespace of the index. Can also be set by the "
-                   "`INDEX_NAMESPACE` environment variable. If not set, the default"
-                   "namespace will be used.")
-def chat(chat_server_url, rag, debug, stream, namespace):
+def chat(chat_server_url, rag, debug, stream):
     check_server_health(chat_server_url)
     note_msg = (
         "🚨 Note 🚨\n"
@@ -562,7 +561,6 @@ def chat(chat_server_url, rag, debug, stream, namespace):
             openai_api_key="canopy",
             api_base=chat_server_url,
             print_debug_info=debug,
-            namespace=namespace
         )
 
         if not rag:
@@ -597,6 +595,12 @@ def chat(chat_server_url, rag, debug, stream, namespace):
 
         If you would like to try out the chatbot, run `canopy chat` in a separate
         terminal window.
+
+        You can also use the OpenAPI client to access the Canopy server just
+        by changing the API endpoint.
+
+        For more information see:
+        https://github.com/pinecone-io/canopy?tab=readme-ov-file#migrating-an-existing-openai-application-to-canopy
         """
     )
 )
