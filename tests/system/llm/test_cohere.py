@@ -14,11 +14,10 @@ from canopy.llm.cohere import CohereLLM
 def assert_chat_completion(response):
     assert len(response.choices) == 1  # Cohere API does not return multiple choices.
 
-    for choice in response.choices:
-        assert isinstance(choice.message, MessageBase)
-        assert isinstance(choice.message.content, str)
-        assert len(choice.message.content) > 0
-        assert isinstance(choice.message.role, Role)
+    assert isinstance(response.choices[0].message, MessageBase)
+    assert isinstance(response.choices[0].message.content, str)
+    assert len(response.choices[0].message.content) > 0
+    assert isinstance(response.choices[0].message.role, Role)
 
 
 @pytest.fixture
