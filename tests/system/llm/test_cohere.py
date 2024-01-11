@@ -37,11 +37,13 @@ def model_name():
 
 @pytest.fixture
 def messages():
-    # Create a list of MessageBase objects
     return [
-        MessageBase(role=Role.USER, content="Hello, assistant."),
-        MessageBase(role=Role.ASSISTANT,
-                    content="Hello, user. How can I assist you?")
+        MessageBase(
+            role=Role.USER, content="Hello, assistant."),
+        MessageBase(
+            role=Role.ASSISTANT, content="Hello, user. How can I assist you?"),
+        MessageBase(
+            role=Role.USER, content="Tell me about X.")
     ]
 
 
@@ -54,8 +56,11 @@ def system_prompt():
 def expected_chat_kwargs():
     return {
         "model": "command",
-        "message": 'Hello, user. How can I assist you?',
-        "chat_history": [{'role': 'USER', 'message': 'Hello, assistant.'}],
+        "message": "Tell me about X.",
+        "chat_history": [
+            {'role': 'USER', 'message': 'Hello, assistant.'},
+            {"role": "CHATBOT", "message": "Hello, user. How can I assist you?"}
+        ],
         "connectors": None,
         "documents": [],
         "preamble_override": "Use only the provided documents to answer.",
