@@ -12,14 +12,10 @@ import pandas as pd
 from pydantic import ValidationError
 
 from canopy.models.data_models import Document
-
-
-class IDsNotUniqueError(ValueError):
-    pass
-
-
-class DocumentsValidationError(ValueError):
-    pass
+from canopy_cli.data_loader.errors import (
+    DataLoaderException,
+    DocumentsValidationError,
+    IDsNotUniqueError)
 
 
 class NonSchematicFilesTypes(Enum):
@@ -50,7 +46,7 @@ def _process_metadata(value):
             if isinstance(v, Iterable) or pd.notna(v)}
 
 
-def _df_to_documents(df: pd.DataFrame) -> List[Document]:
+def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if "id" not in df.columns:
@@ -61,10 +57,20 @@ def _df_to_documents(df: pd.DataFrame) -> List[Document]:
     try:
         if "metadata" in df.columns:
             df.loc[:, "metadata"] = df["metadata"].apply(_process_metadata)
-        documents = [
-            Document(**{k: v for k, v in row._asdict().items() if not pd.isna(v)})
-            for row in df.itertuples(index=False)
-        ]
+        documents = []
+        for row in df.itertuples(index=False):
+            try:
+                documents.append(
+                    Document(
+                        **{k: v for k, v in row._asdict().items() if not pd.isna(v)}
+                    )
+                )
+            except ValidationError as e:
+                raise DataLoaderException(
+                    file_name=origin_file_path,
+                    row_id=row.id,
+                    err=format_multiline(e.errors()[0]["msg"])
+                ) from e
     except ValidationError as e:
         raise DocumentsValidationError("Documents failed validation") from e
     except ValueError as e:
@@ -89,31 +95,47 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
 
     rows = []
     for file_path in file_paths:
-        with open(file_path, "r") as f:
-            text = f.read()
-            rows.append(
-                {
-                    "id": os.path.basename(file_path).replace(".txt", ""),
-                    "text": text,
-                    "source": file_path
-                }
-            )
+        try:
+            with open(file_path, "r", encoding='utf-8') as f:
+                text = f.read()
+                rows.append(
+                    {
+                        "id": os.path.basename(file_path).replace(".txt", ""),
+                        "text": text,
+                        "source": file_path
+                    }
+                )
+        except UnicodeDecodeError as e:
+            raise DataLoaderException(
+                file_name=file_path,
+                row_id="*",
+                err="File must be UTF-8 encoded"
+            ) from e
     df = pd.DataFrame(rows, columns=["id", "text", "source"])
     return df
 
 
 def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
-    if file_path.endswith(".parquet"):
-        df = pd.read_parquet(file_path)
-    elif file_path.endswith(".csv"):
-        df = pd.read_csv(file_path)
-    elif file_path.endswith(".jsonl"):
-        df = pd.read_json(file_path, lines=True)
-    else:
-        raise ValueError(
-            "Only [.parquet, .jsonl, .csv, .txt] files are supported"
-        )
-    return _df_to_documents(df)
+    try:
+        if file_path.endswith(".parquet"):
+            df = pd.read_parquet(file_path)
+        elif file_path.endswith(".csv"):
+            df = pd.read_csv(file_path)
+        elif file_path.endswith(".jsonl"):
+            df = pd.read_json(file_path, lines=True)
+        else:
+            raise ValueError(
+                "Only [.parquet, .jsonl, .csv, .txt] files are supported"
+            )
+    except ValueError as e:
+        raise e
+    except Exception as e:
+        raise DataLoaderException(
+            file_name=file_path,
+            row_id="*",
+            err=str(e)
+        ) from e
+    return _df_to_documents(df, origin_file_path=file_path)
 
 
 def _load_multiple_non_schematic_files(

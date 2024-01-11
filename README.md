@@ -1,10 +1,10 @@
 # Canopy
 
 <p align="center">
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
 </a>
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
 </a>
 </p>
@@ -64,7 +64,7 @@ pip install canopy-sdk
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export INDEX_NAME=<INDEX_NAME>
+export INDEX_NAME="<INDEX_NAME>"
 ```
 
 <details>
@@ -79,6 +79,7 @@ export INDEX_NAME=<INDEX_NAME>
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
 | `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
@@ -200,6 +201,8 @@ canopy chat
 This will open a chat interface in your terminal. You can ask questions and the RAG-infused chatbot will try to answer them using the data you uploaded.
 
 To compare the chat response with and without RAG use the `--no-rag` flag
+
+> **Note**: This method is only supported with OpenAI at the moment.
 
 ```bash
 canopy chat --no-rag

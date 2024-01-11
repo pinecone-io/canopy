@@ -16,50 +16,52 @@ query_builder_prompt: &query_builder_prompt |
   You should break down complex questions into sub-queries if needed.
 
 
-# -------------------------------------------------------------------------------------------
-# Tokenizer configuration
-# A Tokenizer singleton instance must be initialized before initializing any other components
-# -------------------------------------------------------------------------------------------
 tokenizer:
+  # -------------------------------------------------------------------------------------------
+  # Tokenizer configuration
+  # A Tokenizer singleton instance must be initialized before initializing any other components
+  # -------------------------------------------------------------------------------------------
   type: OpenAITokenizer                 # Options: [OpenAITokenizer]
   params:
     model_name: gpt-3.5-turbo
 
 
-# -------------------------------------------------------------------------------------------------------------
-# Chat engine configuration
-# The chat engine is the main component of the server, generating responses to the `/chat.completion` API call.
-# The configuration is recursive, so that each component contains a subsection for each of its sub components.
-# -------------------------------------------------------------------------------------------------------------
 chat_engine:
+  # -------------------------------------------------------------------------------------------------------------
+  # Chat engine configuration
+  # The chat engine is the main component of the server, generating responses to the `/chat.completion` API call.
+  # The configuration is recursive, so that each component contains a subsection for each of its sub components.
+  # -------------------------------------------------------------------------------------------------------------
   params:
     max_prompt_tokens: 4096             # The maximum number of tokens to use for input prompt to the LLM
     max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
-    history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
-    min_history_messages: 1             # Minimal number of messages to keep in history
 
+  history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
+    type: RecentHistoryPruner
+    params:
+      min_history_messages: 1             # Minimal number of messages to keep in history
 
-  # -------------------------------------------------------------------------------------------------------------
-  # LLM configuration
-  # Configuration of the LLM (Large Language Model)
-  # -------------------------------------------------------------------------------------------------------------
   llm: &llm
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
     type: OpenAILLM                     # Options: [OpenAILLM, AzureOpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
       # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
       # here will be used in every LLM API call. For example:
-#      temperature: 0.7
-#      top_p: 0.9
+#       temperature: 0.7
+#       top_p: 0.9
 
-  # --------------------------------------------------------------------
-  # Configuration for the QueryBuilder subcomponent of the chat engine.
-  # The query builder is responsible for generating textual queries given user message history.
-  # --------------------------------------------------------------------
   query_builder:
-    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator]
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
+    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, InstructionQueryGenerator]
     params:
       prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
       function_description:             # A function description passed to the LLM's `function_calling` API
@@ -68,53 +70,48 @@ chat_engine:
     llm:  # The LLM that the query builder will use to generate queries. Leave `*llm` to use the chat engine's LLM
       <<: *llm
 
-
-  # -------------------------------------------------------------------------------------------------------------
-  # ContextEngine configuration
-  # The context engine is responsible for generating textual context for the `/query` API calls.
-  # -------------------------------------------------------------------------------------------------------------
   context_engine:
+    # -------------------------------------------------------------------------------------------------------------
+    # ContextEngine configuration
+    # The context engine is responsible for generating textual context for the `/query` API calls.
+    # -------------------------------------------------------------------------------------------------------------
     params:
       global_metadata_filter: null      # An optional metadata filter to apply to all queries
 
-
-    # -------------------------------------------------------------------------
-    # Configuration for the ContextBuilder subcomponent of the context engine.
-    # The context builder is responsible for formulating a textual context given query results.
-    # -------------------------------------------------------------------------
     context_builder:
+      # -------------------------------------------------------------------------
+      # Configuration for the ContextBuilder subcomponent of the context engine.
+      # The context builder is responsible for formulating a textual context given query results.
+      # -------------------------------------------------------------------------
       type: StuffingContextBuilder      # Options: [StuffingContextBuilder]
 
-
-    # -----------------------------------------------------------------------------------------------------------
-    # KnowledgeBase configuration
-    # The KnowledgeBase is a responsible for storing and indexing the user's documents
-    # -----------------------------------------------------------------------------------------------------------
     knowledge_base:
+      # -----------------------------------------------------------------------------------------------------------
+      # KnowledgeBase configuration
+      # The KnowledgeBase is a responsible for storing and indexing the user's documents
+      # -----------------------------------------------------------------------------------------------------------
       params:
         default_top_k: 5                # The default number of document chunks to retrieve for each query
 #        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
 #          metric: cosine
 #          pod_type: p1
 
-
-      # --------------------------------------------------------------------------
-      # Configuration for the Chunker subcomponent of the knowledge base.
-      # The chunker is responsible for splitting documents' text into smaller chunks.
-      # --------------------------------------------------------------------------
       chunker:
+        # --------------------------------------------------------------------------
+        # Configuration for the Chunker subcomponent of the knowledge base.
+        # The chunker is responsible for splitting documents' text into smaller chunks.
+        # --------------------------------------------------------------------------
         type: MarkdownChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
         params:
           chunk_size: 256               # The maximum number of tokens in each chunk
           chunk_overlap: 0              # The number of tokens to overlap between chunks
           keep_separator: true          # Whether to keep the separator in the chunks
 
-
-      # --------------------------------------------------------------------------
-      # Configuration for the RecordEncoder subcomponent of the knowledge base.
-      # The record encoder is responsible for encoding document chunks to a vector representation
-      # --------------------------------------------------------------------------
       record_encoder:
+        # --------------------------------------------------------------------------
+        # Configuration for the RecordEncoder subcomponent of the knowledge base.
+        # The record encoder is responsible for encoding document chunks to a vector representation
+        # --------------------------------------------------------------------------
         type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding

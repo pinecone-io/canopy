@@ -2,21 +2,19 @@ import json
 import os
 from typing import List
 
-from datetime import datetime
-
 import pinecone
 import pytest
 from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed
 
 from canopy.knowledge_base import KnowledgeBase
-
 from canopy_server.app import app, API_VERSION
 from canopy_server.models.v1.api_models import (
     HealthStatus,
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
+from ..util import create_e2e_tests_index_name
 
 upsert_payload = ContextUpsertRequest(
     documents=[
@@ -45,9 +43,8 @@ def assert_vector_ids_not_exist(vector_ids: List[str],
 
 
 @pytest.fixture(scope="module")
-def index_name(testrun_uid):
-    today = datetime.today().strftime("%Y-%m-%d")
-    return f"test-app-{testrun_uid[-6:]}-{today}"
+def index_name(testrun_uid: str):
+    return create_e2e_tests_index_name(testrun_uid)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -55,7 +52,6 @@ def knowledge_base(index_name):
     pinecone.init()
     kb = KnowledgeBase(index_name=index_name)
     kb.create_canopy_index(indexed_fields=["test"])
-
     return kb
 
 
@@ -84,6 +80,7 @@ def teardown_knowledge_base(knowledge_base):
     if index_name in pinecone.list_indexes():
         pinecone.delete_index(index_name)
 
+
 # TODO: the following test is a complete e2e test, this it not the final design
 # for the e2e tests, however there were some issues
 # with the fixtures that will be resovled
@@ -93,8 +90,8 @@ def test_health(client):
     health_response = client.get("/health")
     assert health_response.is_success
     assert (
-        health_response.json()
-        == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+            health_response.json()
+            == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
     )
 
 

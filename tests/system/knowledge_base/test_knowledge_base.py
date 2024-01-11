@@ -1,17 +1,17 @@
 import os
 import random
 
-import pytest
-import pinecone
 import numpy as np
+import pinecone
+import pytest
+from dotenv import load_dotenv
 from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
     wait_chain,
 )
-from dotenv import load_dotenv
-from datetime import datetime
+
 from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
 from canopy.knowledge_base.chunker import Chunker
 from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
@@ -19,11 +19,11 @@ from canopy.knowledge_base.models import DocumentWithScore
 from canopy.knowledge_base.record_encoder import RecordEncoder
 from canopy.knowledge_base.reranker import Reranker
 from canopy.models.data_models import Document, Query
-from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
-from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
-
+from tests.unit.stubs.stub_chunker import StubChunker
+from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
+from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
+from tests.util import create_system_tests_index_name
 
 load_dotenv()
 
@@ -42,8 +42,7 @@ def retry_decorator():
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid):
-    today = datetime.today().strftime("%Y-%m-%d")
-    return f"test-kb-{testrun_uid[-6:]}-{today}"
+    return create_system_tests_index_name(testrun_uid)
 
 
 @pytest.fixture(scope="module")
@@ -224,6 +223,8 @@ def test_create_index(index_full_name, knowledge_base):
     assert index_full_name in pinecone.list_indexes()
     assert index_full_name == index_full_name
     assert knowledge_base._index.describe_index_stats()
+    index_description = pinecone.describe_index(index_full_name)
+    assert index_description.dimension == knowledge_base._encoder.dimension
 
 
 def test_list_indexes(index_full_name):
@@ -297,7 +298,6 @@ def test_update_documents(encoder,
                           documents,
                           encoded_chunks,
                           knowledge_base):
-
     index_name = knowledge_base._index_name
 
     # chunker/kb that produces fewer chunks per doc
@@ -481,13 +481,39 @@ def test_create_with_text_in_indexed_field_raise(index_name,
 def test_create_with_index_encoder_dimension_none(index_name, chunker):
     encoder = StubRecordEncoder(StubDenseEncoder(dimension=3))
     encoder._dense_encoder.dimension = None
-    with pytest.raises(ValueError) as e:
+    with pytest.raises(RuntimeError) as e:
         kb = KnowledgeBase(index_name=index_name,
                            record_encoder=encoder,
                            chunker=chunker)
         kb.create_canopy_index()
 
-    assert "Could not infer dimension from encoder" in str(e.value)
+    assert "failed to infer" in str(e.value)
+    assert "dimension" in str(e.value)
+    assert f"{encoder.__class__.__name__} does not support" in str(e.value)
+
+
+# TODO: Add unit tests that verify that `pinecone.create_index()` is called with
+#  correct `dimension` in all cases (inferred from encoder, directly passed, etc.)
+
+# TODO: This test should be part of KnowledgeBase unit tests, which we don't have yet.
+def test_create_encoder_err(index_name, chunker):
+    class RaisesStubRecordEncoder(StubRecordEncoder):
+        @property
+        def dimension(self):
+            raise ValueError("mock error")
+
+    encoder = RaisesStubRecordEncoder(StubDenseEncoder(dimension=3))
+
+    with pytest.raises(RuntimeError) as e:
+        kb = KnowledgeBase(index_name=index_name,
+                           record_encoder=encoder,
+                           chunker=chunker)
+        kb.create_canopy_index()
+
+    assert "failed to infer" in str(e.value)
+    assert "dimension" in str(e.value)
+    assert "mock error" in str(e.value)
+    assert encoder.__class__.__name__ in str(e.value)
 
 
 @pytest.fixture

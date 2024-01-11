@@ -8,11 +8,13 @@ import pandas as pd
 
 from canopy.models.data_models import Document
 from canopy_cli.data_loader.data_loader import (
-    IDsNotUniqueError,
-    DocumentsValidationError,
     load_from_path,
     _load_single_schematic_file_by_suffix, _df_to_documents,
 )
+from canopy_cli.data_loader.errors import (
+    DataLoaderException,
+    DocumentsValidationError,
+    IDsNotUniqueError)
 from tests.unit import random_words
 
 
@@ -169,7 +171,7 @@ bad_df_has_excess_field = (
     DocumentsValidationError,
 )
 
-bad_df_missppelled_optional_field = (
+bad_df_misspelled_optional_field = (
     pd.DataFrame(
         [
             {"id": 1, "text": "foo", "sorce": "foo_source"},
@@ -204,29 +206,29 @@ bad_df_duplicate_ids = (
 
 
 all_dataframes_as_dict_with_name = [
-    ("good_df_minimal", good_df_minimal),
-    ("good_df_maximal", good_df_maximal),
-    ("bad_df_missing_field", bad_df_missing_field),
-    ("bad_df_bad_type", bad_df_bad_type),
-    ("bad_df_bad_type_optional", bad_df_bad_type_optional),
-    ("bad_df_bad_type_metadata", bad_df_bad_type_metadata),
-    ("bad_df_bad_type_metadata_list", bad_df_bad_type_metadata_list),
-    ("bad_df_has_excess_field", bad_df_has_excess_field),
-    ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field),
-    ("bad_df_duplicate_ids", bad_df_duplicate_ids),
-    ("bad_df_missppelled_optional_field", bad_df_missppelled_optional_field),
-    ("good_df_all_good_metadata_permutations", good_df_all_good_metadata_permutations),
+    ("good_df_minimal", good_df_minimal, None),
+    ("good_df_maximal", good_df_maximal, None),
+    ("bad_df_missing_field", bad_df_missing_field, DataLoaderException),
+    ("bad_df_bad_type", bad_df_bad_type, DataLoaderException),
+    ("bad_df_bad_type_optional", bad_df_bad_type_optional, DataLoaderException),
+    ("bad_df_bad_type_metadata", bad_df_bad_type_metadata, DocumentsValidationError),
+    ("bad_df_bad_type_metadata_list", bad_df_bad_type_metadata_list, DocumentsValidationError),  # noqa: E501
+    ("bad_df_has_excess_field", bad_df_has_excess_field, DataLoaderException),
+    ("bad_df_missing_mandatory_field", bad_df_missing_mandatory_field, DocumentsValidationError),  # noqa: E501
+    ("bad_df_duplicate_ids", bad_df_duplicate_ids, IDsNotUniqueError),
+    ("bad_df_misspelled_optional_field", bad_df_misspelled_optional_field, DataLoaderException),  # noqa: E501
+    ("good_df_all_good_metadata_permutations", good_df_all_good_metadata_permutations, None),  # noqa: E501
 ]
 
 
-@pytest.mark.parametrize("name, df_and_expected",
+@pytest.mark.parametrize("name, df_and_expected, expected_error",
                          all_dataframes_as_dict_with_name)
-def test_df_to_documents(name, df_and_expected) -> None:
+def test_df_to_documents(name, df_and_expected, expected_error) -> None:
     df, expected = df_and_expected
     if name.startswith("good"):
         assert _df_to_documents(df) == expected
     else:
-        with pytest.raises(expected):
+        with pytest.raises(expected_error):
             _df_to_documents(df)
 
 
