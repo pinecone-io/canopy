@@ -3,12 +3,12 @@ from unittest.mock import MagicMock
 import pytest
 from cohere.error import CohereAPIError
 
-from canopy.models.data_models import Context, ContextContent, Role, MessageBase # noqa
+from canopy.models.data_models import Context, ContextContent, Role, MessageBase
 from canopy.context_engine.context_builder.stuffing import (
     StuffingContextContent, ContextQueryResult, ContextSnippet
 )
-from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
-from canopy.llm.cohere import CohereLLM  # noqa
+from canopy.models.api_models import ChatResponse, StreamingChatChunk
+from canopy.llm.cohere import CohereLLM
 
 
 def assert_chat_completion(response):
