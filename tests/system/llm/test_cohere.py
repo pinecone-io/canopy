@@ -216,3 +216,13 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
         },
     ]
     cohere_llm._client.chat.assert_called_once_with(**expected_chat_kwargs)
+
+
+def test_token_counts_mapped_in_chat_response(cohere_llm, messages, system_prompt):
+    response = cohere_llm.chat_completion(chat_history=messages,
+                                          system_prompt=system_prompt)
+    assert response.usage.prompt_tokens == 45
+    assert response.usage.completion_tokens
+    assert response.usage.total_tokens == (
+            response.usage.prompt_tokens + response.usage.completion_tokens
+    )
