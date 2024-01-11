@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 
-from canopy.models.data_models import Role, MessageBase  # noqa
+from canopy.models.data_models import Role, MessageBase, Context, StringContextContent  # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk  # noqa
 from canopy.llm.anyscale import AnyscaleLLM  # noqa
 from canopy.llm.models import (
@@ -12,6 +12,9 @@ from canopy.llm.models import (
     FunctionArrayProperty,
 )  # noqa
 from openai import BadRequestError  # noqa
+
+
+SYSTEM_PROMPT = "You are a helpful assistant."
 
 
 def assert_chat_completion(response, num_choices=1):
@@ -30,7 +33,6 @@ def assert_function_call_format(result):
     assert len(result["queries"]) > 0
     assert isinstance(result["queries"][0], str)
     assert len(result["queries"][0]) > 0
-
 
 class TestAnyscaleLLM:
     @staticmethod

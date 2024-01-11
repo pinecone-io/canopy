@@ -67,6 +67,13 @@ class ContextContent(BaseModel, ABC):
         return self.to_text()
 
 
+class StringContextContent(ContextContent):
+    __root__: str
+
+    def to_text(self, **kwargs) -> str:
+        return self.__root__
+
+
 class Context(BaseModel):
     content: ContextContent
     num_tokens: int

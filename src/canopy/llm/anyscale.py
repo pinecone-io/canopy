@@ -1,9 +1,8 @@
-from typing import Union, Iterable, Optional, Any, List
+from typing import Optional, Any
 import os
 from canopy.llm import OpenAILLM
 from canopy.llm.models import Function
-from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Query
+from canopy.models.data_models import Messages
 
 ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
 FUNCTION_MODEL_LIST = [
@@ -40,7 +39,8 @@ class AnyscaleLLM(OpenAILLM):
 
     def enforced_function_call(
         self,
-        messages: Messages,
+        system_prompt: str,
+        chat_history: Messages,
         function: Function,
         *,
         max_tokens: Optional[int] = None,
@@ -57,21 +57,12 @@ class AnyscaleLLM(OpenAILLM):
                 messages, function, max_tokens=max_tokens, model_params=model_params
             )
 
-    async def achat_completion(
-        self,
-        messages: Messages,
-        *,
-        stream: bool = False,
-        max_generated_tokens: Optional[int] = None,
-        model_params: Optional[dict] = None,
-    ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
-        raise NotImplementedError()
-
-    async def agenerate_queries(
-        self,
-        messages: Messages,
-        *,
-        max_generated_tokens: Optional[int] = None,
-        model_params: Optional[dict] = None,
-    ) -> List[Query]:
+    def aenforced_function_call(self,
+                                system_prompt: str,
+                                chat_history: Messages,
+                                function: Function,
+                                *,
+                                max_tokens: Optional[int] = None,
+                                model_params: Optional[dict] = None
+                                ):
         raise NotImplementedError()

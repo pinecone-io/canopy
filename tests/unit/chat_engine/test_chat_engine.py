@@ -10,7 +10,6 @@ from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
                                                             ContextQueryResult,
                                                             StuffingContextContent, )
 from canopy.llm import BaseLLM
-from canopy.models.data_models import SystemMessage
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
@@ -72,9 +71,6 @@ class TestChatEngine:
             ),
             num_tokens=1  # TODO: This is a dummy value. Need to improve.
         )
-        expected_prompt = [SystemMessage(
-            content=system_prompt + f"\nContext: {mock_context.to_text()}"
-        )] + messages
 
         mock_chat_response = ChatResponse(
             id='chatcmpl-7xuuGZzniUGiqxDSTJnqwb0l1xtfp',
@@ -98,7 +94,7 @@ class TestChatEngine:
 
         expected = {
             'queries': mock_queries,
-            'prompt': expected_prompt,
+            'prompt': system_prompt,
             'response': mock_chat_response,
             'context': mock_context,
         }
@@ -125,7 +121,9 @@ class TestChatEngine:
             max_context_tokens=70
         )
         self.mock_llm.chat_completion.assert_called_once_with(
-            expected['prompt'],
+            system_prompt=expected['prompt'],
+            context=expected['context'],
+            chat_history=messages,
             max_tokens=200,
             stream=False,
             model_params=None
@@ -173,7 +171,9 @@ class TestChatEngine:
             max_context_tokens=max_context_tokens
         )
         self.mock_llm.chat_completion.assert_called_once_with(
-            expected['prompt'],
+            system_prompt=expected['prompt'],
+            context=expected['context'],
+            chat_history=messages,
             max_tokens=max_generated_tokens,
             stream=False,
             model_params=None

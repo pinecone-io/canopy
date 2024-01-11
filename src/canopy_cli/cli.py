@@ -45,9 +45,9 @@ DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
 
 
-def check_server_health(url: str):
+def check_server_health(url: str, timeout_seconds: int = 30):
     try:
-        res = requests.get(urljoin(url, "/health"))
+        res = requests.get(urljoin(url, "/health"), timeout=timeout_seconds)
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -65,6 +65,14 @@ def check_server_health(url: str):
         msg = (
             f"Canopy server on {url} is not healthy, failed with error: {error}"
         )
+        raise CLIError(msg)
+
+    except requests.exceptions.ReadTimeout:
+        msg = f"""
+        Canopy server did not send any data in the allotted
+        amount of time ({timeout_seconds} seconds).
+        Please check that the server is running on {url}.
+        """
         raise CLIError(msg)
 
 
