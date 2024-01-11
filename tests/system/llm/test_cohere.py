@@ -21,15 +21,6 @@ def assert_chat_completion(response):
         assert isinstance(choice.message.role, Role)
 
 
-def assert_function_call_format(result):
-    assert isinstance(result, dict)
-    assert "queries" in result
-    assert isinstance(result["queries"], list)
-    assert len(result["queries"]) > 0
-    assert isinstance(result["queries"][0], str)
-    assert len(result["queries"][0]) > 0
-
-
 @pytest.fixture
 def model_name():
     return "command"
