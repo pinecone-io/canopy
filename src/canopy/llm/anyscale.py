@@ -49,12 +49,14 @@ class AnyscaleLLM(OpenAILLM):
         if self.model_name not in FUNCTION_MODEL_LIST:
             raise ValueError(
                 f"Model {self.model_name} doesn't support function calling. "
-                "To use function calling capability, please select a different model_name "
-                "Pleaes check following link for details: https://docs.endpoints.anyscale.com/guides/function-calling#supported-models"
+                "To use function calling capability, please select a different model"
+                "Pleaes check following link for details: "
+                "https://docs.endpoints.anyscale.com/guides/function-calling"
             )
         else:
             return super().enforced_function_call(
-                system_prompt, chat_history, function, max_tokens=max_tokens, model_params=model_params
+                system_prompt, chat_history, function,
+                max_tokens=max_tokens, model_params=model_params
             )
 
     def aenforced_function_call(self,

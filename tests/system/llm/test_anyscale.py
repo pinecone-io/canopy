@@ -109,7 +109,8 @@ class TestAnyscaleLLM:
         anyscale_llm, messages, function_query_knowledgebase
     ):
         result = anyscale_llm.enforced_function_call(
-            system_prompt=SYSTEM_PROMPT, chat_history=messages, function=function_query_knowledgebase
+            system_prompt=SYSTEM_PROMPT, chat_history=messages,
+            function=function_query_knowledgebase
         )
         assert_function_call_format(result)
 
@@ -118,7 +119,8 @@ class TestAnyscaleLLM:
         anyscale_llm, messages, model_params_high_temperature
     ):
         response = anyscale_llm.chat_completion(
-            system_prompt=SYSTEM_PROMPT, chat_history=messages, model_params=model_params_high_temperature
+            system_prompt=SYSTEM_PROMPT, chat_history=messages,
+            model_params=model_params_high_temperature
         )
         assert_chat_completion(response, num_choices=model_params_high_temperature["n"])
 
@@ -127,7 +129,8 @@ class TestAnyscaleLLM:
         anyscale_llm, messages, model_params_low_temperature
     ):
         response = anyscale_llm.chat_completion(
-            system_prompt=SYSTEM_PROMPT, chat_history=messages, model_params=model_params_low_temperature
+            system_prompt=SYSTEM_PROMPT, chat_history=messages,
+            model_params=model_params_low_temperature
         )
         assert_chat_completion(response, num_choices=model_params_low_temperature["n"])
 
@@ -164,7 +167,8 @@ class TestAnyscaleLLM:
     @staticmethod
     def test_chat_streaming(anyscale_llm, messages):
         stream = True
-        response = anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages, stream=stream)
+        response = anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
+                                                chat_history=messages, stream=stream)
         messages_received = [message for message in response]
         assert len(messages_received) > 0
         for message in messages_received:
@@ -188,7 +192,8 @@ class TestAnyscaleLLM:
     @staticmethod
     def test_negative_max_tokens(anyscale_llm, messages):
         with pytest.raises(RuntimeError):
-            anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages, max_tokens=-5)
+            anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
+                                         chat_history=messages, max_tokens=-5)
 
     @staticmethod
     def test_chat_complete_api_failure_populates(anyscale_llm, messages):
@@ -198,7 +203,8 @@ class TestAnyscaleLLM:
         )
 
         with pytest.raises(Exception, match="API call failed"):
-            anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)
+            anyscale_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
+                                         chat_history=messages)
 
     @staticmethod
     def test_available_models(anyscale_llm):
