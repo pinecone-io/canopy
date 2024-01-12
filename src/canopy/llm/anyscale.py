@@ -54,7 +54,7 @@ class AnyscaleLLM(OpenAILLM):
             )
         else:
             return super().enforced_function_call(
-                messages, function, max_tokens=max_tokens, model_params=model_params
+                system_prompt, chat_history, function, max_tokens=max_tokens, model_params=model_params
             )
 
     def aenforced_function_call(self,
