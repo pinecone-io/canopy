@@ -2,8 +2,6 @@ import json
 import os
 from typing import List
 
-from datetime import datetime
-
 import pytest
 from fastapi.testclient import TestClient
 from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
@@ -17,6 +15,7 @@ from canopy_server.models.v1.api_models import (
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
+from ..util import create_e2e_tests_index_name
 
 upsert_payload = ContextUpsertRequest(
     documents=[
@@ -50,9 +49,8 @@ def try_create_canopy_index(kb: KnowledgeBase):
 
 
 @pytest.fixture(scope="module")
-def index_name(testrun_uid):
-    today = datetime.today().strftime("%Y-%m-%d")
-    return f"test-app-{testrun_uid[-6:]}-{today}"
+def index_name(testrun_uid: str):
+    return create_e2e_tests_index_name(testrun_uid)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -102,8 +100,8 @@ def test_health(client):
     health_response = client.get("/health")
     assert health_response.is_success
     assert (
-        health_response.json()
-        == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+            health_response.json()
+            == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
     )
 
 

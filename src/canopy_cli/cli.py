@@ -21,7 +21,7 @@ from urllib.parse import urljoin
 from canopy.knowledge_base import KnowledgeBase, list_canopy_indexes
 from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
-from canopy.models.data_models import Document
+from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
 from canopy_cli.data_loader import (
     load_from_path,
@@ -43,16 +43,10 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
 spinner = Spinner()
 
-OPENAI_AUTH_ERROR_MSG = (
-    "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
-    "environment variable is set correctly.\n"
-    "Please visit https://platform.openai.com/account/api-keys for more details"
-)
 
-
-def check_server_health(url: str):
+def check_server_health(url: str, timeout_seconds: int = 30):
     try:
-        res = requests.get(urljoin(url, "/health"))
+        res = requests.get(urljoin(url, "/health"), timeout=timeout_seconds)
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -70,6 +64,14 @@ def check_server_health(url: str):
         msg = (
             f"Canopy server on {url} is not healthy, failed with error: {error}"
         )
+        raise CLIError(msg)
+
+    except requests.exceptions.ReadTimeout:
+        msg = f"""
+        Canopy server did not send any data in the allotted
+        amount of time ({timeout_seconds} seconds).
+        Please check that the server is running on {url}.
+        """
         raise CLIError(msg)
 
 
@@ -139,9 +141,15 @@ def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
     Tokenizer.initialize()
     try:
-        ChatEngine.from_config(config.get("chat_engine", {}))
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+        # If the server itself will fail, we can't except the error, since it's running
+        # in a different process. Try to load and run the ChatEngine so we can catch
+        # any errors and print a nice message.
+        chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
+        chat_engine.max_generated_tokens = 5
+        chat_engine.context_engine.knowledge_base.connect()
+        chat_engine.chat(
+            [UserMessage(content="This is a health check. Are you alive? Be concise")]
+        )
     except Exception as e:
         msg = f"Failed to initialize Canopy server. Reason:\n{e}"
         if config_file:
@@ -228,9 +236,15 @@ def new(index_name: str, config: Optional[str]):
     with spinner:
         try:
             kb.create_canopy_index()
-        # TODO: kb should throw a specific exception for each case
+        # TODO: kb should throw a specific exception for failure
         except Exception as e:
-            msg = f"Failed to create a new index. Reason:\n{e}"
+            already_exists_str = f"Index {kb.index_name} already exists"
+            if isinstance(e, RuntimeError) and already_exists_str in str(e):
+                msg = (f"{already_exists_str}, please use a different name."
+                       f"If you wish to delete the index, log in to Pinecone's "
+                       f"Console: https://app.pinecone.io/")
+            else:
+                msg = f"Failed to create a new index. Reason:\n{e}"
             raise CLIError(msg)
     click.echo(click.style("Success!", fg="green"))
     os.environ["INDEX_NAME"] = index_name
@@ -302,8 +316,8 @@ def upsert(index_name: str,
     kb_config = _load_kb_config(config)
     try:
         kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
-    except openai.OpenAIError:
-        raise CLIError(OPENAI_AUTH_ERROR_MSG)
+    except Exception as e:
+        raise CLIError(str(e))
 
     try:
         kb.connect()
@@ -348,7 +362,8 @@ def upsert(index_name: str,
     pbar = tqdm(total=len(data), desc="Upserting documents")
     failed_docs: List[str] = []
     first_error: Optional[str] = None
-    for batch in _batch_documents_by_chunks(kb._chunker, data):
+    for batch in _batch_documents_by_chunks(kb._chunker, data,
+                                            batch_size=kb._encoder.batch_size):
         try:
             kb.upsert(batch)
         except Exception as e:

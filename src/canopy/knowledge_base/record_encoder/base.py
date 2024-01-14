@@ -100,7 +100,13 @@ class RecordEncoder(ABC, ConfigurableMixin):
         """   # noqa: E501
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
-            encoded_docs.extend(self._encode_documents_batch(batch))
+            try:
+                encoded_docs.extend(self._encode_documents_batch(batch))
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to enconde documents using {self.__class__.__name__}. "
+                    f"Error: {self._format_error(e)}"
+                ) from e
 
         return encoded_docs  # TODO: consider yielding a generator
 
@@ -118,7 +124,13 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
-            kb_queries.extend(self._encode_queries_batch(batch))
+            try:
+                kb_queries.extend(self._encode_queries_batch(batch))
+            except Exception as e:
+                raise RuntimeError(
+                    f"Failed to enconde queries using {self.__class__.__name__}. "
+                    f"Error: {self._format_error(e)}"
+                ) from e
 
         return kb_queries
 
@@ -137,3 +149,6 @@ class RecordEncoder(ABC, ConfigurableMixin):
             kb_queries.extend(await self._aencode_queries_batch(batch))
 
         return kb_queries
+
+    def _format_error(self, err):
+        return f"{err}"

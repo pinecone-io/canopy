@@ -1,27 +1,50 @@
 # ===========================================================
 #            Configuration file for Canopy Server
 # ===========================================================
-query_builder_prompt: &query_builder_prompt |
-  Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
-  You should break down complex questions into sub-queries if needed.
-# -------------------------------------------------------------------------------------------
-# Tokenizer configuration
-# A Tokenizer singleton instance must be initialized before initializing any other components
-# -------------------------------------------------------------------------------------------
 tokenizer:
+  # -------------------------------------------------------------------------------------------
+  # Tokenizer configuration
+  # Use LLamaTokenizer from HuggingFace with the relevant OSS model (e.g. LLama2)
+  # -------------------------------------------------------------------------------------------
   type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
   params:
-    model_name: openlm-research/open_llama_7b_v2
+    model_name: hf-internal-testing/llama-tokenizer
 
 chat_engine:
+  # -------------------------------------------------------------------------------------------
+  # Chat engine configuration
+  # Use Anyscale Endpoint as the open source LLM provider
+  # You can find the list of supported LLM at https://docs.endpoints.anyscale.com/category/supported-models
+  # -------------------------------------------------------------------------------------------
+  params:
+    max_prompt_tokens: 2048             # The maximum number of tokens to use for input prompt to the LLM.
   llm: &llm
     type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
     params:
       model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
-      
-  # --------------------------------------------------------------------
-  # Configuration for the QueryBuilder subcomponent of the chat engine.
-  # The query builder is responsible for generating textual queries given user message history.
-  # --------------------------------------------------------------------
+
   query_builder:
-    type: LastMessageQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator]
+    # --------------------------------------------------------------------
+    # Configuration for the QueryBuilder subcomponent of the chat engine.
+    # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the InstructionQueryGenerator
+    # --------------------------------------------------------------------
+    type: InstructionQueryGenerator     # Options: [InstructionQueryGenerator, LastMessageQueryGenerator]
+
+  context_engine:
+    # -------------------------------------------------------------------------------------------------------------
+    # ContextEngine configuration
+    # -------------------------------------------------------------------------------------------------------------
+    knowledge_base:
+      # -----------------------------------------------------------------------------------------------------------
+      # KnowledgeBase configuration
+      # -----------------------------------------------------------------------------------------------------------
+      record_encoder:
+        # --------------------------------------------------------------------------
+        # Configuration for the RecordEncoder subcomponent of the knowledge base.
+        # Use Anyscale's Embedding endpoint for dense encoding
+        # --------------------------------------------------------------------------
+        type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder, AnyscaleRecordEncoder]
+        params:
+          model_name:                   # The name of the model to use for encoding
+            thenlper/gte-large
+          batch_size: 100               # The number of document chunks to encode in each call to the encoding model

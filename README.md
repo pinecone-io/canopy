@@ -79,6 +79,7 @@ export INDEX_NAME="<INDEX_NAME>"
 | `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
 </details>
@@ -243,4 +244,13 @@ To run the canopy server for production, please run:
 gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
 
-The server interacts with services like Pinecone and OpenAI using your own authentication credentials. When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, so that your server would only take requests from authenticated users.
+Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
+for your production needs. For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
+[Deployment to GCP](docs/deployment-gcp.md) documentation.
+
+
+> [!IMPORTANT]
+>  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
+   When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, 
+   so that your server would only take requests from authenticated users.
+

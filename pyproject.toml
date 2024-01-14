@@ -1,24 +1,24 @@
 [tool.poetry]
 name = "canopy-sdk"
-version = "0.4.0a0"
+version = "0.5.0"
 description = "Retrieval Augmented Generation (RAG) framework and context engine powered by Pinecone"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
 license = "Apache-2.0"
-packages = [{ include = "canopy", from = "src" },
-    { include = "canopy_cli", from = "src" },
-    { include = "canopy_server", from = "src" }, ]
+packages = [{include = "canopy", from = "src"},
+            {include = "canopy_cli", from = "src"},
+            {include = "canopy_server", from = "src"},]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-pinecone-client = "3.0.0.dev4"
+pinecone-client = "3.0.0.dev10"
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
 tiktoken = "^0.3.3"
 pydantic = "^1.10.7"
 pandas-stubs = "^2.0.3.230814"
-fastapi = "^0.92.0"
-uvicorn = "^0.20.0"
+fastapi = ">=0.92.0, <1.0.0"
+uvicorn = ">=0.20.0, <1.0.0"
 tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
 types-tqdm = "^4.61.0"
@@ -28,12 +28,17 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = "^0.7.0"
+pinecone-text = "^0.7.1"
 tokenizers = "^0.15.0"
 transformers = "^4.35.2"
 sentencepiece = "^0.1.99"
 pandas = "2.0.0"
 pyarrow = "^14.0.1"
+cohere = { version = ">=4.37", optional = true }
+
+[tool.poetry.extras]
+cohere = ["cohere"]
+
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
@@ -88,3 +93,5 @@ skip-checking-raises = true
 [tool.poetry.scripts]
 canopy = "canopy_cli.cli:cli"
 
+[tool.pytest.ini_options]
+log_cli = true

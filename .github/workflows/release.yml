@@ -133,7 +133,7 @@ jobs:
         env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag: V${{ needs.build.outputs.new_version }}
+          tag: v${{ needs.build.outputs.new_version }}
           name: ${{ needs.build.outputs.new_version }}
           artifacts: "dist/*"
           bodyFile: "CHANGELOG.md"
