@@ -1,9 +1,12 @@
 import logging
 from datetime import datetime
+from typing import Optional
 
 import pinecone
 
 logger = logging.getLogger(__name__)
+
+TEST_NAMESPACE_NAME = "ns"
 
 
 def create_index_name(testrun_uid: str, prefix: str) -> str:
@@ -15,17 +18,16 @@ def create_system_tests_index_name(testrun_uid: str) -> str:
     return create_index_name(testrun_uid, "test-kb")
 
 
-def create_e2e_tests_index_name(testrun_uid: str) -> str:
-    return create_index_name(testrun_uid, "test-app")
-
-
-def create_e2e_ns_tests_index_name(testrun_uid: str) -> str:
-    return create_index_name(testrun_uid, "test-app-ns")
+def create_e2e_tests_index_name(testrun_uid: str,
+                                namespace: Optional[str] = None) -> str:
+    suffix = "" if namespace is None else f"-{namespace}"
+    return create_index_name(testrun_uid, f"test-app{suffix}")
 
 
 def cleanup_indexes(testrun_uid: str):
     pinecone.init()
-    e2e_ns_index_name = create_e2e_ns_tests_index_name(testrun_uid)
+    e2e_ns_index_name = create_e2e_tests_index_name(testrun_uid,
+                                                    namespace=TEST_NAMESPACE_NAME)
     e2e_index_name = create_e2e_tests_index_name(testrun_uid)
     system_index_name = create_system_tests_index_name(testrun_uid)
     index_names = (system_index_name, e2e_index_name, e2e_ns_index_name)
