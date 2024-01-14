@@ -13,6 +13,7 @@ from canopy.llm import BaseLLM
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
+from ...util import TEST_NAMESPACE
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt"
 MAX_PROMPT_TOKENS = 100
@@ -100,7 +101,11 @@ class TestChatEngine:
         }
         return messages, expected
 
-    def test_chat(self, history_length=5, snippet_length=10):
+    @pytest.mark.parametrize("namespace", [
+        None, TEST_NAMESPACE
+    ])
+    def test_chat(self, namespace, history_length=5, snippet_length=10):
+
         chat_engine = self._init_chat_engine()
 
         # Mock input and expected output
@@ -109,7 +114,7 @@ class TestChatEngine:
                                                            MOCK_SYSTEM_PROMPT)
 
         # Call the method under test
-        response = chat_engine.chat(messages, namespace="test")
+        response = chat_engine.chat(messages, namespace=namespace)
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -119,7 +124,7 @@ class TestChatEngine:
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
             max_context_tokens=70,
-            namespace="test"
+            namespace=namespace
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
@@ -132,8 +137,11 @@ class TestChatEngine:
 
         assert response == expected['response']
 
-    # TODO: parametrize and add more test cases
+    @pytest.mark.parametrize("namespace", [
+        None, TEST_NAMESPACE
+    ])
     def test_chat_engine_params(self,
+                                namespace,
                                 system_prompt_length=10,
                                 max_prompt_tokens=80,
                                 max_context_tokens=60,
@@ -160,7 +168,7 @@ class TestChatEngine:
                 chat_engine.chat(messages)
             return
 
-        response = chat_engine.chat(messages, namespace="test")
+        response = chat_engine.chat(messages, namespace=namespace)
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -170,7 +178,7 @@ class TestChatEngine:
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
             max_context_tokens=max_context_tokens,
-            namespace="test"
+            namespace=namespace
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],

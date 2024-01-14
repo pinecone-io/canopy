@@ -6,7 +6,7 @@ import pinecone
 
 logger = logging.getLogger(__name__)
 
-TEST_NAMESPACE_NAME = "ns"
+TEST_NAMESPACE = "ns"
 
 
 def create_index_name(testrun_uid: str, prefix: str) -> str:
@@ -27,7 +27,7 @@ def create_e2e_tests_index_name(testrun_uid: str,
 def cleanup_indexes(testrun_uid: str):
     pinecone.init()
     e2e_ns_index_name = create_e2e_tests_index_name(testrun_uid,
-                                                    namespace=TEST_NAMESPACE_NAME)
+                                                    namespace=TEST_NAMESPACE)
     e2e_index_name = create_e2e_tests_index_name(testrun_uid)
     system_index_name = create_system_tests_index_name(testrun_uid)
     index_names = (system_index_name, e2e_index_name, e2e_ns_index_name)

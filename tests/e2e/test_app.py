@@ -15,7 +15,7 @@ from canopy_server.models.v1.api_models import (
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
-from ..util import create_e2e_tests_index_name, TEST_NAMESPACE_NAME
+from ..util import create_e2e_tests_index_name, TEST_NAMESPACE
 
 upsert_payload = ContextUpsertRequest(
     documents=[
@@ -29,7 +29,7 @@ upsert_payload = ContextUpsertRequest(
 )
 
 
-@pytest.fixture(scope="module", params=[None, TEST_NAMESPACE_NAME])
+@pytest.fixture(scope="module", params=[None, TEST_NAMESPACE])
 def namespace(request):
     return request.param
 
