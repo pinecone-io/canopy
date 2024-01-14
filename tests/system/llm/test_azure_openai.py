@@ -1,233 +1,82 @@
 import os
-from unittest.mock import MagicMock
-
-import jsonschema
 import pytest
 
-from canopy.models.data_models import Role, MessageBase  # noqa
-from canopy.models.api_models import ChatResponse, StreamingChatChunk  # noqa
-from canopy.llm.azure_openai_llm import AzureOpenAILLM  # noqa
-from canopy.llm.models import \
-    Function, FunctionParameters, FunctionArrayProperty  # noqa
-from openai import BadRequestError  # noqa
+from canopy.llm import AzureOpenAILLM
+from .test_openai import messages, SYSTEM_PROMPT
 
 
-def assert_chat_completion(response, num_choices=1):
-    assert len(response.choices) == num_choices
-    for choice in response.choices:
-        assert isinstance(choice.message, MessageBase)
-        assert isinstance(choice.message.content, str)
-        assert len(choice.message.content) > 0
-        assert isinstance(choice.message.role, Role)
+MODEL_NAME = os.getenv("AZURE_DEPLOYMENT_NAME")
 
-
-def assert_function_call_format(result):
-    assert isinstance(result, dict)
-    assert "queries" in result
-    assert isinstance(result["queries"], list)
-    assert len(result["queries"]) > 0
-    assert isinstance(result["queries"][0], str)
-    assert len(result["queries"][0]) > 0
-
-
-class TestAzureOpenAILLM:
-
-    @staticmethod
-    @pytest.fixture
-    def model_name():
-        return "gpt-3.5-turbo-0613"
-
-    @staticmethod
-    @pytest.fixture
-    def messages():
-        # Create a list of MessageBase objects
-        return [
-            MessageBase(role=Role.USER, content="Hello, assistant."),
-            MessageBase(role=Role.ASSISTANT,
-                        content="Hello, user. How can I assist you?")
-        ]
-
-    @staticmethod
-    @pytest.fixture
-    def function_query_knowledgebase():
-        return Function(
-            name="query_knowledgebase",
-            description="Query search engine for relevant information",
-            parameters=FunctionParameters(
-                required_properties=[
-                    FunctionArrayProperty(
-                        name="queries",
-                        items_type="string",
-                        description='List of queries to send to the search engine.',
-                    ),
-                ]
-            ),
+@pytest.fixture
+def azure_openai_llm():
+    if os.getenv("AZURE_DEPLOYMENT_NAME") is None:
+        pytest.skip(
+            "Couldn't find Azure deployment name. Skipping Azure OpenAI tests."
         )
+    return AzureOpenAILLM(model_name=os.getenv("AZURE_DEPLOYMENT_NAME"))
 
-    @staticmethod
-    @pytest.fixture
-    def model_params_high_temperature():
-        return {"temperature": 0.9, "top_p": 0.95, "n": 3}
 
-    @staticmethod
-    @pytest.fixture
-    def model_params_low_temperature():
-        return {"temperature": 0.2, "top_p": 0.5, "n": 1}
+def test_init_params():
+    llm = AzureOpenAILLM(
+        model_name="test_model_name",
+        api_version="2020-05-03",
+    )
 
-    @staticmethod
-    @pytest.fixture
-    def azure_openai_llm(model_name):
-        return AzureOpenAILLM(model_name=model_name)
+    assert llm.model_name == "test_model_name"
+    assert llm._client._api_version == "2020-05-03"
 
-    @staticmethod
-    def test_init_with_custom_params(azure_openai_llm):
-        llm = AzureOpenAILLM(model_name="test_model_name",
-                             api_key="test_api_key",
-                             organization="test_organization",
-                             temperature=0.9,
-                             top_p=0.95,
-                             n=3, )
 
-        assert llm.model_name == "test_model_name"
-        assert llm.default_model_params["temperature"] == 0.9
-        assert llm.default_model_params["top_p"] == 0.95
-        assert llm.default_model_params["n"] == 3
-        assert llm._client.api_key == "<>"
-        assert llm._client.organization == "test_organization"
+@pytest.fixture()
+def no_api_key():
+    before = os.environ.pop("AZURE_OPENAI_API_KEY", None)
+    yield
+    if before is not None:
+        os.environ["AZURE_OPENAI_API_KEY"] = before
 
-    @staticmethod
-    def test_chat_completion(azure_openai_llm, messages):
-        response = azure_openai_llm.chat_completion(messages=messages)
-        assert_chat_completion(response)
 
-    @staticmethod
-    def test_enforced_function_call(azure_openai_llm,
-                                    messages,
-                                    function_query_knowledgebase):
-        result = azure_openai_llm.enforced_function_call(
-            messages=messages,
-            function=function_query_knowledgebase)
-        assert_function_call_format(result)
+def test_missing_api_key(no_api_key):
+    with pytest.raises(RuntimeError, match="AZURE_OPENAI_API_KEY"):
+        AzureOpenAILLM(MODEL_NAME)
 
-    @staticmethod
-    def test_chat_completion_high_temperature(azure_openai_llm,
-                                              messages,
-                                              model_params_high_temperature):
-        response = azure_openai_llm.chat_completion(
-            messages=messages,
-            model_params=model_params_high_temperature
-        )
-        assert_chat_completion(response,
-                               num_choices=model_params_high_temperature["n"])
 
-    @staticmethod
-    def test_chat_completion_low_temperature(azure_openai_llm,
-                                             messages,
-                                             model_params_low_temperature):
-        response = azure_openai_llm.chat_completion(messages=messages,
-                                                    model_params=model_params_low_temperature)
-        assert_chat_completion(response,
-                               num_choices=model_params_low_temperature["n"])
+@pytest.fixture()
+def bad_api_key():
+    before = os.environ.pop("AZURE_OPENAI_API_KEY", None)
+    os.environ["AZURE_OPENAI_API_KEY"] = "bad key"
+    yield
+    if before is not None:
+        os.environ["AZURE_OPENAI_API_KEY"] = before
 
-    @staticmethod
-    def test_enforced_function_call_high_temperature(azure_openai_llm,
-                                                     messages,
-                                                     function_query_knowledgebase,
-                                                     model_params_high_temperature):
-        result = azure_openai_llm.enforced_function_call(
-            messages=messages,
-            function=function_query_knowledgebase,
-            model_params=model_params_high_temperature
-        )
-        assert isinstance(result, dict)
 
-    @staticmethod
-    def test_enforced_function_call_low_temperature(azure_openai_llm,
-                                                    messages,
-                                                    function_query_knowledgebase,
-                                                    model_params_low_temperature):
-        result = azure_openai_llm.enforced_function_call(
-            messages=messages,
-            function=function_query_knowledgebase,
-            model_params=model_params_low_temperature
-        )
-        assert_function_call_format(result)
+def test_bad_api_key(bad_api_key, messages):
+    with pytest.raises(RuntimeError, match="AZURE_OPENAI_API_KEY"):
+        llm = AzureOpenAILLM(MODEL_NAME)
+        llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)
 
-    @staticmethod
-    def test_chat_streaming(azure_openai_llm, messages):
-        stream = True
-        response = azure_openai_llm.chat_completion(messages=messages,
-                                                    stream=stream)
-        messages_received = [message for message in response]
-        assert len(messages_received) > 0
-        for message in messages_received:
-            assert isinstance(message, StreamingChatChunk)
+@pytest.fixture()
+def no_azure_endpoint():
+    before = os.environ.pop("AZURE_OPENAI_ENDPOINT", None)
+    yield
+    if before is not None:
+        os.environ["AZURE_OPENAI_ENDPOINT"] = before
 
-    @staticmethod
-    def test_max_tokens(azure_openai_llm, messages):
-        max_tokens = 2
-        response = azure_openai_llm.chat_completion(messages=messages,
-                                                    max_tokens=max_tokens)
-        assert isinstance(response, ChatResponse)
-        assert len(response.choices[0].message.content.split()) <= max_tokens
 
-    @staticmethod
-    def test_missing_messages(azure_openai_llm):
-        with pytest.raises(BadRequestError):
-            azure_openai_llm.chat_completion(messages=[])
+def test_missing_azure_endpoint(no_azure_endpoint):
+    with pytest.raises(RuntimeError, match="AZURE_OPENAI_ENDPOINT"):
+        AzureOpenAILLM(MODEL_NAME)
 
-    @staticmethod
-    def test_negative_max_tokens(azure_openai_llm, messages):
-        with pytest.raises(BadRequestError):
-            azure_openai_llm.chat_completion(messages=messages, max_tokens=-5)
+@pytest.fixture()
+def bad_azure_endpoint():
+    before = os.environ.pop("AZURE_OPENAI_ENDPOINT", None)
+    os.environ["AZURE_OPENAI_ENDPOINT"] = "bad endpoint"
+    yield
+    if before is not None:
+        os.environ["AZURE_OPENAI_ENDPOINT"] = before
 
-    @staticmethod
-    def test_chat_complete_api_failure_populates(azure_openai_llm,
-                                                 messages):
-        azure_openai_llm._client = MagicMock()
-        azure_openai_llm._client.chat.completions.create.side_effect = Exception(
-            "API call failed")
+def test_bad_azure_endpoint(bad_azure_endpoint, messages):
+    with pytest.raises(RuntimeError, match="Azure OpenAI endpoint"):
+        llm = AzureOpenAILLM(MODEL_NAME)
+        llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)
 
-        with pytest.raises(Exception, match="API call failed"):
-            azure_openai_llm.chat_completion(messages=messages)
+# def test_function_calling_error(azure_openai_llm):
 
-    @staticmethod
-    def test_enforce_function_api_failure_populates(azure_openai_llm,
-                                                    messages,
-                                                    function_query_knowledgebase):
-        azure_openai_llm._client = MagicMock()
-        azure_openai_llm._client.chat.completions.create.side_effect = Exception(
-            "API call failed")
-
-        with pytest.raises(Exception, match="API call failed"):
-            azure_openai_llm.enforced_function_call(messages=messages,
-                                                    function=function_query_knowledgebase)
-
-    @staticmethod
-    def test_enforce_function_wrong_output_schema(azure_openai_llm,
-                                                  messages,
-                                                  function_query_knowledgebase):
-        azure_openai_llm._client = MagicMock()
-        azure_openai_llm._client.chat.completions.create.return_value = MagicMock(
-            choices=[MagicMock(
-                message=MagicMock(
-                    tool_calls=[
-                        MagicMock(
-                            function=MagicMock(
-                                arguments="{\"key\": \"value\"}"))]))])
-
-        with pytest.raises(jsonschema.ValidationError,
-                           match="'queries' is a required property"):
-            azure_openai_llm.enforced_function_call(messages=messages,
-                                                    function=function_query_knowledgebase)
-
-        assert azure_openai_llm._client.chat.completions.create.call_count == 3, \
-            "retry did not happen as expected"
-
-    @staticmethod
-    def test_available_models(azure_openai_llm):
-        models = azure_openai_llm.available_models
-        assert isinstance(models, list)
-        assert len(models) > 0
-        assert isinstance(models[0], str)
-        assert azure_openai_llm.model_name in models
