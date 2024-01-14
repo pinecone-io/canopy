@@ -1,4 +1,5 @@
 import json
+import os
 from copy import deepcopy
 from typing import Optional, Any, Dict, cast, Union, Iterable, List
 
@@ -29,25 +30,23 @@ class AzureOpenAILLM(OpenAILLM):
           This is different from the environment variable for passing an organization to the parent class (OpenAILLM), which is "OPENAI_ORG".
     """  # noqa: E501
     def __init__(self,
-                 model_name: str = "gpt-3.5-turbo",
+                 model_name: str,
                  *,
                  api_key: Optional[str] = None,
                  api_version: str = "2023-12-01-preview",
                  azure_endpoint: Optional[str] = None,
                  organization: Optional[str] = None,
-                 base_url: Optional[str] = None,
                  **kwargs: Any,
                  ):
         """
         Initialize the Azure OpenAI LLM.
 
         Args:
-            model_name: Either your custom model deployment, or the name of a public OpenAI model to use 
+            model_name: The name of your custom model deployment on Azure. This is required. 
             api_key: Your Azure OpenAI API key. Defaults to None (uses the "AZURE_OPENAI_API_KEY" environment variable).
-            base_url: The base URL to use for the Azure OpenAI API. Will use the AZURE_OPENAI_ENDPOINT environment variable if set.
-            **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
-                    For example, you can set the temperature, top_p etc
-                    These params can be overridden by passing a `model_params` argument to the `chat_completion` or `enforced_function_call` methods.
+            api_version: The Azure OpenAI API version to use. Defaults to "2023-12-01-preview".
+            azure_endpoint: The url of your Azure OpenAI service endpoint. Defaults to None (uses the "AZURE_OPENAI_ENDPOINT" environment variable).
+            **kwargs: Generation default parameters to use for each request.
 
 
         >>> from canopy.llm.azure_openai_llm import AzureOpenAILLM
@@ -59,46 +58,30 @@ class AzureOpenAILLM(OpenAILLM):
         """  # noqa: E501
         self.model_name = model_name
 
-        # if not environ.get('AZURE_OPENAI_API_KEY'):
-        #     raise EnvironmentError('Please set your Azure OpenAI API key environment variable ('
-        #                            'export AZURE_OPENAI_API_KEY=<your azure openai api key>). See here for more '
-        #                            'information: '
-        #                            'https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python')
-        #
-        # if not environ.get('OPENAI_API_VERSION'):
-        #     raise EnvironmentError("Please set your Azure OpenAI API version. ('export OPENAI_API_VERSION=<your API "
-        #                            "version"
-        #                            ">'). See here for more information "
-        #                            "https://learn.microsoft.com/en-us/azure/ai-services/openai/quickstart?tabs=command-line%2Cpython&pivots=programming-language-python")
-        #
-        # if azure_deployment is None:
-        #     if not environ.get('AZURE_DEPLOYMENT'):
-        #         raise EnvironmentError('You need to set an environment variable for AZURE_DEPLOYMENT to the name of '
-        #                                'your Azure deployment')
-        #     azure_deployment = os.getenv('AZURE_DEPLOYMENT')
+        try:
+            self._client = openai.AzureOpenAI(
+                azure_deployment=model_name,
+                api_key=api_key,
+                api_version=api_version,
+                azure_endpoint=azure_endpoint,
+                organization=organization,
+            )
+        except (openai.OpenAIError, ValueError) as e:
+            raise RuntimeError(
+                "Failed to connect to Azure OpenAI, please make sure that the "
+                "AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT environment variables "
+                "are set correctly. "
+                f"Underlying Error:\n{self._format_openai_error(e)}"
+            )
 
-        self._client = openai.AzureOpenAI(
-            azure_deployment=model_name,
-            api_key=api_key,
-            api_version=api_version,
-            azure_endpoint=azure_endpoint,
-            organization=organization,
-            base_url=base_url,
-        )
         self.default_model_params = kwargs
 
     @property
     def available_models(self):
-        raise NotImplementedError("Azure OpenAI LLM does not support listing available models")
+        raise NotImplementedError(
+            "Azure OpenAI LLM does not support listing available models"
+        )
 
-    # @retry(
-    #     reraise=True,
-    #     stop=stop_after_attempt(3),
-    #     retry=retry_if_exception_type(
-    #         (json.decoder.JSONDecodeError,
-    #          jsonschema.ValidationError)
-    #     ),
-    # )
     async def achat_completion(
         self,
         messages: Messages,
@@ -117,3 +100,19 @@ class AzureOpenAILLM(OpenAILLM):
         model_params: Optional[dict] = None,
     ) -> List[Query]:
         raise NotImplementedError()
+
+    def _handle_chat_error(self, e):
+        if isinstance(e, openai.AuthenticationError):
+            raise RuntimeError(
+                "Failed to connect to Azure OpenAI, please make sure that the "
+                "AZURE_OPENAI_API_KEY environment variable is set correctly. "
+                f"Underlying Error:\n{self._format_openai_error(e)}"
+            )
+        elif isinstance(e, openai.APIConnectionError):
+            raise RuntimeError(
+                f"Failed to connect to your Azure OpenAI endpoint, please make sure "
+                f"that the provided endpoint {os.getenv('AZURE_OPENAI_ENDPOINT')} "
+                f"is correct. Underlying Error:\n{self._format_openai_error(e)}"
+            )
+        else:
+            super()._handle_chat_error(e)
