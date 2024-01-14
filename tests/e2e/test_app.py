@@ -40,8 +40,8 @@ def namespace_prefix(namespace):
 
 
 @pytest.fixture(scope="module")
-def index_name(testrun_uid: str, namespace):
-    return create_e2e_tests_index_name(testrun_uid, namespace)
+def index_name(testrun_uid: str):
+    return create_e2e_tests_index_name(testrun_uid)
 
 
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))

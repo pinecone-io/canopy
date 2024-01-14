@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from typing import Optional
 
 import pinecone
 
@@ -18,19 +17,15 @@ def create_system_tests_index_name(testrun_uid: str) -> str:
     return create_index_name(testrun_uid, "test-kb")
 
 
-def create_e2e_tests_index_name(testrun_uid: str,
-                                namespace: Optional[str] = None) -> str:
-    suffix = "" if namespace is None else f"-{namespace}"
-    return create_index_name(testrun_uid, f"test-app{suffix}")
+def create_e2e_tests_index_name(testrun_uid: str) -> str:
+    return create_index_name(testrun_uid, "test-app")
 
 
 def cleanup_indexes(testrun_uid: str):
     pinecone.init()
-    e2e_ns_index_name = create_e2e_tests_index_name(testrun_uid,
-                                                    namespace=TEST_NAMESPACE)
     e2e_index_name = create_e2e_tests_index_name(testrun_uid)
     system_index_name = create_system_tests_index_name(testrun_uid)
-    index_names = (system_index_name, e2e_index_name, e2e_ns_index_name)
+    index_names = (system_index_name, e2e_index_name)
     logger.info(f"Preparing to cleanup indexes: {index_names}")
     current_indexes = pinecone.list_indexes()
     for index_name in index_names:
