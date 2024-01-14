@@ -69,7 +69,7 @@ def knowledge_base(index_name):
 
 
 @pytest.fixture(scope="module")
-def client(knowledge_base, index_name, namespace):
+def client(knowledge_base, index_name):
     index_name_before = os.getenv("INDEX_NAME")
     os.environ["INDEX_NAME"] = index_name
     tokenizer_before = Tokenizer._tokenizer_instance
