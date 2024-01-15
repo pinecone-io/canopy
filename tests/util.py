@@ -5,6 +5,8 @@ import pinecone
 
 logger = logging.getLogger(__name__)
 
+TEST_NAMESPACE = "ns"
+
 
 def create_index_name(testrun_uid: str, prefix: str) -> str:
     today = datetime.today().strftime("%Y-%m-%d")
