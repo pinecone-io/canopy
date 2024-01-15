@@ -3,7 +3,7 @@ import os
 import glob
 from enum import Enum
 from collections.abc import Iterable
-from typing import List, NamedTuple, cast
+from typing import List
 from textwrap import dedent
 
 import numpy as np
@@ -62,7 +62,9 @@ def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
             try:
                 documents.append(
                     Document(
-                        **{k: v for k, v in row._asdict().items() if not pd.isna(v)}  # type: ignore[operator]
+                        **{k: v for k, v in
+                           row._asdict().items()  # type: ignore[operator]
+                           if not pd.isna(v)}
                     )
                 )
             except ValidationError as e:
@@ -139,8 +141,8 @@ def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
 
 
 def _load_multiple_non_schematic_files(
-    file_paths: List[str],
-    type: NonSchematicFilesTypes
+        file_paths: List[str],
+        type: NonSchematicFilesTypes
 ) -> List[Document]:
     if not isinstance(file_paths, list):
         raise ValueError("file_paths must be a list of strings")
