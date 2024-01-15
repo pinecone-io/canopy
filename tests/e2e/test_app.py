@@ -1,6 +1,7 @@
 import json
 import os
-from typing import List
+from typing import List, Optional
+from urllib.parse import urljoin
 
 import pinecone
 import pytest
@@ -14,7 +15,7 @@ from canopy_server.models.v1.api_models import (
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
-from ..util import create_e2e_tests_index_name
+from ..util import create_e2e_tests_index_name, TEST_NAMESPACE
 
 upsert_payload = ContextUpsertRequest(
     documents=[
@@ -28,23 +29,35 @@ upsert_payload = ContextUpsertRequest(
 )
 
 
-@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
-def assert_vector_ids_exist(vector_ids: List[str],
-                            knowledge_base: KnowledgeBase):
-    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
-    assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
+@pytest.fixture(scope="module", params=[None, TEST_NAMESPACE])
+def namespace(request):
+    return request.param
 
 
-@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
-def assert_vector_ids_not_exist(vector_ids: List[str],
-                                knowledge_base: KnowledgeBase):
-    fetch_response = knowledge_base._index.fetch(ids=vector_ids)
-    assert len(fetch_response["vectors"]) == 0
+@pytest.fixture(scope="module")
+def namespace_prefix(namespace):
+    return f"{namespace}/" if namespace is not None else ""
 
 
 @pytest.fixture(scope="module")
 def index_name(testrun_uid: str):
     return create_e2e_tests_index_name(testrun_uid)
+
+
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
+def assert_vector_ids_exist(vector_ids: List[str],
+                            knowledge_base: KnowledgeBase,
+                            namespace: Optional[str] = None):
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids, namespace=namespace)
+    assert all([v_id in fetch_response["vectors"] for v_id in vector_ids])
+
+
+@retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
+def assert_vector_ids_not_exist(vector_ids: List[str],
+                                knowledge_base: KnowledgeBase,
+                                namespace: Optional[str] = None):
+    fetch_response = knowledge_base._index.fetch(ids=vector_ids, namespace=namespace)
+    assert len(fetch_response["vectors"]) == 0
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -62,7 +75,7 @@ def client(knowledge_base, index_name):
     tokenizer_before = Tokenizer._tokenizer_instance
     Tokenizer.clear()
     with TestClient(app) as client:
-        client.base_url = f"{client.base_url}/{API_VERSION}"
+        client.base_url = urljoin(f"{client.base_url}", API_VERSION)
         yield client
     if index_name_before:
         os.environ["INDEX_NAME"] = index_name_before
@@ -83,11 +96,11 @@ def teardown_knowledge_base(knowledge_base):
 
 # TODO: the following test is a complete e2e test, this it not the final design
 # for the e2e tests, however there were some issues
-# with the fixtures that will be resovled
+# with the fixtures that will be resolved
 
 
 def test_health(client):
-    health_response = client.get("/health")
+    health_response = client.get("health")
     assert health_response.is_success
     assert (
             health_response.json()
@@ -95,16 +108,16 @@ def test_health(client):
     )
 
 
-def test_upsert(client):
+def test_upsert(client, namespace_prefix):
     # Upsert a document to the index
     upsert_response = client.post(
-        "/context/upsert",
+        f"{namespace_prefix}context/upsert",
         json=upsert_payload.dict())
     assert upsert_response.is_success
 
 
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
-def test_query(client):
+def test_query(client, namespace_prefix):
     # fetch the context with all the right filters
     tokenizer = Tokenizer()
     query_payload = ContextQueryRequest(
@@ -119,7 +132,7 @@ def test_query(client):
     )
 
     query_response = client.post(
-        "/context/query",
+        f"{namespace_prefix}context/query",
         json=query_payload.dict())
     assert query_response.is_success
 
@@ -138,7 +151,7 @@ def test_query(client):
             upsert_payload.dict()["documents"][0]["source"])
 
 
-def test_chat_required_params(client):
+def test_chat_required_params(client, namespace_prefix):
     # test response is as expected on /chat
     chat_payload = {
         "messages": [
@@ -149,7 +162,7 @@ def test_chat_required_params(client):
         ]
     }
     chat_response = client.post(
-        "/chat/completions",
+        f"{namespace_prefix}chat/completions",
         json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
@@ -161,7 +174,7 @@ def test_chat_required_params(client):
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
 
 
-def test_chat_openai_additional_params(client):
+def test_chat_openai_additional_params(client, namespace_prefix):
     chat_payload = {
         "messages": [
             {
@@ -179,7 +192,7 @@ def test_chat_openai_additional_params(client):
         "top_p": 0.5,
     }
     chat_response = client.post(
-        "/chat/completions",
+        f"{namespace_prefix}chat/completions",
         json=chat_payload)
     assert chat_response.is_success
     chat_response_as_json = chat_response.json()
@@ -190,18 +203,18 @@ def test_chat_openai_additional_params(client):
     assert all([kw in chat_response_content for kw in ["red", "bananas"]])
 
 
-def test_delete(client, knowledge_base):
+def test_delete(client, knowledge_base, namespace, namespace_prefix):
     doc_ids = ["api_tests-1"]
     vector_ids = [f"{d_id}_{0}" for d_id in doc_ids]
 
-    assert_vector_ids_exist(vector_ids, knowledge_base)
+    assert_vector_ids_exist(vector_ids, knowledge_base, namespace=namespace)
 
     delete_payload = {
         "document_ids": doc_ids
     }
     delete_response = client.post(
-        "/context/delete",
+        f"{namespace_prefix}context/delete",
         json=delete_payload)
     assert delete_response.is_success
 
-    assert_vector_ids_not_exist(vector_ids, knowledge_base)
+    assert_vector_ids_not_exist(vector_ids, knowledge_base, namespace=namespace)

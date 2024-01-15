@@ -156,6 +156,10 @@ Canopy supports files in `jsonl`, `parquet` and `csv` formats. Additionally, you
 
 [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format, Follow the instructions in the CLI when you upload your data.
 
+> [!TIP]
+> If you would like to separate your data into [namespaces](https://docs.pinecone.io/docs/namespaces),
+> you can use the `--namespace` option or the `INDEX_NAMESPACE` environment variable.
+
 ### 3. Start the Canopy server
 
 The Canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
@@ -219,20 +223,18 @@ This will open a similar chat interface window, but will show both the RAG and n
 If you already have an application that uses the OpenAI API, you can migrate it to **Canopy** by simply changing the API endpoint to `http://host:port/v1`, for example with the default configuration:
 
 ```python
-import openai
+from openai import OpenAI
 
-openai.api_base = "http://localhost:8000/v1"
-
-# now you can use the OpenAI API as usual
+client = OpenAI(base_url="http://localhost:8000/v1")
 ```
 
-or without global state change:
-
+If you would like to use a specific index namespace for chatting, you can just append the namespace to the API endpoint:
 ```python
-import openai
+from openai import OpenAI
 
-openai_response = openai.Completion.create(..., api_base="http://localhost:8000/v1")
+client = OpenAI(base_url="http://localhost:8000/v1/my-namespace")
 ```
+
 
 ### Running Canopy server in production
 
@@ -244,4 +246,13 @@ To run the canopy server for production, please run:
 gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
 
-The server interacts with services like Pinecone and OpenAI using your own authentication credentials. When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, so that your server would only take requests from authenticated users.
+Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
+for your production needs. For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
+[Deployment to GCP](docs/deployment-gcp.md) documentation.
+
+
+> [!IMPORTANT]
+>  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
+   When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, 
+   so that your server would only take requests from authenticated users.
+
