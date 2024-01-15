@@ -114,5 +114,21 @@ class AzureOpenAILLM(OpenAILLM):
                 f"that the provided endpoint {os.getenv('AZURE_OPENAI_ENDPOINT')} "
                 f"is correct. Underlying Error:\n{self._format_openai_error(e)}"
             )
+        elif isinstance(e, openai.NotFoundError):
+            if e.type and 'invalid' in e.type:
+                raise RuntimeError(
+                    f"It seems that you are trying to use OpenAI's `function calling` "
+                    f"or `tools` features. Please note that Azure OpenAI only supports "
+                    f"function calling for specific models and API versions. More details "
+                    f"in: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling. " # noqa: E501
+                    f"Underlying Error:\n{self._format_openai_error(e)}"
+                )
+            else:
+                raise RuntimeError(
+                    f"Failed to connect to your Azure OpenAI. Please make sure that you"
+                    f"have provided the correct deployment name: {self.model_name} and "
+                    f"API version: {self._client._api_version}. "
+                    f"Underlying Error:\n{self._format_openai_error(e)}"
+                )
         else:
             super()._handle_chat_error(e)

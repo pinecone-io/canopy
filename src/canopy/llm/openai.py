@@ -245,7 +245,13 @@ class OpenAILLM(BaseLLM):
     @staticmethod
     def _format_openai_error(e):
         try:
-            return e.response.json()['error']['message']
+            response = e.response.json()
+            if "error" in response:
+                return response["error"]["message"]
+            elif "message" in response:
+                return response["message"]
+            else:
+                return str(e)
         except Exception:
             return str(e)
 
