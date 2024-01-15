@@ -40,13 +40,13 @@ load_dotenv()
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
-DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}"
+DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}/"
 spinner = Spinner()
 
 
 def check_server_health(url: str, timeout_seconds: int = 30):
     try:
-        res = requests.get(urljoin(url, "/health"), timeout=timeout_seconds)
+        res = requests.get(urljoin(url, "health"), timeout=timeout_seconds)
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -279,6 +279,9 @@ def _batch_documents_by_chunks(chunker: Chunker,
 
         Load all the documents from a data file or a directory containing multiple data
         files. The allowed formats are .jsonl, .parquet, .csv, and .txt.
+
+        If you would like partition your data into namespaces, you can use the namespace parameter.
+        For more information see: https://docs.pinecone.io/docs/namespaces
         """  # noqa: E501
     )
 )
@@ -296,12 +299,17 @@ def _batch_documents_by_chunks(chunker: Chunker,
                    "long as less than 10% of the documents have failed to be uploaded.")
 @click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
               help="Path to a canopy config file. Can also be set by the "
-                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
-                   "defualt configuration will be used.")
+                   "`CANOPY_CONFIG_FILE` environment variable. Otherwise, the built-in "
+                   "default configuration will be used.")
+@click.option("--namespace", "-n", default="", envvar="INDEX_NAMESPACE",
+              help="The namespace of the index. Can also be set by the "
+                   "`INDEX_NAMESPACE` environment variable. If not set, the default "
+                   "namespace will be used.")
 def upsert(index_name: str,
            data_path: str,
            allow_failures: bool,
-           config: Optional[str]):
+           config: Optional[str],
+           namespace: str):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -329,7 +337,10 @@ def upsert(index_name: str,
     click.echo("Canopy is going to upsert data from ", nl=False)
     click.echo(click.style(f'{data_path}', fg='yellow'), nl=False)
     click.echo(" to index: ")
-    click.echo(click.style(f'{kb.index_name} \n', fg='green'))
+    click.echo(click.style(f'{kb.index_name}', fg='green'), nl=False)
+    click.echo(" using namespace: ", nl=False)
+    click.echo(click.style(f'{namespace or "default"} \n', fg='cyan'))
+
     with spinner:
         try:
             data = load_from_path(data_path)
@@ -365,7 +376,7 @@ def upsert(index_name: str,
     for batch in _batch_documents_by_chunks(kb._chunker, data,
                                             batch_size=kb._encoder.batch_size):
         try:
-            kb.upsert(batch)
+            kb.upsert(batch, namespace=namespace)
         except Exception as e:
             if allow_failures and len(failed_docs) < len(data) // 10:
                 failed_docs.extend([_.id for _ in batch])
@@ -401,7 +412,7 @@ def _chat(
     openai_api_key=None,
     api_base=None,
     stream=True,
-    print_debug_info=False,
+    print_debug_info=False
 ):
     if openai_api_key is None:
         openai_api_key = os.environ.get("OPENAI_API_KEY")
@@ -412,9 +423,11 @@ def _chat(
             "Please set the OPENAI_API_KEY environment "
             "variable."
         )
+
+    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
+
     output = ""
     history += [{"role": "user", "content": message}]
-    client = openai.OpenAI(base_url=api_base, api_key=openai_api_key)
 
     start = time.time()
     try:
@@ -477,6 +490,7 @@ def _chat(
         """
 
     )
+
 )
 @click.option("--stream/--no-stream", default=True,
               help="Stream the response from the RAG chatbot word by word.")
@@ -580,6 +594,12 @@ def chat(chat_server_url, rag, debug, stream):
 
         If you would like to try out the chatbot, run `canopy chat` in a separate
         terminal window.
+
+        You can also use the OpenAPI client to access the Canopy server just
+        by changing the API endpoint.
+
+        For more information see:
+        https://github.com/pinecone-io/canopy?tab=readme-ov-file#migrating-an-existing-openai-application-to-canopy
         """
     )
 )
@@ -674,7 +694,7 @@ def stop(url):
                     raise CLIError(msg)
 
     try:
-        res = requests.get(urljoin(url, "/shutdown"))
+        res = requests.get(urljoin(url, "shutdown"))
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
@@ -692,8 +712,8 @@ def stop(url):
         """
     )
 )
-@click.option("--url", default="http://localhost:8000",
-              help="Canopy's server url. Defaults to http://localhost:8000")
+@click.option("--url", default=DEFAULT_SERVER_URL,
+              help=f"Canopy's server url. Defaults to {DEFAULT_SERVER_URL}")
 def api_docs(url):
     import webbrowser
 
@@ -719,7 +739,7 @@ def api_docs(url):
             print(HTML_TEMPLATE % json.dumps(app.openapi()), file=fd)
         webbrowser.open('file://' + os.path.realpath(filename))
     else:
-        webbrowser.open(urljoin(url, "redoc"))
+        webbrowser.open(urljoin(url, "/redoc"))
 
 
 if __name__ == "__main__":

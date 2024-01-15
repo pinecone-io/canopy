@@ -386,7 +386,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def query(self,
               queries: List[Query],
-              global_metadata_filter: Optional[dict] = None
+              global_metadata_filter: Optional[dict] = None,
+              namespace: Optional[str] = None
               ) -> List[QueryResult]:
         """
         Query the knowledge base to retrieve document chunks.
@@ -402,6 +403,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             global_metadata_filter: A metadata filter to apply to all queries, in addition to any query-specific filters.
                                     For example, the filter {"website": "wiki"} will only return documents with the metadata {"website": "wiki"} (in case provided in upsert)
                                     see https://docs.pinecone.io/docs/metadata-filtering
+            namespace: The namespace that will be queried in the underlying index. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+
         Returns:
             A list of QueryResult objects.
 
@@ -421,7 +424,9 @@ class KnowledgeBase(BaseKnowledgeBase):
             raise RuntimeError(self._connection_error_msg)
 
         queries = self._encoder.encode_queries(queries)
-        results = [self._query_index(q, global_metadata_filter) for q in queries]
+        results = [self._query_index(q,
+                                     global_metadata_filter,
+                                     namespace) for q in queries]
         results = self._reranker.rerank(results)
 
         return [
@@ -440,7 +445,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def _query_index(self,
                      query: KBQuery,
-                     global_metadata_filter: Optional[dict]) -> KBQueryResult:
+                     global_metadata_filter: Optional[dict],
+                     namespace: Optional[str] = None) -> KBQueryResult:
         if self._index is None:
             raise RuntimeError(self._connection_error_msg)
 
@@ -456,7 +462,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         result = self._index.query(vector=query.values,
                                    sparse_vector=query.sparse_values,
                                    top_k=top_k,
-                                   namespace=query.namespace,
+                                   namespace=namespace,
                                    filter=metadata_filter,
                                    include_metadata=True,
                                    _check_return_type=_check_return_type,
@@ -645,7 +651,8 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     async def aquery(self,
                      queries: List[Query],
-                     global_metadata_filter: Optional[dict] = None
+                     global_metadata_filter: Optional[dict] = None,
+                     namespace: Optional[str] = None
                      ) -> List[QueryResult]:
         raise NotImplementedError()
 

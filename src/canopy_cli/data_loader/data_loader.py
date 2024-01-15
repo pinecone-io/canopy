@@ -62,13 +62,15 @@ def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
             try:
                 documents.append(
                     Document(
-                        **{k: v for k, v in row._asdict().items() if not pd.isna(v)}
+                        **{k: v for k, v in
+                           row._asdict().items()  # type: ignore[operator]
+                           if not pd.isna(v)}
                     )
                 )
             except ValidationError as e:
                 raise DataLoaderException(
                     file_name=origin_file_path,
-                    row_id=row.id,
+                    row_id=str(row.id),
                     err=format_multiline(e.errors()[0]["msg"])
                 ) from e
     except ValidationError as e:
@@ -139,8 +141,8 @@ def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
 
 
 def _load_multiple_non_schematic_files(
-    file_paths: List[str],
-    type: NonSchematicFilesTypes
+        file_paths: List[str],
+        type: NonSchematicFilesTypes
 ) -> List[Document]:
     if not isinstance(file_paths, list):
         raise ValueError("file_paths must be a list of strings")
