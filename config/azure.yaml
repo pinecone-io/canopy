@@ -1,66 +1,37 @@
 # ===========================================================
-#            Configuration file for Canopy Server
-#               When using Azure OpenAI
+#            Configuration file for Azure OpenAI
 # ===========================================================
 
-# ---------------------------------------------------------------------------------
-# LLM prompts
-# Defined here for convenience, then referenced in the chat engine configuration
-# Note: line breaks in the prompts are important, and may affect the LLM's behavior
-# ---------------------------------------------------------------------------------
-system_prompt: &system_prompt |
-  Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
-  If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context.
-  Don't address the context directly, but use it to answer the user question like it's your own knowledge.
+
 query_builder_prompt: &query_builder_prompt |
   Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
   You should break down complex questions into sub-queries if needed.
 
 
-# -------------------------------------------------------------------------------------------
-# Tokenizer configuration
-# A Tokenizer singleton instance must be initialized before initializing any other components
-# -------------------------------------------------------------------------------------------
 tokenizer:
   type: OpenAITokenizer                 # Options: [OpenAITokenizer]
   params:
     model_name: gpt-3.5-turbo
 
 
-# -------------------------------------------------------------------------------------------------------------
-# Chat engine configuration
-# The chat engine is the main component of the server, generating responses to the `/chat.completion` API call.
-# The configuration is recursive, so that each component contains a subsection for each of its sub components.
-# -------------------------------------------------------------------------------------------------------------
 chat_engine:
-  params:
-    max_prompt_tokens: 4096             # The maximum number of tokens to use for input prompt to the LLM
-    max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
-    max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
-    system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
-    history_pruning: recent             # How to prune messages if chat history is too long. Options: [raise, recent]
-    min_history_messages: 1             # Minimal number of messages to keep in history
 
-
-  # -------------------------------------------------------------------------------------------------------------
-  # LLM configuration
-  # Configuration of the LLM (Large Language Model)
-  # -------------------------------------------------------------------------------------------------------------
   llm: &llm
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
     type: AzureOpenAILLM                # Options: [OpenAILLM, AzureOpenAILLM]
     params:
       model_name: your-deployment-name  # Specify the name of the LLM deployment to use.
-      # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
-      # here will be used in every LLM API call. For example:
-#      temperature: 0.7
-#      top_p: 0.9
+      api_version: 2023-07-01
 
-  # --------------------------------------------------------------------
-  # Configuration for the QueryBuilder subcomponent of the chat engine.
-  # The query builder is responsible for generating textual queries given user message history.
-  # --------------------------------------------------------------------
   query_builder:
-    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator]
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
+    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, InstructionQueryGenerator]
     params:
       prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
       function_description:             # A function description passed to the LLM's `function_calling` API
@@ -69,55 +40,17 @@ chat_engine:
     llm:  # The LLM that the query builder will use to generate queries. Leave `*llm` to use the chat engine's LLM
       <<: *llm
 
-
-  # -------------------------------------------------------------------------------------------------------------
-  # ContextEngine configuration
-  # The context engine is responsible for generating textual context for the `/query` API calls.
-  # -------------------------------------------------------------------------------------------------------------
   context_engine:
-    params:
-      global_metadata_filter: null      # An optional metadata filter to apply to all queries
 
-
-    # -------------------------------------------------------------------------
-    # Configuration for the ContextBuilder subcomponent of the context engine.
-    # The context builder is responsible for formulating a textual context given query results.
-    # -------------------------------------------------------------------------
-    context_builder:
-      type: StuffingContextBuilder      # Options: [StuffingContextBuilder]
-
-
-    # -----------------------------------------------------------------------------------------------------------
-    # KnowledgeBase configuration
-    # The KnowledgeBase is a responsible for storing and indexing the user's documents
-    # -----------------------------------------------------------------------------------------------------------
     knowledge_base:
-      params:
-        default_top_k: 5                # The default number of document chunks to retrieve for each query
-#        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
-#          metric: cosine
-#          pod_type: p1
 
-
-      # --------------------------------------------------------------------------
-      # Configuration for the Chunker subcomponent of the knowledge base.
-      # The chunker is responsible for splitting documents' text into smaller chunks.
-      # --------------------------------------------------------------------------
-      chunker:
-        type: MarkdownChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
-        params:
-          chunk_size: 256               # The maximum number of tokens in each chunk
-          chunk_overlap: 0              # The number of tokens to overlap between chunks
-          keep_separator: true          # Whether to keep the separator in the chunks
-
-
-      # --------------------------------------------------------------------------
-      # Configuration for the RecordEncoder subcomponent of the knowledge base.
-      # The record encoder is responsible for encoding document chunks to a vector representation
-      # --------------------------------------------------------------------------
       record_encoder:
-        type: AzureOpenAIRecordEncoder  # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
+        # --------------------------------------------------------------------------
+        # Configuration for the RecordEncoder subcomponent of the knowledge base.
+        # The record encoder is responsible for encoding document chunks to a vector representation
+        # --------------------------------------------------------------------------
+        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
-          model_name:                   # The name of the deployed Azure OpenAI model to use for embedding
-            my-embeddings-model
+          model_name:                   # The name of the model to use for encoding
+            text-embedding-ada-002
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model
