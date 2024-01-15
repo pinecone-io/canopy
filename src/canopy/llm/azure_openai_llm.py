@@ -1,18 +1,9 @@
-import json
 import os
-from copy import deepcopy
-from typing import Optional, Any, Dict, cast, Union, Iterable, List
+from typing import Optional, Any
 
-import jsonschema
 import openai
-from openai.types.chat import ChatCompletionToolParam
-from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
-import canopy
 from canopy.llm import OpenAILLM
-from canopy.llm.models import Function, FunctionParameters, FunctionArrayProperty
-from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, UserMessage, Query
 
 
 class AzureOpenAILLM(OpenAILLM):
@@ -23,26 +14,26 @@ class AzureOpenAILLM(OpenAILLM):
     To set the following environment variables:
     - AZURE_OPENAI_API_KEY: Your Azure OpenAI API key.
     - AZURE_OPENAI_ENDPOINT: Your Azure endpoint, including the resource, e.g. `https://example-resource.azure.openai.com/`
-    
+
     To use a specific custom model deployment, simply pass the deployment name to the `model_name` argument
-    
-    Note: If you want to set an OpenAI organization, you would need to set environment variable "OPENAI_ORG_ID". 
+
+    Note: If you want to set an OpenAI organization, you would need to set environment variable "OPENAI_ORG_ID".
           This is different from the environment variable for passing an organization to the parent class (OpenAILLM), which is "OPENAI_ORG".
     """  # noqa: E501
+
     def __init__(self,
                  model_name: str,
                  *,
                  api_key: Optional[str] = None,
                  api_version: str = "2023-12-01-preview",
                  azure_endpoint: Optional[str] = None,
-                 organization: Optional[str] = None,
                  **kwargs: Any,
                  ):
         """
         Initialize the Azure OpenAI LLM.
 
         Args:
-            model_name: The name of your custom model deployment on Azure. This is required. 
+            model_name: The name of your custom model deployment on Azure. This is required.
             api_key: Your Azure OpenAI API key. Defaults to None (uses the "AZURE_OPENAI_API_KEY" environment variable).
             api_version: The Azure OpenAI API version to use. Defaults to "2023-12-01-preview".
             azure_endpoint: The url of your Azure OpenAI service endpoint. Defaults to None (uses the "AZURE_OPENAI_ENDPOINT" environment variable).
@@ -63,8 +54,7 @@ class AzureOpenAILLM(OpenAILLM):
                 azure_deployment=model_name,
                 api_key=api_key,
                 api_version=api_version,
-                azure_endpoint=azure_endpoint,
-                organization=organization,
+                azure_endpoint=azure_endpoint,  # type: ignore
             )
         except (openai.OpenAIError, ValueError) as e:
             raise RuntimeError(
@@ -81,25 +71,6 @@ class AzureOpenAILLM(OpenAILLM):
         raise NotImplementedError(
             "Azure OpenAI LLM does not support listing available models"
         )
-
-    async def achat_completion(
-        self,
-        messages: Messages,
-        *,
-        stream: bool = False,
-        max_generated_tokens: Optional[int] = None,
-        model_params: Optional[dict] = None,
-    ) -> Union[ChatResponse, Iterable[StreamingChatChunk]]:
-        raise NotImplementedError()
-
-    async def agenerate_queries(
-        self,
-        messages: Messages,
-        *,
-        max_generated_tokens: Optional[int] = None,
-        model_params: Optional[dict] = None,
-    ) -> List[Query]:
-        raise NotImplementedError()
 
     def _handle_chat_error(self, e):
         if isinstance(e, openai.AuthenticationError):
@@ -119,8 +90,8 @@ class AzureOpenAILLM(OpenAILLM):
                 raise RuntimeError(
                     f"It seems that you are trying to use OpenAI's `function calling` "
                     f"or `tools` features. Please note that Azure OpenAI only supports "
-                    f"function calling for specific models and API versions. More details "
-                    f"in: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling. " # noqa: E501
+                    f"function calling for specific models and API versions. More "
+                    f"details in: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling. "  # noqa: E501
                     f"Underlying Error:\n{self._format_openai_error(e)}"
                 )
             else:

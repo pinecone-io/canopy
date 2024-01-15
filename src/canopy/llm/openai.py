@@ -215,7 +215,6 @@ class OpenAILLM(BaseLLM):
         except openai.OpenAIError as e:
             self._handle_chat_error(e)
 
-
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)
 

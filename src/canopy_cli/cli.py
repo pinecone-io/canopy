@@ -4,7 +4,6 @@ import subprocess
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
-from openai.lib.azure import AzureOpenAI
 from prompt_toolkit import prompt
 import time
 

@@ -1,11 +1,12 @@
 import os
+
 import pytest
 
 from canopy.llm import AzureOpenAILLM
-from .test_openai import messages, SYSTEM_PROMPT
-
+from .test_openai import SYSTEM_PROMPT
 
 MODEL_NAME = os.getenv("AZURE_DEPLOYMENT_NAME")
+
 
 @pytest.fixture
 def azure_openai_llm():
@@ -53,6 +54,7 @@ def test_bad_api_key(bad_api_key, messages):
         llm = AzureOpenAILLM(MODEL_NAME)
         llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)
 
+
 @pytest.fixture()
 def no_azure_endpoint():
     before = os.environ.pop("AZURE_OPENAI_ENDPOINT", None)
@@ -65,6 +67,7 @@ def test_missing_azure_endpoint(no_azure_endpoint):
     with pytest.raises(RuntimeError, match="AZURE_OPENAI_ENDPOINT"):
         AzureOpenAILLM(MODEL_NAME)
 
+
 @pytest.fixture()
 def bad_azure_endpoint():
     before = os.environ.pop("AZURE_OPENAI_ENDPOINT", None)
@@ -73,10 +76,10 @@ def bad_azure_endpoint():
     if before is not None:
         os.environ["AZURE_OPENAI_ENDPOINT"] = before
 
+
 def test_bad_azure_endpoint(bad_azure_endpoint, messages):
     with pytest.raises(RuntimeError, match="Azure OpenAI endpoint"):
         llm = AzureOpenAILLM(MODEL_NAME)
         llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)
 
 # def test_function_calling_error(azure_openai_llm):
-
