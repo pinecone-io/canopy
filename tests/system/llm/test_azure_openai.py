@@ -3,7 +3,7 @@ import os
 import pytest
 
 from canopy.llm import AzureOpenAILLM
-from .test_openai import SYSTEM_PROMPT, messages
+from .test_openai import SYSTEM_PROMPT
 
 MODEL_NAME = os.getenv("AZURE_DEPLOYMENT_NAME")
 

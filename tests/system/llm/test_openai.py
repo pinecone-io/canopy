@@ -12,7 +12,6 @@ from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty  # noqa
 from openai import BadRequestError # noqa
 
-
 SYSTEM_PROMPT = "You are a helpful assistant."
 
 
@@ -37,16 +36,6 @@ def assert_function_call_format(result):
 @pytest.fixture
 def model_name():
     return "gpt-3.5-turbo-0613"
-
-
-@pytest.fixture
-def messages():
-    # Create a list of MessageBase objects
-    return [
-        MessageBase(role=Role.USER, content="Hello, assistant."),
-        MessageBase(role=Role.ASSISTANT,
-                    content="Hello, user. How can I assist you?")
-    ]
 
 
 @pytest.fixture
