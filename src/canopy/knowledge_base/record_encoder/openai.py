@@ -62,7 +62,6 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
         except Exception:
             return str(e)
 
-
     def _format_error(self, err):
         if isinstance(err, RateLimitError):
             return (f"Your OpenAI account seem to have reached the rate limit. "

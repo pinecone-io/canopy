@@ -11,7 +11,7 @@ class AzureOpenAIRecordEncoder(OpenAIRecordEncoder):
     AzureOpenAIRecordEncoder is a type of DenseRecordEncoder that uses the Azure OpenAI's `embeddings` deployments.
     The implementation uses the `AzureOpenAIEncoder` class from the `pinecone-text` library.
     For more information about see: https://github.com/pinecone-io/pinecone-text
-    
+
     Azure OpenAI services require a valid API key, and an Azure endpoint. You will need
     To set the following environment variables:
     - AZURE_OPENAI_API_KEY: Your Azure OpenAI API key.
@@ -19,18 +19,19 @@ class AzureOpenAIRecordEncoder(OpenAIRecordEncoder):
     """  # noqa: E501
 
     def __init__(
-        self,
-        *,
-        model_name: str,
-        api_version: str = "2023-12-01-preview",
-        batch_size: int = 400,
-        **kwargs
+            self,
+            *,
+            model_name: str,
+            api_version: str = "2023-12-01-preview",
+            batch_size: int = 400,
+            **kwargs
     ):
         """
         Initialize the AzureOpenAIRecordEncoder
 
         Args:
             model_name: The name of embeddings model deployment to use for encoding
+            api_version: The Azure OpenAI API version to use. Defaults to "2023-12-01-preview".
             batch_size: The number of documents or queries to encode at once.
                         Defaults to 400.
             **kwargs: Additional arguments to pass to the underlying `pinecone-text.AzureOpenAIEncoder`.
@@ -45,7 +46,8 @@ class AzureOpenAIRecordEncoder(OpenAIRecordEncoder):
                 f"Underlying Error:\n{self._format_openai_error(e)}"
             ) from e
 
-        DenseRecordEncoder.__init__(self, dense_encoder=encoder, batch_size=batch_size, **kwargs)
+        DenseRecordEncoder.__init__(self, dense_encoder=encoder, batch_size=batch_size,
+                                    **kwargs)
 
     def _format_error(self, err):
         if isinstance(err, openai.AuthenticationError):
@@ -61,7 +63,7 @@ class AzureOpenAIRecordEncoder(OpenAIRecordEncoder):
                 f"is correct. Underlying Error:\n{self._format_openai_error(err)}"
             )
         elif isinstance(err, openai.NotFoundError):
-            return(
+            return (
                 f"Failed to connect to your Azure OpenAI. Please make sure that "
                 f"you have provided the correct deployment name: {self.model_name} "
                 f"and API version: {self._client._api_version}. "
