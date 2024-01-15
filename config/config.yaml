@@ -48,7 +48,7 @@ chat_engine:
     # LLM configuration
     # Configuration of the LLM (Large Language Model)
     # -------------------------------------------------------------------------------------------------------------
-    type: OpenAILLM                     # Options: [OpenAILLM]
+    type: OpenAILLM                     # Options: [OpenAILLM, AzureOpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
       # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
@@ -112,7 +112,7 @@ chat_engine:
         # Configuration for the RecordEncoder subcomponent of the knowledge base.
         # The record encoder is responsible for encoding document chunks to a vector representation
         # --------------------------------------------------------------------------
-        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder]
+        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding
             text-embedding-ada-002

@@ -75,6 +75,10 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
+        AZURE_DEPLOYMENT_NAME: ${{ secrets.AZURE_DEPLOYMENT_NAME }}
+        AZURE_EMBEDDING_DEPLOYMENT_NAME: ${{ secrets.AZURE_EMBEDDING_DEPLOYMENT_NAME }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
       run: |
         run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')     
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
@@ -92,6 +96,10 @@ jobs:
         ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
         CE_LOG_FILENAME: e2e.log
+        AZURE_DEPLOYMENT_NAME: ${{ secrets.AZURE_DEPLOYMENT_NAME }}
+        AZURE_EMBEDDING_DEPLOYMENT_NAME: ${{ secrets.AZURE_EMBEDDING_DEPLOYMENT_NAME }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
       run: |
         run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT

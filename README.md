@@ -82,6 +82,9 @@ export INDEX_NAME="<INDEX_NAME>"
 | `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
+| `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+| `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+
 </details>
 
 
