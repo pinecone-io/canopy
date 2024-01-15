@@ -11,7 +11,7 @@ query_builder_prompt: &query_builder_prompt |
 tokenizer:
   type: OpenAITokenizer                 # Options: [OpenAITokenizer]
   params:
-    model_name: gpt-3.5-turbo
+    model_name: gpt-3.5-turbo           # Configure the tokenizer that matches the OpenAI model in your deployment
 
 
 chat_engine:
@@ -24,7 +24,7 @@ chat_engine:
     type: AzureOpenAILLM                # Options: [OpenAILLM, AzureOpenAILLM]
     params:
       model_name: your-deployment-name  # Specify the name of the LLM deployment to use.
-      api_version: 2023-07-01
+      api_version: 2023-12-01-preview   # Specify the API version to use.
 
   query_builder:
     # -------------------------------------------------------------------------------------------------------------
@@ -49,8 +49,8 @@ chat_engine:
         # Configuration for the RecordEncoder subcomponent of the knowledge base.
         # The record encoder is responsible for encoding document chunks to a vector representation
         # --------------------------------------------------------------------------
-        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
+        type: AzureOpenAIRecordEncoder  # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
-          model_name:                   # The name of the model to use for encoding
-            text-embedding-ada-002
+          model_name:                   # Specify the name of the embedding deployment to use.
+            your-embedding-deployment-name
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model

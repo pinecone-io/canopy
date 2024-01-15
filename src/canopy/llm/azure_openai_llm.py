@@ -62,7 +62,7 @@ class AzureOpenAILLM(OpenAILLM):
                 "AZURE_OPENAI_API_KEY and AZURE_OPENAI_ENDPOINT environment variables "
                 "are set correctly. "
                 f"Underlying Error:\n{self._format_openai_error(e)}"
-            )
+            ) from e
 
         self.default_model_params = kwargs
 
