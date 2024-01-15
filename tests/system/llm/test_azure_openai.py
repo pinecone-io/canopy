@@ -17,7 +17,7 @@ def azure_openai_llm():
     return AzureOpenAILLM(model_name=os.getenv("AZURE_DEPLOYMENT_NAME"))
 
 
-def test_init_params():
+def test_init_params(azure_openai_llm):
     llm = AzureOpenAILLM(
         model_name="test_model_name",
         api_version="2020-05-03",
