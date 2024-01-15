@@ -3,7 +3,7 @@ import os
 import glob
 from enum import Enum
 from collections.abc import Iterable
-from typing import List
+from typing import List, NamedTuple, cast
 from textwrap import dedent
 
 import numpy as np
@@ -62,13 +62,13 @@ def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
             try:
                 documents.append(
                     Document(
-                        **{k: v for k, v in row._asdict().items() if not pd.isna(v)}
+                        **{k: v for k, v in row._asdict().items() if not pd.isna(v)}  # type: ignore[operator]
                     )
                 )
             except ValidationError as e:
                 raise DataLoaderException(
                     file_name=origin_file_path,
-                    row_id=row.id,
+                    row_id=str(row.id),
                     err=format_multiline(e.errors()[0]["msg"])
                 ) from e
     except ValidationError as e:
