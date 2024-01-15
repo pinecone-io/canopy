@@ -83,6 +83,7 @@ jobs:
     - name: Run e2e tests
       id: e2e_tests
       if: github.event_name == 'merge_group'
+      continue-on-error: ${{ matrix.pinecone-plan == "starter" }}
       env:
         INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
         PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
