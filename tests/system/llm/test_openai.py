@@ -89,6 +89,9 @@ def openai_llm(request, model_name):
 
 
 def test_init_with_custom_params(openai_llm):
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("Tested separately in test_azure_openai.py")
+
     llm = openai_llm.__class__(
         model_name="test_model_name",
         api_key="test_api_key",

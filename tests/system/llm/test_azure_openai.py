@@ -3,7 +3,7 @@ import os
 import pytest
 
 from canopy.llm import AzureOpenAILLM
-from .test_openai import SYSTEM_PROMPT
+from .test_openai import SYSTEM_PROMPT, messages
 
 MODEL_NAME = os.getenv("AZURE_DEPLOYMENT_NAME")
 
@@ -21,9 +21,17 @@ def test_init_params():
     llm = AzureOpenAILLM(
         model_name="test_model_name",
         api_version="2020-05-03",
+        api_key="test_api_key",
+        temperature=0.9,
+        top_p=0.95,
+        n=3,
     )
 
     assert llm.model_name == "test_model_name"
+    assert llm.default_model_params["temperature"] == 0.9
+    assert llm.default_model_params["top_p"] == 0.95
+    assert llm.default_model_params["n"] == 3
+    assert llm._client.api_key == "test_api_key"
     assert llm._client._api_version == "2020-05-03"
 
 
