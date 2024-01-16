@@ -1,5 +1,4 @@
 import random
-from typing import Dict, Any
 
 import pytest
 import numpy as np
@@ -24,7 +23,7 @@ from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-from tests.util import create_system_tests_index_name, TEST_CREATE_INDEX_PARAMS
+from tests.util import create_system_tests_index_name
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
 RETRY_TIMEOUT = 120
