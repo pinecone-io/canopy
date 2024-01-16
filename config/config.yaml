@@ -92,10 +92,6 @@ chat_engine:
       # -----------------------------------------------------------------------------------------------------------
       params:
         default_top_k: 5                # The default number of document chunks to retrieve for each query
-#        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
-#          metric: cosine
-#          pod_type: p1
-
       chunker:
         # --------------------------------------------------------------------------
         # Configuration for the Chunker subcomponent of the knowledge base.
@@ -117,3 +113,22 @@ chat_engine:
           model_name:                   # The name of the model to use for encoding
             text-embedding-ada-002
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model
+
+create_index_params:
+  # -------------------------------------------------------------------------------------------
+  # Initialization parameters to be passed to create a canopy index. These parameters will
+  # be used when running "canopy new".
+  # -------------------------------------------------------------------------------------------
+  metric: cosine
+  spec:
+    serverless:
+      cloud: aws
+      region: us-west-2
+    # For pod indexes you can pass the spec with the key "pod" instead of "serverless"
+    # See the example below:
+#    pod:
+#      environment: eu-west1-gcp
+#      pod_type: p1.x1
+#      # Here you can specify here replicas, shards, pods, metadata_config if needed.
+
+

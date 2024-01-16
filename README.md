@@ -62,7 +62,6 @@ pip install canopy-sdk
 
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
-export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
 export INDEX_NAME="<INDEX_NAME>"
 ```
@@ -76,7 +75,6 @@ export INDEX_NAME="<INDEX_NAME>"
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
-| `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
 | `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
