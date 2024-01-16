@@ -59,7 +59,7 @@ def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
         raise RuntimeError("Failed to connect to Pinecone. "
                            "Please check your credentials and try again") from e
 
-    index_names = [_['name'] for _ in indexes.index_list['indexes']]
+    index_names = indexes.names()
 
     return [index for index in index_names if index.startswith(INDEX_NAME_PREFIX)]
 
@@ -193,11 +193,6 @@ class KnowledgeBase(BaseKnowledgeBase):
         # `create_canopy_index()`
         self._index: Optional[Index] = None
 
-        self._default_spec = ServerlessSpec(
-            cloud="aws",
-            region="us-west-2"
-        )
-
     def _connect_index(self) -> None:
         if self.index_name not in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
@@ -294,7 +289,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         """  # noqa: E501
 
         if spec is None:
-            spec = self._default_spec
+            spec = ServerlessSpec(
+                cloud="aws",
+                region="us-west-2"
+            )
 
         if dimension is None:
             try:
