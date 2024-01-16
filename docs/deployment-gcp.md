@@ -65,7 +65,6 @@ in [README.md](https://github.com/pinecone-io/canopy/blob/main/README.md).
 ```text
 OPENAI_API_KEY={open-api-key}
 PINECONE_API_KEY={pinecone-api-key}
-PINECONE_ENVIRONMENT={pinecone-environment}
 INDEX_NAME={index-name}
 
 # Other necessary environment variables if needed

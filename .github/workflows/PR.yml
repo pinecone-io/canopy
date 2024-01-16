@@ -21,7 +21,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.9
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
@@ -42,7 +42,6 @@ jobs:
     strategy:
       matrix:
         python-version: [3.9, '3.10', 3.11]
-        pinecone-plan: ["paid", "starter"]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -60,21 +59,23 @@ jobs:
       if: github.event_name == 'merge_group'
       id: gen_suffix
       run: |
-        RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
+        RAW_SUFFIX="${{ matrix.python-version }}"
         SUFFIX="${RAW_SUFFIX//./-}"
         echo "${SUFFIX}"
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT
     - name: Run system tests
       id: system_tests
       if: github.event_name == 'merge_group'
-      continue-on-error: ${{ matrix.pinecone-plan == 'starter' }}
       env:
         INDEX_NAME: system-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
-        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
-        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
+        AZURE_DEPLOYMENT_NAME: ${{ secrets.AZURE_DEPLOYMENT_NAME }}
+        AZURE_EMBEDDING_DEPLOYMENT_NAME: ${{ secrets.AZURE_EMBEDDING_DEPLOYMENT_NAME }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
       run: |
         run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')     
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
@@ -83,15 +84,17 @@ jobs:
     - name: Run e2e tests
       id: e2e_tests
       if: github.event_name == 'merge_group'
-      continue-on-error: ${{ matrix.pinecone-plan == 'starter' }}
       env:
         INDEX_NAME: e2e-${{ steps.gen_suffix.outputs.INDEX_NAME_SUFFIX }}
-        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
-        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         ANYSCALE_API_KEY: ${{ secrets.ANYSCALE_API_KEY }}
         CO_API_KEY: ${{ secrets.CO_API_KEY }}
         CE_LOG_FILENAME: e2e.log
+        AZURE_DEPLOYMENT_NAME: ${{ secrets.AZURE_DEPLOYMENT_NAME }}
+        AZURE_EMBEDDING_DEPLOYMENT_NAME: ${{ secrets.AZURE_EMBEDDING_DEPLOYMENT_NAME }}
+        AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+        AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
       run: |
         run_id=$(uuidgen | tr -d '-' | tr '[:upper:]' '[:lower:]')
         echo "run_id=${run_id}" >> $GITHUB_OUTPUT
@@ -100,8 +103,7 @@ jobs:
     - name: Cleanup indexes
       if: (cancelled() || failure()) && github.event_name == 'merge_group'
       env:
-        PINECONE_ENVIRONMENT: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_ENVIRONMENT_3 || secrets.PINECONE_ENVIRONMENT_4 }}
-        PINECONE_API_KEY: ${{ matrix.pinecone-plan == 'paid' && secrets.PINECONE_API_KEY_3 || secrets.PINECONE_API_KEY_4 }}
+        PINECONE_API_KEY: ${{ secrets.PINECONE_API_KEY }}
       run: |
         export PYTHONPATH=.
         poetry run python scripts/cleanup_indexes.py "${{ steps.e2e_tests.outputs.run_id }}"
@@ -110,11 +112,11 @@ jobs:
       uses: actions/upload-artifact@v3
       if: always()
       with:
-        name: pytest-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        name: pytest-report-py${{ matrix.python-version }}
         path: report*.html
     - name: upload e2e test log
       uses: actions/upload-artifact@v3
       if: failure() && github.event_name == 'merge_group'
       with:
-        name: e2e-log-failure-report-py${{ matrix.python-version }}-${{ matrix.pinecone-plan }}
+        name: e2e-log-failure-report-py${{ matrix.python-version }}
         path: e2e.log

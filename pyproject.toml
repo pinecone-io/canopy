@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "canopy-sdk"
-version = "0.5.0"
+version = "0.6.0"
 description = "Retrieval Augmented Generation (RAG) framework and context engine powered by Pinecone"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
@@ -10,12 +10,11 @@ packages = [{include = "canopy", from = "src"},
             {include = "canopy_server", from = "src"},]
 
 [tool.poetry.dependencies]
-python = "^3.9"
-pinecone-client = "^2.2.2"
+python = ">=3.9,<3.13"
+pinecone-client = "^3.0.0"
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
 tiktoken = "^0.3.3"
-pinecone-datasets = "^0.6.2"
 pydantic = "^1.10.7"
 pandas-stubs = "^2.0.3.230814"
 fastapi = ">=0.92.0, <1.0.0"
@@ -29,14 +28,17 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = "^0.7.1"
+pinecone-text = "^0.7.2"
 tokenizers = "^0.15.0"
 transformers = "^4.35.2"
 sentencepiece = "^0.1.99"
+pandas = "2.0.0"
+pyarrow = "^14.0.1"
 cohere = { version = ">=4.37", optional = true }
 
 [tool.poetry.extras]
 cohere = ["cohere"]
+
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
@@ -52,6 +54,7 @@ pytest-xdist = "^3.3.1"
 types-requests = "^2.31.0.2"
 httpx = "^0.25.0"
 pydoclint = "^0.3.8"
+pytest-dotenv = "^0.5.2"
 
 [build-system]
 requires = ["poetry-core"]
