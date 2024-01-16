@@ -59,7 +59,6 @@ def encoder():
         StubDenseEncoder())
 
 
-@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
 def try_create_canopy_index(kb: KnowledgeBase):
     kb.create_canopy_index()
 

@@ -35,7 +35,10 @@ def namespace(request):
     return request.param
 
 
-@pytest.fixture(scope="module", params=TEST_CREATE_INDEX_PARAMS)
+@pytest.fixture(scope="module",
+                params=TEST_CREATE_INDEX_PARAMS,
+                # The first key in the spec is the index type ("serverless" \ "pod")
+                ids=[next(iter(_["spec"])) for _ in TEST_CREATE_INDEX_PARAMS])
 def create_index_params(request):
     return request.param
 
@@ -45,14 +48,14 @@ def namespace_prefix(namespace):
     return f"{namespace}/" if namespace is not None else ""
 
 
-@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
 def try_create_canopy_index(kb: KnowledgeBase, init_params: Dict[str, Any]):
     kb.create_canopy_index(**init_params)
 
 
 @pytest.fixture(scope="module")
-def index_name(testrun_uid: str):
-    return create_e2e_tests_index_name(testrun_uid)
+def index_name(testrun_uid: str, create_index_params):
+    index_type = next(iter(create_index_params["spec"]))
+    return create_e2e_tests_index_name(testrun_uid) + f"-{index_type}"
 
 
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
@@ -74,12 +77,6 @@ def assert_vector_ids_not_exist(vector_ids: List[str],
 @pytest.fixture(scope="module", autouse=True)
 def knowledge_base(index_name, create_index_params):
     kb = KnowledgeBase(index_name=index_name)
-
-    # System and E2E tests are running in parallel and try to create
-    # indexes at the same time.
-    # DB raises an exception when we create two indexes at the same time.
-    # So we need to retry for now in order to overcome this.
-    # TODO: Remove the retries after the DB is fixed.
     try_create_canopy_index(kb, create_index_params)
 
     return kb
