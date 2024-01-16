@@ -59,7 +59,7 @@ jobs:
       if: github.event_name == 'merge_group'
       id: gen_suffix
       run: |
-        RAW_SUFFIX="${{ matrix.python-version }}-${{ matrix.pinecone-plan }}"
+        RAW_SUFFIX="${{ matrix.python-version }}"
         SUFFIX="${RAW_SUFFIX//./-}"
         echo "${SUFFIX}"
         echo "INDEX_NAME_SUFFIX=${SUFFIX}" >> $GITHUB_OUTPUT

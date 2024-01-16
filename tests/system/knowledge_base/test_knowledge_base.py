@@ -60,18 +60,13 @@ def encoder():
         StubDenseEncoder())
 
 
-@pytest.fixture(scope="module", params=TEST_CREATE_INDEX_PARAMS)
-def create_index_params(request):
-    return request.param
-
-
 @retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
-def try_create_canopy_index(kb: KnowledgeBase, init_params: Dict[str, Any]):
-    kb.create_canopy_index(**init_params)
+def try_create_canopy_index(kb: KnowledgeBase):
+    kb.create_canopy_index()
 
 
 @pytest.fixture(scope="module", autouse=True)
-def knowledge_base(index_full_name, index_name, chunker, encoder, create_index_params):
+def knowledge_base(index_full_name, index_name, chunker, encoder):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
@@ -79,7 +74,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder, create_index_p
     if index_full_name in list_canopy_indexes():
         _get_global_client().delete_index(index_full_name)
 
-    try_create_canopy_index(kb, create_index_params)
+    try_create_canopy_index(kb)
 
     return kb
 
