@@ -128,6 +128,10 @@ jobs:
           git checkout -b release/$(poetry version -s)
           git push origin release/$(poetry version -s)
 
+      - name: Parse Changelog
+        id: changelog
+        uses: ocavue/changelog-parser-action@v1
+
       - name: Create GH release
         uses: ncipollo/release-action@v1
         env:
@@ -136,7 +140,7 @@ jobs:
           tag: v${{ needs.build.outputs.new_version }}
           name: ${{ needs.build.outputs.new_version }}
           artifacts: "dist/*"
-          bodyFile: "CHANGELOG.md"
+          body: ${{ steps.changelog.outputs.latestBody }}
           prerelease: ${{ startsWith(inputs.versionLevel, 'pre') }}
 
       - name: Publish to test pypi
