@@ -5,7 +5,7 @@ from urllib.parse import urljoin
 
 import pytest
 from fastapi.testclient import TestClient
-from tenacity import retry, stop_after_attempt, wait_fixed, wait_random
+from tenacity import retry, stop_after_attempt, wait_fixed
 
 from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.knowledge_base import list_canopy_indexes
@@ -16,7 +16,7 @@ from canopy_server.models.v1.api_models import (
     ContextUpsertRequest,
     ContextQueryRequest)
 from .. import Tokenizer
-from ..util import create_e2e_tests_index_name, TEST_NAMESPACE, TEST_CREATE_INDEX_PARAMS
+from ..util import create_e2e_tests_index_name
 
 upsert_payload = ContextUpsertRequest(
     documents=[
@@ -28,19 +28,6 @@ upsert_payload = ContextUpsertRequest(
         }
     ],
 )
-
-
-@pytest.fixture(scope="module", params=[None, TEST_NAMESPACE])
-def namespace(request):
-    return request.param
-
-
-@pytest.fixture(scope="module",
-                params=TEST_CREATE_INDEX_PARAMS,
-                # The first key in the spec is the index type ("serverless" \ "pod")
-                ids=[next(iter(_["spec"])) for _ in TEST_CREATE_INDEX_PARAMS])
-def create_index_params(request):
-    return request.param
 
 
 @pytest.fixture(scope="module")

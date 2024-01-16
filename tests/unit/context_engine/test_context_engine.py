@@ -11,7 +11,6 @@ from canopy.context_engine.context_builder.stuffing import (ContextSnippet,
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.models import QueryResult, DocumentWithScore
 from canopy.models.data_models import Query, Context, ContextContent
-from tests.util import TEST_NAMESPACE
 
 
 @pytest.fixture
@@ -58,11 +57,6 @@ def mock_query_result(sample_context_text):
             ]
         )
     ]
-
-
-@pytest.fixture(scope="module", params=[None, TEST_NAMESPACE])
-def namespace(request):
-    return request.param
 
 
 def test_query(context_engine,
