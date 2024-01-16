@@ -1,5 +1,5 @@
 ## [0.6.0] - 2024-01-16
-## Breaking changes
+### Breaking changes
 * Pinecone serverless support [#246](https://github.com/pinecone-io/canopy/pull/246)
 
 ### Bug fixes
