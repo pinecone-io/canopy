@@ -86,8 +86,7 @@ def validate_pinecone_connection():
     except RuntimeError as e:
         msg = (
             f"{str(e)}\n"
-            "Credentials should be set by the PINECONE_API_KEY and PINECONE_ENVIRONMENT"
-            " environment variables.\n"
+            "Credentials should be set by the PINECONE_API_KEY environment variables.\n"
             "Please visit https://www.pinecone.io/docs/quickstart/ for more details."
         )
         raise CLIError(msg)
@@ -113,6 +112,13 @@ def _read_config_file(config_file: Optional[str]) -> Dict[str, Any]:
         raise CLIError(msg)
 
     return config
+
+
+def _load_create_index_params(config_file: Optional[str]) -> Dict[str, Any]:
+    config = _read_config_file(config_file)
+    if not config:
+        return {}
+    return config.get("create_index_params", {})
 
 
 def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
@@ -224,18 +230,21 @@ def health(url):
 @click.argument("index-name", nargs=1, envvar="INDEX_NAME", type=str, required=True)
 @click.option("--config", "-c", default=None, envvar="CANOPY_CONFIG_FILE",
               help="Path to a canopy config file. Can also be set by the "
-                   "`CANOPY_CONFIG_FILE` envrionment variable. Otherwise, the built-in"
-                   "defualt configuration will be used.")
+                   "`CANOPY_CONFIG_FILE` environment variable. Otherwise, the built-in"
+                   "default configuration will be used.")
 def new(index_name: str, config: Optional[str]):
     _initialize_tokenizer()
     kb_config = _load_kb_config(config)
     kb = KnowledgeBase.from_config(kb_config, index_name=index_name)
-    click.echo("Canopy is going to create a new index: ", nl=False)
-    click.echo(click.style(f"{kb.index_name}", fg="green"))
+    create_index_params = _load_create_index_params(config)
+    click.echo("Canopy is going to create a new index named ", nl=False)
+    click.echo(click.style(f"{kb.index_name}", fg="green"), nl=False)
+    click.echo(" with the following initialization parameters:")
+    click.echo(click.style(f"{yaml.dump(create_index_params)}", fg="cyan"))
     click.confirm(click.style("Do you want to continue?", fg="red"), abort=True)
     with spinner:
         try:
-            kb.create_canopy_index()
+            kb.create_canopy_index(**create_index_params)
         # TODO: kb should throw a specific exception for failure
         except Exception as e:
             already_exists_str = f"Index {kb.index_name} already exists"

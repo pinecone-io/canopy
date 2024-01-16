@@ -1,13 +1,15 @@
 import logging
 from datetime import datetime
 
-import pinecone
-
 from canopy.knowledge_base.knowledge_base import _get_global_client
 
 logger = logging.getLogger(__name__)
 
 TEST_NAMESPACE = "ns"
+TEST_CREATE_INDEX_PARAMS = [
+    {"spec": {"serverless": {"cloud": "aws", "region": "us-west-2"}}},
+    {"spec": {"pod": {"environment": "eu-west1-gcp", "pod_type": "p1.x1"}}},
+]
 
 
 def create_index_name(testrun_uid: str, prefix: str) -> str:

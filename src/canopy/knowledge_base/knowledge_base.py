@@ -80,7 +80,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     Example:
         >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-        >>> from tokenizer import Tokenizer
+        >>> from canopy.tokenizer import Tokenizer
         >>> Tokenizer.initialize()
         >>> kb = KnowledgeBase(index_name="my_index")
         >>> kb.create_canopy_index()
@@ -118,7 +118,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
             create a new index:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy.tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.create_canopy_index()
@@ -192,9 +192,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         # The index object is initialized lazily, when the user calls `connect()` or
         # `create_canopy_index()`
         self._index: Optional[Index] = None
+
         self._default_spec = ServerlessSpec(
-            cloud='aws',
-            region='us-west-2'
+            cloud="aws",
+            region="us-west-2"
         )
 
     def _connect_index(self) -> None:
@@ -410,7 +411,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Examples:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy.tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
@@ -510,7 +511,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Example:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy.tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
@@ -546,7 +547,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # we need to delete all existing chunks
         # belonging to the same documents before upserting the new ones.
         # we currently don't delete documents before upsert in starter env
-        if not self._is_starter_env():
+        if not self._is_serverless_env():
             self.delete(document_ids=[doc.id for doc in documents],
                         namespace=namespace)
 
@@ -572,7 +573,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         Example:
             >>> from canopy.knowledge_base.knowledge_base import KnowledgeBase
-            >>> from tokenizer import Tokenizer
+            >>> from canopy.tokenizer import Tokenizer
             >>> Tokenizer.initialize()
             >>> kb = KnowledgeBase(index_name="my_index")
             >>> kb.connect()
@@ -583,7 +584,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # Currently starter env does not support delete by metadata filter
         # So temporarily we delete the first DELETE_STARTER_CHUNKS_PER_DOC chunks
-        if self._is_starter_env():
+        if self._is_serverless_env():
             for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
                 doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
                 chunked_ids = [f"{doc_id}_{i}"
@@ -641,13 +642,10 @@ class KnowledgeBase(BaseKnowledgeBase):
         kb = cls._from_config(config)
         return kb
 
-    @staticmethod
-    def _is_starter_env():
-        # TODO: Fix this for serverless!
-        # starter_env_suffixes = ("starter", "stage-gcp-0")
-        # return (os.getenv("PINECONE_ENVIRONMENT").lower()
-        #        .endswith(starter_env_suffixes))
-        return True
+    @lru_cache(maxsize=1)
+    def _is_serverless_env(self):
+        description = self._pinecone_client.describe_index(self.index_name)
+        return "serverless" in description["spec"]
 
     async def aquery(self,
                      queries: List[Query],

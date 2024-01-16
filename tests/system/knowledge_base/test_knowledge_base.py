@@ -1,4 +1,5 @@
 import random
+from typing import Dict, Any
 
 import pytest
 import numpy as np
@@ -23,7 +24,7 @@ from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit import random_words
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-from tests.util import create_system_tests_index_name
+from tests.util import create_system_tests_index_name, TEST_CREATE_INDEX_PARAMS
 
 PINECONE_API_KEY_ENV_VAR = "PINECONE_API_KEY"
 RETRY_TIMEOUT = 120
@@ -59,13 +60,18 @@ def encoder():
         StubDenseEncoder())
 
 
+@pytest.fixture(scope="module", params=TEST_CREATE_INDEX_PARAMS)
+def create_index_params(request):
+    return request.param
+
+
 @retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
-def try_create_canopy_index(kb: KnowledgeBase):
-    kb.create_canopy_index(metric="dotproduct")
+def try_create_canopy_index(kb: KnowledgeBase, init_params: Dict[str, Any]):
+    kb.create_canopy_index(**init_params)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def knowledge_base(index_full_name, index_name, chunker, encoder):
+def knowledge_base(index_full_name, index_name, chunker, encoder, create_index_params):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
@@ -73,7 +79,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     if index_full_name in list_canopy_indexes():
         _get_global_client().delete_index(index_full_name)
 
-    try_create_canopy_index(kb)
+    try_create_canopy_index(kb, create_index_params)
 
     return kb
 
@@ -322,7 +328,7 @@ def test_update_documents(encoder,
     expected_chunks = [chunk.id for chunk in updated_chunks]
     assert_chunks_in_index(kb, updated_chunks)
 
-    if not knowledge_base._is_starter_env():
+    if not knowledge_base._is_serverless_env():
         unexpected_chunks = [c_id for c_id in chunk_ids
                              if c_id not in expected_chunks]
         assert len(unexpected_chunks) > 0, "bug in the test itself"
