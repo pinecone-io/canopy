@@ -31,7 +31,7 @@ class BaseLLM(ABC, ConfigurableMixin):
                                function: Function,
                                *,
                                max_tokens: Optional[int] = None,
-                               model_params: Optional[dict] = None
+                               model_params: Optional[dict] = None,
                                ) -> dict:
         pass
 

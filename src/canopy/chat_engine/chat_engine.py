@@ -90,6 +90,7 @@ class ChatEngine(BaseChatEngine):
                  max_context_tokens: Optional[int] = None,
                  query_builder: Optional[QueryGenerator] = None,
                  system_prompt: Optional[str] = None,
+                 allow_model_params_override: bool = False,
                  history_pruner: Optional[HistoryPruner] = None,
                  ):
         """
@@ -103,6 +104,7 @@ class ChatEngine(BaseChatEngine):
             max_context_tokens: The maximum number of tokens to use for the context to prompt the LLM. Defaults to be 70% of the max_prompt_tokens.
             query_builder: An instance of a query generator to use for generating queries from the chat history. Defaults to FunctionCallingQueryGenerator.
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
+            allow_model_params_override: Whether to allow individual `chat()` calls to override the pre-configured LLM params. Defaults to False.
             history_pruner: The history pruner to use for pruning the chat history before prompting the LLM. Defaults to None, which means no pruning will be done.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
@@ -161,6 +163,8 @@ class ChatEngine(BaseChatEngine):
             )
         self.max_context_tokens = max_context_tokens
 
+        self.allow_model_params_override = allow_model_params_override
+
     def chat(self,
              messages: Messages,
              *,
@@ -205,13 +209,19 @@ class ChatEngine(BaseChatEngine):
             system_prompt=self.system_prompt,
             context=context
         )
+        model_params_dict = {}
+        if self.allow_model_params_override and model_params:
+            model_params_dict = {
+                k: v for k, v in model_params.items() if v is not None
+            }
+        if model_params_dict.get("max_tokens", None) is None:
+            model_params_dict["max_tokens"] = self.max_generated_tokens
 
         llm_response = self.llm.chat_completion(system_prompt=self.system_prompt,
                                                 chat_history=llm_messages,
                                                 context=context,
-                                                max_tokens=self.max_generated_tokens,
                                                 stream=stream,
-                                                model_params=model_params)
+                                                model_params=model_params_dict)
         debug_info = {}
         if CE_DEBUG_INFO:
             debug_info['context'] = context.dict()
