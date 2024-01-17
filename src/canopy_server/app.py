@@ -129,7 +129,8 @@ async def chat(
             chat_engine.chat,
             messages=request.messages,
             stream=request.stream,
-            namespace=namespace
+            namespace=namespace,
+            model_params=model_params,
         )
 
         if request.stream:
