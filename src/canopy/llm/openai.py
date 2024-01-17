@@ -61,8 +61,11 @@ class OpenAILLM(BaseLLM):
             )
 
         self.default_model_params = kwargs
-        if self.default_model_params.get("model", None) is None:
-            self.default_model_params["model"] = self.model_name
+        if "model" in self.default_model_params:
+            raise ValueError(
+                "The 'model' parameter is not allowed in the default model params. "
+                "Please use the 'model_name' argument instead."
+            )
 
     @property
     def available_models(self):
@@ -112,6 +115,8 @@ class OpenAILLM(BaseLLM):
         if max_tokens is not None:
             model_params_dict["max_tokens"] = max_tokens
 
+        model = model_params_dict.pop("model", self.model_name)
+
         if context is None:
             system_message = system_prompt
         else:
@@ -119,7 +124,8 @@ class OpenAILLM(BaseLLM):
         messages = [SystemMessage(content=system_message).dict()
                     ] + [m.dict() for m in chat_history]
         try:
-            response = self._client.chat.completions.create(messages=messages,
+            response = self._client.chat.completions.create(model=model,
+                                                            messages=messages,
                                                             stream=stream,
                                                             **model_params_dict)
         except openai.OpenAIError as e:
@@ -197,6 +203,8 @@ class OpenAILLM(BaseLLM):
         if max_tokens is not None:
             model_params_dict["max_tokens"] = max_tokens
 
+        model = model_params_dict.pop("model", self.model_name)
+
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
 
@@ -204,6 +212,7 @@ class OpenAILLM(BaseLLM):
                     ] + [m.dict() for m in chat_history]
         try:
             chat_completion = self._client.chat.completions.create(
+                model=model,
                 messages=messages,
                 tools=[function_dict],
                 tool_choice={"type": "function",
