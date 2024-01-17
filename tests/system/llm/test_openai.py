@@ -174,6 +174,23 @@ def test_enforced_function_call_low_temperature(openai_llm,
     assert_function_call_format(result)
 
 
+def test_chat_completion_with_model_name(openai_llm, messages):
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("In Azure the model name has to be a valid deployment")
+
+    new_model_name = "gpt-3.5-turbo-1106"
+    assert new_model_name != openai_llm.model_name, (
+        "The new model name should be different from the default one. Please change it."
+    )
+    response = openai_llm.chat_completion(
+        system_prompt=SYSTEM_PROMPT,
+        chat_history=messages,
+        model_params={"model": new_model_name}
+    )
+
+    assert response.model == new_model_name
+
+
 def test_chat_streaming(openai_llm, messages):
     stream = True
     response = openai_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
