@@ -2,6 +2,17 @@ name: Create and publish a Docker image
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag the image with'
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        description: 'Version to tag the image with'
+        required: true
+        type: string
   push:
     branches:
       - 'main'
@@ -31,10 +42,12 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-              ghcr.io/pinecone-io/canopy
+              ghcr.io/${{ github.repository }}
           tags: |
-            type=ref,event=branch
-            type=semver,pattern={{version}}
+            type=ref,event=branch,enable=${{ github.event_name == 'push' }}
+            type=semver,pattern={{version}},enable=${{ github.event_name == 'push' }}
+            type=raw,value=latest,enable=${{ github.event_name != 'push' }}
+            type=raw,value=${{inputs.version}},enable=${{ github.event_name != 'push' }}
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
