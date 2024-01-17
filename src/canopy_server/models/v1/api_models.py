@@ -8,12 +8,23 @@ from canopy.models.data_models import Messages, Query, Document
 
 
 class ChatRequest(BaseModel):
-    model: str = Field(
-        default="",
-        description="The ID of the model to use. This field is ignored; instead, configure this field in the Canopy config.",  # noqa: E501
-    )
     messages: Messages = Field(
         description="A list of messages comprising the conversation so far."
+    )
+    stream: bool = Field(
+        default=False,
+        description="""Whether or not to stream the chatbot's response. If set, the response is server-sent events containing [chat.completion.chunk](https://platform.openai.com/docs/api-reference/chat/streaming) objects""",  # noqa: E501
+    )
+
+    # -------------------------------------------------------------------------------
+    # Optional params. The params below are ignored by default, and should be usually
+    # configured in the Canopy config file instead.
+    # You can allow passing these params to the API by setting the
+    # `allow_model_params_override` flag in the ChatEngine's config.
+    # -------------------------------------------------------------------------------
+    model: str = Field(
+        default="",
+        description="The name of the model to use."  # noqa: E501
     )
     frequency_penalty: Optional[float] = Field(
         default=None,
@@ -46,10 +57,6 @@ class ChatRequest(BaseModel):
     stop: Optional[Union[List[str], str]] = Field(
         default=None,
         description="One or more sequences where the API will stop generating further tokens.",  # noqa: E501
-    )
-    stream: bool = Field(
-        default=False,
-        description="""Whether or not to stream the chatbot's response. If set, the response is server-sent events containing [chat.completion.chunk](https://platform.openai.com/docs/api-reference/chat/streaming) objects""",  # noqa: E501
     )
     temperature: Optional[float] = Field(
         default=None,
