@@ -42,7 +42,7 @@ def try_create_canopy_index(kb: KnowledgeBase, init_params: Dict[str, Any]):
 @pytest.fixture(scope="module")
 def index_name(testrun_uid: str, create_index_params):
     index_type = next(iter(create_index_params["spec"]))
-    return create_e2e_tests_index_name(testrun_uid) + f"-{index_type}"
+    return create_e2e_tests_index_name(testrun_uid, index_type)
 
 
 @retry(reraise=True, stop=stop_after_attempt(60), wait=wait_fixed(1))
