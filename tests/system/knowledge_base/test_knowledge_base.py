@@ -1,5 +1,5 @@
 import random
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 import pytest
 import numpy as np
@@ -8,7 +8,7 @@ from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
-    wait_chain, stop_after_attempt, wait_random,
+    wait_chain,
 )
 
 from canopy.knowledge_base import KnowledgeBase
