@@ -170,6 +170,7 @@ class ChatEngine(BaseChatEngine):
              *,
              stream: bool = False,
              model_params: Optional[dict] = None,
+             namespace: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -184,6 +185,7 @@ class ChatEngine(BaseChatEngine):
             messages: A list of messages (history) to generate the next response from.
             stream: A boolean flag to indicate if the chat should be streamed or not. Defaults to False.
             model_params: A dictionary of model parameters to use for the LLM. Defaults to None, which means the LLM will use its default values.
+            namespace: The namespace of the index for context retreival. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
 
         Returns:
             A ChatResponse object if stream is False, or a StreamingChatResponse object if stream is True.
@@ -200,7 +202,7 @@ class ChatEngine(BaseChatEngine):
             >>> for chunk in response.chunks:
             ...     print(chunk.json())
         """  # noqa: E501
-        context = self._get_context(messages)
+        context = self._get_context(messages, namespace)
         llm_messages = self._history_pruner.build(
             chat_history=messages,
             max_tokens=self.max_prompt_tokens,
@@ -237,9 +239,11 @@ class ChatEngine(BaseChatEngine):
 
     def _get_context(self,
                      messages: Messages,
+                     namespace: Optional[str] = None
                      ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
-        context = self.context_engine.query(queries, self.max_context_tokens)
+        context = self.context_engine.query(queries, self.max_context_tokens,
+                                            namespace=namespace)
         return context
 
     async def achat(self,

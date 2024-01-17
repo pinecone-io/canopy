@@ -17,13 +17,6 @@ from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Context, SystemMessage
 
 
-def _format_openai_error(e):
-    try:
-        return e.response.json()['error']['message']
-    except Exception:
-        return str(e)
-
-
 class OpenAILLM(BaseLLM):
     """
     OpenAI LLM wrapper built on top of the OpenAI Python client.
@@ -64,7 +57,7 @@ class OpenAILLM(BaseLLM):
             raise RuntimeError(
                 "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
                 "environment variable is set correctly.\n"
-                f"Error: {_format_openai_error(e)}"
+                f"Error: {self._format_openai_error(e)}"
             )
 
         self.default_model_params = kwargs
@@ -130,12 +123,7 @@ class OpenAILLM(BaseLLM):
                                                             stream=stream,
                                                             **model_params_dict)
         except openai.OpenAIError as e:
-            provider_name = self.__class__.__name__.replace("LLM", "")
-            raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for chat "
-                f"completion.\n"
-                f"Error: {_format_openai_error(e)}"
-            )
+            self._handle_chat_error(e)
 
         def streaming_iterator(response):
             for chunk in response:
@@ -224,12 +212,7 @@ class OpenAILLM(BaseLLM):
                 **model_params_dict
             )
         except openai.OpenAIError as e:
-            provider_name = self.__class__.__name__.replace("LLM", "")
-            raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for "
-                f"chat completion with enforced function calling.\n"
-                f"Error: {_format_openai_error(e)}"
-            )
+            self._handle_chat_error(e)
 
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)
@@ -256,3 +239,24 @@ class OpenAILLM(BaseLLM):
                                       max_tokens: Optional[int] = None,
                                       model_params: Optional[dict] = None):
         raise NotImplementedError()
+
+    @staticmethod
+    def _format_openai_error(e):
+        try:
+            response = e.response.json()
+            if "error" in response:
+                return response["error"]["message"]
+            elif "message" in response:
+                return response["message"]
+            else:
+                return str(e)
+        except Exception:
+            return str(e)
+
+    def _handle_chat_error(self, e):
+        provider_name = self.__class__.__name__.replace("LLM", "")
+        raise RuntimeError(
+            f"Failed to use {provider_name}'s {self.model_name} model for chat "
+            f"completion. "
+            f"Underlying Error:\n{self._format_openai_error(e)}"
+        )
