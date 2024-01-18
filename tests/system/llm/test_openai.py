@@ -1,16 +1,16 @@
+import os
 from unittest.mock import MagicMock
 
 import jsonschema
 import pytest
 
-
+from canopy.llm import AzureOpenAILLM
 from canopy.models.data_models import Role, MessageBase, Context, StringContextContent  # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
 from canopy.llm.openai import OpenAILLM  # noqa
 from canopy.llm.models import \
     Function, FunctionParameters, FunctionArrayProperty  # noqa
 from openai import BadRequestError # noqa
-
 
 SYSTEM_PROMPT = "You are a helpful assistant."
 
@@ -36,16 +36,6 @@ def assert_function_call_format(result):
 @pytest.fixture
 def model_name():
     return "gpt-3.5-turbo-0613"
-
-
-@pytest.fixture
-def messages():
-    # Create a list of MessageBase objects
-    return [
-        MessageBase(role=Role.USER, content="Hello, assistant."),
-        MessageBase(role=Role.ASSISTANT,
-                    content="Hello, user. How can I assist you?")
-    ]
 
 
 @pytest.fixture
@@ -75,18 +65,30 @@ def model_params_low_temperature():
     return {"temperature": 0.2, "top_p": 0.5, "n": 1}
 
 
-@pytest.fixture
-def openai_llm(model_name):
-    return OpenAILLM(model_name=model_name)
+@pytest.fixture(params=[OpenAILLM, AzureOpenAILLM])
+def openai_llm(request, model_name):
+    llm_class = request.param
+    if llm_class == AzureOpenAILLM:
+        model_name = os.getenv("AZURE_DEPLOYMENT_NAME")
+        if model_name is None:
+            pytest.skip(
+                "Couldn't find Azure deployment name. Skipping Azure OpenAI tests."
+            )
+    return llm_class(model_name=model_name)
 
 
 def test_init_with_custom_params(openai_llm):
-    llm = OpenAILLM(model_name="test_model_name",
-                    api_key="test_api_key",
-                    organization="test_organization",
-                    temperature=0.9,
-                    top_p=0.95,
-                    n=3,)
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("Tested separately in test_azure_openai.py")
+
+    llm = openai_llm.__class__(
+        model_name="test_model_name",
+        api_key="test_api_key",
+        organization="test_organization",
+        temperature=0.9,
+        top_p=0.95,
+        n=3,
+    )
 
     assert llm.model_name == "test_model_name"
     assert llm.default_model_params["temperature"] == 0.9
@@ -172,6 +174,23 @@ def test_enforced_function_call_low_temperature(openai_llm,
     assert_function_call_format(result)
 
 
+def test_chat_completion_with_model_name(openai_llm, messages):
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("In Azure the model name has to be a valid deployment")
+
+    new_model_name = "gpt-3.5-turbo-1106"
+    assert new_model_name != openai_llm.model_name, (
+        "The new model name should be different from the default one. Please change it."
+    )
+    response = openai_llm.chat_completion(
+        system_prompt=SYSTEM_PROMPT,
+        chat_history=messages,
+        model_params={"model": new_model_name}
+    )
+
+    assert response.model == new_model_name
+
+
 def test_chat_streaming(openai_llm, messages):
     stream = True
     response = openai_llm.chat_completion(system_prompt=SYSTEM_PROMPT,
@@ -247,8 +266,38 @@ def test_enforce_function_wrong_output_schema(openai_llm,
 
 
 def test_available_models(openai_llm):
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("Azure does not support listing models")
     models = openai_llm.available_models
     assert isinstance(models, list)
     assert len(models) > 0
     assert isinstance(models[0], str)
     assert openai_llm.model_name in models
+
+
+@pytest.fixture()
+def no_api_key():
+    before = os.environ.pop("OPENAI_API_KEY", None)
+    yield
+    if before is not None:
+        os.environ["OPENAI_API_KEY"] = before
+
+
+def test_missing_api_key(no_api_key):
+    with pytest.raises(RuntimeError, match="OPENAI_API_KEY"):
+        OpenAILLM()
+
+
+@pytest.fixture()
+def bad_api_key():
+    before = os.environ.pop("OPENAI_API_KEY", None)
+    os.environ["OPENAI_API_KEY"] = "bad key"
+    yield
+    if before is not None:
+        os.environ["OPENAI_API_KEY"] = before
+
+
+def test_bad_api_key(bad_api_key, messages):
+    with pytest.raises(RuntimeError, match="API key"):
+        llm = OpenAILLM()
+        llm.chat_completion(system_prompt=SYSTEM_PROMPT, chat_history=messages)

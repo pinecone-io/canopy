@@ -25,7 +25,7 @@ from fastapi import (
     APIRouter
 )
 import uvicorn
-from typing import cast, Union
+from typing import cast, Union, Optional
 
 from canopy.models.api_models import (
     StreamingChatResponse,
@@ -102,20 +102,35 @@ logger: logging.Logger
 )
 async def chat(
     request: ChatRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
-
     The request schema follows OpenAI's chat completion API schema: https://platform.openai.com/docs/api-reference/chat/create.
-    Note that all fields other than `messages` and `stream` are currently ignored. The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
+    Note that all fields other than `messages`, `stream` and `namespace` are currently ignored.
+    The Canopy server uses the model parameters defined in the `ChatEngine` config for all underlying LLM calls.
+
+    Args:
+        request: Chat request containing the messages
+        namespace: The namespace to query in the underlying `KnowledgeBase`. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+
+    Returns:
+        OpenAI compatible chat response
 
     """  # noqa: E501
+
     try:
+        logger.debug(f"The namespace is {namespace}")
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
+        model_params = request.dict(exclude={"messages", "stream"})
         answer = await run_in_threadpool(
-            chat_engine.chat, messages=request.messages, stream=request.stream
+            chat_engine.chat,
+            messages=request.messages,
+            stream=request.stream,
+            namespace=namespace,
+            model_params=model_params,
         )
 
         if request.stream:
@@ -148,18 +163,28 @@ async def chat(
 )
 async def query(
     request: ContextQueryRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
     The returned text may be structured or unstructured, depending on the Canopy configuration.
     Query allows limiting the context length in tokens to control LLM costs.
     This method does not pass through the LLM and uses only retrieval and construction from Pinecone DB.
+
+    Args:
+        request: Request containing the queries for the knowledge base
+        namespace: The namespace to query in the underlying `KnowledgeBase`. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
+
+    Returns:
+        Context content with the token count
+
     """  # noqa: E501
     try:
         context: Context = await run_in_threadpool(
             context_engine.query,
             queries=request.queries,
             max_context_tokens=request.max_tokens,
+            namespace=namespace
         )
         return ContextResponse(content=context.content.to_text(),
                                num_tokens=context.num_tokens)
@@ -176,6 +201,7 @@ async def query(
 )
 async def upsert(
     request: ContextUpsertRequest = Body(...),
+    namespace: str = ""
 ) -> SuccessUpsertResponse:
     """
     Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
@@ -186,7 +212,10 @@ async def upsert(
     try:
         logger.info(f"Upserting {len(request.documents)} documents")
         await run_in_threadpool(
-            kb.upsert, documents=request.documents, batch_size=request.batch_size
+            kb.upsert,
+            documents=request.documents,
+            batch_size=request.batch_size,
+            namespace=namespace
         )
 
         return SuccessUpsertResponse()
@@ -203,13 +232,16 @@ async def upsert(
 )
 async def delete(
     request: ContextDeleteRequest = Body(...),
+    namespace: Optional[str] = None,
 ) -> SuccessDeleteResponse:
     """
     Delete documents from the knowledgebase. Deleting documents is done by their unique ID.
     """  # noqa: E501
     try:
         logger.info(f"Delete {len(request.document_ids)} documents")
-        await run_in_threadpool(kb.delete, document_ids=request.document_ids)
+        await run_in_threadpool(kb.delete,
+                                document_ids=request.document_ids,
+                                namespace=namespace or "")
         return SuccessDeleteResponse()
 
     except Exception as e:
@@ -288,13 +320,13 @@ async def startup():
 
 
 def _init_routes(app):
-    # Include the application level router (health, shutdown, ...)
-    app.include_router(application_router, include_in_schema=False)
-    app.include_router(application_router, prefix=f"/{API_VERSION}")
-    # Include the API without version == latest
-    app.include_router(context_api_router, include_in_schema=False)
-    app.include_router(openai_api_router, include_in_schema=False)
     # Include the API version in the path, API_VERSION should be the latest version.
+    app.include_router(application_router, prefix=f"/{API_VERSION}")
+    app.include_router(context_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
+                       tags=["Context (Namespace)"])
+    app.include_router(openai_api_router, prefix=f"/{API_VERSION}" + "/{namespace}",
+                       tags=["LLM (Namespace)"])
+
     app.include_router(context_api_router, prefix=f"/{API_VERSION}", tags=["Context"])
     app.include_router(openai_api_router, prefix=f"/{API_VERSION}", tags=["LLM"])
 

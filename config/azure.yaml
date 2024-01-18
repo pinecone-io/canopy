@@ -1,0 +1,56 @@
+# ===========================================================
+#            Configuration file for Azure OpenAI
+# ===========================================================
+
+
+query_builder_prompt: &query_builder_prompt |
+  Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
+  You should break down complex questions into sub-queries if needed.
+
+
+tokenizer:
+  type: OpenAITokenizer                 # Options: [OpenAITokenizer]
+  params:
+    model_name: gpt-3.5-turbo           # Configure the tokenizer that matches the OpenAI model in your deployment
+
+
+chat_engine:
+
+  llm: &llm
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
+    type: AzureOpenAILLM                # Options: [OpenAILLM, AzureOpenAILLM]
+    params:
+      model_name: your-deployment-name  # Specify the name of the LLM deployment to use.
+      api_version: 2023-12-01-preview   # Specify the API version to use.
+
+  query_builder:
+    # -------------------------------------------------------------------------------------------------------------
+    # LLM configuration
+    # Configuration of the LLM (Large Language Model)
+    # -------------------------------------------------------------------------------------------------------------
+    type: FunctionCallingQueryGenerator # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, InstructionQueryGenerator]
+    params:
+      prompt: *query_builder_prompt     # The query builder's system prompt for calling the LLM
+      function_description:             # A function description passed to the LLM's `function_calling` API
+        Query search engine for relevant information
+
+    llm:  # The LLM that the query builder will use to generate queries. Leave `*llm` to use the chat engine's LLM
+      <<: *llm
+
+  context_engine:
+
+    knowledge_base:
+
+      record_encoder:
+        # --------------------------------------------------------------------------
+        # Configuration for the RecordEncoder subcomponent of the knowledge base.
+        # The record encoder is responsible for encoding document chunks to a vector representation
+        # --------------------------------------------------------------------------
+        type: AzureOpenAIRecordEncoder  # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
+        params:
+          model_name:                   # Specify the name of the embedding deployment to use.
+            your-embedding-deployment-name
+          batch_size: 400               # The number of document chunks to encode in each call to the encoding model

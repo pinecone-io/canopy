@@ -30,12 +30,17 @@ class KBEncodedDocChunk(KBDocChunk):
         metadata["document_id"] = self.document_id
         metadata["source"] = self.source
 
-        return {
+        record = {
             "id": self.id,
             "values": self.values,
             "metadata": metadata,
-            "sparse_values": self.sparse_values,
+
         }
+
+        if self.sparse_values is not None:
+            record["sparse_values"] = self.sparse_values
+
+        return record
 
 
 class KBQuery(Query):

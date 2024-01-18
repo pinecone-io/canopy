@@ -100,7 +100,8 @@ class TestChatEngine:
         }
         return messages, expected
 
-    def test_chat(self, history_length=5, snippet_length=10):
+    def test_chat(self, namespace, history_length=5, snippet_length=10):
+
         chat_engine = self._init_chat_engine()
 
         # Mock input and expected output
@@ -109,7 +110,7 @@ class TestChatEngine:
                                                            MOCK_SYSTEM_PROMPT)
 
         # Call the method under test
-        response = chat_engine.chat(messages)
+        response = chat_engine.chat(messages, namespace=namespace)
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -118,21 +119,32 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=70
+            max_context_tokens=70,
+            namespace=namespace
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
             context=expected['context'],
             chat_history=messages,
-            max_tokens=200,
             stream=False,
-            model_params=None
+            model_params={'max_tokens': 200}
         )
 
         assert response == expected['response']
 
-    # TODO: parametrize and add more test cases
+    @pytest.mark.parametrize("allow_model_params_override,params_override",
+                             [("False", None),
+                              ("False", {'temperature': 0.99, 'top_p': 0.5}),
+                              ("True", {'temperature': 0.99, 'top_p': 0.5}),
+                              ("True", {'temperature': 0.99, 'max_tokens': 200}),],
+                             ids=["no_override",
+                                  "override_not_allowed",
+                                  "valid_override",
+                                  "valid_override_with_max_tokens"])
     def test_chat_engine_params(self,
+                                namespace,
+                                allow_model_params_override,
+                                params_override,
                                 system_prompt_length=10,
                                 max_prompt_tokens=80,
                                 max_context_tokens=60,
@@ -143,10 +155,13 @@ class TestChatEngine:
                                 ):
 
         system_prompt = self._generate_text(system_prompt_length)
-        chat_engine = self._init_chat_engine(system_prompt=system_prompt,
-                                             max_prompt_tokens=max_prompt_tokens,
-                                             max_context_tokens=max_context_tokens,
-                                             max_generated_tokens=max_generated_tokens)
+        chat_engine = self._init_chat_engine(
+            system_prompt=system_prompt,
+            max_prompt_tokens=max_prompt_tokens,
+            max_context_tokens=max_context_tokens,
+            max_generated_tokens=max_generated_tokens,
+            allow_model_params_override=allow_model_params_override
+        )
 
         # Mock input and expected output
         messages, expected = self._get_inputs_and_expected(history_length,
@@ -159,7 +174,13 @@ class TestChatEngine:
                 chat_engine.chat(messages)
             return
 
-        response = chat_engine.chat(messages)
+        response = chat_engine.chat(messages,
+                                    namespace=namespace,
+                                    model_params=params_override)
+
+        expected_model_params = {'max_tokens': max_generated_tokens}
+        if allow_model_params_override and params_override is not None:
+            expected_model_params.update(params_override)
 
         # Assertions
         self.mock_query_builder.generate.assert_called_once_with(
@@ -168,15 +189,15 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=max_context_tokens
+            max_context_tokens=max_context_tokens,
+            namespace=namespace
         )
         self.mock_llm.chat_completion.assert_called_once_with(
             system_prompt=expected['prompt'],
             context=expected['context'],
             chat_history=messages,
-            max_tokens=max_generated_tokens,
             stream=False,
-            model_params=None
+            model_params=expected_model_params
         )
 
         assert response == expected['response']
@@ -199,7 +220,8 @@ class TestChatEngine:
         )
         self.mock_context_engine.query.assert_called_once_with(
             expected['queries'],
-            max_context_tokens=70
+            max_context_tokens=70,
+            namespace=None
         )
 
         assert isinstance(context, Context)
