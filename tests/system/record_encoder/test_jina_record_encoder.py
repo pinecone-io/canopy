@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from canopy.knowledge_base.models import KBDocChunk
@@ -23,6 +25,8 @@ queries = [Query(text="Sample query 1"),
 
 @pytest.fixture
 def encoder():
+    if os.getenv("JINA_API_KEY", None) is None:
+        pytest.skip("Did not find JINA_API_KEY environment variable. Skipping...")
     return JinaRecordEncoder(batch_size=2)
 
 
