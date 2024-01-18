@@ -221,7 +221,7 @@ class OpenAILLM(BaseLLM):
                 **model_params_dict
             )
         except openai.OpenAIError as e:
-            self._handle_chat_error(e)
+            self._handle_chat_error(e, is_function_call=True)
 
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)
@@ -263,6 +263,14 @@ class OpenAILLM(BaseLLM):
             return str(e)
 
     def _handle_chat_error(self, e, is_function_call=False):
+        if isinstance(e, openai.NotFoundError) and is_function_call:
+            if e.type and 'invalid' in e.type:
+                raise NotImplementedError(
+                    f"The selected model ({self.model_name}) does not support "
+                    f"  function calling. "
+                    f"Underlying Error:\n{self._format_openai_error(e)}"
+                ) from e
+
         provider_name = self.__class__.__name__.replace("LLM", "")
         raise RuntimeError(
             f"Failed to use {provider_name}'s {self.model_name} model for chat "

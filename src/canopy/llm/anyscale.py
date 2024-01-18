@@ -46,10 +46,13 @@ class AnyscaleLLM(OpenAILLM):
         max_tokens: Optional[int] = None,
         model_params: Optional[dict] = None,
     ) -> dict:
-        if self.model_name not in FUNCTION_MODEL_LIST:
+        model = self.model_name
+        if model_params and "model" in model_params:
+            model = model_params["model"]
+        if model not in FUNCTION_MODEL_LIST:
             raise NotImplementedError(
-                f"Model {self.model_name} doesn't support function calling. "
-                "To use function calling capability, please select a different model"
+                f"Model {model} doesn't support function calling. "
+                "To use function calling capability, please select a different model.\n"
                 "Pleaes check following link for details: "
                 "https://docs.endpoints.anyscale.com/guides/function-calling"
             )
