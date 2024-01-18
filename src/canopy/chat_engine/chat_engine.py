@@ -2,8 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional, cast
 
-from canopy.chat_engine.models import HistoryPruningMethod
-from canopy.chat_engine.prompt_builder import PromptBuilder
+from canopy.chat_engine.history_pruner import RecentHistoryPruner
+from canopy.chat_engine.history_pruner.base import HistoryPruner
 from canopy.chat_engine.query_generator import (QueryGenerator,
                                                 FunctionCallingQueryGenerator, )
 from canopy.context_engine import ContextEngine
@@ -78,6 +78,7 @@ class ChatEngine(BaseChatEngine):
         'context_engine': ContextEngine,
         'llm': OpenAILLM,
         'query_builder': FunctionCallingQueryGenerator,
+        'history_pruner': RecentHistoryPruner,
     }
 
     def __init__(self,
@@ -89,8 +90,8 @@ class ChatEngine(BaseChatEngine):
                  max_context_tokens: Optional[int] = None,
                  query_builder: Optional[QueryGenerator] = None,
                  system_prompt: Optional[str] = None,
-                 history_pruning: str = "recent",
-                 min_history_messages: int = 1
+                 allow_model_params_override: bool = False,
+                 history_pruner: Optional[HistoryPruner] = None,
                  ):
         """
         Initialize a chat engine.
@@ -103,8 +104,8 @@ class ChatEngine(BaseChatEngine):
             max_context_tokens: The maximum number of tokens to use for the context to prompt the LLM. Defaults to be 70% of the max_prompt_tokens.
             query_builder: An instance of a query generator to use for generating queries from the chat history. Defaults to FunctionCallingQueryGenerator.
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
-            history_pruning: The history pruning method to use for truncating the chat history to a prompt. Defaults to "recent", which means the chat history will be truncated to the most recent messages.
-            min_history_messages: The minimum number of messages to keep in the chat history. Defaults to 1.
+            allow_model_params_override: Whether to allow individual `chat()` calls to override the pre-configured LLM params. Defaults to False.
+            history_pruner: The history pruner to use for pruning the chat history before prompting the LLM. Defaults to None, which means no pruning will be done.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
             raise TypeError(
@@ -132,34 +133,44 @@ class ChatEngine(BaseChatEngine):
         else:
             self._query_builder = self._DEFAULT_COMPONENTS['query_builder']()
 
+        if history_pruner:
+            if not isinstance(history_pruner, HistoryPruner):
+                raise TypeError(
+                    f"history_pruner must be an instance of HistoryPruner, "
+                    f"got {type(history_pruner)}"
+                )
+            self._history_pruner = history_pruner
+        else:
+            self._history_pruner = self._DEFAULT_COMPONENTS['history_pruner']()
+
         self.max_prompt_tokens = max_prompt_tokens
         self.max_generated_tokens = max_generated_tokens
-        self.system_prompt_template = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self._tokenizer = Tokenizer()
-        self._prompt_builder = PromptBuilder(
-            history_pruning=HistoryPruningMethod(history_pruning),
-            min_history_messages=min_history_messages
-        )
 
         # Set max budget for context tokens, default to 70% of max_prompt_tokens
         max_context_tokens = max_context_tokens or int(max_prompt_tokens * 0.7)
-        system_prompt_tokens = self._tokenizer.messages_token_count(
-            [SystemMessage(content=self.system_prompt_template)]
+        self._system_prompt_tokens = self._tokenizer.messages_token_count(
+            [SystemMessage(content=self.system_prompt)]
         )
-        if max_context_tokens + system_prompt_tokens > max_prompt_tokens:
+        if max_context_tokens + self._system_prompt_tokens > max_prompt_tokens:
             raise ValueError(
                 f"Not enough token budget for knowledge base context. The system prompt"
-                f" is taking {system_prompt_tokens} tokens, and together with the "
+                f" is taking {self._system_prompt_tokens } tokens,"
+                f" and together with the "
                 f"configured max context tokens {max_context_tokens} it exceeds "
                 f"max_prompt_tokens of {self.max_prompt_tokens}"
             )
         self.max_context_tokens = max_context_tokens
 
+        self.allow_model_params_override = allow_model_params_override
+
     def chat(self,
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[dict] = None
+             model_params: Optional[dict] = None,
+             namespace: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -174,6 +185,7 @@ class ChatEngine(BaseChatEngine):
             messages: A list of messages (history) to generate the next response from.
             stream: A boolean flag to indicate if the chat should be streamed or not. Defaults to False.
             model_params: A dictionary of model parameters to use for the LLM. Defaults to None, which means the LLM will use its default values.
+            namespace: The namespace of the index for context retreival. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
 
         Returns:
             A ChatResponse object if stream is False, or a StreamingChatResponse object if stream is True.
@@ -190,17 +202,26 @@ class ChatEngine(BaseChatEngine):
             >>> for chunk in response.chunks:
             ...     print(chunk.json())
         """  # noqa: E501
-        context = self._get_context(messages)
-        system_prompt = self.system_prompt_template + f"\nContext: {context.to_text()}"
-        llm_messages = self._prompt_builder.build(
-            system_prompt,
-            messages,
-            max_tokens=self.max_prompt_tokens
+        context = self._get_context(messages, namespace)
+        llm_messages = self._history_pruner.build(
+            chat_history=messages,
+            max_tokens=self.max_prompt_tokens,
+            system_prompt=self.system_prompt,
+            context=context
         )
-        llm_response = self.llm.chat_completion(llm_messages,
-                                                max_tokens=self.max_generated_tokens,
+        model_params_dict = {}
+        if self.allow_model_params_override and model_params:
+            model_params_dict = {
+                k: v for k, v in model_params.items() if v is not None
+            }
+        if model_params_dict.get("max_tokens", None) is None:
+            model_params_dict["max_tokens"] = self.max_generated_tokens
+
+        llm_response = self.llm.chat_completion(system_prompt=self.system_prompt,
+                                                chat_history=llm_messages,
+                                                context=context,
                                                 stream=stream,
-                                                model_params=model_params)
+                                                model_params=model_params_dict)
         debug_info = {}
         if CE_DEBUG_INFO:
             debug_info['context'] = context.dict()
@@ -218,9 +239,11 @@ class ChatEngine(BaseChatEngine):
 
     def _get_context(self,
                      messages: Messages,
+                     namespace: Optional[str] = None
                      ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
-        context = self.context_engine.query(queries, self.max_context_tokens)
+        context = self.context_engine.query(queries, self.max_context_tokens,
+                                            namespace=namespace)
         return context
 
     async def achat(self,

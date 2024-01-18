@@ -1,4 +1,6 @@
 from typing import List
+
+from openai import OpenAIError, RateLimitError, APIConnectionError, AuthenticationError
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
 from canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
@@ -13,11 +15,13 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
     """  # noqa: E501
 
-    def __init__(self,
-                 *,
-                 model_name: str = "text-embedding-ada-002",
-                 batch_size: int = 400,
-                 **kwargs):
+    def __init__(
+        self,
+        *,
+        model_name: str = "text-embedding-ada-002",
+        batch_size: int = 400,
+        **kwargs
+    ):
         """
         Initialize the OpenAIRecordEncoder
 
@@ -27,20 +31,15 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
                         Defaults to 400.
             **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
         """  # noqa: E501
-        encoder = OpenAIEncoder(model_name, **kwargs)
+        try:
+            encoder = OpenAIEncoder(model_name, **kwargs)
+        except OpenAIError as e:
+            raise RuntimeError(
+                "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
+                "environment variable is set correctly.\n"
+                f"Error: {self._format_openai_error(e)}"
+            ) from e
         super().__init__(dense_encoder=encoder, batch_size=batch_size)
-
-    def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
-        """
-        Encode a list of documents, takes a list of KBDocChunk and returns a list of KBEncodedDocChunk.
-
-        Args:
-            documents: A list of KBDocChunk to encode.
-
-        Returns:
-            encoded chunks: A list of KBEncodedDocChunk, with the `values` field populated by the generated embeddings vector.
-        """  # noqa: E501
-        return super().encode_documents(documents)
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]
@@ -49,3 +48,27 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
 
     async def _aencode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
         raise NotImplementedError
+
+    @staticmethod
+    def _format_openai_error(e):
+        try:
+            response = e.response.json()
+            if "error" in response:
+                return response["error"]["message"]
+            elif "message" in response:
+                return response["message"]
+            else:
+                return str(e)
+        except Exception:
+            return str(e)
+
+    def _format_error(self, err):
+        if isinstance(err, RateLimitError):
+            return (f"Your OpenAI account seem to have reached the rate limit. "
+                    f"Details: {self._format_openai_error(err)}")
+        elif isinstance(err, (AuthenticationError, APIConnectionError)):
+            return (f"Failed to connect to OpenAI, please make sure that the "
+                    f"OPENAI_API_KEY environment variable is set correctly. "
+                    f"Details: {self._format_openai_error(err)}")
+        else:
+            return self._format_openai_error(err)

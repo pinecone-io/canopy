@@ -1,10 +1,10 @@
 # Canopy
 
 <p align="center">
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/pyversions/canopy-sdk" alt="Supported Python versions">
 </a>
-<a href="https://pypi.org/project/fastapi" target="_blank">
+<a href="https://pypi.org/project/canopy-sdk" target="_blank">
     <img src="https://img.shields.io/pypi/v/canopy-sdk?label=pypi%20package" alt="Package version">
 </a>
 </p>
@@ -62,7 +62,6 @@ pip install canopy-sdk
 
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
-export PINECONE_ENVIRONMENT="<PINECONE_ENVIRONMENT>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
 export JINA_API_KEY="<JINA_API_KEY>"
 export INDEX_NAME="<INDEX_NAME>"
@@ -77,12 +76,15 @@ export INDEX_NAME="<INDEX_NAME>"
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
-| `PINECONE_ENVIRONMENT`| Determines the Pinecone service cloud environment of your index e.g `west1-gcp`, `us-east-1-aws`, etc                       | You can find the Pinecone environment next to the API key in [console](https://app.pinecone.io/)                                                                             |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `JINA_API_KEY`        | API key for Jina AI. Used to authenticate to JinaAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
+| `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+| `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+
 </details>
 
 
@@ -157,6 +159,10 @@ Canopy supports files in `jsonl`, `parquet` and `csv` formats. Additionally, you
 
 [This notebook](https://colab.research.google.com/github/pinecone-io/examples/blob/master/learn/generation/canopy/00-canopy-data-prep.ipynb) shows how you create a dataset in this format, Follow the instructions in the CLI when you upload your data.
 
+> [!TIP]
+> If you would like to separate your data into [namespaces](https://docs.pinecone.io/docs/namespaces),
+> you can use the `--namespace` option or the `INDEX_NAMESPACE` environment variable.
+
 ### 3. Start the Canopy server
 
 The Canopy server exposes Canopy's functionality via a REST API. Namely, it allows you to upload documents, retrieve relevant docs for a given query, and chat with your data. The server exposes a `/chat.completion` endpoint that can be easily integrated with any chat application.
@@ -200,6 +206,8 @@ This will open a chat interface in your terminal. You can ask questions and the 
 
 To compare the chat response with and without RAG use the `--no-rag` flag
 
+> **Note**: This method is only supported with OpenAI at the moment.
+
 ```bash
 canopy chat --no-rag
 ```
@@ -218,20 +226,18 @@ This will open a similar chat interface window, but will show both the RAG and n
 If you already have an application that uses the OpenAI API, you can migrate it to **Canopy** by simply changing the API endpoint to `http://host:port/v1`, for example with the default configuration:
 
 ```python
-import openai
+from openai import OpenAI
 
-openai.api_base = "http://localhost:8000/v1"
-
-# now you can use the OpenAI API as usual
+client = OpenAI(base_url="http://localhost:8000/v1")
 ```
 
-or without global state change:
-
+If you would like to use a specific index namespace for chatting, you can just append the namespace to the API endpoint:
 ```python
-import openai
+from openai import OpenAI
 
-openai_response = openai.Completion.create(..., api_base="http://localhost:8000/v1")
+client = OpenAI(base_url="http://localhost:8000/v1/my-namespace")
 ```
+
 
 ### Running Canopy server in production
 
@@ -243,4 +249,13 @@ To run the canopy server for production, please run:
 gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
 
-The server interacts with services like Pinecone and OpenAI using your own authentication credentials. When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, so that your server would only take requests from authenticated users.
+Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
+for your production needs. For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
+[Deployment to GCP](docs/deployment-gcp.md) documentation.
+
+
+> [!IMPORTANT]
+>  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
+   When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, 
+   so that your server would only take requests from authenticated users.
+
