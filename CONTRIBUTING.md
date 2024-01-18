@@ -15,7 +15,7 @@ focused on bugs and feature requests.
 ## Pull Requests
 
 It is really simple to get started and create a pull request. Canopy is released regularly, so, you should see your
-improvements release in a matter of days or weeks 🚀
+improvements released in a matter of days or weeks 🚀
 
 Unless your change is trivial (typo, docs tweak etc.), please create an issue to discuss the change before
 creating a pull request.
@@ -29,10 +29,10 @@ label on GitHub.
 
 You'll need the following prerequisites:
 
-- Any Python version between **Python 3.8 and 3.11**
+- Any Python version between **Python 3.9 and 3.11**
 - [**Poetry**](https://github.com/python-poetry/poetry)
-- **git**
-- **make**
+- [**git**](https://git-scm.com/)
+- [**make**](https://www.gnu.org/software/make/)
 
 ### Installation & Setup
 
