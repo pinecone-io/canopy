@@ -22,8 +22,8 @@ from canopy.knowledge_base.reranker import Reranker, TransparentReranker
 from canopy.models.data_models import Query, Document
 
 INDEX_NAME_PREFIX = "canopy--"
-TIMEOUT_INDEX_CREATE = 30
-TIMEOUT_INDEX_PROVISION = 300
+TIMEOUT_INDEX_CREATE = 90
+TIMEOUT_INDEX_PROVISION = 120
 INDEX_PROVISION_TIME_INTERVAL = 3
 RESERVED_METADATA_KEYS = {"document_id", "text", "source"}
 
