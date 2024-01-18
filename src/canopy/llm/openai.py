@@ -262,7 +262,7 @@ class OpenAILLM(BaseLLM):
         except Exception:
             return str(e)
 
-    def _handle_chat_error(self, e):
+    def _handle_chat_error(self, e, is_function_call=False):
         provider_name = self.__class__.__name__.replace("LLM", "")
         raise RuntimeError(
             f"Failed to use {provider_name}'s {self.model_name} model for chat "

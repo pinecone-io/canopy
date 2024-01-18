@@ -47,7 +47,7 @@ class AnyscaleLLM(OpenAILLM):
         model_params: Optional[dict] = None,
     ) -> dict:
         if self.model_name not in FUNCTION_MODEL_LIST:
-            raise ValueError(
+            raise NotImplementedError(
                 f"Model {self.model_name} doesn't support function calling. "
                 "To use function calling capability, please select a different model"
                 "Pleaes check following link for details: "
