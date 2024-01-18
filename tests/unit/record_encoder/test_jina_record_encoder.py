@@ -28,7 +28,8 @@ def encoder():
 
 
 def test_dimension(encoder):
-    with patch('pinecone_text.dense.JinaEncoder.encode_documents') as mock_encode_documents:
+    with patch('pinecone_text.dense.JinaEncoder.encode_documents') \
+            as mock_encode_documents:
         mock_encode_documents.return_value = [[0.1, 0.2, 0.3]]
         assert encoder.dimension == 3
 
@@ -44,8 +45,10 @@ def custom_encode(*args, **kwargs):
                           ([], "encode_documents"),
                           ([], "encode_queries")])
 def test_encode_documents(encoder, items, function):
-    with patch('pinecone_text.dense.JinaEncoder.encode_documents', side_effect=custom_encode):
-        with patch('pinecone_text.dense.JinaEncoder.encode_queries', side_effect=custom_encode):
+    with patch('pinecone_text.dense.JinaEncoder.encode_documents',
+               side_effect=custom_encode):
+        with patch('pinecone_text.dense.JinaEncoder.encode_queries',
+                   side_effect=custom_encode):
             encoded_documents = getattr(encoder, function)(items)
 
             assert len(encoded_documents) == len(items)
