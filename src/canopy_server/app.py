@@ -118,16 +118,19 @@ async def chat(
         OpenAI compatible chat response
 
     """  # noqa: E501
+
     try:
         logger.debug(f"The namespace is {namespace}")
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
+        model_params = request.dict(exclude={"messages", "stream"})
         answer = await run_in_threadpool(
             chat_engine.chat,
             messages=request.messages,
             stream=request.stream,
-            namespace=namespace
+            namespace=namespace,
+            model_params=model_params,
         )
 
         if request.stream:

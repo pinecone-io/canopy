@@ -155,3 +155,8 @@ jobs:
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_TOKEN }}
           poetry publish
+  publish-image:
+    needs: [build, publish]
+    uses: ./.github/workflows/build-push-image.yml
+    with:
+      version: ${{ needs.build.outputs.new_version }}
