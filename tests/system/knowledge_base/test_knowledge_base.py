@@ -1,4 +1,5 @@
 import random
+from typing import Dict, Any
 
 import pytest
 import numpy as np
@@ -7,7 +8,7 @@ from tenacity import (
     retry,
     stop_after_delay,
     wait_fixed,
-    wait_chain, stop_after_attempt, wait_random,
+    wait_chain,
 )
 
 from canopy.knowledge_base import KnowledgeBase
@@ -59,13 +60,12 @@ def encoder():
         StubDenseEncoder())
 
 
-@retry(reraise=True, stop=stop_after_attempt(5), wait=wait_random(min=10, max=20))
-def try_create_canopy_index(kb: KnowledgeBase):
-    kb.create_canopy_index()
+def try_create_canopy_index(kb: KnowledgeBase, init_params: Dict[str, Any]):
+    kb.create_canopy_index(**init_params)
 
 
 @pytest.fixture(scope="module", autouse=True)
-def knowledge_base(index_full_name, index_name, chunker, encoder):
+def knowledge_base(index_full_name, index_name, chunker, encoder, create_index_params):
     kb = KnowledgeBase(index_name=index_name,
                        record_encoder=encoder,
                        chunker=chunker)
@@ -73,7 +73,7 @@ def knowledge_base(index_full_name, index_name, chunker, encoder):
     if index_full_name in list_canopy_indexes():
         _get_global_client().delete_index(index_full_name)
 
-    try_create_canopy_index(kb)
+    try_create_canopy_index(kb, create_index_params)
 
     return kb
 

@@ -13,7 +13,6 @@ from canopy.llm import BaseLLM
 from canopy.models.api_models import ChatResponse, _Choice, TokenCounts
 from canopy.models.data_models import MessageBase, Query, Context, Role
 from .. import random_words
-from ...util import TEST_NAMESPACE
 
 MOCK_SYSTEM_PROMPT = "This is my mock prompt"
 MAX_PROMPT_TOKENS = 100
@@ -101,9 +100,6 @@ class TestChatEngine:
         }
         return messages, expected
 
-    @pytest.mark.parametrize("namespace", [
-        None, TEST_NAMESPACE
-    ])
     def test_chat(self, namespace, history_length=5, snippet_length=10):
 
         chat_engine = self._init_chat_engine()
@@ -136,9 +132,6 @@ class TestChatEngine:
 
         assert response == expected['response']
 
-    @pytest.mark.parametrize("namespace", [
-        None, TEST_NAMESPACE
-    ])
     @pytest.mark.parametrize("allow_model_params_override,params_override",
                              [("False", None),
                               ("False", {'temperature': 0.99, 'top_p': 0.5}),
