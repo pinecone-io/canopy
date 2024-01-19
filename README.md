@@ -255,7 +255,7 @@ Canopy is using FastAPI as the web framework and Uvicorn as the ASGI server. It 
 To run the canopy server for production, please run:
 
 ```bash
-gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
+gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
 ```
 
 Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
