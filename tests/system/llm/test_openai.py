@@ -4,7 +4,7 @@ from unittest.mock import MagicMock
 import jsonschema
 import pytest
 
-from canopy.llm import AzureOpenAILLM
+from canopy.llm import AzureOpenAILLM, AnyscaleLLM
 from canopy.models.data_models import Role, MessageBase, Context, StringContextContent  # noqa
 from canopy.models.api_models import ChatResponse, StreamingChatChunk # noqa
 from canopy.llm.openai import OpenAILLM  # noqa
@@ -34,11 +34,6 @@ def assert_function_call_format(result):
 
 
 @pytest.fixture
-def model_name():
-    return "gpt-3.5-turbo-0613"
-
-
-@pytest.fixture
 def function_query_knowledgebase():
     return Function(
         name="query_knowledgebase",
@@ -65,8 +60,8 @@ def model_params_low_temperature():
     return {"temperature": 0.2, "top_p": 0.5, "n": 1}
 
 
-@pytest.fixture(params=[OpenAILLM, AzureOpenAILLM])
-def openai_llm(request, model_name):
+@pytest.fixture(params=[OpenAILLM, AzureOpenAILLM, AnyscaleLLM])
+def openai_llm(request):
     llm_class = request.param
     if llm_class == AzureOpenAILLM:
         model_name = os.getenv("AZURE_DEPLOYMENT_NAME")
@@ -74,6 +69,13 @@ def openai_llm(request, model_name):
             pytest.skip(
                 "Couldn't find Azure deployment name. Skipping Azure OpenAI tests."
             )
+    elif llm_class == AnyscaleLLM:
+        if os.getenv("ANYSCALE_API_KEY") is None:
+            pytest.skip("Couldn't find Anyscale API key. Skipping Anyscale tests.")
+        model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+    else:
+        model_name = "gpt-3.5-turbo-0613"
+
     return llm_class(model_name=model_name)
 
 
@@ -129,6 +131,9 @@ def test_enforced_function_call(openai_llm,
 def test_chat_completion_high_temperature(openai_llm,
                                           messages,
                                           model_params_high_temperature):
+    if isinstance(openai_llm, AnyscaleLLM):
+        pytest.skip("Anyscale don't support n>1 for the moment.")
+
     response = openai_llm.chat_completion(
         system_prompt=SYSTEM_PROMPT,
         chat_history=messages,
@@ -152,6 +157,9 @@ def test_enforced_function_call_high_temperature(openai_llm,
                                                  messages,
                                                  function_query_knowledgebase,
                                                  model_params_high_temperature):
+    if isinstance(openai_llm, AnyscaleLLM):
+        pytest.skip("Anyscale don't support n>1 for the moment.")
+
     result = openai_llm.enforced_function_call(
         system_prompt=SYSTEM_PROMPT,
         chat_history=messages,
@@ -165,11 +173,15 @@ def test_enforced_function_call_low_temperature(openai_llm,
                                                 messages,
                                                 function_query_knowledgebase,
                                                 model_params_low_temperature):
+    model_params = model_params_low_temperature.copy()
+    if isinstance(openai_llm, AnyscaleLLM):
+        model_params["top_p"] = 1.0
+
     result = openai_llm.enforced_function_call(
         system_prompt=SYSTEM_PROMPT,
         chat_history=messages,
         function=function_query_knowledgebase,
-        model_params=model_params_low_temperature
+        model_params=model_params
     )
     assert_function_call_format(result)
 
@@ -177,8 +189,11 @@ def test_enforced_function_call_low_temperature(openai_llm,
 def test_chat_completion_with_model_name(openai_llm, messages):
     if isinstance(openai_llm, AzureOpenAILLM):
         pytest.skip("In Azure the model name has to be a valid deployment")
+    elif isinstance(openai_llm, AnyscaleLLM):
+        new_model_name = "meta-llama/Llama-2-7b-chat-hf"
+    else:
+        new_model_name = "gpt-3.5-turbo-1106"
 
-    new_model_name = "gpt-3.5-turbo-1106"
     assert new_model_name != openai_llm.model_name, (
         "The new model name should be different from the default one. Please change it."
     )
@@ -263,6 +278,25 @@ def test_enforce_function_wrong_output_schema(openai_llm,
 
     assert openai_llm._client.chat.completions.create.call_count == 3, \
         "retry did not happen as expected"
+
+
+def test_enforce_function_unsupported_model(openai_llm,
+                                            messages,
+                                            function_query_knowledgebase):
+    if isinstance(openai_llm, AzureOpenAILLM):
+        pytest.skip("Currently not tested in Azure")
+    elif isinstance(openai_llm, AnyscaleLLM):
+        new_model_name = "meta-llama/Llama-2-7b-chat-hf"
+    else:
+        new_model_name = "gpt-3.5-turbo-0301"
+
+    with pytest.raises(NotImplementedError):
+        openai_llm.enforced_function_call(
+            system_prompt=SYSTEM_PROMPT,
+            chat_history=messages,
+            function=function_query_knowledgebase,
+            model_params={"model": new_model_name}
+        )
 
 
 def test_available_models(openai_llm):
