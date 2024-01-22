@@ -72,34 +72,34 @@ class AzureOpenAILLM(OpenAILLM):
             "Azure OpenAI LLM does not support listing available models"
         )
 
-    def _handle_chat_error(self, e):
+    def _handle_chat_error(self, e, is_function_call=False):
         if isinstance(e, openai.AuthenticationError):
             raise RuntimeError(
                 "Failed to connect to Azure OpenAI, please make sure that the "
                 "AZURE_OPENAI_API_KEY environment variable is set correctly. "
                 f"Underlying Error:\n{self._format_openai_error(e)}"
-            )
+            ) from e
         elif isinstance(e, openai.APIConnectionError):
             raise RuntimeError(
                 f"Failed to connect to your Azure OpenAI endpoint, please make sure "
                 f"that the provided endpoint {os.getenv('AZURE_OPENAI_ENDPOINT')} "
                 f"is correct. Underlying Error:\n{self._format_openai_error(e)}"
-            )
+            ) from e
         elif isinstance(e, openai.NotFoundError):
-            if e.type and 'invalid' in e.type:
-                raise RuntimeError(
+            if e.type and 'invalid' in e.type and is_function_call:
+                raise NotImplementedError(
                     f"It seems that you are trying to use OpenAI's `function calling` "
                     f"or `tools` features. Please note that Azure OpenAI only supports "
                     f"function calling for specific models and API versions. More "
                     f"details in: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling. "  # noqa: E501
                     f"Underlying Error:\n{self._format_openai_error(e)}"
-                )
+                ) from e
             else:
                 raise RuntimeError(
                     f"Failed to connect to your Azure OpenAI. Please make sure that "
                     f"you have provided the correct deployment name: {self.model_name} "
                     f"and API version: {self._client._api_version}. "
                     f"Underlying Error:\n{self._format_openai_error(e)}"
-                )
+                ) from e
         else:
             super()._handle_chat_error(e)
