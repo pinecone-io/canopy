@@ -179,7 +179,7 @@ class CohereLLM(BaseLLM):
                                max_tokens: Optional[int] = None,
                                model_params: Optional[dict] = None
                                ) -> dict:
-        return NotImplementedError()  # type: ignore[return-value]
+        raise NotImplementedError("Cohere LLM doesn't support function calling")
 
     async def aenforced_function_call(self,
                                       system_prompt: str,
@@ -187,7 +187,7 @@ class CohereLLM(BaseLLM):
                                       function: Function, *,
                                       max_tokens: Optional[int] = None,
                                       model_params: Optional[dict] = None):
-        raise NotImplementedError()
+        raise NotImplementedError("Cohere LLM doesn't support function calling")
 
     async def achat_completion(self,
                                system_prompt: str,
@@ -199,7 +199,7 @@ class CohereLLM(BaseLLM):
                                model_params: Optional[dict] = None,
                                ) -> Union[ChatResponse,
                                           Iterable[StreamingChatChunk]]:
-        raise NotImplementedError()
+        raise NotImplementedError("Cohere LLM doesn't support async chat completion")
 
     async def agenerate_queries(self,
                                 messages: Messages,
@@ -207,7 +207,7 @@ class CohereLLM(BaseLLM):
                                 max_generated_tokens: Optional[int] = None,
                                 model_params: Optional[dict] = None,
                                 ) -> List[Query]:
-        raise NotImplementedError()
+        raise NotImplementedError("Cohere LLM doesn't support async query generation")
 
     def _map_messages(self, messages: Messages) -> List[dict[str, Any]]:
         """
