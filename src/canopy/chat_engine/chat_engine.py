@@ -90,6 +90,7 @@ class ChatEngine(BaseChatEngine):
                  max_context_tokens: Optional[int] = None,
                  query_builder: Optional[QueryGenerator] = None,
                  system_prompt: Optional[str] = None,
+                 allow_model_params_override: bool = False,
                  history_pruner: Optional[HistoryPruner] = None,
                  ):
         """
@@ -103,6 +104,7 @@ class ChatEngine(BaseChatEngine):
             max_context_tokens: The maximum number of tokens to use for the context to prompt the LLM. Defaults to be 70% of the max_prompt_tokens.
             query_builder: An instance of a query generator to use for generating queries from the chat history. Defaults to FunctionCallingQueryGenerator.
             system_prompt: The system prompt to use for the LLM. Defaults to a generic prompt that is suitable for most use cases.
+            allow_model_params_override: Whether to allow individual `chat()` calls to override the pre-configured LLM params. Defaults to False.
             history_pruner: The history pruner to use for pruning the chat history before prompting the LLM. Defaults to None, which means no pruning will be done.
         """  # noqa: E501
         if not isinstance(context_engine, ContextEngine):
@@ -161,11 +163,14 @@ class ChatEngine(BaseChatEngine):
             )
         self.max_context_tokens = max_context_tokens
 
+        self.allow_model_params_override = allow_model_params_override
+
     def chat(self,
              messages: Messages,
              *,
              stream: bool = False,
-             model_params: Optional[dict] = None
+             model_params: Optional[dict] = None,
+             namespace: Optional[str] = None
              ) -> Union[ChatResponse, StreamingChatResponse]:
         """
         Chat completion with RAG. Given a list of messages (history), the chat engine will generate the next response, based on the relevant context retrieved from the knowledge base.
@@ -180,6 +185,7 @@ class ChatEngine(BaseChatEngine):
             messages: A list of messages (history) to generate the next response from.
             stream: A boolean flag to indicate if the chat should be streamed or not. Defaults to False.
             model_params: A dictionary of model parameters to use for the LLM. Defaults to None, which means the LLM will use its default values.
+            namespace: The namespace of the index for context retreival. To learn more about namespaces, see https://docs.pinecone.io/docs/namespaces
 
         Returns:
             A ChatResponse object if stream is False, or a StreamingChatResponse object if stream is True.
@@ -196,20 +202,26 @@ class ChatEngine(BaseChatEngine):
             >>> for chunk in response.chunks:
             ...     print(chunk.json())
         """  # noqa: E501
-        context = self._get_context(messages)
+        context = self._get_context(messages, namespace)
         llm_messages = self._history_pruner.build(
             chat_history=messages,
             max_tokens=self.max_prompt_tokens,
             system_prompt=self.system_prompt,
             context=context
         )
+        model_params_dict = {}
+        if self.allow_model_params_override and model_params:
+            model_params_dict = {
+                k: v for k, v in model_params.items() if v is not None
+            }
+        if model_params_dict.get("max_tokens", None) is None:
+            model_params_dict["max_tokens"] = self.max_generated_tokens
 
         llm_response = self.llm.chat_completion(system_prompt=self.system_prompt,
                                                 chat_history=llm_messages,
                                                 context=context,
-                                                max_tokens=self.max_generated_tokens,
                                                 stream=stream,
-                                                model_params=model_params)
+                                                model_params=model_params_dict)
         debug_info = {}
         if CE_DEBUG_INFO:
             debug_info['context'] = context.dict()
@@ -227,9 +239,11 @@ class ChatEngine(BaseChatEngine):
 
     def _get_context(self,
                      messages: Messages,
+                     namespace: Optional[str] = None
                      ) -> Context:
         queries = self._query_builder.generate(messages, self.max_prompt_tokens)
-        context = self.context_engine.query(queries, self.max_context_tokens)
+        context = self.context_engine.query(queries, self.max_context_tokens,
+                                            namespace=namespace)
         return context
 
     async def achat(self,

@@ -37,6 +37,7 @@ chat_engine:
     max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
+    allow_model_params_override: false  # Whether to allow overriding the LLM's parameters in an API call
 
   history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
     type: RecentHistoryPruner
@@ -48,13 +49,13 @@ chat_engine:
     # LLM configuration
     # Configuration of the LLM (Large Language Model)
     # -------------------------------------------------------------------------------------------------------------
-    type: OpenAILLM                     # Options: [OpenAILLM]
+    type: OpenAILLM                     # Options: [OpenAILLM, AzureOpenAILLM]
     params:
       model_name: gpt-3.5-turbo         # The name of the model to use.
-      # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values set
-      # here will be used in every LLM API call. For example:
-#       temperature: 0.7
-#       top_p: 0.9
+      # You can add any additional parameters which are supported by the LLM's `ChatCompletion()` API. The values
+      # set here will be used in every LLM API call, but may be overridden if `allow_model_params_override` is true.
+#      temperature: 0.7
+#      top_p: 0.9
 
   query_builder:
     # -------------------------------------------------------------------------------------------------------------
@@ -92,10 +93,6 @@ chat_engine:
       # -----------------------------------------------------------------------------------------------------------
       params:
         default_top_k: 5                # The default number of document chunks to retrieve for each query
-#        index_params:                  # Optional - index creation parameters for `create_canopy_index()` or `canopy new`
-#          metric: cosine
-#          pod_type: p1
-
       chunker:
         # --------------------------------------------------------------------------
         # Configuration for the Chunker subcomponent of the knowledge base.
@@ -112,8 +109,27 @@ chat_engine:
         # Configuration for the RecordEncoder subcomponent of the knowledge base.
         # The record encoder is responsible for encoding document chunks to a vector representation
         # --------------------------------------------------------------------------
-        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder]
+        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding
             text-embedding-ada-002
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model
+
+create_index_params:
+  # -------------------------------------------------------------------------------------------
+  # Initialization parameters to be passed to create a canopy index. These parameters will
+  # be used when running "canopy new".
+  # -------------------------------------------------------------------------------------------
+  metric: cosine
+  spec:
+    serverless:
+      cloud: aws
+      region: us-west-2
+    # For pod indexes you can pass the spec with the key "pod" instead of "serverless"
+    # See the example below:
+#    pod:
+#      environment: eu-west1-gcp
+#      pod_type: p1.x1
+#      # Here you can specify here replicas, shards, pods, metadata_config if needed.
+
+

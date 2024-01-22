@@ -37,9 +37,19 @@ class FunctionCallingQueryGenerator(QueryGenerator):
         messages = self._history_pruner.build(system_prompt=self._system_prompt,
                                               chat_history=messages,
                                               max_tokens=max_prompt_tokens)
-        arguments = self._llm.enforced_function_call(system_prompt=self._system_prompt,
-                                                     chat_history=messages,
-                                                     function=self._function)
+        try:
+            arguments = self._llm.enforced_function_call(
+                system_prompt=self._system_prompt,
+                chat_history=messages,
+                function=self._function
+            )
+        except NotImplementedError as e:
+            raise RuntimeError(
+                "FunctionCallingQueryGenerator requires an LLM that supports "
+                "function calling. Please provide a different LLM, "
+                "or alternatively select a different QueryGenerator class. "
+                f"Received the following error from LLM:\n{e}"
+            ) from e
 
         return [Query(text=q)
                 for q in arguments["queries"]]

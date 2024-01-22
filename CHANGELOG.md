@@ -1,3 +1,25 @@
+## [0.6.0] - 2024-01-16
+### Breaking changes
+* Pinecone serverless support [#246](https://github.com/pinecone-io/canopy/pull/246)
+
+### Bug fixes
+* Loosen fastapi and uvicorn requirements [#229](https://github.com/pinecone-io/canopy/pull/229)
+* Cleanup indexes in case of failure [#232](https://github.com/pinecone-io/canopy/pull/232)
+* Add timeout to checking server health [#236](https://github.com/pinecone-io/canopy/pull/236)
+
+### Added
+* Add instruction query generator [#226](https://github.com/pinecone-io/canopy/pull/226)
+* Separate LLM API params [#231](https://github.com/pinecone-io/canopy/pull/231)
+* Add dockerfile [#234](https://github.com/pinecone-io/canopy/pull/234), [#237](https://github.com/pinecone-io/canopy/pull/237), [#242](https://github.com/pinecone-io/canopy/pull/242)
+* Add support for namespaces [#243](https://github.com/pinecone-io/canopy/pull/243)
+* Azure OpenAI LLM implementation [#188](https://github.com/pinecone-io/canopy/pull/188) (Thanks @MichaelAnckaert, @aulorbe!)
+
+### Documentation
+* Add deployment guide (GCP) [#239](https://github.com/pinecone-io/canopy/pull/239)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/V0.5.0...v0.6.0
+
+
 ## [0.5.0] - 2023-12-13
 
 ## Bug fixes

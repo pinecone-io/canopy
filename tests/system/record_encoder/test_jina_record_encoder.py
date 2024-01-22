@@ -3,8 +3,7 @@ import os
 import pytest
 
 from canopy.knowledge_base.models import KBDocChunk
-from canopy.knowledge_base.record_encoder import AzureOpenAIRecordEncoder
-from canopy.knowledge_base.record_encoder.openai import OpenAIRecordEncoder
+from canopy.knowledge_base.record_encoder.jina import JinaRecordEncoder
 from canopy.models.data_models import Query
 
 
@@ -24,22 +23,15 @@ queries = [Query(text="Sample query 1"),
            Query(text="Sample query 4")]
 
 
-@pytest.fixture(params=[OpenAIRecordEncoder, AzureOpenAIRecordEncoder])
-def encoder(request):
-    encoder_class = request.param
-    if encoder_class == AzureOpenAIRecordEncoder:
-        model_name = os.getenv("AZURE_EMBEDDING_DEPLOYMENT_NAME")
-        if model_name is None:
-            pytest.skip(
-                "Couldn't find Azure deployment name. Skipping Azure OpenAI tests."
-            )
-        return AzureOpenAIRecordEncoder(model_name=model_name, batch_size=2)
-    elif encoder_class == OpenAIRecordEncoder:
-        return OpenAIRecordEncoder(batch_size=2)
+@pytest.fixture
+def encoder():
+    if os.getenv("JINA_API_KEY", None) is None:
+        pytest.skip("Did not find JINA_API_KEY environment variable. Skipping...")
+    return JinaRecordEncoder(batch_size=2)
 
 
 def test_dimension(encoder):
-    assert encoder.dimension == 1536
+    assert encoder.dimension == 768
 
 
 @pytest.mark.parametrize("items,function",

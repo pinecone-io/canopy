@@ -17,13 +17,6 @@ from canopy.models.api_models import ChatResponse, StreamingChatChunk
 from canopy.models.data_models import Messages, Context, SystemMessage
 
 
-def _format_openai_error(e):
-    try:
-        return e.response.json()['error']['message']
-    except Exception:
-        return str(e)
-
-
 class OpenAILLM(BaseLLM):
     """
     OpenAI LLM wrapper built on top of the OpenAI Python client.
@@ -64,10 +57,15 @@ class OpenAILLM(BaseLLM):
             raise RuntimeError(
                 "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "
                 "environment variable is set correctly.\n"
-                f"Error: {_format_openai_error(e)}"
+                f"Error: {self._format_openai_error(e)}"
             )
 
         self.default_model_params = kwargs
+        if "model" in self.default_model_params:
+            raise ValueError(
+                "The 'model' parameter is not allowed in the default model params. "
+                "Please use the 'model_name' argument instead."
+            )
 
     @property
     def available_models(self):
@@ -94,7 +92,7 @@ class OpenAILLM(BaseLLM):
             stream: Whether to stream the response or not.
             max_tokens: Maximum number of tokens to generate. Defaults to None (generates until stop sequence or until hitting max context size).
             model_params: Model parameters to use for this request. Defaults to None (uses the default model parameters).
-                          Dictonary of parametrs to override the default model parameters if set on initialization.
+                          Dictonary of parameters to override the default model parameters if set on initialization.
                           For example, you can pass: {"temperature": 0.9, "top_p": 1.0} to override the default temperature and top_p.
                           see: https://platform.openai.com/docs/api-reference/chat/create
         Returns:
@@ -113,9 +111,11 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
+
+        model = model_params_dict.pop("model", self.model_name)
 
         if context is None:
             system_message = system_prompt
@@ -124,18 +124,12 @@ class OpenAILLM(BaseLLM):
         messages = [SystemMessage(content=system_message).dict()
                     ] + [m.dict() for m in chat_history]
         try:
-            response = self._client.chat.completions.create(model=self.model_name,
+            response = self._client.chat.completions.create(model=model,
                                                             messages=messages,
                                                             stream=stream,
-                                                            max_tokens=max_tokens,
                                                             **model_params_dict)
         except openai.OpenAIError as e:
-            provider_name = self.__class__.__name__.replace("LLM", "")
-            raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for chat "
-                f"completion.\n"
-                f"Error: {_format_openai_error(e)}"
-            )
+            self._handle_chat_error(e)
 
         def streaming_iterator(response):
             for chunk in response:
@@ -205,9 +199,11 @@ class OpenAILLM(BaseLLM):
         """  # noqa: E501
 
         model_params_dict: Dict[str, Any] = deepcopy(self.default_model_params)
-        model_params_dict.update(
-            model_params or {}
-        )
+        model_params_dict.update(model_params or {})
+        if max_tokens is not None:
+            model_params_dict["max_tokens"] = max_tokens
+
+        model = model_params_dict.pop("model", self.model_name)
 
         function_dict = cast(ChatCompletionToolParam,
                              {"type": "function", "function": function.dict()})
@@ -216,8 +212,8 @@ class OpenAILLM(BaseLLM):
                     ] + [m.dict() for m in chat_history]
         try:
             chat_completion = self._client.chat.completions.create(
+                model=model,
                 messages=messages,
-                model=self.model_name,
                 tools=[function_dict],
                 tool_choice={"type": "function",
                              "function": {"name": function.name}},
@@ -225,12 +221,7 @@ class OpenAILLM(BaseLLM):
                 **model_params_dict
             )
         except openai.OpenAIError as e:
-            provider_name = self.__class__.__name__.replace("LLM", "")
-            raise RuntimeError(
-                f"Failed to use {provider_name}'s {self.model_name} model for "
-                f"chat completion with enforced function calling.\n"
-                f"Error: {_format_openai_error(e)}"
-            )
+            self._handle_chat_error(e, is_function_call=True)
 
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)
@@ -257,3 +248,32 @@ class OpenAILLM(BaseLLM):
                                       max_tokens: Optional[int] = None,
                                       model_params: Optional[dict] = None):
         raise NotImplementedError()
+
+    @staticmethod
+    def _format_openai_error(e):
+        try:
+            response = e.response.json()
+            if "error" in response:
+                return response["error"]["message"]
+            elif "message" in response:
+                return response["message"]
+            else:
+                return str(e)
+        except Exception:
+            return str(e)
+
+    def _handle_chat_error(self, e, is_function_call=False):
+        if isinstance(e, openai.NotFoundError) and is_function_call:
+            if e.type and 'invalid' in e.type:
+                raise NotImplementedError(
+                    f"The selected model ({self.model_name}) does not support "
+                    f"  function calling. "
+                    f"Underlying Error:\n{self._format_openai_error(e)}"
+                ) from e
+
+        provider_name = self.__class__.__name__.replace("LLM", "")
+        raise RuntimeError(
+            f"Failed to use {provider_name}'s {self.model_name} model for chat "
+            f"completion. "
+            f"Underlying Error:\n{self._format_openai_error(e)}"
+        )
