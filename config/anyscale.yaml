@@ -19,16 +19,16 @@ chat_engine:
   params:
     max_prompt_tokens: 2048             # The maximum number of tokens to use for input prompt to the LLM.
   llm: &llm
-    type: AnyscaleLLM                     # Options: [OpenAILLM, AnyscaleLLM]
+    type: AnyscaleLLM
     params:
       model_name: meta-llama/Llama-2-7b-chat-hf         # The name of the model to use.
 
   query_builder:
-    # --------------------------------------------------------------------
-    # Configuration for the QueryBuilder subcomponent of the chat engine.
-    # Since Anyscale's LLM endpoint currently doesn't support function calling, we will use the InstructionQueryGenerator
-    # --------------------------------------------------------------------
-    type: InstructionQueryGenerator     # Options: [InstructionQueryGenerator, LastMessageQueryGenerator]
+    type: FunctionCallingQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, InstructionQueryGenerator]
+    llm: 
+      type: AnyscaleLLM
+      params:
+        model_name: mistralai/Mistral-7B-Instruct-v0.1
 
   context_engine:
     # -------------------------------------------------------------------------------------------------------------
@@ -43,7 +43,7 @@ chat_engine:
         # Configuration for the RecordEncoder subcomponent of the knowledge base.
         # Use Anyscale's Embedding endpoint for dense encoding
         # --------------------------------------------------------------------------
-        type: AnyscaleRecordEncoder       # Options: [OpenAIRecordEncoder, AnyscaleRecordEncoder]
+        type: AnyscaleRecordEncoder
         params:
           model_name:                   # The name of the model to use for encoding
             thenlper/gte-large
