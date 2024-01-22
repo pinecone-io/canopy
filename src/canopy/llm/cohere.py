@@ -2,7 +2,7 @@ import time
 from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List
 
-import cohere  # type: ignore
+import cohere
 from tenacity import retry, stop_after_attempt
 
 from canopy.llm import BaseLLM
@@ -88,15 +88,15 @@ class CohereLLM(BaseLLM):
             model_params or {}
         )
         connectors = model_params_dict.pop('connectors', None)
-        messages: List[Dict[str, Any]] = self.map_messages(chat_history)
+        messages: List[Dict[str, Any]] = self._map_messages(chat_history)
 
         if not messages:
             raise cohere.error.CohereAPIError("No message provided")
 
         response = self._client.chat(
             model=self.model_name,
-            message=messages[-1]['message'],
-            chat_history=messages[:-1],
+            message=messages.pop()['message'],
+            chat_history=messages,
             documents=self.generate_documents_from_context(context),
             preamble_override=system_prompt,
             stream=stream,
@@ -161,7 +161,7 @@ class CohereLLM(BaseLLM):
         stop=stop_after_attempt(3),
     )
     def generate_search_queries(self, messages):
-        messages = self.map_messages(messages)
+        messages = self._map_messages(messages)
         response = self._client.chat(
             model=self.model_name,
             message=messages[-1]['message'],
@@ -209,7 +209,7 @@ class CohereLLM(BaseLLM):
                                 ) -> List[Query]:
         raise NotImplementedError()
 
-    def map_messages(self, messages: Messages) -> List[dict[str, Any]]:
+    def _map_messages(self, messages: Messages) -> List[dict[str, Any]]:
         """
         Map the messages to format expected by Cohere.
 

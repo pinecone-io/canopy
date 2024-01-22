@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, cast
 
 from canopy.chat_engine.query_generator import QueryGenerator
 from canopy.chat_engine.history_pruner.raising import RaisingHistoryPruner
@@ -32,8 +32,8 @@ class CohereQueryGenerator(QueryGenerator):
                  max_prompt_tokens: int) -> List[Query]:
         messages = self._history_pruner.build(chat_history=messages,
                                               max_tokens=max_prompt_tokens)
-        queries = self._llm.generate_search_queries(  # type: ignore[union-attr]
-            messages)
+        llm = cast(CohereLLM, self._llm)
+        queries = llm.generate_search_queries(messages)
         return [Query(text=query) for query in queries]
 
     async def agenerate(self,

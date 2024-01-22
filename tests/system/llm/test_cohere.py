@@ -26,18 +26,6 @@ def model_name():
 
 
 @pytest.fixture
-def messages():
-    return [
-        MessageBase(
-            role=Role.USER, content="Hello, assistant."),
-        MessageBase(
-            role=Role.ASSISTANT, content="Hello, user. How can I assist you?"),
-        MessageBase(
-            role=Role.USER, content="Tell me about X.")
-    ]
-
-
-@pytest.fixture
 def system_prompt():
     return "Use only the provided documents to answer."
 
@@ -46,7 +34,7 @@ def system_prompt():
 def expected_chat_kwargs():
     return {
         "model": "command",
-        "message": "Tell me about X.",
+        "message": "Just checking in. Be concise.",
         "chat_history": [
             {'role': 'USER', 'message': 'Hello, assistant.'},
             {"role": "CHATBOT", "message": "Hello, user. How can I assist you?"}
@@ -221,7 +209,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
 def test_token_counts_mapped_in_chat_response(cohere_llm, messages, system_prompt):
     response = cohere_llm.chat_completion(chat_history=messages,
                                           system_prompt=system_prompt)
-    assert response.usage.prompt_tokens == 45
+    assert response.usage.prompt_tokens == 47
     assert response.usage.completion_tokens
     assert response.usage.total_tokens == (
             response.usage.prompt_tokens + response.usage.completion_tokens

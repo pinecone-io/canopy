@@ -70,7 +70,8 @@ module = [
     'pinecone_text.*',
     'pinecone_datasets',
     'pinecone',
-    'transformers.*'
+    'transformers.*',
+    'cohere.*'
 ]
 ignore_missing_imports = true
 
