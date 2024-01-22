@@ -69,7 +69,7 @@ class TokenChunker(Chunker):
 
         text_chunks = [self._tokenizer.detokenize(chunk)
                        for chunk in token_chunks]
-        return [KBDocChunk(id=f"{document.id}_{i}",
+        return [KBDocChunk(id=self.generate_chunk_id(document.id, i),
                            document_id=document.id,
                            text=text_chunk,
                            source=document.source,

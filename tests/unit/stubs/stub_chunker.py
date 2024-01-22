@@ -15,7 +15,7 @@ class StubChunker(Chunker):
             return []
 
         # simply duplicate docs as chunks
-        return [KBDocChunk(id=f"{document.id}_{i}",
+        return [KBDocChunk(id=self.generate_chunk_id(document.id, i),
                            document_id=document.id,
                            text=document.text + (f" dup_{i}" if i > 0 else ""),
                            source=document.source,
