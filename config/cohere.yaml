@@ -15,9 +15,9 @@ system_prompt: &system_prompt |
 # Tokenizer configuration
 # -------------------------------------------------------------------------------------------
 tokenizer:
-  type: CohereAPITokenizer
+  type: CohereHFTokenizer
   params:
-    model_name: command
+    model_name: Cohere/Command-nightly
 
 
 # -------------------------------------------------------------------------------------------------------------
