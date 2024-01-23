@@ -1,7 +1,9 @@
 import pytest
 
 from canopy.knowledge_base.models import KBDocChunk
-from canopy.knowledge_base.record_encoder.sentence_transformers import SentenceTransformerRecordEncoder
+from canopy.knowledge_base.record_encoder.sentence_transformers import (
+    SentenceTransformerRecordEncoder
+)
 from canopy.models.data_models import Query
 
 from unittest.mock import patch
