@@ -98,7 +98,7 @@ class ConfigurableMixin:
 
             # For classes implementing ConfigurableMixin, we need to call
             # `from_config()` on the base class
-            assert hasattr(default_class, '__FACTORY_BASE_CLASS__')
+            assert hasattr(default_class, '__FACTORY_BASE_CLASS__'), default_class
             base_class = default_class.__FACTORY_BASE_CLASS__
             component = base_class.from_config(component_config)
             loaded_components[component_name] = component

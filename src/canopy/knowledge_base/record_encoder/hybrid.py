@@ -1,8 +1,11 @@
 from typing import List
 from functools import cached_property
+
+from pinecone_text.dense import OpenAIEncoder
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 from pinecone_text.hybrid import hybrid_convex_scale
 from pinecone_text.sparse import BM25Encoder
+
 from .base import RecordEncoder
 from canopy.knowledge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from canopy.models.data_models import Query
@@ -27,7 +30,7 @@ class HybridRecordEncoder(RecordEncoder):
     """  # noqa: E501
 
     def __init__(self,
-                 dense_encoder: BaseDenseEncoder,
+                 dense_encoder: BaseDenseEncoder = None,
                  alpha: float = 0.5,
                  **kwargs):
         """
@@ -43,7 +46,15 @@ class HybridRecordEncoder(RecordEncoder):
             raise ValueError("Alpha must be between 0 and 1")
 
         super().__init__(**kwargs)
-        self._dense_encoder = dense_encoder
+        if dense_encoder:
+            if not isinstance(dense_encoder, BaseDenseEncoder):
+                raise TypeError(
+                    f"dense_encoder must be an instance of BaseDenseEncoder, "
+                    f"not {type(dense_encoder)}"
+                )
+            self._dense_encoder = dense_encoder
+        else:
+            self._dense_encoder = OpenAIEncoder()
         self._sparse_encoder = BM25Encoder.default()
         self._alpha = alpha
 
