@@ -1,13 +1,13 @@
 import pytest
 
-from canopy.tokenizer import CohereTokenizer
+from canopy.tokenizer import CohereAPITokenizer
 
 
-class TestCohereTokenizer:
+class TestCohereAPITokenizer:
     @staticmethod
     @pytest.fixture(scope="class")
     def tokenizer():
-        return CohereTokenizer(model_name="command")
+        return CohereAPITokenizer(model_name="command")
 
     @staticmethod
     @pytest.fixture

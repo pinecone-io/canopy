@@ -5,14 +5,14 @@ from .base import BaseTokenizer
 from ..models.data_models import Messages
 
 
-class CohereTokenizer(BaseTokenizer):
+class CohereAPITokenizer(BaseTokenizer):
     """
     Tokenizer for Cohere models, based on the Cohere Tokenize API.
 
     Usage:
-    Initialize the singleton tokenizer with the CohereTokenizer class:
+    Initialize the singleton tokenizer with the CohereAPITokenizer class:
     >>> from canopy.tokenizer import Tokenizer
-    >>> Tokenizer.initialize(tokenizer_class=CohereTokenizer, model_name="embed-multilingual-v3.0")
+    >>> Tokenizer.initialize(tokenizer_class=CohereAPITokenizer, model_name="embed-multilingual-v3.0")
 
     You can then use the tokenizer instance from anywhere in the code:
     >>> from canopy.tokenizer import Tokenizer
