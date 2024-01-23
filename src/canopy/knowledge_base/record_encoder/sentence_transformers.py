@@ -1,4 +1,4 @@
-from pinecone_text.sentence_transformer_encoder import SentenceTransformerEncoder
+from pinecone_text.dense import SentenceTransformerEncoder
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
 
 
