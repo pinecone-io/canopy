@@ -28,6 +28,7 @@ class SentenceTransformerRecordEncoder(DenseRecordEncoder):
             query_encoder_name: The name of the embedding model to use for encoding queries.
                         See https://huggingface.co/models?library=sentence-transformers
                         for all possible Sentence Transformer models.
+                        Defaults to `model_name`.
             batch_size: The number of documents or queries to encode at once.
                         Defaults to 400.
             device: The local device to use for encoding, for example "cpu", "cuda" or "mps".
