@@ -43,16 +43,13 @@ class FunctionCallingQueryGenerator(QueryGenerator):
                 chat_history=messages,
                 function=self._function
             )
-        except RuntimeError as e:
-            if "function calling" in str(e):
-                raise RuntimeError(
-                    "FunctionCallingQueryGenerator requires an LLM that supports "
-                    "function calling. Please provide a different LLM, "
-                    "or alternatively select a different QueryGenerator class. "
-                    f"Received the following error from LLM:\n{e}"
-                ) from e
-
-            raise
+        except NotImplementedError as e:
+            raise RuntimeError(
+                "FunctionCallingQueryGenerator requires an LLM that supports "
+                "function calling. Please provide a different LLM, "
+                "or alternatively select a different QueryGenerator class. "
+                f"Received the following error from LLM:\n{e}"
+            ) from e
 
         return [Query(text=q)
                 for q in arguments["queries"]]

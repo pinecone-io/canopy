@@ -63,6 +63,7 @@ pip install canopy-sdk
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
+export JINA_API_KEY="<JINA_API_KEY>"
 export INDEX_NAME="<INDEX_NAME>"
 ```
 
@@ -72,14 +73,24 @@ export INDEX_NAME="<INDEX_NAME>"
 <br /> 
 </summary>
 
+### Mandatory Environment Variables
+
 | Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
 |-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `PINECONE_API_KEY`    | The API key for Pinecone. Used to authenticate to Pinecone services to create indexes and to insert, delete and search data | Register or log into your Pinecone account in the [console](https://app.pinecone.io/). You can access your API key from the "API Keys" section in the sidebar of your dashboard |
 | `OPENAI_API_KEY`      | API key for OpenAI. Used to authenticate to OpenAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
-| `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
-| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
 | `INDEX_NAME`          | Name of the Pinecone index Canopy will underlying work with                                                                  | You can choose any name as long as it follows Pinecone's [restrictions](https://support.pinecone.io/hc/en-us/articles/11729246212637-Are-there-restrictions-on-index-names-#:~:text=There%20are%20two%20main%20restrictions,and%20emojis%20are%20not%20supported.)                                                                                       |
 | `CANOPY_CONFIG_FILE` | The path of a configuration yaml file to be used by the Canopy server. | Optional - if not provided, default configuration would be used |
+
+
+### Optional Environment Variables
+These optional environment variables are used to authenticate to other supported services for embeddings and LLMs. If you configure Canopy to use any of these providers - you would need to set the relevant environment variables.
+
+| Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
+| `JINA_API_KEY`        | API key for Jina AI. Used to authenticate to JinaAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
 | `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
 
@@ -247,7 +258,7 @@ Canopy is using FastAPI as the web framework and Uvicorn as the ASGI server. It 
 To run the canopy server for production, please run:
 
 ```bash
-gunicorn canopy_cli.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers <number of desired worker processes>
+gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:PORT --workers WORKER_COUNT
 ```
 
 Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
