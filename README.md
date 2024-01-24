@@ -217,6 +217,9 @@ This will open a similar chat interface window, but will show both the RAG and n
 * Canopy currently only supports OpenAI as the backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
 * More integrations will be supported in the near future.
 
+## Contributing
+Thank you for considering contributing to Canopy! Please see our [contributing guidelines](./CONTRIBUTING.md) for more information.
+
 ## Advanced usage
 
 ### Migrating an existing OpenAI application to **Canopy**
