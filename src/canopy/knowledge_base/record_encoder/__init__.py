@@ -1,5 +1,5 @@
 from .base import RecordEncoder
-from .cohere import CohereEncoder
+from .cohere import CohereRecordEncoder
 from .dense import DenseRecordEncoder
 from .openai import OpenAIRecordEncoder
 from .anyscale import AnyscaleRecordEncoder

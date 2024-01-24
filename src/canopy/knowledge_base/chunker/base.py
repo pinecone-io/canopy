@@ -7,7 +7,6 @@ from canopy.utils.config import ConfigurableMixin
 
 
 class Chunker(ABC, ConfigurableMixin):
-
     """
     Base class for chunkers. Chunkers take a document (id, text, ...)
     and return a list of KBDocChunks  (id, text, document_id, ...)
@@ -57,3 +56,6 @@ class Chunker(ABC, ConfigurableMixin):
     @abstractmethod
     async def achunk_single_document(self, document: Document) -> List[KBDocChunk]:
         raise NotImplementedError()
+
+    def generate_chunk_id(self, document_id: str, chunk_index: int) -> str:
+        return f"{document_id}_{chunk_index}"
