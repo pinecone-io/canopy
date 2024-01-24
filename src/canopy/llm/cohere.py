@@ -87,6 +87,8 @@ class CohereLLM(BaseLLM):
         model_params_dict.update(
             model_params or {}
         )
+        model_params_dict["max_tokens"] = max_tokens
+
         connectors = model_params_dict.pop('connectors', None)
         messages: List[Dict[str, Any]] = self._map_messages(chat_history)
 
@@ -103,7 +105,6 @@ class CohereLLM(BaseLLM):
             connectors=[
                 {"id": connector} for connector in connectors
             ] if connectors else None,
-            max_tokens=max_tokens,
             **model_params_dict
         )
 
