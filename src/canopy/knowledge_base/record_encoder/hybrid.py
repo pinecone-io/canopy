@@ -25,8 +25,7 @@ class HybridRecordEncoder(RecordEncoder):
     HybridRecordEncoder uses BaseDenseEncoder for dense encoding and BM25Encoder for sparse encoding.
 
     Alpha is a parameter that controls the weight of the dense vector in the hybrid representation.
-    If alpha is 1, the query vector will be the dense vector, if alpha is 0, the query vector will be the sparse vector.
-    The default value of alpha is 0.5.
+    If alpha is 1, the query vector will be the dense vector. The default value of alpha is 0.5.
 
     For more information about the encoders see: https://github.com/pinecone-io/pinecone-text
 
