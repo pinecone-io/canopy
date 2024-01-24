@@ -39,7 +39,6 @@ from .models.v1.api_models import (
     ContextUpsertRequest,
     HealthStatus,
     ContextDeleteRequest,
-    ShutdownResponse,
     SuccessUpsertResponse,
     SuccessDeleteResponse,
     ContextResponse,
@@ -293,33 +292,6 @@ async def health_check() -> HealthStatus:
         ) from e
 
     return HealthStatus(pinecone_status="OK", llm_status="OK")
-
-
-@application_router.get("/shutdown")
-async def shutdown() -> ShutdownResponse:
-    """
-    __WARNING__: Experimental method.
-
-
-    This method will shutdown the server. It is used for testing purposes, and not recommended to be used
-    in production.
-    This method will locate the parent process and send a SIGINT signal to it.
-    """  # noqa: E501
-    logger.info("Shutting down")
-    proc = current_process()
-    p_process = parent_process()
-    pid = p_process.pid if p_process is not None else proc.pid
-    if not pid:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to locate parent process. Cannot shutdown server.",
-        )
-    if sys.platform == 'win32':
-        kill_signal = signal.CTRL_C_EVENT
-    else:
-        kill_signal = signal.SIGINT
-    os.kill(pid, kill_signal)
-    return ShutdownResponse()
 
 
 def _init_routes(app):
