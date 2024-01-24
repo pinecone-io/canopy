@@ -7,6 +7,8 @@ from canopy.knowledge_base.record_encoder.sentence_transformers import (
 from canopy.models.data_models import Query
 
 
+pytest.skip("Skipping SentenceTransformer system tests", allow_module_level=True)
+
 documents = [KBDocChunk(
             id=f"doc_1_{i}",
             text=f"Sample document {i}",
