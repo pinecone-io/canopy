@@ -359,7 +359,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         if isinstance(self._encoder, HybridRecordEncoder):
             if metric != "dotproduct":
                 raise RuntimeError(
-                    "HybridRecordEncoder only supports dotproduct metric."
+                    "HybridRecordEncoder only supports dotproduct metric. "
                     "Please set metric='dotproduct' on index creation."
                 )
 

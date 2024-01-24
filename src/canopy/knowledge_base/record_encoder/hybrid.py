@@ -1,4 +1,5 @@
 import logging
+from functools import cached_property
 from typing import List, Optional
 
 from pinecone_text.dense import OpenAIEncoder
@@ -61,20 +62,18 @@ class HybridRecordEncoder(RecordEncoder):
             self._dense_encoder = dense_encoder
         else:
             self._dense_encoder = OpenAIEncoder()
-
-        self._sparse_encoder = self._load_sparse_encoder(bm_25_encoder_df_path)
+        self._bm_25_encoder_df_path = bm_25_encoder_df_path
         self._alpha = alpha
 
-    def _load_sparse_encoder(self,
-                             bm_25_encoder_df_path: Optional[str] = None
-                             ) -> BM25Encoder:
+    @cached_property
+    def _sparse_encoder(self) -> BM25Encoder:
         logger.info("Loading the document frequencies for the BM25Encoder...")
-        if bm_25_encoder_df_path is None:
-            loaded = BM25Encoder.default()
+        if self._bm_25_encoder_df_path is None:
+            encoder = BM25Encoder.default()
         else:
-            loaded = BM25Encoder().load(bm_25_encoder_df_path)
+            encoder = BM25Encoder().load(self._bm_25_encoder_df_path)
         logger.info("Finished loading the document frequencies for the BM25Encoder.")
-        return loaded
+        return encoder
 
     def _encode_documents_batch(self,
                                 documents: List[KBDocChunk]
