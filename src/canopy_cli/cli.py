@@ -1,6 +1,4 @@
 import os
-import signal
-import subprocess
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
@@ -664,6 +662,7 @@ def start(host: str, port: str, reload: bool, stream: bool,
 
     click.echo(f"Starting Canopy server on {host}:{port}")
     start_server(host, port=port, reload=reload, config_file=config)
+
 
 @cli.command(
     help=(

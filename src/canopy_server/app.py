@@ -1,12 +1,10 @@
 import os
 import logging
-import signal
 import sys
 import uuid
 from contextlib import asynccontextmanager
 
 import openai
-from multiprocessing import current_process, parent_process
 
 import yaml
 from dotenv import load_dotenv
