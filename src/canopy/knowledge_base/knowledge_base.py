@@ -15,7 +15,8 @@ except ImportError:
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
-                                                  OpenAIRecordEncoder)
+                                                  OpenAIRecordEncoder,
+                                                  HybridRecordEncoder)
 from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                           KBDocChunkWithScore, DocumentWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
@@ -318,6 +319,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                 "If you wish to delete it call `knowledge_base.delete_index()`. "
             )
 
+        self._validate_metric(metric)
+
         try:
             self._pinecone_client.create_index(
                 name=self.index_name,
@@ -351,6 +354,14 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
             time.sleep(INDEX_PROVISION_TIME_INTERVAL)
+
+    def _validate_metric(self, metric: Optional[str]):
+        if isinstance(self._encoder, HybridRecordEncoder):
+            if metric != "dotproduct":
+                raise RuntimeError(
+                    "HybridRecordEncoder only supports dotproduct metric."
+                    "Please set metric='dotproduct' on index creation."
+                )
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:

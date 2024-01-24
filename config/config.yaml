@@ -109,11 +109,8 @@ chat_engine:
         # Configuration for the RecordEncoder subcomponent of the knowledge base.
         # The record encoder is responsible for encoding document chunks to a vector representation
         # --------------------------------------------------------------------------
-        type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
-        params:
-          model_name:                   # The name of the model to use for encoding
-            text-embedding-ada-002
-          batch_size: 400               # The number of document chunks to encode in each call to the encoding model
+        type: HybridRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
+
 
 create_index_params:
   # -------------------------------------------------------------------------------------------
