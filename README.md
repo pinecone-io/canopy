@@ -258,6 +258,8 @@ To run the canopy server for production, please run:
 gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:PORT --workers WORKER_COUNT
 ```
 
+Note: replace `PORT` and `WORKER_COUNT` with values.
+
 Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
 for your production needs. For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
 [Deployment to GCP](docs/deployment-gcp.md) documentation.
