@@ -41,7 +41,7 @@ cohere = { version = ">=4.37", optional = true }
 [tool.poetry.extras]
 cohere = ["cohere"]
 torch = ["pinecone-text"]
-anyscale = ["transformers"]
+transformers = ["transformers"]
 
 
 [tool.poetry.group.dev.dependencies]

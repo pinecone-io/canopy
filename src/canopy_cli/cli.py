@@ -145,11 +145,12 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
 
 def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
-    Tokenizer.initialize()
+    tokenizer_config = config.get("tokenizer", {})
     try:
         # If the server itself will fail, we can't except the error, since it's running
         # in a different process. Try to load and run the ChatEngine so we can catch
         # any errors and print a nice message.
+        Tokenizer.initialize_from_config(tokenizer_config)
         chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
         chat_engine.max_generated_tokens = 5
         chat_engine.context_engine.knowledge_base.connect()
@@ -338,7 +339,7 @@ def upsert(index_name: str,
 
     try:
         kb.connect()
-    except RuntimeError as e:
+    except (RuntimeError) as e:
         # TODO: kb should throw a specific exception for each case
         msg = str(e)
         raise CLIError(msg)
