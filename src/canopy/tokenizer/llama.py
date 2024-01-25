@@ -5,7 +5,7 @@ import os
 
 try:
     from transformers import LlamaTokenizerFast as HfTokenizer
-except (OSError, ImportError, ModuleNotFoundError) as e:
+except (OSError, ImportError, ModuleNotFoundError):
     _tranformers_installed = False
 else:
     _tranformers_installed = True
