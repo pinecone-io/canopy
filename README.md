@@ -225,7 +225,7 @@ This will open a similar chat interface window, but will show both the RAG and n
 
 ## Considerations
 
-* Rate limits and pricing set by model providers apply to Canopy use. Canopy currently works with OpenAI, Azure OpenAI, Anyscale, and Cohere models.
+* Rate limits and pricing set by model providers apply to Canopy usage. Canopy currently works with OpenAI, Azure OpenAI, Anyscale, and Cohere models.
 * More integrations will be supported in the near future.
 
 ## Advanced usage
