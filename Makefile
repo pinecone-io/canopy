@@ -35,7 +35,7 @@ test-e2e:
 	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope tests/e2e
 
 install:
-	poetry install --all-extras
+	poetry install
 docker-build:
 	@echo "Building Docker image..."
 	docker build $(CONTAINER_COMMON_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
