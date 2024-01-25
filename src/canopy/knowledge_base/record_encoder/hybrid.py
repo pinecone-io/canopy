@@ -2,11 +2,10 @@ import logging
 from functools import cached_property
 from typing import List, Optional
 
-from pinecone_text.dense import OpenAIEncoder
-from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 from pinecone_text.hybrid import hybrid_convex_scale
 from pinecone_text.sparse import BM25Encoder
 
+from . import DenseRecordEncoder, OpenAIRecordEncoder
 from .base import RecordEncoder
 from canopy.knowledge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
 from canopy.models.data_models import Query
@@ -31,8 +30,12 @@ class HybridRecordEncoder(RecordEncoder):
 
     """  # noqa: E501
 
+    _DEFAULT_COMPONENTS = {
+        "dense_record_encoder": OpenAIRecordEncoder
+    }
+
     def __init__(self,
-                 dense_encoder: BaseDenseEncoder = None,
+                 dense_record_encoder: Optional[DenseRecordEncoder] = None,
                  alpha: float = 0.5,
                  bm_25_encoder_df_path: Optional[str] = None,
                  **kwargs):
@@ -40,7 +43,7 @@ class HybridRecordEncoder(RecordEncoder):
         Initialize the encoder.
 
         Args:
-            dense_encoder: A BaseDenseEncoder to encode the text.
+            dense_record_encoder: A DenseRecordEncoder to encode the text.
             alpha: The weight of the dense vector in the hybrid representation (between 0 and 1).
             bm_25_encoder_df_path: The path to the file that contains the document frequencies of the BM25Encoder.\
             You can create this file by fitting the BM25Encoder on a corpus of documents and calling `dump`\
@@ -52,15 +55,18 @@ class HybridRecordEncoder(RecordEncoder):
             raise ValueError("Alpha must be between 0 (excluded) and 1 (included)")
 
         super().__init__(**kwargs)
-        if dense_encoder:
-            if not isinstance(dense_encoder, BaseDenseEncoder):
+
+        if dense_record_encoder:
+            if not isinstance(dense_record_encoder, DenseRecordEncoder):
                 raise TypeError(
-                    f"dense_encoder must be an instance of BaseDenseEncoder, "
-                    f"not {type(dense_encoder)}"
+                    f"dense_encoder must be an instance of DenseRecordEncoder, "
+                    f"not {type(dense_record_encoder)}"
                 )
-            self._dense_encoder = dense_encoder
+            self._dense_record_encoder = dense_record_encoder
         else:
-            self._dense_encoder = OpenAIEncoder()
+            default_dense_encoder = self._DEFAULT_COMPONENTS["dense_record_encoder"]
+            self._dense_record_encoder = default_dense_encoder()
+
         self._bm_25_encoder_df_path = bm_25_encoder_df_path
         self._alpha = alpha
 
@@ -87,13 +93,14 @@ class HybridRecordEncoder(RecordEncoder):
             with the `values` containing the generated dense vector and
             `sparse_values` containing the generated sparse vector.
         """  # noqa: E501
-        texts = [d.text for d in documents]
-        dense_values = self._dense_encoder.encode_documents(texts)
-        sparse_values = self._sparse_encoder.encode_documents(texts)
-        return [
-            KBEncodedDocChunk(**d.dict(), values=v, sparse_values=sv) for d, v, sv in
-            zip(documents, dense_values, sparse_values)
-        ]
+
+        chunks = self._dense_record_encoder.encode_documents(documents)
+        sparse_values = self._sparse_encoder.encode_documents(
+            [d.text for d in documents]
+        )
+        for chunk, sv in zip(chunks, sparse_values):
+            chunk.sparse_values = sv
+        return chunks
 
     def _encode_queries_batch(self, queries: List[Query]) -> List[KBQuery]:
         """
@@ -105,16 +112,20 @@ class HybridRecordEncoder(RecordEncoder):
             alpha and `sparse_values` containing the generated sparse vector with the weight (1 - alpha).
         """  # noqa: E501
 
-        texts = [q.text for q in queries]
-        dense_values = self._dense_encoder.encode_queries(texts)
-        sparse_values = self._sparse_encoder.encode_queries(texts)
+        dense_queries = self._dense_record_encoder.encode_queries(queries)
+        sparse_values = self._sparse_encoder.encode_queries([q.text for q in queries])
+
         scaled_values = [
-            hybrid_convex_scale(v, sv, self._alpha) for v, sv in
-            zip(dense_values, sparse_values)
+            hybrid_convex_scale(dq.values, sv, self._alpha) for dq, sv in
+            zip(dense_queries, sparse_values)
         ]
 
-        return [KBQuery(**q.dict(), values=v, sparse_values=sv) for q, (v, sv) in
-                zip(queries, scaled_values)]
+        return [q.copy(update=dict(values=v, sparse_values=sv)) for q, (v, sv) in
+                zip(dense_queries, scaled_values)]
+
+    @property
+    def dimension(self) -> int:
+        return self._dense_record_encoder.dimension
 
     async def _aencode_documents_batch(self,
                                        documents: List[KBDocChunk]
