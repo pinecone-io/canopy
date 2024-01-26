@@ -1,6 +1,7 @@
 from typing import Optional
 from pinecone_text.dense import SentenceTransformerEncoder
 from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
+from huggingface_hub.utils import RepositoryNotFoundError
 
 
 class SentenceTransformerRecordEncoder(DenseRecordEncoder):
@@ -35,10 +36,16 @@ class SentenceTransformerRecordEncoder(DenseRecordEncoder):
                         Defaults to "cuda" if cuda is available, otherwise to "cpu".
             **kwargs: Additional arguments to pass to the underlying `pinecone-text.SentenceTransformerEncoder`.
         """  # noqa: E501
-        encoder = SentenceTransformerEncoder(
-            document_encoder_name=model_name,
-            query_encoder_name=query_encoder_name,
-            device=device,
-            **kwargs,
-        )
+        try:
+            encoder = SentenceTransformerEncoder(
+                document_encoder_name=model_name,
+                query_encoder_name=query_encoder_name,
+                device=device,
+                **kwargs,
+            )
+        except RepositoryNotFoundError as e:
+            raise RuntimeError(
+                "Your chosen Sentence Transformer model(s) could not be found. "
+                f"Details: {str(e)}"
+            ) from e
         super().__init__(dense_encoder=encoder, batch_size=batch_size)
