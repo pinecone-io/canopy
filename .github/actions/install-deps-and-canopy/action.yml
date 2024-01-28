@@ -9,9 +9,15 @@ inputs:
     description: "Whether to install canopy library, or dependencies only"
     required: true
     default: "true"
+  extras:
+    description: "Extra dependencies to install"
+    required: false
+    default: "cohere transformers"
 
 runs:
   using: "composite"
+  env:
+    CANOPY_EXTRAS: ${{ inputs.extras }}
   steps:
   - name: Install Poetry
     uses: snok/install-poetry@v1
@@ -37,8 +43,8 @@ runs:
   - name: Install dependencies
     shell: bash
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-    run: poetry install --no-interaction --no-root --all-extras --with dev
+    run: poetry install --no-interaction --no-root --with dev --extras "{{ env.CANOPY_EXTRAS }}"
   - name: Install project
     if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
-    run: poetry install --no-interaction --all-extras --with dev
+    run: make install-extras

@@ -22,6 +22,9 @@ lint:
 static:
 	poetry run mypy src
 
+install-extras:
+	poetry install --with dev --extras "$(CANOPY_EXTRAS)"
+
 test:
 	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope
 
