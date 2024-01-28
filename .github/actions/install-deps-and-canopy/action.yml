@@ -10,7 +10,7 @@ inputs:
     required: true
     default: "true"
   extras:
-    description: "Extra dependencies to install"
+    description: "Extra dependencies to install, space separated"
     required: false
     default: "cohere transformers"
 
