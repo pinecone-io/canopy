@@ -66,7 +66,7 @@ def test_init_encoder_invalid_alpha(dense_record_encoder):
     with pytest.raises(ValueError):
         HybridRecordEncoder(dense_record_encoder, alpha=2)
     with pytest.raises(ValueError):
-        HybridRecordEncoder(dense_record_encoder, alpha=0)
+        HybridRecordEncoder(dense_record_encoder, alpha=0, match="sparse only")
 
 
 def test_encode_documents(hybrid_encoder, documents, queries):
@@ -86,23 +86,38 @@ def test_encode_queries(hybrid_encoder, queries):
         assert "values" in encoded_query.sparse_values
 
 
-def test_encode_queries_alpha_applied_correctly(hybrid_encoder, queries):
+def test_encode_queries_alpha_applied_correctly(dense_record_encoder,
+                                                bm_25_encoder_df_path,
+                                                queries):
     """
         Tests whether the alpha value is applied correctly when encoding queries.
     """
     alpha = 0.2
     alpha_coefficient = 2
 
-    with patch.object(hybrid_encoder, '_alpha', new=alpha):
-        encoded_queries = hybrid_encoder.encode_queries(queries)
+    hb_1 = HybridRecordEncoder(dense_record_encoder,
+                               bm_25_encoder_df_path=bm_25_encoder_df_path,
+                               alpha=alpha)
+    hb_2 = HybridRecordEncoder(dense_record_encoder,
+                               bm_25_encoder_df_path=bm_25_encoder_df_path,
+                               alpha=alpha_coefficient * alpha)
 
-    with patch.object(hybrid_encoder, '_alpha', new=alpha_coefficient * alpha):
-        encoded_queries_2 = hybrid_encoder.encode_queries(queries)
+    encoded_queries = hb_1.encode_queries(queries)
+    encoded_queries_2 = hb_2.encode_queries(queries)
 
     for encoded_query, encoded_query_2 in zip(encoded_queries, encoded_queries_2):
         assert len(encoded_query.values) == len(encoded_query_2.values)
         for value, value_2 in zip(encoded_query.values, encoded_query_2.values):
             assert pytest.approx(value * alpha_coefficient) == value_2
+
+        assert (encoded_query.sparse_values["indices"] ==
+                encoded_query_2.sparse_values["indices"])
+
+        scaling_coefficient = (1 - alpha_coefficient * alpha) / (1 - alpha)
+        for value, value_2 in zip(encoded_query.sparse_values["values"],
+                                  encoded_query_2.sparse_values["values"]):
+
+            assert pytest.approx(value * scaling_coefficient) == value_2
 
 
 def test_encode_queries_with_alpha_1(hybrid_encoder, dense_record_encoder, queries):

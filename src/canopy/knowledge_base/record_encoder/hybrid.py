@@ -51,6 +51,10 @@ class HybridRecordEncoder(RecordEncoder):
             **kwargs: Additional arguments to pass to the RecordEncoder.
         """  # noqa: E501
 
+        if alpha == 0:
+            raise ValueError("Sparse only representation is not supported. "
+                             "Alpha must be greater than 0.")
+
         if not 0 < alpha <= 1:
             raise ValueError("Alpha must be between 0 (excluded) and 1 (included)")
 
