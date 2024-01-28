@@ -339,7 +339,7 @@ def upsert(index_name: str,
 
     try:
         kb.connect()
-    except (RuntimeError) as e:
+    except RuntimeError as e:
         # TODO: kb should throw a specific exception for each case
         msg = str(e)
         raise CLIError(msg)
