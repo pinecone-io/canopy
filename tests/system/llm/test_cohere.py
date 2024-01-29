@@ -49,12 +49,12 @@ def expected_chat_kwargs():
 
 @pytest.fixture
 def model_params_high_temperature():
-    return {"temperature": 0.9, "p": 0.95}
+    return {"temperature": 0.9}
 
 
 @pytest.fixture
 def model_params_low_temperature():
-    return {"temperature": 0.2, "p": 0.5}
+    return {"temperature": 0.2}
 
 
 @pytest.fixture

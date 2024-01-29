@@ -89,6 +89,8 @@ class CohereLLM(BaseLLM):
         )
         model_params_dict["max_tokens"] = max_tokens
 
+        model_params_dict = self._convert_model_params(model_params_dict)
+
         connectors = model_params_dict.pop('connectors', None)
         messages: List[Dict[str, Any]] = self._map_messages(chat_history)
 
@@ -209,6 +211,44 @@ class CohereLLM(BaseLLM):
                                 model_params: Optional[dict] = None,
                                 ) -> List[Query]:
         raise NotImplementedError("Cohere LLM doesn't support async query generation")
+
+    def _convert_model_params(self, openai_model_params: dict) -> dict:
+        """
+        Convert Open AI model params to Cohere equivalents.
+
+        Args:
+            openai_model_params: model params passed from client to Canopy API in OpenAI format.
+
+        Returns:
+            Model params used with Cohere Chat API.
+        """  # noqa: E501
+        common_params = [
+            "model",
+            "frequency_penalty",
+            "max_tokens",
+            "presence_penalty",
+            "stream",
+            "temperature",
+        ]
+        converted_model_params = {}
+
+        for param in common_params:
+            if param in openai_model_params:
+                converted_model_params[param] = openai_model_params.pop(param)
+
+        # Scale is -2.0 to 2.0 with OpenAI, but -1.0 to 1.0 with Cohere.
+        if presence_penalty := converted_model_params.get("presence_penalty"):
+            converted_model_params = presence_penalty * 0.5
+
+        unrecognized_keys = set(openai_model_params.keys())
+        default_keys = set(self.default_model_params.keys())
+
+        if unrecognized_keys.difference(default_keys):
+            raise NotImplementedError(
+                f"{','.join(unrecognized_keys)} not supported by Cohere Chat API."
+            )
+
+        return converted_model_params
 
     def _map_messages(self, messages: Messages) -> List[dict[str, Any]]:
         """
