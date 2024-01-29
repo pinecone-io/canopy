@@ -195,11 +195,6 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ### Stopping the server 
 To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
-If you have started the server in the background, you can stop it by running:
-
-```bash
-canopy stop
-```
 
 ## Evaluation chat tool
 

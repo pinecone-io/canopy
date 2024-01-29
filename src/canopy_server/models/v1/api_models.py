@@ -114,13 +114,6 @@ class ChatDebugInfo(BaseModel):
         return self.json()
 
 
-class ShutdownResponse(BaseModel):
-    message: str = Field(
-        default="Shutting down",
-        description="Message indicating the server is shutting down.",
-    )
-
-
 class SuccessUpsertResponse(BaseModel):
     message: str = Field(
         default="Success",

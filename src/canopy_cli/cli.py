@@ -1,6 +1,4 @@
 import os
-import signal
-import subprocess
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
@@ -665,55 +663,6 @@ def start(host: str, port: str, reload: bool, stream: bool,
 
     click.echo(f"Starting Canopy server on {host}:{port}")
     start_server(host, port=port, reload=reload, config_file=config)
-
-
-@cli.command(
-    help=(
-        """
-        \b
-        Stop the Canopy server.
-
-        This command sends a shutdown request to the Canopy server.
-        """
-    )
-)
-@click.option("url", "--url", default=DEFAULT_SERVER_URL,
-              help=("URL of the Canopy server to use. "
-                    f"Defaults to {DEFAULT_SERVER_URL}"))
-def stop(url):
-    if os.name != "nt":
-        # Check if the server was started using Gunicorn
-        res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
-                             capture_output=True)
-        output = res.stdout.decode("utf-8").split()
-
-        # If Gunicorn was used, kill all Gunicorn processes
-        if output:
-            msg = ("It seems that Canopy server was launched using Gunicorn.\n"
-                   "Do you want to kill all Gunicorn processes?")
-            click.confirm(click.style(msg, fg="red"), abort=True)
-            try:
-                subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
-                               check=True)
-            except subprocess.CalledProcessError:
-                try:
-                    [os.kill(int(pid), signal.SIGINT) for pid in output]
-                except OSError:
-                    msg = (
-                        "Could not kill Gunicorn processes. Please kill them manually."
-                        f"Found process ids: {output}"
-                    )
-                    raise CLIError(msg)
-
-    try:
-        res = requests.get(urljoin(url, "shutdown"))
-        res.raise_for_status()
-        return res.ok
-    except requests.exceptions.ConnectionError:
-        msg = f"""
-        Could not find Canopy server on {url}.
-        """
-        raise CLIError(msg)
 
 
 @cli.command(
