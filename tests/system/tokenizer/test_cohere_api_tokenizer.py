@@ -11,7 +11,7 @@ class TestCohereAPITokenizer(BaseTestTokenizer):
     @staticmethod
     @pytest.fixture(scope="class")
     def tokenizer():
-        if not os.getenv("Co_API_KEY"):
+        if not os.getenv("CO_API_KEY"):
             pytest.skip("Skipping Cohere API tokenizer tests because "
                         "COHERE_API_KEY environment variable is not set.")
         return CohereAPITokenizer(model_name="command")
