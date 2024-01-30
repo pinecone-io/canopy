@@ -1,91 +1,56 @@
+import os
+
 import pytest
 
+from canopy.models.data_models import MessageBase, Role
 from canopy.tokenizer import CohereAPITokenizer
+from tokenizer.base_test_tokenizer import BaseTestTokenizer
 
 
-class TestCohereAPITokenizer:
+class TestCohereAPITokenizer(BaseTestTokenizer):
     @staticmethod
     @pytest.fixture(scope="class")
     def tokenizer():
+        if not os.getenv("Co_API_KEY"):
+            pytest.skip("Skipping Cohere API tokenizer tests because "
+                        "COHERE_API_KEY environment variable is not set.")
         return CohereAPITokenizer(model_name="command")
 
     @staticmethod
     @pytest.fixture
     def text():
-        return "Hello World!"
+        return "string with special characters like !@#$%^&*()_+日本 " \
+               "spaces   \n \n\n CASE cAse "
+
 
     @staticmethod
     @pytest.fixture
     def expected_tokens(text):
-        return ["Hello", " World", "!"]
-
-    # region: test tokenize
-
-    @staticmethod
-    def test_tokenize(tokenizer, text, expected_tokens):
-        tokens = tokenizer.tokenize(text)
-        assert tokens == expected_tokens, f"\nExpected: {expected_tokens}" \
-                                          f"\nActual: {tokens}"
+        return ['string', ' with', ' special', ' characters', ' like',
+                ' !', '@', '#', '$', '%', '^', '&', '*', '()', '_', '+', '日',
+                '本', ' spaces', '   ', '\n ', '\n\n', ' CASE', ' c', 'A',
+                'se', " "]
 
     @staticmethod
-    def test_tokenize_empty_string(tokenizer):
-        assert tokenizer.tokenize("") == []
+    def test_messages_token_count(tokenizer):
+        messages = [MessageBase(role=Role.USER, content="Hello, assistant.")]
+        assert tokenizer.messages_token_count(messages) == 11
 
-    @staticmethod
-    def test_tokenize_invalid_input_type_raise_exception(tokenizer):
-        with pytest.raises(Exception):
-            tokenizer.tokenize(1)
-
-        with pytest.raises(Exception):
-            tokenizer.tokenize(["asd"])
-
-    # endregion
-
-    # region: test detokenize
-
-    @staticmethod
-    def test_detokenize(tokenizer, text, expected_tokens):
-        text = tokenizer.detokenize(expected_tokens)
-        assert text == text
-
-    @staticmethod
-    def test_detokenize_empty_string(tokenizer):
-        assert tokenizer.detokenize([]) == ""
-
-    @staticmethod
-    def test_detokenize_invalid_input_type_raise_exception(tokenizer):
-        with pytest.raises(Exception):
-            tokenizer.detokenize(1)
-
-        with pytest.raises(Exception):
-            tokenizer.detokenize("asd")
-
-    # region test token_count
-
-    @staticmethod
-    def test_token_count(tokenizer, text, expected_tokens):
-        token_count = tokenizer.token_count(text)
-        assert token_count == len(expected_tokens)
-        assert token_count == len(tokenizer.tokenize(text))
-
-    @staticmethod
-    def test_token_count_empty_string(tokenizer):
-        assert tokenizer.token_count("") == 0
+        messages = [MessageBase(role=Role.USER,
+                                content="Hello, assistant."),
+                    MessageBase(role=Role.ASSISTANT,
+                                content="Hello, user. How can I assist you?")]
+        assert tokenizer.messages_token_count(messages) == 25
 
     @staticmethod
     def test_messages_token_count_empty_messages(tokenizer):
         assert tokenizer.messages_token_count([]) == 3
 
-    # endregion
-
-    # region special tokens
-
     @staticmethod
     def test_special_tokens_to_natural_text(tokenizer):
-        tokens = tokenizer.tokenize("<|endoftext|>")
+        tokens = tokenizer.tokenize("<BOS_TOKEN>")
+        assert tokens == ['<', 'BOS', '_', 'TOKEN', '>']
 
-        assert tokens == ['<', '|', 'end', 'of', 'text', '|', '>']
-        assert tokenizer.detokenize(tokens) == "<|endoftext|>"
-        assert tokenizer.token_count("<|endoftext|>") == 7
+        assert tokenizer.detokenize(tokens) == "<BOS_TOKEN>"
 
-    # endregion
+        assert tokenizer.token_count("<BOS_TOKEN>") == 5
