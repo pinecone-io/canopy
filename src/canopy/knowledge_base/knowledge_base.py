@@ -7,6 +7,8 @@ from typing import List, Optional, Dict, Any, Union
 from pinecone import (ServerlessSpec, PodSpec,
                       Pinecone, PineconeApiException)
 
+from canopy.utils.debugging import CE_DEBUG_INFO
+
 try:
     from pinecone import GRPCIndex as Index
 except ImportError:
@@ -437,20 +439,31 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = [self._query_index(q,
                                      global_metadata_filter,
                                      namespace) for q in queries]
-        results = self._reranker.rerank(results)
+        ranked_results = self._reranker.rerank(results)
 
         return [
             QueryResult(
-                query=r.query,
+                query=rr.query,
                 documents=[
                     DocumentWithScore(
                         **d.dict(exclude={
-                            'values', 'sparse_values', 'document_id'
+                            'document_id'
                         })
                     )
-                    for d in r.documents
-                ]
-            ) for r in results
+                    for d in rr.documents
+                ],
+                debug_info={"db_result": QueryResult(
+                    query=r.query,
+                    documents=[
+                        DocumentWithScore(
+                            **d.dict(exclude={
+                                'document_id'
+                            })
+                        )
+                        for d in r.documents
+                    ]
+                )} if CE_DEBUG_INFO else {}
+            ) for rr, r in zip(ranked_results, results)
         ]
 
     def _query_index(self,
