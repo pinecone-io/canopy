@@ -19,5 +19,3 @@ class Reranker(ABC, ConfigurableMixin):
     @abstractmethod
     async def arerank(self, results: List[KBQueryResult]) -> List[KBQueryResult]:
         pass
-
-

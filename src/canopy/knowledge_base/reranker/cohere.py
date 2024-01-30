@@ -1,11 +1,11 @@
-from typing import List
+from typing import List, Optional
 
 from canopy.knowledge_base.models import KBQueryResult
 from canopy.knowledge_base.reranker import Reranker
 
 try:
     import cohere
-except (OSError, ImportError, ModuleNotFoundError) as e:
+except (OSError, ImportError, ModuleNotFoundError):
     _cohere_installed = False
 else:
     _cohere_installed = True
@@ -15,12 +15,25 @@ class CohereReranker(Reranker):
     """
     Reranker that uses Cohere's text embedding to rerank documents.
 
-    Note: You should provide an API key as the environment variable `CO_API_KEY`.
+    For each query and documents returned for that query, returns a list
+    of documents ordered by their relevance to the provided query.
     """
 
     def __init__(self,
                  model_name: str = 'rerank-english-v2.0',
-                 top_n: int = 10):
+                 *,
+                 top_n: int = 10,
+                 api_key: Optional[str] = None):
+        """
+            Initializes the Cohere reranker.
+
+            Args:
+                model_name: The identifier of the model to use, one of :
+                    rerank-english-v2.0, rerank-multilingual-v2.0
+                top_n: The number of most relevant documents return, defaults to 10
+                api_key: API key for Cohere. If not passed `CO_API_KEY` environment
+                    variable will be used.
+        """
 
         if not _cohere_installed:
             raise ImportError(
@@ -28,7 +41,7 @@ class CohereReranker(Reranker):
                 "dependencies by running: "
                 "pip install canopy-sdk[cohere]"
             )
-        self._client = cohere.Client()
+        self._client = cohere.Client(api_key=api_key)
         self._model_name = model_name
         self._top_n = top_n
 
