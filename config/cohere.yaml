@@ -36,13 +36,13 @@ chat_engine:
       model_name: command
       # You can add any additional parameters which are supported by the Cohere Co.Chat API. The values set
       # here will be used in every Co.Chat API call. For example:
-      prompt_truncation: "AUTO"
+      # prompt_truncation: "AUTO"
+      # citation_quality: "accurate"
+      # temperature: 0.85
       # Specifying connectors is contrary to Canopy's purpose of searching the Pinecone knowledge base only,
       # but technically can still be passed like this:
       # connectors:
       #  - "web-search"
-      citation_quality: "accurate"
-      temperature: 0.85
       # Uncomment to suppress errors when unrecognized or unsupported model params are sent to CohereLLM.
       # ignore_unrecognized_params: true
 
