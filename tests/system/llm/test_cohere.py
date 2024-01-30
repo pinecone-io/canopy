@@ -58,8 +58,8 @@ def model_params_low_temperature():
 
 
 @pytest.fixture
-def cohere_llm(model_name):
-    return CohereLLM(model_name=model_name)
+def cohere_llm():
+    return CohereLLM()
 
 
 @pytest.fixture
@@ -160,6 +160,25 @@ def test_chat_completion_with_unsupported_context_engine(cohere_llm,
         cohere_llm.chat_completion(chat_history=messages,
                                    system_prompt="",
                                    context=unsupported_context)
+
+
+def test_chat_completion_with_unrecognized_param_raises_error(cohere_llm, messages):
+    with pytest.raises(NotImplementedError):
+        cohere_llm.chat_completion(chat_history=messages,
+                                   system_prompt="",
+                                   model_params={
+                                       "functions": {},
+                                   })
+
+
+def test_chat_completion_ignores_unrecognized_model_params_with_init_kwarg(messages):
+    cohere_llm = CohereLLM(ignore_unrecognized_params=True)
+    response = cohere_llm.chat_completion(chat_history=messages,
+                                          system_prompt="",
+                                          model_params={
+                                              "functions": {},
+                                          })
+    assert response.object == "chat.completion"
 
 
 def test_chat_completion_with_stuffing_context_snippets(cohere_llm,

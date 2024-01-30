@@ -26,10 +26,11 @@ class CohereLLM(BaseLLM):
           You can set the "CO_API_KEY" environment variable to your API key.
     """
     def __init__(self,
-                 model_name: str = "command-nightly",
+                 model_name: str = "command",
                  *,
                  api_key: Optional[str] = None,
                  base_url: Optional[str] = None,
+                 ignore_unrecognized_params: Optional[bool] = False,
                  **kwargs: Any,
                  ):
         """
@@ -45,6 +46,7 @@ class CohereLLM(BaseLLM):
         """  # noqa: E501
         super().__init__(model_name)
         self._client = cohere.Client(api_key, api_url=base_url)
+        self.ignore_unrecognized_params = ignore_unrecognized_params
         self.default_model_params = kwargs
 
     def chat_completion(self,
@@ -243,7 +245,7 @@ class CohereLLM(BaseLLM):
         unrecognized_keys = set(openai_model_params.keys())
         default_keys = set(self.default_model_params.keys())
 
-        if unrecognized_keys.difference(default_keys):
+        if unrecognized_keys.difference(default_keys) and not self.ignore_unrecognized_params:
             raise NotImplementedError(
                 f"{','.join(unrecognized_keys)} not supported by Cohere Chat API."
             )
