@@ -441,6 +441,9 @@ class KnowledgeBase(BaseKnowledgeBase):
                                      namespace) for q in queries]
         ranked_results = self._reranker.rerank(results)
 
+        assert len(results) == len(ranked_results), ("Reranker returned a different"
+                                                     " number of results "
+                                                     "than the number of queries")
         return [
             QueryResult(
                 query=rr.query,
