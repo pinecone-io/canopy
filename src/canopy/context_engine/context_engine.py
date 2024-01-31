@@ -7,7 +7,7 @@ from canopy.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.models.data_models import Context, Query
 from canopy.utils.config import ConfigurableMixin
-from canopy.utils.debugging import CE_DEBUG_INFO
+from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 
 class BaseContextEngine(ABC, ConfigurableMixin):
@@ -108,7 +108,7 @@ class ContextEngine(BaseContextEngine):
             namespace=namespace)
         context = self.context_builder.build(query_results, max_context_tokens)
 
-        if CE_DEBUG_INFO:
+        if CANOPY_DEBUG_INFO:
             context.debug_info["query_results"] = [
                 {**qr.dict(), **qr.debug_info} for qr in query_results
             ]

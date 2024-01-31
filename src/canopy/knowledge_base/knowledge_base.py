@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any, Union
 from pinecone import (ServerlessSpec, PodSpec,
                       Pinecone, PineconeApiException)
 
-from canopy.utils.debugging import CE_DEBUG_INFO
+from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 try:
     from pinecone import GRPCIndex as Index
@@ -465,7 +465,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                         )
                         for d in r.documents
                     ]
-                ).dict()} if CE_DEBUG_INFO else {}
+                ).dict()} if CANOPY_DEBUG_INFO else {}
             ) for rr, r in zip(ranked_results, results)
         ]
 
