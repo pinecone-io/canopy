@@ -40,6 +40,7 @@ class CohereLLM(BaseLLM):
             model_name: The name of the model to use. See https://docs.cohere.com/docs/models
             api_key: Your Cohere API key. Defaults to None (uses the "CO_API_KEY" environment variable).
             base_url: The base URL to use for the Cohere API. Defaults to None (uses the "CO_API_URL" environment variable if set, otherwise use default Cohere API URL).
+            ignore_unrecognized_params: Flag to suppress errors when unrecognized model params (from other LLMs) are passed to Cohere.
             **kwargs: Generation default parameters to use for each request. See https://platform.openai.com/docs/api-reference/chat/create
                     For example, you can set the temperature, p, etc
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` methods.
@@ -227,16 +228,27 @@ class CohereLLM(BaseLLM):
         common_params = [
             "model",
             "frequency_penalty",
+            "logit_bias",
             "max_tokens",
             "presence_penalty",
             "stream",
             "temperature",
         ]
+
+        equivalent_params = {
+            "top_p": "p",
+            "user": "user_name",
+        }
+
         converted_model_params = {}
 
         for param in common_params:
             if param in openai_model_params:
                 converted_model_params[param] = openai_model_params.pop(param)
+
+        for param, equivalent in equivalent_params.items():
+            if param in openai_model_params:
+                converted_model_params[equivalent] = openai_model_params.pop(param)
 
         # Scale is -2.0 to 2.0 with OpenAI, but -1.0 to 1.0 with Cohere.
         if presence_penalty := converted_model_params.get("presence_penalty"):
@@ -245,7 +257,8 @@ class CohereLLM(BaseLLM):
         unrecognized_keys = set(openai_model_params.keys())
         default_keys = set(self.default_model_params.keys())
 
-        if unrecognized_keys.difference(default_keys) and not self.ignore_unrecognized_params:
+        if unrecognized_keys.difference(default_keys) \
+                and not self.ignore_unrecognized_params:
             raise NotImplementedError(
                 f"{','.join(unrecognized_keys)} not supported by Cohere Chat API."
             )

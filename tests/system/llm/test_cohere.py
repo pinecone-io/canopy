@@ -181,6 +181,30 @@ def test_chat_completion_ignores_unrecognized_model_params_with_init_kwarg(messa
     assert response.object == "chat.completion"
 
 
+def test_chat_completion_with_equivalent_model_params(cohere_llm,
+                                                      messages,
+                                                      system_prompt,
+                                                      expected_chat_kwargs):
+    cohere_llm._client = MagicMock(wraps=cohere_llm._client)
+    response = cohere_llm.chat_completion(
+        chat_history=messages,
+        system_prompt=system_prompt,
+        model_params={
+            "top_p": 0.9,
+            "user": "admin",
+        }
+    )
+    expected_chat_kwargs_with_equivalents = {
+        **expected_chat_kwargs,
+        "p": 0.9,
+        "user_name": "admin",
+    }
+    cohere_llm._client.chat.assert_called_once_with(
+        **expected_chat_kwargs_with_equivalents
+    )
+    assert response.object == "chat.completion"
+
+
 def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
                                                         messages,
                                                         expected_chat_kwargs,
