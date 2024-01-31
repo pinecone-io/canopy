@@ -465,7 +465,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                         )
                         for d in r.documents
                     ]
-                )} if CE_DEBUG_INFO else {}
+                ).dict()} if CE_DEBUG_INFO else {}
             ) for rr, r in zip(ranked_results, results)
         ]
 
