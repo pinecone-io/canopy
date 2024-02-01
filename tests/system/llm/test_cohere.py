@@ -132,12 +132,12 @@ def test_max_tokens(cohere_llm, messages):
 
 
 def test_missing_messages(cohere_llm):
-    with pytest.raises(CohereAPIError):
+    with pytest.raises(RuntimeError, match="No message provided"):
         cohere_llm.chat_completion(chat_history=[], system_prompt='')
 
 
 def test_negative_max_tokens(cohere_llm, messages):
-    with pytest.raises(CohereAPIError):
+    with pytest.raises(RuntimeError, match="max_tokens cannot be less than 0"):
         cohere_llm.chat_completion(
             chat_history=messages, max_tokens=-5, system_prompt='')
 
@@ -147,7 +147,7 @@ def test_chat_completion_api_failure_propagates(cohere_llm,
     cohere_llm._client = MagicMock()
     cohere_llm._client.chat.side_effect = CohereAPIError("API call failed")
 
-    with pytest.raises(CohereAPIError, match="API call failed"):
+    with pytest.raises(RuntimeError, match="API call failed"):
         cohere_llm.chat_completion(chat_history=messages, system_prompt="")
 
 
@@ -257,3 +257,20 @@ def test_token_counts_mapped_in_chat_response(cohere_llm, messages, system_promp
     assert response.usage.total_tokens == (
             response.usage.prompt_tokens + response.usage.completion_tokens
     )
+
+
+def test_api_errors_caught_and_raised_as_runtime_errors(cohere_llm,
+                                                        messages,
+                                                        system_prompt):
+    expected_message = (
+        "Failed to use Cohere's unknown_model model for chat completion."
+        " Underlying Error:\n"
+        ".+"
+    )
+
+    with pytest.raises(RuntimeError, match=expected_message):
+        cohere_llm.chat_completion(chat_history=messages,
+                                   system_prompt=system_prompt,
+                                   model_params={
+                                       "model": "unknown_model",
+                                   })

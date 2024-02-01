@@ -96,22 +96,30 @@ class CohereLLM(BaseLLM):
 
         connectors = model_params_dict.pop('connectors', None)
         messages: List[Dict[str, Any]] = self._map_messages(chat_history)
+        model_name = model_params_dict.pop('model', None) or self.model_name
 
         if not messages:
-            raise cohere.error.CohereAPIError("No message provided")
+            raise RuntimeError("No message provided")
 
-        response = self._client.chat(
-            model=self.model_name,
-            message=messages.pop()['message'],
-            chat_history=messages,
-            documents=self.generate_documents_from_context(context),
-            preamble_override=system_prompt,
-            stream=stream,
-            connectors=[
-                {"id": connector} for connector in connectors
-            ] if connectors else None,
-            **model_params_dict
-        )
+        try:
+            response = self._client.chat(
+                model=model_name,
+                message=messages.pop()['message'],
+                chat_history=messages,
+                documents=self.generate_documents_from_context(context),
+                preamble_override=system_prompt,
+                stream=stream,
+                connectors=[
+                    {"id": connector} for connector in connectors
+                ] if connectors else None,
+                **model_params_dict
+            )
+        except cohere.error.CohereAPIError as e:
+            raise RuntimeError(
+                f"Failed to use Cohere's {model_name} model for chat "
+                f"completion. "
+                f"Underlying Error:\n{e.message}"
+            )
 
         def streaming_iterator(res):
             for chunk in res:
