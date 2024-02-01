@@ -35,7 +35,7 @@ sentencepiece = "^0.1.99"
 pandas = "2.0.0"
 pyarrow = "^14.0.1"
 cohere = { version = ">=4.37", optional = true }
-qdrant-client = { version = "1.7.0", python = ">=3.9,<3.12" }
+qdrant-client = "^1.7.2"
 
 [tool.poetry.extras]
 cohere = ["cohere"]
