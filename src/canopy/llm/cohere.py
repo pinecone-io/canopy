@@ -46,7 +46,16 @@ class CohereLLM(BaseLLM):
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` methods.
         """  # noqa: E501
         super().__init__(model_name)
-        self._client = cohere.Client(api_key, api_url=base_url)
+
+        try:
+            self._client = cohere.Client(api_key, api_url=base_url)
+        except cohere.error.CohereError as e:
+            raise RuntimeError(
+                "Failed to connect to Cohere, please make sure that the CO_API_KEY "
+                "environment variable is set correctly.\n"
+                f"Error: {e.message}"
+            )
+
         self.ignore_unrecognized_params = ignore_unrecognized_params
         self.default_model_params = kwargs
 

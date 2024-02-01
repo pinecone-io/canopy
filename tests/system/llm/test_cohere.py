@@ -274,3 +274,16 @@ def test_api_errors_caught_and_raised_as_runtime_errors(cohere_llm,
                                    model_params={
                                        "model": "unknown_model",
                                    })
+
+
+def test_bad_api_key(monkeypatch):
+    monkeypatch.setenv("CO_API_KEY", "")
+
+    expected_message = (
+        "Failed to connect to Cohere, please make sure that the CO_API_KEY"
+        " environment variable is set correctly.\n"
+        ".*API key"
+    )
+
+    with pytest.raises(RuntimeError, match=expected_message):
+        CohereLLM()
