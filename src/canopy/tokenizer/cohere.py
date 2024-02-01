@@ -49,7 +49,7 @@ class CohereHFTokenizer(BaseTokenizer):
         Returns:
             The list of tokens.
         """
-        return self._encoder.encode(text).tokens
+        return self._encoder.encode(text, add_special_tokens=False).tokens
 
     def detokenize(self, tokens: List[str]) -> str:
         """
@@ -77,7 +77,7 @@ class CohereHFTokenizer(BaseTokenizer):
         Returns:
             The number of tokens in the text.
         """
-        return len(self._encoder.encode(text).ids)
+        return len(self._encoder.encode(text, add_special_tokens=False).ids)
 
     def messages_token_count(self, messages: Messages) -> int:
         """
