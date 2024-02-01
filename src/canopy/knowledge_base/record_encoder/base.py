@@ -21,7 +21,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
     - _encode_queries_batch
 
     Async encoders are still not supported, but will be added in the future.
-    """   # noqa: E501
+    """  # noqa: E501
 
     def __init__(self, batch_size: int = 1):
         """
@@ -30,7 +30,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         Args:
             batch_size: The number of documents or queries to encode at once.
                         Defaults to 1.
-        """   # noqa: E501
+        """  # noqa: E501
         self.batch_size = batch_size
 
     # TODO: rename documents to doc_chunks or chunks
@@ -47,7 +47,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         Returns:
             encoded chunks: A list of KBEncodedDocChunk.
-        """   # noqa: E501
+        """  # noqa: E501
         pass
 
     @abstractmethod
@@ -61,7 +61,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         Returns:
             encoded queries: A list of KBQuery.
-        """   # noqa: E501
+        """  # noqa: E501
         pass
 
     @abstractmethod
@@ -78,14 +78,6 @@ class RecordEncoder(ABC, ConfigurableMixin):
     def _batch_iterator(data: list, batch_size):
         return (data[pos:pos + batch_size] for pos in range(0, len(data), batch_size))
 
-    @property
-    def dimension(self) -> Optional[int]:
-        """
-        Returns:
-            The dimension of the dense vectors produced by the encoder, if applicable.
-        """   # noqa: E501
-        return None
-
     def encode_documents(self, documents: List[KBDocChunk]) -> List[KBEncodedDocChunk]:
         """
 
@@ -97,7 +89,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
         Returns:
             encoded chunks: A list of KBEncodedDocChunk.
 
-        """   # noqa: E501
+        """  # noqa: E501
         encoded_docs = []
         for batch in self._batch_iterator(documents, self.batch_size):
             try:
@@ -120,7 +112,7 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
         Returns:
             encoded queries: A list of KBQuery.
-        """   # noqa: E501
+        """  # noqa: E501
 
         kb_queries = []
         for batch in self._batch_iterator(queries, self.batch_size):
@@ -152,3 +144,11 @@ class RecordEncoder(ABC, ConfigurableMixin):
 
     def _format_error(self, err):
         return f"{err}"
+
+    @property
+    def dimension(self) -> Optional[int]:
+        """
+        Returns:
+            The dimension of the dense vectors produced by the encoder, if applicable.
+        """  # noqa: E501
+        return None

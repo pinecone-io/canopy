@@ -14,13 +14,19 @@ CONTAINER_EXTRA_BUILD_ARGS =
 CONTAINER_COMMON_RUN_ARGS = --platform linux/amd64 -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(shell [ -e "$(CONTAINER_ENV_FILE)" ] && echo "--env-file $(CONTAINER_ENV_FILE)")
 CONTAINER_EXTRA_RUN_ARGS =
 
-.PHONY: lint static test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev help
+.PHONY: lint static install install-extras test test-unit test-system test-e2e install docker-build docker-build-dev docker-run docker-run-dev help
 
 lint:
 	poetry run flake8 .
 
 static:
 	poetry run mypy src
+
+install:
+	poetry install
+
+install-extras:
+	poetry install --with dev --extras "$(CANOPY_EXTRAS)"
 
 test:
 	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope
@@ -54,6 +60,7 @@ help:
 	@echo "Available targets:"
 	@echo ""
 	@echo " -- DEV -- "
+	@echo "  make install            - Install all the dependencies."
 	@echo "  make lint               - Lint the code."
 	@echo "  make static             - Run static type checks."
 	@echo "  make test               - Test the code."

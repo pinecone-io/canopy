@@ -195,11 +195,6 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ### Stopping the server 
 To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
-If you have started the server in the background, you can stop it by running:
-
-```bash
-canopy stop
-```
 
 ## Evaluation chat tool
 
@@ -227,6 +222,9 @@ This will open a similar chat interface window, but will show both the RAG and n
 
 * Canopy currently only supports OpenAI as the backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
 * More integrations will be supported in the near future.
+
+## Contributing
+Thank you for considering contributing to Canopy! Please see our [contributing guidelines](./CONTRIBUTING.md) for more information.
 
 ## Advanced usage
 

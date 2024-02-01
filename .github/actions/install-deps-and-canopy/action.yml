@@ -9,6 +9,10 @@ inputs:
     description: "Whether to install canopy library, or dependencies only"
     required: true
     default: "true"
+  extras:
+    description: "Extra dependencies to install, space separated"
+    required: false
+    default: "cohere transformers"
 
 runs:
   using: "composite"
@@ -37,8 +41,12 @@ runs:
   - name: Install dependencies
     shell: bash
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-    run: poetry install --no-interaction --no-root --all-extras --with dev
+    env:
+      CANOPY_EXTRAS: ${{ inputs.extras }}
+    run: poetry install --no-interaction --no-root --with dev --extras "${CANOPY_EXTRAS}"
   - name: Install project
     if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
-    run: poetry install --no-interaction --all-extras --with dev
+    env:
+      CANOPY_EXTRAS: ${{ inputs.extras }}
+    run: make install-extras

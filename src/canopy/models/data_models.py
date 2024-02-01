@@ -3,9 +3,14 @@ from enum import Enum
 from typing import Optional, List, Union, Dict, Literal
 
 from pydantic import BaseModel, Field, validator, Extra
+from typing import TypedDict
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
+
+class SparseVector(TypedDict):
+    indices: List[int]
+    values: List[float]
 
 # ----------------- Context Engine models -----------------
 

@@ -7,6 +7,8 @@ from typing import List, Optional, Dict, Any, Union
 from pinecone import (ServerlessSpec, PodSpec,
                       Pinecone, PineconeApiException)
 
+from canopy.utils.debugging import CANOPY_DEBUG_INFO
+
 try:
     from pinecone import GRPCIndex as Index
 except ImportError:
@@ -15,7 +17,8 @@ except ImportError:
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
-                                                  OpenAIRecordEncoder)
+                                                  OpenAIRecordEncoder,
+                                                  HybridRecordEncoder)
 from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                           KBDocChunkWithScore, DocumentWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
@@ -318,6 +321,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                 "If you wish to delete it call `knowledge_base.delete_index()`. "
             )
 
+        self._validate_metric(metric)
+
         try:
             self._pinecone_client.create_index(
                 name=self.index_name,
@@ -351,6 +356,14 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
             time.sleep(INDEX_PROVISION_TIME_INTERVAL)
+
+    def _validate_metric(self, metric: Optional[str]):
+        if isinstance(self._encoder, HybridRecordEncoder):
+            if metric != "dotproduct":
+                raise RuntimeError(
+                    "HybridRecordEncoder only supports dotproduct metric. "
+                    "Please set metric='dotproduct' on index creation."
+                )
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:
@@ -426,20 +439,34 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = [self._query_index(q,
                                      global_metadata_filter,
                                      namespace) for q in queries]
-        results = self._reranker.rerank(results)
+        ranked_results = self._reranker.rerank(results)
 
+        assert len(results) == len(ranked_results), ("Reranker returned a different"
+                                                     " number of results "
+                                                     "than the number of queries")
         return [
             QueryResult(
-                query=r.query,
+                query=rr.query,
                 documents=[
                     DocumentWithScore(
                         **d.dict(exclude={
-                            'values', 'sparse_values', 'document_id'
+                            'document_id'
                         })
                     )
-                    for d in r.documents
-                ]
-            ) for r in results
+                    for d in rr.documents
+                ],
+                debug_info={"db_result": QueryResult(
+                    query=r.query,
+                    documents=[
+                        DocumentWithScore(
+                            **d.dict(exclude={
+                                'document_id'
+                            })
+                        )
+                        for d in r.documents
+                    ]
+                ).dict()} if CANOPY_DEBUG_INFO else {}
+            ) for rr, r in zip(ranked_results, results)
         ]
 
     def _query_index(self,
