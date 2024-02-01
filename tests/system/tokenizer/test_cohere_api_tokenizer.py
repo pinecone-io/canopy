@@ -22,7 +22,6 @@ class TestCohereAPITokenizer(BaseTestTokenizer):
         return "string with special characters like !@#$%^&*()_+日本 " \
                "spaces   \n \n\n CASE cAse "
 
-
     @staticmethod
     @pytest.fixture
     def expected_tokens(text):
