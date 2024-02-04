@@ -28,8 +28,8 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = [{version = "^0.7.2"},
-                 {version = "^0.7.2", extras = ["dense"], optional = true}]
+pinecone-text = [{version = "^0.8.0"},
+                 {version = "^0.8.0", extras = ["dense"], optional = true}]
 
 tokenizers = "^0.15.0"
 transformers = {version = "^4.35.2", optional = true}
