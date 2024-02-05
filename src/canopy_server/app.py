@@ -184,9 +184,13 @@ async def upsert(
     The documents are chunked and encoded, then the resulting encoded chunks are sent to the Pinecone index in batches.
     """  # noqa: E501
     try:
-        logger.info(f"Upserting {len(request.documents)} documents")
+        logger.info(f"Upserting2 {len(request.documents)} documents")
+        upsert_index_name = request.index_name or os.getenv("INDEX_NAME")
+        logger.info(f"upsert_index_name: {upsert_index_name}")
+        kb_upsert = KnowledgeBase(index_name=upsert_index_name)
+        kb_upsert.connect()
         await run_in_threadpool(
-            kb.upsert, documents=request.documents, batch_size=request.batch_size
+            kb_upsert.upsert, documents=request.documents, batch_size=request.batch_size
         )
 
         return SuccessUpsertResponse()
