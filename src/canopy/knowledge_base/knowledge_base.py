@@ -4,15 +4,15 @@ import time
 from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
-from pinecone import (ServerlessSpec, PodSpec,
-                      Pinecone, PineconeApiException)
+from pinecone import (ServerlessSpec, PodSpec, Index,
+                      PineconeApiException)
 
 from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 try:
-    from pinecone import GRPCIndex as Index
+    from pinecone.grpc import PineconeGRPC as Pinecone
 except ImportError:
-    from pinecone import Index
+    from pinecone import Pinecone
 
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
@@ -260,7 +260,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def create_canopy_index(self,
                             spec: Union[Dict, ServerlessSpec, PodSpec] = None,
-                            dimension: Optional[int] = None,
                             metric: Optional[str] = "cosine"
                             ):
         """
@@ -283,9 +282,6 @@ class KnowledgeBase(BaseKnowledgeBase):
            spec: A dictionary containing configurations describing how the index should be deployed. For serverless indexes,
                  specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config,
                  and source_collection.
-           dimension: The dimension of the vectors to index.
-                       If `dimension` isn't explicitly provided,
-                       Canopy would try to infer the embedding's dimension based on the configured `Encoder`
            metric: The distance metric to be used for similarity search: 'euclidean', 'cosine', or 'dotproduct'. The
                    default is 'cosine'.
 
@@ -297,22 +293,21 @@ class KnowledgeBase(BaseKnowledgeBase):
                 region="us-west-2"
             )
 
-        if dimension is None:
-            try:
-                encoder_dimension = self._encoder.dimension
-                if encoder_dimension is None:
-                    raise RuntimeError(
-                        f"The selected encoder {self._encoder.__class__.__name__} does "
-                        f"not support inferring the vectors' dimensionality."
-                    )
-                dimension = encoder_dimension
-            except Exception as e:
+        try:
+            encoder_dimension = self._encoder.dimension
+            if encoder_dimension is None:
                 raise RuntimeError(
-                    f"Canopy has failed to infer vectors' dimensionality using the "
-                    f"selected encoder: {self._encoder.__class__.__name__}. You can "
-                    f"provide the dimension manually, try using a different encoder, or"
-                    f" fix the underlying error:\n{e}"
-                ) from e
+                    f"The selected encoder {self._encoder.__class__.__name__} does "
+                    f"not support inferring the vectors' dimensionality."
+                )
+            dimension = encoder_dimension
+        except Exception as e:
+            raise RuntimeError(
+                f"Canopy has failed to infer vectors' dimensionality using the "
+                f"selected encoder: {self._encoder.__class__.__name__}. You can "
+                f"provide the dimension manually, try using a different encoder, or"
+                f" fix the underlying error:\n{e}"
+            ) from e
 
         if self.index_name in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(

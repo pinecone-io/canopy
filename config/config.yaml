@@ -112,9 +112,8 @@ chat_engine:
         type: OpenAIRecordEncoder       # Options: [OpenAIRecordEncoder, AzureOpenAIRecordEncoder]
         params:
           model_name:                   # The name of the model to use for encoding
-            text-embedding-ada-002
+            text-embedding-3-small
           batch_size: 400               # The number of document chunks to encode in each call to the encoding model
-
 create_index_params:
   # -------------------------------------------------------------------------------------------
   # Initialization parameters to be passed to create a canopy index. These parameters will
