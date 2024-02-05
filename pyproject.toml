@@ -11,7 +11,8 @@ packages = [{include = "canopy", from = "src"},
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-pinecone-client = "^3.0.0"
+pinecone-client = [{ version = "^3.0.0" },
+                   { version = "^3.0.0", extras = ["grpc"], optional = true }]
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
 tiktoken = "^0.3.3"
@@ -28,8 +29,8 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = [{version = "^0.7.2"},
-                 {version = "^0.7.2", extras = ["dense"], optional = true}]
+pinecone-text = [{version = "^0.8.0"},
+                 {version = "^0.8.0", extras = ["dense"], optional = true}]
 
 tokenizers = "^0.15.0"
 transformers = {version = "^4.35.2", optional = true}
@@ -42,6 +43,7 @@ cohere = { version = ">=4.37", optional = true }
 cohere = ["cohere"]
 torch = ["pinecone-text"]
 transformers = ["transformers"]
+grpc = ["pinecone-client"]
 
 
 [tool.poetry.group.dev.dependencies]
@@ -76,6 +78,7 @@ module = [
     'pinecone',
     'transformers.*',
     'cohere.*',
+    'pinecone.grpc'
     'huggingface_hub.utils'
 ]
 ignore_missing_imports = true
