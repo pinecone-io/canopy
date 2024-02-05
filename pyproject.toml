@@ -76,6 +76,7 @@ module = [
     'pinecone',
     'transformers.*',
     'cohere.*',
+    'huggingface_hub.utils'
 ]
 ignore_missing_imports = true
 
