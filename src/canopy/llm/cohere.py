@@ -264,13 +264,12 @@ class CohereLLM(BaseLLM):
         """  # noqa: E501
         converted_model_params = {}
 
-        for param in COMMON_PARAMS:
-            if param in openai_model_params:
+        for param in list(openai_model_params.keys()):
+            if param in COMMON_PARAMS:
                 converted_model_params[param] = openai_model_params.pop(param)
-
-        for param, equivalent in EQUIVALENT_PARAMS.items():
-            if param in openai_model_params:
-                converted_model_params[equivalent] = openai_model_params.pop(param)
+            elif param in EQUIVALENT_PARAMS:
+                converted_model_params[EQUIVALENT_PARAMS[param]] = \
+                    openai_model_params.pop(param)
 
         # Scale is -2.0 to 2.0 with OpenAI, but -1.0 to 1.0 with Cohere.
         if presence_penalty := converted_model_params.get("presence_penalty"):
