@@ -18,6 +18,23 @@ from canopy.models.data_models import Context, MessageBase, Messages, Role, Quer
 from canopy.context_engine.context_builder.stuffing import StuffingContextContent
 
 
+COMMON_PARAMS = {
+    "model",
+    "frequency_penalty",
+    "logit_bias",
+    "max_tokens",
+    "presence_penalty",
+    "stream",
+    "temperature",
+}
+
+
+EQUIVALENT_PARAMS = {
+    "top_p": "p",
+    "user": "user_name",
+}
+
+
 class CohereLLM(BaseLLM):
     """
     Cohere LLM wrapper built on top of the Cohere Python client.
@@ -245,28 +262,13 @@ class CohereLLM(BaseLLM):
         Returns:
             Model params used with Cohere Chat API.
         """  # noqa: E501
-        common_params = [
-            "model",
-            "frequency_penalty",
-            "logit_bias",
-            "max_tokens",
-            "presence_penalty",
-            "stream",
-            "temperature",
-        ]
-
-        equivalent_params = {
-            "top_p": "p",
-            "user": "user_name",
-        }
-
         converted_model_params = {}
 
-        for param in common_params:
+        for param in COMMON_PARAMS:
             if param in openai_model_params:
                 converted_model_params[param] = openai_model_params.pop(param)
 
-        for param, equivalent in equivalent_params.items():
+        for param, equivalent in EQUIVALENT_PARAMS.items():
             if param in openai_model_params:
                 converted_model_params[equivalent] = openai_model_params.pop(param)
 
