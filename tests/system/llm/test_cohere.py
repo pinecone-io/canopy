@@ -31,17 +31,19 @@ def system_prompt():
 
 
 @pytest.fixture
-def expected_chat_kwargs():
+def expected_chat_kwargs(system_prompt):
     return {
         "model": "command",
         "message": "Just checking in. Be concise.",
         "chat_history": [
+            {"role": "USER", "message": "Use only the provided documents to answer."},
+            {"role": "CHATBOT", "message": "Ok."},
             {'role': 'USER', 'message': 'Hello, assistant.'},
             {"role": "CHATBOT", "message": "Hello, user. How can I assist you?"}
         ],
         "connectors": None,
         "documents": [],
-        "preamble_override": "Use only the provided documents to answer.",
+        "preamble_override": None,
         "stream": False,
         "max_tokens": None,
     }
@@ -106,6 +108,17 @@ def test_chat_completion_low_temperature(cohere_llm,
     response = cohere_llm.chat_completion(chat_history=messages,
                                           model_params=model_params_low_temperature,
                                           system_prompt='')
+    assert_chat_completion(response)
+
+
+def test_chat_completion_without_system_prompt(cohere_llm,
+                                               messages,
+                                               expected_chat_kwargs):
+    expected_chat_kwargs["chat_history"] = expected_chat_kwargs["chat_history"][2:]
+    cohere_llm._client = MagicMock(wraps=cohere_llm._client)
+    response = cohere_llm.chat_completion(
+        chat_history=messages, system_prompt="")
+    cohere_llm._client.chat.assert_called_once_with(**expected_chat_kwargs)
     assert_chat_completion(response)
 
 
@@ -252,7 +265,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
 def test_token_counts_mapped_in_chat_response(cohere_llm, messages, system_prompt):
     response = cohere_llm.chat_completion(chat_history=messages,
                                           system_prompt=system_prompt)
-    assert response.usage.prompt_tokens == 47
+    assert response.usage.prompt_tokens == 107
     assert response.usage.completion_tokens
     assert response.usage.total_tokens == (
             response.usage.prompt_tokens + response.usage.completion_tokens

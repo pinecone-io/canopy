@@ -110,13 +110,16 @@ class CohereLLM(BaseLLM):
         if not messages:
             raise RuntimeError("No message provided")
 
+        if system_prompt:
+            messages = self._prepend_system_prompt_to_messages(system_prompt, messages)
+
         try:
             response = self._client.chat(
                 model=model_name,
                 message=messages.pop()['message'],
                 chat_history=messages,
                 documents=self.generate_documents_from_context(context),
-                preamble_override=system_prompt,
+                preamble_override=None,
                 stream=stream,
                 connectors=[
                     {"id": connector} for connector in connectors
@@ -312,6 +315,35 @@ class CohereLLM(BaseLLM):
             })
 
         return mapped_messages
+
+    def _prepend_system_prompt_to_messages(self,
+                                           system_prompt: str,
+                                           messages: List[dict[str, Any]]) -> (
+                                                List)[dict[str, Any]]:
+        """
+        Prepend the value passed as the system prompt to the messages.
+
+        Cohere does not have a direct equivalent to the system prompt, and when passing
+        documents it's preferred to send the system prompt as the first message instead.
+        """
+        first_message = messages[0]
+
+        if (first_message["message"] == system_prompt
+                and first_message["role"] == "USER"):
+            return messages
+
+        system_prompt_messages = [
+            {
+                "role": "USER",
+                "message": system_prompt,
+            },
+            {
+                "role": "CHATBOT",
+                "message": "Ok."
+            }
+        ]
+
+        return system_prompt_messages + messages
 
     def generate_documents_from_context(
             self, context: Optional[Context]) -> List[Dict[str, Any]]:
