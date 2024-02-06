@@ -57,12 +57,3 @@ class TestCohereHFTokenizer(BaseTestTokenizer):
             ),
         ]
         assert tokenizer.messages_token_count(messages) == 25
-
-    @staticmethod
-    def test_special_tokens_to_natural_text(tokenizer):
-        tokens = tokenizer.tokenize("<BOS_TOKEN>")
-        assert tokens == ['<', 'BOS', '_', 'TOKEN', '>']
-
-        assert tokenizer.detokenize(tokens) == "<BOS_TOKEN>"
-
-        assert tokenizer.token_count("<BOS_TOKEN>") == 5

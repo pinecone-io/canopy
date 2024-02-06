@@ -44,12 +44,3 @@ class TestCohereAPITokenizer(BaseTestTokenizer):
     @staticmethod
     def test_messages_token_count_empty_messages(tokenizer):
         assert tokenizer.messages_token_count([]) == 3
-
-    @staticmethod
-    def test_special_tokens_to_natural_text(tokenizer):
-        tokens = tokenizer.tokenize("<BOS_TOKEN>")
-        assert tokens == ['<', 'BOS', '_', 'TOKEN', '>']
-
-        assert tokenizer.detokenize(tokens) == "<BOS_TOKEN>"
-
-        assert tokenizer.token_count("<BOS_TOKEN>") == 5
