@@ -26,10 +26,10 @@ queries = [Query(text="Sample query 1"),
 def encoder():
     try:
         encoder = SentenceTransformerRecordEncoder(batch_size=2)
-    except ImportError as e:
+    except ImportError:
         pytest.skip(
-            f"`transformers` extra not installed. Skipping SentenceTransformer system "
-            f"tests"
+            "`transformers` extra not installed. Skipping SentenceTransformer system "
+            "tests"
         )
     return encoder
 
