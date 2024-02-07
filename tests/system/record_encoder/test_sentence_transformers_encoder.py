@@ -6,18 +6,15 @@ from canopy.knowledge_base.record_encoder.sentence_transformers import (
 )
 from canopy.models.data_models import Query
 
-
-pytest.skip("Skipping SentenceTransformer system tests", allow_module_level=True)
-
 documents = [KBDocChunk(
-            id=f"doc_1_{i}",
-            text=f"Sample document {i}",
-            document_id=f"doc_{i}",
-            metadata={"test": i},
-            source="doc_1",
-        )
-        for i in range(4)
-    ]
+    id=f"doc_1_{i}",
+    text=f"Sample document {i}",
+    document_id=f"doc_{i}",
+    metadata={"test": i},
+    source="doc_1",
+)
+    for i in range(4)
+]
 
 queries = [Query(text="Sample query 1"),
            Query(text="Sample query 2"),
@@ -27,7 +24,14 @@ queries = [Query(text="Sample query 1"),
 
 @pytest.fixture
 def encoder():
-    return SentenceTransformerRecordEncoder(batch_size=2)
+    try:
+        encoder = SentenceTransformerRecordEncoder(batch_size=2)
+    except ImportError as e:
+        pytest.skip(
+            f"`transformers` extra not installed. Skipping SentenceTransformer system "
+            f"tests"
+        )
+    return encoder
 
 
 def test_dimension(encoder):

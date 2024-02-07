@@ -48,4 +48,10 @@ class SentenceTransformerRecordEncoder(DenseRecordEncoder):
                 "Your chosen Sentence Transformer model(s) could not be found. "
                 f"Details: {str(e)}"
             ) from e
+        except ImportError as e:
+            raise ImportError(
+                f"{self.__class__.__name__} requires the `torch` and `transformers` "
+                f"extra dependencies. Please install them using "
+                f"`pip install canopy-sdk[torch,transformers]`."
+            )
         super().__init__(dense_encoder=encoder, batch_size=batch_size)

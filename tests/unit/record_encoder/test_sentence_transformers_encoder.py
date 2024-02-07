@@ -26,7 +26,14 @@ queries = [Query(text="Sample query 1"),
 
 @pytest.fixture
 def encoder():
-    return SentenceTransformerRecordEncoder(batch_size=2)
+    try:
+        encoder = SentenceTransformerRecordEncoder(batch_size=2)
+    except ImportError as e:
+        pytest.skip(
+            f"`transformers` extra not installed. Skipping SentenceTransformer unit "
+            f"tests"
+        )
+    return encoder
 
 
 def test_dimension(encoder):
