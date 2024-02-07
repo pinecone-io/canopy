@@ -4,7 +4,7 @@ import pytest
 
 from canopy.models.data_models import MessageBase, Role
 from canopy.tokenizer import CohereAPITokenizer
-from tokenizer.base_test_tokenizer import BaseTestTokenizer
+from ...unit.tokenizer.base_test_tokenizer import BaseTestTokenizer
 
 
 class TestCohereAPITokenizer(BaseTestTokenizer):
