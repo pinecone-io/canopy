@@ -64,6 +64,9 @@ chat_engine:
     # KnowledgeBase configuration
     # -----------------------------------------------------------------------------------------------------------
     knowledge_base:
+      params:
+        default_top_k: 100
+
       # --------------------------------------------------------------------------
       # Configuration for the RecordEncoder subcomponent of the knowledge base.
       # --------------------------------------------------------------------------
@@ -73,3 +76,8 @@ chat_engine:
           model_name:                   # The name of the model to use for encoding
             "embed-english-v3.0"
           batch_size: 100               # The number of document chunks to encode in each call to the encoding model
+
+      reranker:
+        type: CohereReranker
+        params:
+          top_n: 5
