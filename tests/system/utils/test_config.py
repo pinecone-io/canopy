@@ -7,7 +7,7 @@ from canopy.chat_engine import ChatEngine
 from canopy.context_engine import ContextEngine
 from canopy.knowledge_base import KnowledgeBase
 
-DEFAULT_CONFIG_PATH = 'src/canopy/config/config.yaml'
+DEFAULT_CONFIG_PATH = 'src/canopy/config/default.yaml'
 
 
 @pytest.fixture(scope='module')
