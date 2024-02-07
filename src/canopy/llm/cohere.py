@@ -2,8 +2,14 @@ import time
 from copy import deepcopy
 from typing import Union, Iterable, Optional, Any, Dict, List
 
-import cohere
 from tenacity import retry, stop_after_attempt
+
+try:
+    import cohere
+except (OSError, ImportError, ModuleNotFoundError):
+    _cohere_installed = False
+else:
+    _cohere_installed = True
 
 from canopy.llm import BaseLLM
 from canopy.llm.models import Function
@@ -63,6 +69,13 @@ class CohereLLM(BaseLLM):
                     These params can be overridden by passing a `model_params` argument to the `chat_completion` methods.
         """  # noqa: E501
         super().__init__(model_name)
+
+        if not _cohere_installed:
+            raise ImportError(
+                "Failed to import cohere. Make sure you install cohere extra "
+                "dependencies by running: "
+                "pip install canopy-sdk[cohere]"
+            )
 
         try:
             self._client = cohere.Client(api_key, api_url=base_url)
