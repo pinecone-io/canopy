@@ -1,7 +1,12 @@
 from typing import List, Optional
 
-import cohere
 from tokenizers import Tokenizer as HfTokenizer
+try:
+    import cohere
+except (OSError, ImportError, ModuleNotFoundError):
+    _cohere_installed = False
+else:
+    _cohere_installed = True
 
 from .base import BaseTokenizer
 from ..models.data_models import Messages
@@ -37,6 +42,13 @@ class CohereHFTokenizer(BaseTokenizer):
         Args:
             model_name: The name of the Hugging Face model to use. Defaults to "Cohere/Command-nightly".
         """  # noqa: E501
+        if not _cohere_installed:
+            raise ImportError(
+                "Failed to import cohere. Make sure you install cohere extra "
+                "dependencies by running: "
+                "pip install canopy-sdk[cohere]"
+            )
+
         self._encoder = HfTokenizer.from_pretrained(model_name)
 
     def tokenize(self, text: str) -> List[str]:
