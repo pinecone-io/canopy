@@ -34,12 +34,12 @@ class OctoAIRecordEncoder(DenseRecordEncoder):
                  batch_size: int = 1,
                  **kwargs):
 
-        ae_api_key = api_key or os.environ.get("OCTOAI_TOKEN")
+        ae_api_key = api_key or os.environ.get("OCTOAI_API_KEY")
         if not ae_api_key:
             raise ValueError(
                 "An OctoAI API token is required to use OctoAI. "
                 "Please provide it as an argument "
-                "or set the OCTOAI_TOKEN environment variable."
+                "or set the OCTOAI_API_KEY environment variable."
             )
         ae_base_url = base_url
         encoder = OpenAIEncoder(model_name,
