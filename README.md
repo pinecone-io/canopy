@@ -220,7 +220,7 @@ This will open a similar chat interface window, but will show both the RAG and n
 
 ## Considerations
 
-* Canopy currently only supports OpenAI as the backend for both the embedding model and the LLM. Rate limits and pricing set by OpenAI will apply.  
+* Rate limits and pricing set by model providers apply to Canopy usage. Canopy currently works with OpenAI, Azure OpenAI, Anyscale, and Cohere models.
 * More integrations will be supported in the near future.
 
 ## Contributing
@@ -248,18 +248,17 @@ client = OpenAI(base_url="http://localhost:8000/v1/my-namespace")
 
 ### Running Canopy server in production
 
-Canopy is using FastAPI as the web framework and Uvicorn as the ASGI server. It is recommended to use Gunicorn as the production server, mainly because it supports multiple worker processes and can handle multiple requests in parallel, more details can be found [here](https://www.uvicorn.org/deployment/#using-a-process-manager).
-
-To run the canopy server for production, please run:
-
-```bash
-gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:PORT --workers WORKER_COUNT
-```
-
-Alternatively, consider utilizing the Canopy Docker image available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy) 
-for your production needs. For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
+Canopy is using FastAPI as the web framework and Uvicorn as the ASGI server.  
+To use Canopy in production, it is recommended to utilize Canopy's docker image, available on [GitHub Packages](https://github.com/pinecone-io/canopy/pkgs/container/canopy), 
+for your production needs.  
+For guidance on deploying Canopy on the Google Cloud Platform (GCP), refer to the example provided in the
 [Deployment to GCP](docs/deployment-gcp.md) documentation.
 
+Alternatively, you can use Gunicorn as production-grade WSGI, more details [here](https://www.uvicorn.org/deployment/#using-a-process-manager).  
+Set your desired `PORT` and `WORKER_COUNT` envrionment variables, and start the server with:
+```bash
+gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers $WORKER_COUNT
+```
 
 > [!IMPORTANT]
 >  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
