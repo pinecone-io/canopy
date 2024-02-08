@@ -179,7 +179,7 @@ class CanopyCommandGroup(click.Group):
             "health": 4,
             "stop": 5,
             "api-docs": 6,
-            "gen-config": 7,
+            "create-config": 7,
         }
 
     def list_commands(self, ctx):
@@ -214,10 +214,14 @@ def health(url):
 @cli.command(help="Writes a config template YAML file to the specified path.")
 @click.argument("path", type=click.Path(), required=True)
 @click.option("--template", default="default", help="The name of the template to use.")
-def gen_config(path, template):
+def create_config(path, template):
 
     if not template.endswith('.yaml'):
         template += '.yaml'
+
+    if os.path.exists(path):
+        click.confirm(click.style(f"File {path} already exists. Overwrite?", fg="red"),
+                      abort=True)
 
     try:
         with pkg_resources.open_text('canopy.config', template) as f:
