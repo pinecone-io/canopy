@@ -77,6 +77,7 @@ module = [
     'pinecone_datasets',
     'pinecone',
     'transformers.*',
+    'tokenizers.*',
     'cohere.*',
     'pinecone.grpc',
     'huggingface_hub.utils'
