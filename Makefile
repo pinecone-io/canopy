@@ -1,7 +1,7 @@
 TEST_WORKER_COUNT = 8
 
-POETRY_INSTALL_SYSTEM_ARGS = -E cohere -E transformers
-POETRY_INSTALL_EXTRA_ARGS =
+POETRY_DEFAULT_EXTRAS = -E cohere -E transformers
+POETRY_INSTALL_ARGS =
 
 REPOSITORY = ghcr.io/pinecone-io/canopy
 IMAGE_TAG = $(shell poetry version -s)
@@ -10,7 +10,7 @@ CONTAINER_PORT = 8000
 CONTAINER_ENV_FILE = .env
 CONTAINER_BUILD_DIR = .
 CONTAINER_BUILD_PLATFORM = linux/amd64
-CONTAINER_SYSTEM_BUILD_ARGS = --progress plain --platform $(CONTAINER_BUILD_PLATFORM) --build-arg PORT=$(CONTAINER_PORT) --build-arg POETRY_INSTALL_ARGS="$(POETRY_INSTALL_SYSTEM_ARGS) $(POETRY_INSTALL_EXTRA_ARGS)"
+CONTAINER_SYSTEM_BUILD_ARGS = --progress plain --platform $(CONTAINER_BUILD_PLATFORM) --build-arg PORT=$(CONTAINER_PORT) --build-arg POETRY_INSTALL_ARGS="$(POETRY_DEFAULT_EXTRAS) $(POETRY_INSTALL_ARGS)"
 CONTAINER_EXTRA_BUILD_ARGS =
 
 # Only add the env file if it exists
@@ -18,7 +18,7 @@ CONTAINER_SYSTEM_RUN_ARGS = --platform linux/amd64 -p $(CONTAINER_PORT):$(CONTAI
 CONTAINER_EXTRA_RUN_ARGS =
 
 
-.PHONY: lint static install test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev print-var help
+.PHONY: lint static install install-extras install-all-extras test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev print-var help
 
 lint:
 	poetry run flake8 .
@@ -27,7 +27,13 @@ static:
 	poetry run mypy src
 
 install:
-	poetry install $(POETRY_INSTALL_SYSTEM_ARGS) $(POETRY_INSTALL_EXTRA_ARGS)
+	poetry install $(POETRY_INSTALL_ARGS)
+
+install-extras:
+	poetry install $(POETRY_DEFAULT_EXTRAS) $(POETRY_INSTALL_ARGS)
+
+install-all-extras:
+	poetry install --all-extras $(POETRY_INSTALL_ARGS)
 
 test:
 	poetry run pytest -n $(TEST_WORKER_COUNT) --dist loadscope
@@ -64,7 +70,9 @@ help:
 	@echo "Available targets:"
 	@echo ""
 	@echo " -- DEV -- "
-	@echo "  make install                     - Install all the dependencies with default extras."
+	@echo "  make install                     - Install only the required dependencies without any extras."
+	@echo "  make install-extras              - Install the dependencies with the default extras."
+	@echo "  make install-all-extras          - Install the dependencies with all extras."
 	@echo "  make lint                        - Lint the code."
 	@echo "  make static                      - Run static type checks."
 	@echo "  make test                        - Test the code."
