@@ -13,7 +13,7 @@
 * Generalize chunk creation [#258](https://github.com/pinecone-io/canopy/pull/258)
 * Add SentenceTransformersRecordEncoder [#263](https://github.com/pinecone-io/canopy/pull/263) (Thanks @tomaarsen!)
 * Add HybridRecordEncoder [#265](https://github.com/pinecone-io/canopy/pull/265)
-* Make transformers optional + allow pinecone-text with dense optional [#266](https://github.com/pinecone-io/canopy/pull/266)
+* Make transformers optional & allow pinecone-text with dense optional [#266](https://github.com/pinecone-io/canopy/pull/266)
 * Add cohere reranker [#269](https://github.com/pinecone-io/canopy/pull/269)
 * Add dimension support for OpenAI embeddings [#273](https://github.com/pinecone-io/canopy/pull/273)
 
