@@ -195,6 +195,16 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ### Stopping the server 
 To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
+### Dumping a config Yaml template file
+
+The first step in writing your own configuration file is to start from a valid template. You can dump a configuration file template using the following command:
+
+```bash
+canopy gen-config /path/to/my-config.yaml --template cohere.yaml
+```
+
+You can find the available templates under [src/canopy/config](src/canopy/config/).
+
 
 ## Evaluation chat tool
 
