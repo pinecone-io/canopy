@@ -3,6 +3,7 @@
 
 ARG PYTHON_VERSION=3.11.7
 ARG PORT=8000
+ARG POETRY_INSTALL_ARGS=""
 ################################
 # PYTHON-BASE
 # Sets up all our shared environment variables
@@ -63,9 +64,10 @@ WORKDIR /app
 COPY pyproject.toml ./
 RUN poetry lock
 
+ARG POETRY_INSTALL_ARGS
 # install runtime deps to VIRTUAL_ENV
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --no-root --all-extras --only main
+    poetry install --no-root --only main $POETRY_INSTALL_ARGS
 
 
 ################################
@@ -78,13 +80,13 @@ WORKDIR /app
 COPY --from=builder-base /app/pyproject.toml pyproject.toml
 COPY --from=builder-base /app/poetry.lock poetry.lock
 
-
+ARG POETRY_INSTALL_ARGS
 # quicker install as runtime deps are already installed
 RUN --mount=type=cache,target=/root/.cache \
-    poetry install --no-root --all-extras --with dev
+    poetry install --no-root --with dev $POETRY_INSTALL_ARGS
 
 COPY . .
-RUN poetry install --all-extras --only-root
+RUN poetry install --only-root $POETRY_INSTALL_ARGS
 
 ARG PORT
 EXPOSE $PORT
@@ -101,7 +103,7 @@ FROM python-base as production
 ENV WORKER_COUNT=1
 
 LABEL org.opencontainers.image.source="https://github.com/pinecone-io/canopy"
-LABEL org.opencontainers.image.description="Image containing the canopy server."
+LABEL org.opencontainers.image.description="Retrieval Augmented Generation (RAG) framework and context engine powered by Pinecone"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
@@ -121,7 +123,8 @@ COPY --from=builder-base /app/poetry.lock poetry.lock
 COPY src/ src/
 COPY config/ config/
 RUN touch README.md
-RUN poetry install --all-extras --only-root
+ARG POETRY_INSTALL_ARGS
+RUN poetry install --only-root $POETRY_INSTALL_ARGS
 
 ARG PORT
 EXPOSE $PORT
