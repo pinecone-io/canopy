@@ -121,7 +121,6 @@ COPY --from=builder-base /app/pyproject.toml pyproject.toml
 COPY --from=builder-base /app/poetry.lock poetry.lock
 
 COPY src/ src/
-COPY config/ config/
 RUN touch README.md
 ARG POETRY_INSTALL_ARGS
 RUN poetry install --only-root $POETRY_INSTALL_ARGS
