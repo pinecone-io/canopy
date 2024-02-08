@@ -195,6 +195,7 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 ### Stopping the server 
 To stop the server, simply press `CTRL+C` in the terminal where you started it.
 
+
 ## Evaluation chat tool
 
 Canopy's CLI comes with a built-in chat app that allows you to interactively chat with your text data and compare RAG vs. non-RAG workflows side-by-side to evaluate the results
