@@ -2,6 +2,7 @@ import os
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
+import importlib.resources as pkg_resources
 from prompt_toolkit import prompt
 import time
 
@@ -178,7 +179,7 @@ class CanopyCommandGroup(click.Group):
             "health": 4,
             "stop": 5,
             "api-docs": 6,
-
+            "create-config": 7,
         }
 
     def list_commands(self, ctx):
@@ -208,6 +209,40 @@ def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
     return
+
+
+@cli.command(help="Writes a config template YAML file to the specified path.")
+@click.argument("path", type=click.Path(), required=True)
+@click.option("--template", default="default", help="The name of the template to use.")
+def create_config(path, template):
+
+    if not template.endswith('.yaml'):
+        template += '.yaml'
+
+    if os.path.exists(path):
+        click.confirm(click.style(f"File {path} already exists. Overwrite?", fg="red"),
+                      abort=True)
+
+    try:
+        with pkg_resources.open_text('canopy.config', template) as f:
+            config = yaml.safe_load(f)
+    except FileNotFoundError:
+        files = pkg_resources.files('canopy.config')
+        template_names = [f.name for f in files.iterdir()]
+        click.echo(f"Template '{template}' not found."
+                   f"Available templates: {template_names}",
+                   err=True)
+        return
+    except Exception as e:
+        click.echo(f"Failed to load template '{template}'. Reason: {e}"
+                   f"Make sure you pip installed `canopy-sdk`.",
+                   err=True)
+        return
+
+    with open(path, 'w') as dst_file:
+        yaml.dump(config, dst_file)
+
+    click.echo(f"Config template '{template}' written to {path}")
 
 
 @cli.command(
