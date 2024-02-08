@@ -11,11 +11,11 @@ CONTAINER_ENV_FILE = .env
 CONTAINER_BUILD_DIR = .
 CONTAINER_BUILD_PLATFORM = linux/amd64
 CONTAINER_SYSTEM_BUILD_ARGS = --progress plain --platform $(CONTAINER_BUILD_PLATFORM) --build-arg PORT=$(CONTAINER_PORT) --build-arg POETRY_INSTALL_ARGS="$(POETRY_DEFAULT_EXTRAS) $(POETRY_INSTALL_ARGS)"
-CONTAINER_EXTRA_BUILD_ARGS =
+CONTAINER_BUILD_ARGS =
 
 # Only add the env file if it exists
 CONTAINER_SYSTEM_RUN_ARGS = --platform linux/amd64 -p $(CONTAINER_PORT):$(CONTAINER_PORT) $(shell [ -e "$(CONTAINER_ENV_FILE)" ] && echo "--env-file $(CONTAINER_ENV_FILE)")
-CONTAINER_EXTRA_RUN_ARGS =
+CONTAINER_RUN_ARGS =
 
 
 .PHONY: lint static install install-extras install-all-extras test test-unit test-system test-e2e docker-build docker-build-dev docker-run docker-run-dev print-var help
@@ -49,19 +49,19 @@ test-e2e:
 
 docker-build:
 	@echo "Building Docker image..."
-	docker build $(CONTAINER_SYSTEM_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
+	docker build $(CONTAINER_SYSTEM_BUILD_ARGS) $(CONTAINER_BUILD_ARGS) -t $(REPOSITORY):$(IMAGE_TAG) $(CONTAINER_BUILD_DIR)
 	@echo "Docker build complete."
 
 docker-build-dev:
 	@echo "Building Docker image for development..."
-	docker build $(CONTAINER_SYSTEM_BUILD_ARGS) $(CONTAINER_EXTRA_BUILD_ARGS) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
+	docker build $(CONTAINER_SYSTEM_BUILD_ARGS) $(CONTAINER_BUILD_ARGS) -t $(REPOSITORY)-dev:$(IMAGE_TAG) --target=development $(CONTAINER_BUILD_DIR)
 	@echo "Development Docker build complete."
 
 docker-run:
-	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) $(REPOSITORY):$(IMAGE_TAG)
+	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_RUN_ARGS) $(REPOSITORY):$(IMAGE_TAG)
 
 docker-run-dev:
-	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_EXTRA_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
+	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 print-var:
 	@echo $($(VAR))
