@@ -1,13 +1,12 @@
 import os
 
 import pytest
-import yaml
 
 from canopy.chat_engine import ChatEngine
 from canopy.context_engine import ContextEngine
 from canopy.knowledge_base import KnowledgeBase
+from canopy.utils.config import load_config_template
 
-DEFAULT_CONFIG_PATH = 'src/canopy/config/default.yaml'
 
 
 @pytest.fixture(scope='module')
@@ -24,8 +23,7 @@ def temp_index_name():
 
 
 def test_default_config_matches_code_defaults(temp_index_name):
-    with open(DEFAULT_CONFIG_PATH) as f:
-        default_config = yaml.safe_load(f)
+    default_config = load_config_template("default.yaml")
     chat_engine_config = default_config['chat_engine']
 
     loaded_chat_engine = ChatEngine.from_config(chat_engine_config)

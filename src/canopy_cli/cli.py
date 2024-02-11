@@ -1,8 +1,8 @@
 import os
+import shutil
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
-import importlib.resources as pkg_resources
 from prompt_toolkit import prompt
 import time
 
@@ -211,38 +211,28 @@ def health(url):
     return
 
 
-@cli.command(help="Writes a config template YAML file to the specified path.")
-@click.argument("path", type=click.Path(), required=True)
-@click.option("--template", default="default", help="The name of the template to use.")
-def create_config(path, template):
+@cli.command(help="Writes the config templates to a directory.")
+@click.argument("out_path", type=click.Path(), required=True)
+def create_config(out_path):
 
-    if not template.endswith('.yaml'):
-        template += '.yaml'
+    if os.path.isfile(out_path):
+        raise CLIError(f"Path expected to be a directory,"
+                       f"but found a file at {out_path}")
 
-    if os.path.exists(path):
-        click.confirm(click.style(f"File {path} already exists. Overwrite?", fg="red"),
+    if os.path.exists(out_path) and os.path.isdir(out_path) and os.listdir(out_path):
+        click.confirm(click.style(f"Path {out_path} is not empty. Overwrite?",
+                                  fg="red"),
                       abort=True)
 
+    project_root = os.path.dirname(os.path.dirname(__file__))
+    config_templates_path = os.path.join(project_root, "canopy", "config_templates")
+
     try:
-        with pkg_resources.open_text('canopy.config', template) as f:
-            config = yaml.safe_load(f)
-    except FileNotFoundError:
-        files = pkg_resources.files('canopy.config')
-        template_names = [f.name for f in files.iterdir()]
-        click.echo(f"Template '{template}' not found."
-                   f"Available templates: {template_names}",
-                   err=True)
-        return
+        shutil.copytree(config_templates_path, out_path, dirs_exist_ok=True)
     except Exception as e:
-        click.echo(f"Failed to load template '{template}'. Reason: {e}"
-                   f"Make sure you pip installed `canopy-sdk`.",
-                   err=True)
-        return
+        raise CLIError(f"Failed to write config template to {out_path}. Reason:\n{e}")
 
-    with open(path, 'w') as dst_file:
-        yaml.dump(config, dst_file)
-
-    click.echo(f"Config template '{template}' written to {path}")
+    click.echo(click.style(f"Config templates written to {out_path}", fg="green"))
 
 
 @cli.command(
