@@ -8,7 +8,6 @@ from canopy.knowledge_base import KnowledgeBase
 from canopy.utils.config import load_config_template
 
 
-
 @pytest.fixture(scope='module')
 def temp_index_name():
     index_name_before = os.getenv("INDEX_NAME", None)
