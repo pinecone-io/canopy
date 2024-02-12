@@ -132,7 +132,7 @@ async def chat(
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
-        model_params = request.dict(exclude={"messages", "stream"})
+        model_params = request.model_dump(exclude={"messages", "stream"})
         answer = await run_in_threadpool(
             chat_engine.chat,
             messages=request.messages,

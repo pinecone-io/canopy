@@ -1,6 +1,6 @@
 from typing import Optional, List, Union
 
-from pydantic import BaseModel
+from pydantic import BaseModel, model_serializer
 
 
 class FunctionPrimitiveProperty(BaseModel):
@@ -17,8 +17,8 @@ class FunctionArrayProperty(BaseModel):
     # because the model is more struggling with them
     description: str
 
-    def dict(self, *args, **kwargs):
-        super_dict = super().dict(*args, **kwargs)
+    def model_dump(self, *args, **kwargs):
+        super_dict = super().model_dump(*args, **kwargs)
         if "items_type" in super_dict:
             super_dict["type"] = "array"
             super_dict["items"] = {"type": super_dict.pop("items_type")}
@@ -32,11 +32,12 @@ class FunctionParameters(BaseModel):
     required_properties: List[FunctionProperty]
     optional_properties: List[FunctionProperty] = []
 
-    def dict(self, *args, **kwargs):
+    @model_serializer()
+    def serialize_model(self):
         return {
             "type": "object",
             "properties": {
-                pro.name: pro.dict(exclude_none=True, exclude={"name"})
+                pro.name: pro.model_dump(exclude_none=True, exclude={"name"})
                 for pro in self.required_properties + self.optional_properties
             },
             "required": [pro.name for pro in self.required_properties],

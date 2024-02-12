@@ -408,7 +408,7 @@ def upsert(index_name: str,
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
-    click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
+    click.echo(pd.DataFrame([doc.model_dump(exclude_none=True) for doc in data[:5]]))
     click.echo(click.style(f"\nTotal records: {len(data)}"))
     click.confirm(click.style("\nDoes this data look right?", fg="red"),
                   abort=True)

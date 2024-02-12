@@ -121,8 +121,8 @@ class OpenAILLM(BaseLLM):
             system_message = system_prompt
         else:
             system_message = system_prompt + f"\nContext: {context.to_text()}"
-        messages = [SystemMessage(content=system_message).dict()
-                    ] + [m.dict() for m in chat_history]
+        messages = [SystemMessage(content=system_message).model_dump()
+                    ] + [m.model_dump() for m in chat_history]
         try:
             response = self._client.chat.completions.create(model=model,
                                                             messages=messages,
@@ -133,12 +133,12 @@ class OpenAILLM(BaseLLM):
 
         def streaming_iterator(response):
             for chunk in response:
-                yield StreamingChatChunk.parse_obj(chunk)
+                yield StreamingChatChunk.model_validate(chunk.model_dump())
 
         if stream:
             return streaming_iterator(response)
 
-        return ChatResponse.parse_obj(response)
+        return ChatResponse.model_validate(response.model_dump())
 
     @retry(
         reraise=True,
@@ -206,10 +206,10 @@ class OpenAILLM(BaseLLM):
         model = model_params_dict.pop("model", self.model_name)
 
         function_dict = cast(ChatCompletionToolParam,
-                             {"type": "function", "function": function.dict()})
+                             {"type": "function", "function": function.model_dump()})
 
-        messages = [SystemMessage(content=system_prompt).dict()
-                    ] + [m.dict() for m in chat_history]
+        messages = [SystemMessage(content=system_prompt).model_dump()
+                    ] + [m.model_dump() for m in chat_history]
         try:
             chat_completion = self._client.chat.completions.create(
                 model=model,
@@ -226,7 +226,7 @@ class OpenAILLM(BaseLLM):
         result = chat_completion.choices[0].message.tool_calls[0].function.arguments
         arguments = json.loads(result)
 
-        jsonschema.validate(instance=arguments, schema=function.parameters.dict())
+        jsonschema.validate(instance=arguments, schema=function.parameters.model_dump())
         return arguments
 
     async def achat_completion(self,

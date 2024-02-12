@@ -111,7 +111,7 @@ def test_chat_completion_with_context(openai_llm, messages):
                                           chat_history=messages,
                                           context=Context(
                                               content=StringContextContent(
-                                                  __root__="context from kb"
+                                                  root="context from kb"
                                               ),
                                               num_tokens=5
                                           ))

@@ -223,7 +223,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
                                                         expected_chat_kwargs,
                                                         system_prompt):
     cohere_llm._client = MagicMock(wraps=cohere_llm._client)
-    content = StuffingContextContent(__root__=[
+    content = StuffingContextContent(root=[
         ContextQueryResult(query="", snippets=[
             ContextSnippet(
                 source="https://www.example.com/document",

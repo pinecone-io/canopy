@@ -6,8 +6,7 @@ from canopy.models.data_models import UserMessage, \
 from canopy.tokenizer import Tokenizer
 
 
-SAMPLE_CONTEXT = Context(content=StringContextContent(
-    __root__="Some context information"), num_tokens=3
+SAMPLE_CONTEXT = Context(content=StringContextContent(root="Some context information"), num_tokens=3
 )
 SYSTEM_PROMPT = "This is a system prompt."
 

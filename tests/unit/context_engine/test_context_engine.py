@@ -186,11 +186,11 @@ def test_context_query_result_to_text():
     query_result = ContextQueryResult(query="How does photosynthesis work?",
                                       snippets=[ContextSnippet(text="42",
                                                                source="ref")])
-    context = Context(content=StuffingContextContent(__root__=[query_result]),
+    context = Context(content=StuffingContextContent(root=[query_result]),
                       num_tokens=1)
 
-    assert context.to_text() == json.dumps([query_result.dict()])
-    assert context.to_text(indent=2) == json.dumps([query_result.dict()], indent=2)
+    assert context.to_text() == json.dumps([query_result.model_dump()])
+    assert context.to_text(indent=2) == json.dumps([query_result.model_dump()], indent=2)
 
 
 @pytest.mark.asyncio

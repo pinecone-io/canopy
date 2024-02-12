@@ -50,7 +50,7 @@ class TestStuffingContextBuilder:
                         ])
         ]
         self.full_context = Context(
-            content=StuffingContextContent(__root__=[
+            content=StuffingContextContent(root=[
                 ContextQueryResult(query="test query 1",
                                    snippets=[
                                        ContextSnippet(
@@ -80,7 +80,7 @@ class TestStuffingContextBuilder:
     def test_context_exceeds_max_tokens(self):
         context = self.builder.build(self.query_results, max_context_tokens=30)
 
-        expected_context = Context(content=StuffingContextContent(__root__=[
+        expected_context = Context(content=StuffingContextContent(root=[
             ContextQueryResult(query="test query 1",
                                snippets=[
                                    ContextSnippet(
@@ -102,7 +102,7 @@ class TestStuffingContextBuilder:
         self.query_results[0].documents[0].text = self.text1 * 100
         context = self.builder.build(self.query_results, max_context_tokens=20)
 
-        expected_context = Context(content=StuffingContextContent(__root__=[
+        expected_context = Context(content=StuffingContextContent(root=[
             ContextQueryResult(query="test query 2",
                                snippets=[
                                    ContextSnippet(
@@ -118,17 +118,17 @@ class TestStuffingContextBuilder:
     def test_whole_query_results_not_fit(self):
         context = self.builder.build(self.query_results, max_context_tokens=10)
         assert context.num_tokens == 1
-        assert context.content == []
+        assert context.content.model_dump() == []
 
     def test_max_tokens_zero(self):
         context = self.builder.build(self.query_results, max_context_tokens=0)
         self.assert_num_tokens(context, 1)
-        assert context.content == []
+        assert context.content.model_dump() == []
 
     def test_empty_query_results(self):
         context = self.builder.build([], max_context_tokens=100)
         self.assert_num_tokens(context, 1)
-        assert context.content == []
+        assert context.content.model_dump() == []
 
     def test_documents_with_duplicates(self):
         duplicate_query_results = self.query_results + [
@@ -173,7 +173,7 @@ class TestStuffingContextBuilder:
         context = self.builder.build(
             empty_query_results, max_context_tokens=100)
         self.assert_num_tokens(context, 1)
-        assert context.content == []
+        assert context.content.model_dump() == []
 
     def assert_num_tokens(self, context: Context, max_tokens: int):
         assert context.num_tokens <= max_tokens

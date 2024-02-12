@@ -1,3 +1,4 @@
+import json
 from itertools import zip_longest
 from typing import List, Tuple
 
@@ -23,15 +24,12 @@ class ContextQueryResult(BaseModel):
 
 
 class StuffingContextContent(ContextContent):
-    __root__: List[ContextQueryResult]
-
-    def dict(self, **kwargs):
-        return super().dict(**kwargs)['__root__']
+    root: List[ContextQueryResult]
 
     # In the case of StuffingContextBuilder, we simply want the text representation to
     # be a json. Other ContextContent subclasses may render into text differently
     def to_text(self, **kwargs):
-        return self.json(**kwargs)
+        return json.dumps(self.model_dump(), **kwargs)
 
 
 # ------------- CONTEXT BUILDER -------------
@@ -52,10 +50,10 @@ class StuffingContextBuilder(ContextBuilder):
             ContextQueryResult(query=qr.query, snippets=[])
             for qr in query_results]
         debug_info = {"num_docs": len(sorted_docs_with_origin), "snippet_ids": []}
-        content = StuffingContextContent(__root__=context_query_results)
+        content = StuffingContextContent(root=context_query_results)
 
         if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
-            return Context(content=StuffingContextContent(__root__=[]),
+            return Context(content=StuffingContextContent(root=[]),
                            num_tokens=1, debug_info=debug_info)
 
         seen_doc_ids = set()
@@ -78,7 +76,7 @@ class StuffingContextBuilder(ContextBuilder):
 
         # remove queries with no snippets
         content = StuffingContextContent(
-            __root__=[qr for qr in context_query_results if len(qr.snippets) > 0]
+            root=[qr for qr in context_query_results if len(qr.snippets) > 0]
         )
 
         return Context(content=content,
