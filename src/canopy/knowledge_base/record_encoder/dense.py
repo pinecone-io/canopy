@@ -52,7 +52,9 @@ class DenseRecordEncoder(RecordEncoder):
             encoded queries: A list of KBQuery, with the `values` field populated by the generated embeddings vector.
         """  # noqa: E501
         dense_values = self._dense_encoder.encode_queries([q.text for q in queries])
-        return [KBQuery(**q.model_dump(), values=v) for q, v in zip(queries, dense_values)]
+        return [
+            KBQuery(**q.model_dump(), values=v) for q, v in zip(queries, dense_values)
+        ]
 
     @cached_property
     def dimension(self) -> int:

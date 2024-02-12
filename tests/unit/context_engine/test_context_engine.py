@@ -190,7 +190,8 @@ def test_context_query_result_to_text():
                       num_tokens=1)
 
     assert context.to_text() == json.dumps([query_result.model_dump()])
-    assert context.to_text(indent=2) == json.dumps([query_result.model_dump()], indent=2)
+    assert (context.to_text(indent=2) ==
+            json.dumps([query_result.model_dump()], indent=2))
 
 
 @pytest.mark.asyncio

@@ -5,7 +5,8 @@ import jsonschema
 import openai
 import json
 
-from openai.types.chat import ChatCompletionToolParam
+from openai import Stream
+from openai.types.chat import ChatCompletionToolParam, ChatCompletionChunk, ChatCompletion
 from tenacity import (
     retry,
     stop_after_attempt,
@@ -131,14 +132,14 @@ class OpenAILLM(BaseLLM):
         except openai.OpenAIError as e:
             self._handle_chat_error(e)
 
-        def streaming_iterator(response):
-            for chunk in response:
+        def streaming_iterator(chunks: Stream[ChatCompletionChunk]):
+            for chunk in chunks:
                 yield StreamingChatChunk.model_validate(chunk.model_dump())
 
         if stream:
-            return streaming_iterator(response)
+            return streaming_iterator(cast(Stream[ChatCompletionChunk], response))
 
-        return ChatResponse.model_validate(response.model_dump())
+        return ChatResponse.model_validate(cast(ChatCompletion, response).model_dump())
 
     @retry(
         reraise=True,
