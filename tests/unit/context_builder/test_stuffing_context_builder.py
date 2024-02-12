@@ -50,7 +50,7 @@ class TestStuffingContextBuilder:
                         ])
         ]
         self.full_context = Context(
-            content=StuffingContextContent(root=[
+            content=StuffingContextContent([
                 ContextQueryResult(query="test query 1",
                                    snippets=[
                                        ContextSnippet(
@@ -80,7 +80,7 @@ class TestStuffingContextBuilder:
     def test_context_exceeds_max_tokens(self):
         context = self.builder.build(self.query_results, max_context_tokens=30)
 
-        expected_context = Context(content=StuffingContextContent(root=[
+        expected_context = Context(content=StuffingContextContent([
             ContextQueryResult(query="test query 1",
                                snippets=[
                                    ContextSnippet(
@@ -102,7 +102,7 @@ class TestStuffingContextBuilder:
         self.query_results[0].documents[0].text = self.text1 * 100
         context = self.builder.build(self.query_results, max_context_tokens=20)
 
-        expected_context = Context(content=StuffingContextContent(root=[
+        expected_context = Context(content=StuffingContextContent([
             ContextQueryResult(query="test query 2",
                                snippets=[
                                    ContextSnippet(

@@ -50,10 +50,10 @@ class StuffingContextBuilder(ContextBuilder):
             ContextQueryResult(query=qr.query, snippets=[])
             for qr in query_results]
         debug_info = {"num_docs": len(sorted_docs_with_origin), "snippet_ids": []}
-        content = StuffingContextContent(root=context_query_results)
+        content = StuffingContextContent(context_query_results)
 
         if self._tokenizer.token_count(content.to_text()) > max_context_tokens:
-            return Context(content=StuffingContextContent(root=[]),
+            return Context(content=StuffingContextContent([]),
                            num_tokens=1, debug_info=debug_info)
 
         seen_doc_ids = set()
@@ -76,7 +76,7 @@ class StuffingContextBuilder(ContextBuilder):
 
         # remove queries with no snippets
         content = StuffingContextContent(
-            root=[qr for qr in context_query_results if len(qr.snippets) > 0]
+            [qr for qr in context_query_results if len(qr.snippets) > 0]
         )
 
         return Context(content=content,

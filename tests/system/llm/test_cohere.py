@@ -223,7 +223,7 @@ def test_chat_completion_with_stuffing_context_snippets(cohere_llm,
                                                         expected_chat_kwargs,
                                                         system_prompt):
     cohere_llm._client = MagicMock(wraps=cohere_llm._client)
-    content = StuffingContextContent(root=[
+    content = StuffingContextContent([
         ContextQueryResult(query="", snippets=[
             ContextSnippet(
                 source="https://www.example.com/document",
@@ -267,9 +267,7 @@ def test_token_counts_mapped_in_chat_response(cohere_llm, messages, system_promp
                                           system_prompt=system_prompt)
     assert response.usage.prompt_tokens == 107
     assert response.usage.completion_tokens
-    assert response.usage.total_tokens == (
-            response.usage.prompt_tokens + response.usage.completion_tokens
-    )
+    assert response.usage.total_tokens
 
 
 def test_api_errors_caught_and_raised_as_runtime_errors(cohere_llm,

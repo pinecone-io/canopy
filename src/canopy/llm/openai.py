@@ -6,7 +6,8 @@ import openai
 import json
 
 from openai import Stream
-from openai.types.chat import ChatCompletionToolParam, ChatCompletionChunk, ChatCompletion
+from openai.types.chat import (ChatCompletionToolParam, ChatCompletionChunk,
+                               ChatCompletion)
 from tenacity import (
     retry,
     stop_after_attempt,
