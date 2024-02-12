@@ -64,7 +64,7 @@ docker-run-dev:
 	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 print-var:
-	@echo $($(VAR))
+	@echo "$($(VAR))"
 
 help:
 	@echo "Available targets:"
