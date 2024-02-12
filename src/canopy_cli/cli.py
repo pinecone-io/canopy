@@ -5,7 +5,7 @@ from typing import Dict, Any, Optional, List, Iterable
 import click
 from prompt_toolkit import prompt
 import time
-
+from pathlib import Path
 import requests
 import yaml
 from dotenv import load_dotenv
@@ -22,6 +22,7 @@ from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
 from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
+from canopy.utils.directory import Directory
 from canopy_cli.data_loader import (
     load_from_path,
     IDsNotUniqueError,
@@ -215,20 +216,19 @@ def health(url):
 @click.argument("out_path", type=click.Path(), required=True)
 def create_config(out_path):
 
-    if os.path.isfile(out_path):
+    out_path = Path(out_path)
+
+    if out_path.is_file():
         raise CLIError(f"Path expected to be a directory,"
                        f"but found a file at {out_path}")
 
-    if os.path.exists(out_path) and os.path.isdir(out_path) and os.listdir(out_path):
+    if out_path.exists() and any(out_path.iterdir()):
         click.confirm(click.style(f"Path {out_path} is not empty. Overwrite?",
                                   fg="red"),
                       abort=True)
 
-    project_root = os.path.dirname(os.path.dirname(__file__))
-    config_templates_path = os.path.join(project_root, "canopy", "config_templates")
-
     try:
-        shutil.copytree(config_templates_path, out_path, dirs_exist_ok=True)
+        shutil.copytree(Directory.CONFIG_TEMPLATES, out_path, dirs_exist_ok=True)
     except Exception as e:
         raise CLIError(f"Failed to write config template to {out_path}. Reason:\n{e}")
 

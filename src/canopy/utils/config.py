@@ -1,16 +1,4 @@
-import os
-import yaml
 from typing import Dict, Any
-
-
-def load_config_template(name: str) -> Dict[str, Any]:
-    if not name.endswith(".yaml"):
-        name += ".yaml"
-
-    config_template_path = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                                        "config_templates", name)
-    with open(config_template_path, "r") as f:
-        return yaml.safe_load(f)
 
 
 class ConfigurableMixin:
