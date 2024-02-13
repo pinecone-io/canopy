@@ -37,7 +37,7 @@ def encoder():
 
 
 def test_dimension(encoder):
-    with patch('pinecone_text.dense.JinaEncoder.encode_documents') \
+    with patch('pinecone_text.dense.SentenceTransformerEncoder.encode_documents') \
             as mock_encode_documents:
         mock_encode_documents.return_value = [0.1, 0.2, 0.3]
         assert encoder.dimension == 3
