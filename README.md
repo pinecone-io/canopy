@@ -68,7 +68,7 @@ pip install canopy-sdk
 
 | Name           | Description                                                                                     |
 |----------------|-------------------------------------------------------------------------------------------------|
-| `grpc`         | To unlock some performance improvements by working with the GRPC version of the pinecone client |
+| `grpc`         | To unlock some performance improvements by working with the GRPC version of the Pinecone client |
 | `torch`        | To enable embeddings provided by sentence-transformers                                          |
 | `transformers` | To use LLamaTokenizer                                                                           |
 | `cohere`       | To use Cohere reranker                                                                          |
