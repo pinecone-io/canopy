@@ -58,6 +58,23 @@ source canopy-env/bin/activate
 pip install canopy-sdk
 ```
 
+<details>
+<summary>You can also install canopy-sdk with extras. <b><u>CLICK HERE</u></b> to see the available extras
+
+<br /> 
+</summary>
+
+### Extras
+
+| Name           | Description                                                                                     |
+|----------------|-------------------------------------------------------------------------------------------------|
+| `grpc`         | To unlock some performance improvements by working with the GRPC version of the pinecone client |
+| `torch`        | To enable embeddings provided by sentence-transformers                                          |
+| `transformers` | To use LLamaTokenizer                                                                           |
+| `cohere`       | To use Cohere reranker                                                                          |
+
+</details>
+
 2. Set up the environment variables
 
 ```bash
