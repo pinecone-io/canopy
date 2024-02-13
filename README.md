@@ -71,7 +71,7 @@ pip install canopy-sdk
 | `grpc`         | To unlock some performance improvements by working with the GRPC version of the [Pinecone Client](https://github.com/pinecone-io/pinecone-python-client) |
 | `torch`        | To enable embeddings provided by [sentence-transformers](https://www.sbert.net/)                                                                         |
 | `transformers` | If you are using Anyscale LLMs, it's recommended to use `LLamaTokenizer` tokenizer which requires transformers as dependency                             |
-| `cohere`       | To use the `CohereReranker`                                                                                                                              |
+| `cohere`       | To use Cohere reranker or/and Cohere LLM                                                                                                                 |
 
 </details>
 
