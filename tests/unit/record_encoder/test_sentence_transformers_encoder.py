@@ -39,13 +39,16 @@ def encoder():
 def test_dimension(encoder):
     with patch('pinecone_text.dense.SentenceTransformerEncoder.encode_documents') \
             as mock_encode_documents:
-        mock_encode_documents.return_value = [[0.1, 0.2, 0.3]]
+        mock_encode_documents.return_value = [0.1, 0.2, 0.3]
         assert encoder.dimension == 3
 
 
 def custom_encode(*args, **kwargs):
     input_to_encode = args[0]
-    return [[0.1, 0.2, 0.3] for _ in input_to_encode]
+    if isinstance(input_to_encode, list):
+        return [[0.1, 0.2, 0.3] for _ in input_to_encode]
+    else:
+        return [0.1, 0.2, 0.3]
 
 
 @pytest.mark.parametrize("items,function",

@@ -4,15 +4,16 @@ import time
 from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
-from pinecone import (ServerlessSpec, PodSpec, Index,
+from pinecone import (ServerlessSpec, PodSpec,
                       PineconeApiException)
 
 from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 try:
     from pinecone.grpc import PineconeGRPC as Pinecone
+    from pinecone.grpc import GRPCIndex as Index
 except ImportError:
-    from pinecone import Pinecone
+    from pinecone import Pinecone, Index
 
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
