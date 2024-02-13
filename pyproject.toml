@@ -47,8 +47,8 @@ grpc = ["pinecone-client"]
 
 
 [tool.poetry.group.dev.dependencies]
-jupyter = "^1.0.0"
 pytest = "^7.3.2"
+jupyter = "^1.0.0"
 mypy = "^1.4.1"
 flake8 = "^6.1.0"
 pytest-html = "^4.1.0"
