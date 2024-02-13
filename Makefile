@@ -1,6 +1,6 @@
 TEST_WORKER_COUNT = 8
 
-POETRY_DEFAULT_EXTRAS = -E cohere -E transformers
+POETRY_DEFAULT_EXTRAS = -E cohere -E transformers -E grpc
 POETRY_INSTALL_ARGS =
 
 REPOSITORY = ghcr.io/pinecone-io/canopy

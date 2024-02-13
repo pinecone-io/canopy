@@ -62,7 +62,7 @@ RUN --mount=type=cache,target=/root/.cache \
 # used to init dependencies
 WORKDIR /app
 COPY pyproject.toml ./
-RUN poetry lock
+RUN poetry lock -vv
 
 ARG POETRY_INSTALL_ARGS
 # install runtime deps to VIRTUAL_ENV
