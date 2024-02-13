@@ -35,6 +35,7 @@ def encoder():
         )
     return encoder
 
+
 def test_dimension(encoder):
     with patch('pinecone_text.dense.JinaEncoder.encode_documents') \
             as mock_encode_documents:
