@@ -8,7 +8,14 @@ class TestCohereHFTokenizer(BaseTestTokenizer):
     @staticmethod
     @pytest.fixture(scope="class")
     def tokenizer():
-        return CohereHFTokenizer()
+        try:
+            tokenizer = CohereHFTokenizer()
+        except ImportError:
+            pytest.skip(
+                "`cohere` extra not installed. Skipping CohereHFTokenizer unit "
+                "tests"
+            )
+        return tokenizer
 
     @staticmethod
     @pytest.fixture
