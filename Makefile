@@ -1,6 +1,6 @@
 TEST_WORKER_COUNT = 8
 
-POETRY_DEFAULT_EXTRAS = -E cohere -E transformers
+POETRY_DEFAULT_EXTRAS = -E cohere -E transformers -E grpc
 POETRY_INSTALL_ARGS =
 
 REPOSITORY = ghcr.io/pinecone-io/canopy
@@ -64,7 +64,7 @@ docker-run-dev:
 	docker run $(CONTAINER_SYSTEM_RUN_ARGS) $(CONTAINER_RUN_ARGS) -it $(REPOSITORY)-dev:$(IMAGE_TAG)
 
 print-var:
-	@echo $($(VAR))
+	@echo "$($(VAR))"
 
 help:
 	@echo "Available targets:"

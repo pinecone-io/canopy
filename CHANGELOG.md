@@ -1,4 +1,4 @@
-## [0.7.0] - 2024-02-08
+## [0.7.0] - 2024-02-15
 ### Breaking changes
 * Move config directory to be part of the canopy package [#278](https://github.com/pinecone-io/canopy/pull/278)
 
@@ -16,6 +16,7 @@
 * Make transformers optional & allow pinecone-text with dense optional [#266](https://github.com/pinecone-io/canopy/pull/266)
 * Add cohere reranker [#269](https://github.com/pinecone-io/canopy/pull/269)
 * Add dimension support for OpenAI embeddings [#273](https://github.com/pinecone-io/canopy/pull/273)
+* Include config template files inside the package and add a CLI command to dump them [#287](https://github.com/pinecone-io/canopy/pull/287)
 
 ### Documentation
 * Add contributing guide [#254](https://github.com/pinecone-io/canopy/pull/254)

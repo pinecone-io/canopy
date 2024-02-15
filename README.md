@@ -58,6 +58,23 @@ source canopy-env/bin/activate
 pip install canopy-sdk
 ```
 
+<details>
+<summary>You can also install canopy-sdk with extras. <b><u>CLICK HERE</u></b> to see the available extras
+
+<br /> 
+</summary>
+
+### Extras
+
+| Name           | Description                                                                                                                                              |
+|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `grpc`         | To unlock some performance improvements by working with the GRPC version of the [Pinecone Client](https://github.com/pinecone-io/pinecone-python-client) |
+| `torch`        | To enable embeddings provided by [sentence-transformers](https://www.sbert.net/)                                                                         |
+| `transformers` | If you are using Anyscale LLMs, it's recommended to use `LLamaTokenizer` tokenizer which requires transformers as dependency                             |
+| `cohere`       | To use Cohere reranker or/and Cohere LLM                                                                                                                 |
+
+</details>
+
 2. Set up the environment variables
 
 ```bash

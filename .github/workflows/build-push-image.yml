@@ -51,7 +51,7 @@ jobs:
       - name: Create build args
         run: |
           export POETRY_INSTALL_ARGS="$(make print-var VAR=POETRY_DEFAULT_EXTRAS)"
-          echo "POETRY_INSTALL_ARGS=\"$POETRY_INSTALL_ARGS\"" >> $GITHUB_OUTPUT
+          echo "POETRY_INSTALL_ARGS=$POETRY_INSTALL_ARGS" >> $GITHUB_OUTPUT
         id: build-args
       - name: Build and push
         uses: docker/build-push-action@v5
