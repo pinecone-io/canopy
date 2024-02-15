@@ -396,8 +396,8 @@ class CohereLLM(BaseLLM):
         """
         documents = []
 
-        for result in content.__root__:
+        for result in content.root:
             for snippet in result.snippets:
-                documents.append(snippet.dict())
+                documents.append(snippet.model_dump())
 
         return documents

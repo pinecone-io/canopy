@@ -1,6 +1,6 @@
 from typing import Optional, Sequence, Iterable
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from canopy.models.data_models import MessageBase
 
@@ -20,11 +20,7 @@ class _StreamChoice(BaseModel):
 class TokenCounts(BaseModel):
     prompt_tokens: int
     completion_tokens: int
-    total_tokens: Optional[int] = None
-
-    @validator("total_tokens", always=True)
-    def calc_total_tokens(cls, v, values, **kwargs):
-        return values["prompt_tokens"] + values["completion_tokens"]
+    total_tokens: int
 
 
 class ChatResponse(BaseModel):

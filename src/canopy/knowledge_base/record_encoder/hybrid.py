@@ -124,7 +124,7 @@ class HybridRecordEncoder(RecordEncoder):
             zip(dense_queries, sparse_values)
         ]
 
-        return [q.copy(update=dict(values=v, sparse_values=sv)) for q, (v, sv) in
+        return [q.model_copy(update=dict(values=v, sparse_values=sv)) for q, (v, sv) in
                 zip(dense_queries, scaled_values)]
 
     @property

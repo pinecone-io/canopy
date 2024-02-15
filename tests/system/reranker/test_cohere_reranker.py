@@ -62,7 +62,7 @@ def test_bad_api_key(should_run_test, query_result):
 
 
 def test_model_name_invalid(should_run_test, query_result):
-    with pytest.raises(RuntimeError, match="model not found"):
+    with pytest.raises(RuntimeError, match="model .* not found"):
         CohereReranker(model_name="my-madeup-model").rerank([query_result])
 
 

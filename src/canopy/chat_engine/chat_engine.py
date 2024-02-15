@@ -221,7 +221,7 @@ class ChatEngine(BaseChatEngine):
                                                 model_params=model_params_dict)
         debug_info = {}
         if CANOPY_DEBUG_INFO:
-            debug_info['context'] = context.dict()
+            debug_info['context'] = context.model_dump()
             debug_info['context'].update(context.debug_info)
 
         if stream:

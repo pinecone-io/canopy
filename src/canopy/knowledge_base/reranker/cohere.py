@@ -70,7 +70,7 @@ class CohereReranker(Reranker):
 
             reranked_docs = []
             for rerank_result in response:
-                doc = result.documents[rerank_result.index].copy(
+                doc = result.documents[rerank_result.index].model_copy(
                     deep=True,
                     update=dict(score=rerank_result.relevance_score)
                 )

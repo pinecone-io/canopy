@@ -445,7 +445,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                 query=rr.query,
                 documents=[
                     DocumentWithScore(
-                        **d.dict(exclude={
+                        **d.model_dump(exclude={
                             'document_id'
                         })
                     )
@@ -455,13 +455,13 @@ class KnowledgeBase(BaseKnowledgeBase):
                     query=r.query,
                     documents=[
                         DocumentWithScore(
-                            **d.dict(exclude={
+                            **d.model_dump(exclude={
                                 'document_id'
                             })
                         )
                         for d in r.documents
                     ]
-                ).dict()} if CANOPY_DEBUG_INFO else {}
+                ).model_dump()} if CANOPY_DEBUG_INFO else {}
             ) for rr, r in zip(ranked_results, results)
         ]
 

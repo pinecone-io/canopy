@@ -110,7 +110,7 @@ class ContextEngine(BaseContextEngine):
 
         if CANOPY_DEBUG_INFO:
             context.debug_info["query_results"] = [
-                {**qr.dict(), **qr.debug_info} for qr in query_results
+                {**qr.model_dump(), **qr.debug_info} for qr in query_results
             ]
         return context
 

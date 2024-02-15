@@ -127,7 +127,7 @@ a | b | c
                      '\ntext in level 3\n#### Level 4\ntext in level 4\n##### Level 5'
                      '\ntext in level 5\n###### Level 6\ntext in level 6',
                 source='doc_1',
-                metadata={'test': '1'},
+                metadata={'test': 1},
                 document_id='test_document_1'),
 
             KBDocChunk(
@@ -139,7 +139,7 @@ a | b | c
                      '~~Strikethrough text~~\n\n'
                      '## Another second level header\ntext after second level header',
                      source='doc_1',
-                     metadata={'test': '1'},
+                     metadata={'test': 1},
                      document_id='test_document_1'),
 
             KBDocChunk(
@@ -156,13 +156,13 @@ a | b | c
                      '\n\n## Blockquotes\n\n'
                      '> This is a blockquote.',
                 source='doc_1',
-                metadata={'test': '1'},
+                metadata={'test': 1},
                 document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_3',
                        text='## long text',
                        source='doc_1',
-                       metadata={'test': '1'},
+                       metadata={'test': 1},
                        document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_4',
@@ -176,7 +176,7 @@ a | b | c
                             'Inside, not gold, But memories and '
                             'tales. Of',
                        source='doc_1',
-                       metadata={'test': '1'},
+                       metadata={'test': 1},
                        document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_5',
@@ -185,7 +185,7 @@ a | b | c
                             'Of brave ancestors, And '
                             'magical whales.',
                        source='doc_1',
-                       metadata={'test': '1'},
+                       metadata={'test': 1},
                        document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_6',
@@ -195,7 +195,7 @@ a | b | c
                             "\nThe village united, "
                             "Bathed in tales' light.",
                        source='doc_1',
-                       metadata={'test': '1'},
+                       metadata={'test': 1},
                        document_id='test_document_1'),
 
             KBDocChunk(id='test_document_1_7',
@@ -206,13 +206,13 @@ a | b | c
                             "\n```\n## table"
                             "\na | b | c\n--- | --- | ---\n1 | 2 | 3",
                        source='doc_1',
-                       metadata={'test': '1'},
+                       metadata={'test': 1},
                        document_id='test_document_1'),
 
             KBDocChunk(id='test_document_3_0',
                        text='# short markdown\nmarkdown is short',
                        source='',
-                       metadata={'test': '2'},
+                       metadata={'test': 2},
                        document_id='test_document_3')
         ]
         return chunks
