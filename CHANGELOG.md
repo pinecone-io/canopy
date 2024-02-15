@@ -1,3 +1,9 @@
+## [0.8.0] - 2024-02-15
+### Breaking changes
+* Added support for Pydantic v2 [#288](https://github.com/pinecone-io/canopy/pull/288)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/v0.7.0...v0.8.0
+
 ## [0.7.0] - 2024-02-15
 ### Breaking changes
 * Move config directory to be part of the canopy package [#278](https://github.com/pinecone-io/canopy/pull/278)
