@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Optional
 
-from canopy.tokenizer import Tokenizer
-from canopy.models.data_models import Messages, SystemMessage, Context
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.tokenizer import Tokenizer
+from src.canopy.models.data_models import Messages, SystemMessage, Context
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class HistoryPruner(ABC, ConfigurableMixin):

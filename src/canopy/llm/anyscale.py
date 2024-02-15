@@ -1,8 +1,8 @@
 from typing import Optional, Any
 import os
-from canopy.llm import OpenAILLM
-from canopy.llm.models import Function
-from canopy.models.data_models import Messages
+from src.canopy.llm import OpenAILLM
+from src.canopy.llm.models import Function
+from src.canopy.models.data_models import Messages
 
 ANYSCALE_BASE_URL = "https://api.endpoints.anyscale.com/v1"
 

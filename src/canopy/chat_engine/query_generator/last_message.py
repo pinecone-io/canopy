@@ -1,7 +1,7 @@
 from typing import List
 
-from canopy.chat_engine.query_generator import QueryGenerator
-from canopy.models.data_models import Messages, Query, Role
+from src.canopy.chat_engine.query_generator import QueryGenerator
+from src.canopy.models.data_models import Messages, Query, Role
 
 
 class LastMessageQueryGenerator(QueryGenerator):

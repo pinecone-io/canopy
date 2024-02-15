@@ -2,17 +2,17 @@ import os
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional, cast
 
-from canopy.chat_engine.history_pruner import RecentHistoryPruner
-from canopy.chat_engine.history_pruner.base import HistoryPruner
-from canopy.chat_engine.query_generator import (QueryGenerator,
+from src.canopy.chat_engine.history_pruner import RecentHistoryPruner
+from src.canopy.chat_engine.history_pruner.base import HistoryPruner
+from src.canopy.chat_engine.query_generator import (QueryGenerator,
                                                 FunctionCallingQueryGenerator, )
-from canopy.context_engine import ContextEngine
-from canopy.tokenizer import Tokenizer
-from canopy.llm import BaseLLM, OpenAILLM
-from canopy.models.api_models import (StreamingChatChunk, ChatResponse,
+from src.canopy.context_engine import ContextEngine
+from src.canopy.tokenizer import Tokenizer
+from src.canopy.llm import BaseLLM, OpenAILLM
+from src.canopy.models.api_models import (StreamingChatChunk, ChatResponse,
                                       StreamingChatResponse, )
-from canopy.models.data_models import Context, Messages, SystemMessage
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.models.data_models import Context, Messages, SystemMessage
+from src.canopy.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
@@ -61,13 +61,13 @@ class ChatEngine(BaseChatEngine):
 
     Example:
 
-        >>> from canopy.chat_engine import ChatEngine
+        >>> from src.canopy.chat_engine import ChatEngine
         >>> chat_engine = ChatEngine(context_engine)
 
     Where you can follow the instructions in the [context engine](../context_engine/context_engine) to create a context engine.
     Then you can use the chat engine to chat with a user:
 
-        >>> from canopy.models.data_models import UserMessage
+        >>> from src.canopy.models.data_models import UserMessage
         >>> messages = [UserMessage(content="Hello! what is the capital of France?")]
         >>> response = chat_engine.chat(messages)
         >>> print(response.choices[0].message.content)
@@ -186,7 +186,7 @@ class ChatEngine(BaseChatEngine):
 
         Examples:
 
-            >>> from canopy.models.data_models import UserMessage
+            >>> from src.canopy.models.data_models import UserMessage
             >>> messages = [UserMessage(content="Hello! what is the capital of France?")]
             >>> response = chat_engine.chat(messages)
             >>> print(response.choices[0].message.content)

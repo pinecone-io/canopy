@@ -2,8 +2,8 @@ from typing import List
 
 from .langchain_text_splitter import Language, RecursiveCharacterTextSplitter
 from .recursive_character import RecursiveCharacterChunker
-from canopy.knowledge_base.models import KBDocChunk
-from canopy.models.data_models import Document
+from src.canopy.knowledge_base.models import KBDocChunk
+from src.canopy.models.data_models import Document
 
 
 class MarkdownChunker(RecursiveCharacterChunker):

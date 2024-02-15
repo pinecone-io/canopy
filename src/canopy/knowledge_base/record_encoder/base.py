@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from canopy.knowledge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
-from canopy.models.data_models import Query
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.knowledge_base.models import KBEncodedDocChunk, KBQuery, KBDocChunk
+from src.canopy.models.data_models import Query
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class RecordEncoder(ABC, ConfigurableMixin):

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from canopy.knowledge_base.models import KBQueryResult
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.knowledge_base.models import KBQueryResult
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class Reranker(ABC, ConfigurableMixin):

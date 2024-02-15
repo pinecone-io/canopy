@@ -1,8 +1,8 @@
 from typing import List
 from pinecone_text.dense.cohere_encoder import CohereEncoder
-from canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
-from canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
-from canopy.models.data_models import Query
+from src.canopy.knowledge_base.models import KBDocChunk, KBEncodedDocChunk, KBQuery
+from src.canopy.knowledge_base.record_encoder.dense import DenseRecordEncoder
+from src.canopy.models.data_models import Query
 
 
 class CohereRecordEncoder(DenseRecordEncoder):

@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from .langchain_text_splitter import RecursiveCharacterTextSplitter
 
-from canopy.knowledge_base.chunker.base import Chunker
-from canopy.knowledge_base.models import KBDocChunk
-from canopy.tokenizer import Tokenizer
-from canopy.models.data_models import Document
+from src.canopy.knowledge_base.chunker.base import Chunker
+from src.canopy.knowledge_base.models import KBDocChunk
+from src.canopy.tokenizer import Tokenizer
+from src.canopy.models.data_models import Document
 
 
 class RecursiveCharacterChunker(Chunker):

@@ -5,7 +5,7 @@ import os
 from typing import List
 
 # Taken from https://stackoverflow.com/a/67097076
-__version__ = importlib.metadata.version("canopy-sdk")
+__version__ = "0.5.0"
 
 
 IGNORED_WARNINGS: List[str] = [

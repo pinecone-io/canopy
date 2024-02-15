@@ -11,10 +11,10 @@ from tenacity import (
     stop_after_attempt,
     retry_if_exception_type,
 )
-from canopy.llm import BaseLLM
-from canopy.llm.models import Function
-from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Context, SystemMessage
+from src.canopy.llm import BaseLLM
+from src.canopy.llm.models import Function
+from src.canopy.models.api_models import ChatResponse, StreamingChatChunk
+from src.canopy.models.data_models import Messages, Context, SystemMessage
 
 
 def _format_openai_error(e):

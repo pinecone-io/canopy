@@ -1,11 +1,11 @@
 from typing import List, Optional
 
-from canopy.chat_engine.history_pruner import RaisingHistoryPruner
-from canopy.chat_engine.query_generator import QueryGenerator
-from canopy.llm import BaseLLM, OpenAILLM
-from canopy.llm.models import (Function, FunctionParameters,
+from src.canopy.chat_engine.history_pruner import RaisingHistoryPruner
+from src.canopy.chat_engine.query_generator import QueryGenerator
+from src.canopy.llm import BaseLLM, OpenAILLM
+from src.canopy.llm.models import (Function, FunctionParameters,
                                FunctionArrayProperty)
-from canopy.models.data_models import Messages, Query
+from src.canopy.models.data_models import Messages, Query
 
 DEFAULT_SYSTEM_PROMPT = """Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
 You should break down complex questions into sub-queries if needed.

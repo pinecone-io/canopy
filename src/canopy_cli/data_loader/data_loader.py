@@ -11,8 +11,8 @@ import pandas as pd
 
 from pydantic import ValidationError
 
-from canopy.models.data_models import Document
-from canopy_cli.data_loader.errors import (
+from src.canopy.models.data_models import Document
+from src.canopy_cli.data_loader.errors import (
     DataLoaderException,
     DocumentsValidationError,
     IDsNotUniqueError)

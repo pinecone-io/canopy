@@ -1,7 +1,7 @@
 import click
 from click import ClickException
 
-from canopy_cli.data_loader.data_loader import format_multiline
+from src.canopy_cli.data_loader.data_loader import format_multiline
 
 
 class CLIError(ClickException):

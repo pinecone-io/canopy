@@ -2,12 +2,12 @@ import os
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from canopy.context_engine.context_builder import StuffingContextBuilder
-from canopy.context_engine.context_builder.base import ContextBuilder
-from canopy.knowledge_base import KnowledgeBase
-from canopy.knowledge_base.base import BaseKnowledgeBase
-from canopy.models.data_models import Context, Query
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.context_engine.context_builder import StuffingContextBuilder
+from src.canopy.context_engine.context_builder.base import ContextBuilder
+from src.canopy.knowledge_base import KnowledgeBase
+from src.canopy.knowledge_base.base import BaseKnowledgeBase
+from src.canopy.models.data_models import Context, Query
+from src.canopy.utils.config import ConfigurableMixin
 
 CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
 
@@ -36,8 +36,8 @@ class ContextEngine(BaseContextEngine):
     To create a context engine, you must provide a knowledge base and optionally a context builder.
 
     Example:
-    >>> from canopy.context_engine import ContextEngine
-    >>> from canopy.models.data_models import Query
+    >>> from src.canopy.context_engine import ContextEngine
+    >>> from src.canopy.models.data_models import Query
     >>> context_engine = ContextEngine(knowledge_base=knowledge_base)
     >>> context_engine.query(Query(text="What is the capital of France?"), max_context_tokens=1000)
 
@@ -93,8 +93,8 @@ class ContextEngine(BaseContextEngine):
             A Context object containing the retrieved documents and metadata
 
         Example:
-        >>> from canopy.context_engine import ContextEngine
-        >>> from canopy.models.data_models import Query
+        >>> from src.canopy.context_engine import ContextEngine
+        >>> from src.canopy.models.data_models import Query
         >>> context_engine = ContextEngine(knowledge_base=knowledge_base)
         >>> context_engine.query(Query(text="What is the capital of France?"), max_context_tokens=1000)
         """  # noqa: E501

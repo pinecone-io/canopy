@@ -2,7 +2,7 @@ from typing import List
 
 from .base import Chunker
 from ..models import KBDocChunk
-from canopy.tokenizer import Tokenizer
+from src.canopy.tokenizer import Tokenizer
 from ...models.data_models import Document
 
 

@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from canopy.models.data_models import Messages
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.models.data_models import Messages
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class BaseTokenizer(ABC, ConfigurableMixin):

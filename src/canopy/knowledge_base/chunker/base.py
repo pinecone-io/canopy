@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from canopy.knowledge_base.models import KBDocChunk
-from canopy.models.data_models import Document
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.knowledge_base.models import KBDocChunk
+from src.canopy.models.data_models import Document
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class Chunker(ABC, ConfigurableMixin):

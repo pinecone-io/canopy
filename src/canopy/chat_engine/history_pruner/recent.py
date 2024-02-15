@@ -1,7 +1,7 @@
 from typing import Optional
 
-from canopy.chat_engine.history_pruner.base import HistoryPruner
-from canopy.models.data_models import Messages, Context
+from src.canopy.chat_engine.history_pruner.base import HistoryPruner
+from src.canopy.models.data_models import Messages, Context
 
 
 class RecentHistoryPruner(HistoryPruner):

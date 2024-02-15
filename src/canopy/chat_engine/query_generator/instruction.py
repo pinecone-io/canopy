@@ -4,11 +4,11 @@ from typing import List, Optional, cast
 
 from tenacity import retry, stop_after_attempt, retry_if_exception_type
 
-from canopy.chat_engine.history_pruner.raising import RaisingHistoryPruner
-from canopy.chat_engine.query_generator import QueryGenerator, LastMessageQueryGenerator
-from canopy.llm import BaseLLM, OpenAILLM
-from canopy.models.api_models import ChatResponse
-from canopy.models.data_models import Messages, Query, UserMessage
+from src.canopy.chat_engine.history_pruner.raising import RaisingHistoryPruner
+from src.canopy.chat_engine.query_generator import QueryGenerator, LastMessageQueryGenerator
+from src.canopy.llm import BaseLLM, OpenAILLM
+from src.canopy.models.api_models import ChatResponse
+from src.canopy.models.data_models import Messages, Query, UserMessage
 
 logger = logging.getLogger(__name__)
 

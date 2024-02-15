@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Union, Iterable, Optional
 
-from canopy.llm.models import Function
-from canopy.models.api_models import ChatResponse, StreamingChatChunk
-from canopy.models.data_models import Messages, Context
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.llm.models import Function
+from src.canopy.models.api_models import ChatResponse, StreamingChatChunk
+from src.canopy.models.data_models import Messages, Context
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class BaseLLM(ABC, ConfigurableMixin):

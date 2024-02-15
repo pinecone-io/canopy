@@ -3,8 +3,8 @@ from functools import cached_property
 from pinecone_text.dense.base_dense_ecoder import BaseDenseEncoder
 
 from .base import RecordEncoder
-from canopy.knowledge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
-from canopy.models.data_models import Query
+from src.canopy.knowledge_base.models import KBQuery, KBEncodedDocChunk, KBDocChunk
+from src.canopy.models.data_models import Query
 
 
 class DenseRecordEncoder(RecordEncoder):

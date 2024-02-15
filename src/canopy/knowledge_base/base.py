@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from canopy.knowledge_base.models import QueryResult
-from canopy.models.data_models import Query, Document
-from canopy.utils.config import ConfigurableMixin
+from src.canopy.knowledge_base.models import QueryResult
+from src.canopy.models.data_models import Query, Document
+from src.canopy.utils.config import ConfigurableMixin
 
 
 class BaseKnowledgeBase(ABC, ConfigurableMixin):
