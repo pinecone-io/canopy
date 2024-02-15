@@ -1,4 +1,4 @@
-## [0.7.0] - 2024-02-08
+## [0.7.0] - 2024-02-15
 ### Breaking changes
 * Move config directory to be part of the canopy package [#278](https://github.com/pinecone-io/canopy/pull/278)
 
