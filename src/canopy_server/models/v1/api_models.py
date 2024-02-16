@@ -1,3 +1,4 @@
+import os
 from typing import Optional, List
 
 from pydantic import BaseModel, Field
@@ -40,6 +41,7 @@ class ContextResponse(BaseModel):
 
 class ContextUpsertRequest(BaseModel):
     documents: List[Document]
+    index_name: str = Field(default=os.getenv("INDEX_NAME"), description="The name of the Pinecone Index.")
     batch_size: int = Field(
         default=200, description="The batch size to use when uploading documents chunks to the Pinecone Index."  # noqa: E501
     )
