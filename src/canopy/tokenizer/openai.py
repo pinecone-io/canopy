@@ -91,7 +91,7 @@ class OpenAITokenizer(BaseTokenizer):
         num_tokens = 0
         for message in messages:
             num_tokens += self.MESSAGE_TOKENS_OVERHEAD
-            for key, value in message.dict().items():
+            for key, value in message.model_dump().items():
                 num_tokens += self.token_count(value)
         num_tokens += self.FIXED_PREFIX_TOKENS
         return num_tokens

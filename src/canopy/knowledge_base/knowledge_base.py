@@ -4,15 +4,16 @@ import time
 from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
-from pinecone import (ServerlessSpec, PodSpec, Index,
+from pinecone import (ServerlessSpec, PodSpec,
                       PineconeApiException)
 
 from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 try:
     from pinecone.grpc import PineconeGRPC as Pinecone
+    from pinecone.grpc import GRPCIndex as Index
 except ImportError:
-    from pinecone import Pinecone
+    from pinecone import Pinecone, Index
 
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
@@ -444,7 +445,7 @@ class KnowledgeBase(BaseKnowledgeBase):
                 query=rr.query,
                 documents=[
                     DocumentWithScore(
-                        **d.dict(exclude={
+                        **d.model_dump(exclude={
                             'document_id'
                         })
                     )
@@ -454,13 +455,13 @@ class KnowledgeBase(BaseKnowledgeBase):
                     query=r.query,
                     documents=[
                         DocumentWithScore(
-                            **d.dict(exclude={
+                            **d.model_dump(exclude={
                                 'document_id'
                             })
                         )
                         for d in r.documents
                     ]
-                ).dict()} if CANOPY_DEBUG_INFO else {}
+                ).model_dump()} if CANOPY_DEBUG_INFO else {}
             ) for rr, r in zip(ranked_results, results)
         ]
 

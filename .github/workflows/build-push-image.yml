@@ -48,12 +48,19 @@ jobs:
             type=semver,pattern={{version}},enable=${{ github.event_name == 'push' }}
             type=raw,value=latest,enable=${{ github.event_name != 'push' }}
             type=raw,value=${{inputs.version}},enable=${{ github.event_name != 'push' }}
+      - name: Create build args
+        run: |
+          export POETRY_INSTALL_ARGS="$(make print-var VAR=POETRY_DEFAULT_EXTRAS)"
+          echo "POETRY_INSTALL_ARGS=$POETRY_INSTALL_ARGS" >> $GITHUB_OUTPUT
+        id: build-args
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64
           push: true
+          build-args: |
+            POETRY_INSTALL_ARGS=${{steps.build-args.outputs.POETRY_INSTALL_ARGS}}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           provenance: false

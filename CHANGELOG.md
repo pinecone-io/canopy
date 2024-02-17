@@ -1,3 +1,36 @@
+## [0.8.0] - 2024-02-15
+### Breaking changes
+* Added support for Pydantic v2 [#288](https://github.com/pinecone-io/canopy/pull/288)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/v0.7.0...v0.8.0
+
+## [0.7.0] - 2024-02-15
+### Breaking changes
+* Move config directory to be part of the canopy package [#278](https://github.com/pinecone-io/canopy/pull/278)
+
+### Bug fixes
+* Fix building images on release [#252](https://github.com/pinecone-io/canopy/pull/252)
+* Exporting the correct module CohereRecordEncoder [#264](https://github.com/pinecone-io/canopy/pull/264) (Thanks @tomaarsen!)
+* Fixed GRPC support [#270](https://github.com/pinecone-io/canopy/pull/270)
+* Change the minimum version of FastAPI to 0.93.0 [#279](https://github.com/pinecone-io/canopy/pull/279)
+* Reduce the docker image size [#277](https://github.com/pinecone-io/canopy/pull/277)
+
+### Added
+* Generalize chunk creation [#258](https://github.com/pinecone-io/canopy/pull/258)
+* Add SentenceTransformersRecordEncoder [#263](https://github.com/pinecone-io/canopy/pull/263) (Thanks @tomaarsen!)
+* Add HybridRecordEncoder [#265](https://github.com/pinecone-io/canopy/pull/265)
+* Make transformers optional & allow pinecone-text with dense optional [#266](https://github.com/pinecone-io/canopy/pull/266)
+* Add cohere reranker [#269](https://github.com/pinecone-io/canopy/pull/269)
+* Add dimension support for OpenAI embeddings [#273](https://github.com/pinecone-io/canopy/pull/273)
+* Include config template files inside the package and add a CLI command to dump them [#287](https://github.com/pinecone-io/canopy/pull/287)
+
+### Documentation
+* Add contributing guide [#254](https://github.com/pinecone-io/canopy/pull/254)
+* Update README [#267](https://github.com/pinecone-io/canopy/pull/267) (Thanks @aulorbe!)
+* Fixed typo in dense.py docstring [#280](https://github.com/pinecone-io/canopy/pull/280) (Thanks @ptorru!)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/v0.6.0...v0.7.0
+
 ## [0.6.0] - 2024-01-16
 ### Breaking changes
 * Pinecone serverless support [#246](https://github.com/pinecone-io/canopy/pull/246)

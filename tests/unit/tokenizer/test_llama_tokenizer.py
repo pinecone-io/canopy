@@ -8,7 +8,14 @@ class TestLlamaTokenizer(BaseTestTokenizer):
     @staticmethod
     @pytest.fixture(scope="class")
     def tokenizer():
-        return LlamaTokenizer(model_name="hf-internal-testing/llama-tokenizer")
+        try:
+            tokenizer = LlamaTokenizer(model_name="hf-internal-testing/llama-tokenizer")
+        except ImportError:
+            pytest.skip(
+                "`transformers` extra not installed. Skipping LLamaTokenizer unit "
+                "tests"
+            )
+        return tokenizer
 
     @staticmethod
     @pytest.fixture

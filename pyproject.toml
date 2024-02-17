@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "canopy-sdk"
-version = "0.6.0"
+version = "0.8.0"
 description = "Retrieval Augmented Generation (RAG) framework and context engine powered by Pinecone"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
@@ -11,14 +11,12 @@ packages = [{include = "canopy", from = "src"},
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.13"
-pinecone-client = [{ version = "^3.0.0" },
-                   { version = "^3.0.0", extras = ["grpc"], optional = true }]
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
 tiktoken = "^0.3.3"
-pydantic = "^1.10.7"
+pydantic = "^2.0.0"
 pandas-stubs = "^2.0.3.230814"
-fastapi = ">=0.92.0, <1.0.0"
+fastapi = ">=0.93.0, <1.0.0"
 uvicorn = ">=0.20.0, <1.0.0"
 tenacity = "^8.2.1"
 sse-starlette = "^1.6.5"
@@ -29,9 +27,6 @@ types-pyyaml = "^6.0.12.12"
 jsonschema = "^4.2.0"
 types-jsonschema = "^4.2.0"
 prompt-toolkit = "^3.0.39"
-pinecone-text = [{version = "^0.8.0"},
-                 {version = "^0.8.0", extras = ["dense"], optional = true}]
-
 tokenizers = "^0.15.0"
 transformers = {version = "^4.35.2", optional = true}
 sentencepiece = "^0.1.99"
@@ -39,16 +34,37 @@ pandas = "2.0.0"
 pyarrow = "^14.0.1"
 cohere = { version = ">=4.37", optional = true }
 
+
+pinecone-text =  "^0.8.0"
+# Extra: torch (Relies on pinecone-text[dense])
+# Dependencies here should be synced with pinecone-text's pyproject.toml
+# See: https://github.com/pinecone-io/pinecone-text/blob/0eb00a202f5c9bc8cc48c8b7536fcbabf95f096e/pyproject.toml#L30
+torch = { version = ">=1.13.1", optional = true }
+sentence-transformers = { version = ">=2.0.0", optional = true }
+
+
+pinecone-client =  "^3.0.0"
+# Extra: grpc (Relies on pinecone-client[grpc])
+# Dependencies here should be synced with pinecone-python-client's pyproject.toml
+# See: https://github.com/pinecone-io/pinecone-python-client/blob/886f932b66521a6ab5b1e076f6a53ba2f16eb41b/pyproject.toml#L94
+grpcio = { version = ">=1.44.0", optional = true }
+grpc-gateway-protoc-gen-openapiv2 = { version = "0.1.0", optional = true }
+googleapis-common-protos = { version = ">=1.53.0", optional = true }
+lz4 = { version = ">=3.1.3", optional = true }
+protobuf = { version = "~=3.20.0", optional = true }
+
+
+
 [tool.poetry.extras]
 cohere = ["cohere"]
-torch = ["pinecone-text"]
+torch = ["torch", "sentence-transformers"]
 transformers = ["transformers"]
-grpc = ["pinecone-client"]
+grpc = ["grpcio", "grpc-gateway-protoc-gen-openapiv2", "googleapis-common-protos", "lz4", "protobuf"]
 
 
 [tool.poetry.group.dev.dependencies]
-jupyter = "^1.0.0"
 pytest = "^7.3.2"
+jupyter = "^1.0.0"
 mypy = "^1.4.1"
 flake8 = "^6.1.0"
 pytest-html = "^4.1.0"
@@ -77,6 +93,7 @@ module = [
     'pinecone_datasets',
     'pinecone',
     'transformers.*',
+    'tokenizers.*',
     'cohere.*',
     'pinecone.grpc',
     'huggingface_hub.utils'

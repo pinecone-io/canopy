@@ -1,10 +1,11 @@
 import os
+import shutil
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
 from prompt_toolkit import prompt
 import time
-
+from pathlib import Path
 import requests
 import yaml
 from dotenv import load_dotenv
@@ -21,6 +22,7 @@ from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
 from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
+from canopy.utils.directory import Directory
 from canopy_cli.data_loader import (
     load_from_path,
     IDsNotUniqueError,
@@ -178,7 +180,7 @@ class CanopyCommandGroup(click.Group):
             "health": 4,
             "stop": 5,
             "api-docs": 6,
-
+            "create-config": 7,
         }
 
     def list_commands(self, ctx):
@@ -208,6 +210,29 @@ def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
     return
+
+
+@cli.command(help="Writes the config templates to a directory.")
+@click.argument("out_path", type=click.Path(), required=True)
+def create_config(out_path):
+
+    out_path = Path(out_path)
+
+    if out_path.is_file():
+        raise CLIError(f"Path expected to be a directory,"
+                       f"but found a file at {out_path}")
+
+    if out_path.exists() and any(out_path.iterdir()):
+        click.confirm(click.style(f"Path {out_path} is not empty. Overwrite?",
+                                  fg="red"),
+                      abort=True)
+
+    try:
+        shutil.copytree(Directory.CONFIG_TEMPLATES, out_path, dirs_exist_ok=True)
+    except Exception as e:
+        raise CLIError(f"Failed to write config template to {out_path}. Reason:\n{e}")
+
+    click.echo(click.style(f"Config templates written to {out_path}", fg="green"))
 
 
 @cli.command(
@@ -373,7 +398,7 @@ def upsert(index_name: str,
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
-    click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
+    click.echo(pd.DataFrame([doc.model_dump(exclude_none=True) for doc in data[:5]]))
     click.echo(click.style(f"\nTotal records: {len(data)}"))
     click.confirm(click.style("\nDoes this data look right?", fg="red"),
                   abort=True)
