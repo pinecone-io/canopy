@@ -23,7 +23,7 @@ queries = [Query(text="Sample query 1"),
 
 @pytest.fixture
 def encoder():
-    return OctoAIRecordEncoder(batch_size=1)
+    return OctoAIRecordEncoder(batch_size=2048)
 
 
 def test_dimension(encoder):

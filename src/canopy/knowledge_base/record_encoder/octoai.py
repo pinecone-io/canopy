@@ -31,7 +31,7 @@ class OctoAIRecordEncoder(DenseRecordEncoder):
                  api_key: str = "",
                  base_url: str = OCTOAI_BASE_URL,
                  model_name: str = "thenlper/gte-large",
-                 batch_size: int = 1,
+                 batch_size: int = 1024,
                  **kwargs):
 
         ae_api_key = api_key or os.environ.get("OCTOAI_API_KEY")
