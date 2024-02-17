@@ -110,6 +110,7 @@ These optional environment variables are used to authenticate to other supported
 | `JINA_API_KEY`        | API key for Jina AI. Used to authenticate to JinaAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
 | `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
 | `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+| `OCTOAI_API_KEY`       | API key for OctoAI. Used to authenticate for open source LLMs served in OctoAI                               | You can sign up for OctoAI and find your API key [here](https://octo.ai/)
 
 </details>
 
@@ -281,4 +282,3 @@ gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bi
 >  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
    When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, 
    so that your server would only take requests from authenticated users.
-
