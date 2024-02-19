@@ -41,7 +41,7 @@ def generate_clients(
     https: Optional[bool] = None,
     api_key: Optional[str] = None,
     prefix: Optional[str] = None,
-    timeout: Optional[float] = None,
+    timeout: Optional[int] = None,
     host: Optional[str] = None,
     path: Optional[str] = None,
     force_disable_check_same_thread: bool = False,

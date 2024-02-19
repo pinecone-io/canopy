@@ -1,7 +1,6 @@
 import random
 
 import pytest
-from dotenv import load_dotenv
 
 from canopy.knowledge_base.knowledge_base import KnowledgeBase
 from canopy.knowledge_base.qdrant.qdrant_knowledge_base import (
@@ -20,9 +19,6 @@ from canopy.models.data_models import Query
 from qdrant_client.async_qdrant_remote import AsyncQdrantRemote
 from tests.unit import random_words
 from tests.unit.stubs.stub_chunker import StubChunker
-
-
-load_dotenv()
 
 
 async def execute_and_assert_queries(

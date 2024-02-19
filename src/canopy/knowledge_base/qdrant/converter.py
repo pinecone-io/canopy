@@ -47,8 +47,8 @@ class QdrantConverter:
 
             if sparse_vector:
                 vector[SPARSE_VECTOR_NAME] = models.SparseVector(
-                    indices=sparse_vector["indices"],  # type: ignore
-                    values=sparse_vector["values"],  # type: ignore
+                    indices=sparse_vector["indices"],
+                    values=sparse_vector["values"],
                 )
 
             points.append(
@@ -64,8 +64,8 @@ class QdrantConverter:
     def scored_point_to_scored_doc(
         scored_point: models.ScoredPoint,
     ) -> "KBDocChunkWithScore":
-        metadata: Dict[str, Any] = deepcopy(scored_point.payload)  # type: ignore
-        _id = metadata.pop("chunk_id")  # type: ignore
+        metadata: Dict[str, Any] = deepcopy(scored_point.payload or {})
+        _id = metadata.pop("chunk_id")
         text = metadata.pop("text", "")
         document_id = metadata.pop("document_id")
         return KBDocChunkWithScore(
@@ -82,16 +82,17 @@ class QdrantConverter:
         query: KBQuery,
     ) -> "Union[models.NamedVector, models.NamedSparseVector]":
         # Use dense vector if available, otherwise use sparse vector
-        query_vector: Union[models.NamedSparseVector, models.NamedVector] = (
-            models.NamedVector(name=DENSE_VECTOR_NAME, vector=query.values)
-            if query.values is not None
-            else models.NamedSparseVector(
+        query_vector: Union[models.NamedVector, models.NamedSparseVector]
+        if query.values:
+            query_vector = models.NamedVector(name=DENSE_VECTOR_NAME, vector=query.values)  # noqa: E501
+        elif query.sparse_values:
+            query_vector = models.NamedSparseVector(
                 name=SPARSE_VECTOR_NAME,
                 vector=models.SparseVector(
-                    indices=query.sparse_values["indices"],  # type: ignore
-                    values=query.sparse_values["values"],  # type: ignore
+                    indices=query.sparse_values["indices"],
+                    values=query.sparse_values["values"],
                 ),
             )
-        )
-
+        else:
+            raise ValueError("Query should have either dense or sparse vector.")
         return query_vector

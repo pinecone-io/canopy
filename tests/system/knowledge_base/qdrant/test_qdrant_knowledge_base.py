@@ -3,7 +3,6 @@ from copy import copy
 from pathlib import Path
 
 import pytest
-from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from canopy.knowledge_base.chunker.base import Chunker
 
@@ -31,8 +30,6 @@ from tests.system.knowledge_base.qdrant.common import (
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
-
-load_dotenv()
 
 
 def execute_and_assert_queries(knowledge_base: QdrantKnowledgeBase, chunks_to_query):

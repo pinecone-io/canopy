@@ -25,7 +25,7 @@ from canopy.models.data_models import Query, Document
 
 from qdrant_client import models as models
 from qdrant_client.http.exceptions import UnexpectedResponse
-from grpc import RpcError  # type: ignore
+from grpc import RpcError   # type: ignore[import-untyped]
 from tqdm import tqdm
 
 
@@ -76,7 +76,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         https: Optional[bool] = None,
         api_key: Optional[str] = None,
         prefix: Optional[str] = None,
-        timeout: Optional[float] = None,
+        timeout: Optional[int] = None,
         host: Optional[str] = None,
         path: Optional[str] = None,
         force_disable_check_same_thread: bool = False,
@@ -208,7 +208,10 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             ) from e
 
     def query(
-        self, queries: List[Query], global_metadata_filter: Optional[dict] = None
+        self,
+        queries: List[Query],
+        global_metadata_filter: Optional[dict] = None,
+        namespace: Optional[str] = None,
     ) -> List[QueryResult]:
         """
         Query the knowledge base to retrieve document chunks.
@@ -223,6 +226,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             queries: A list of queries to run against the knowledge base.
             global_metadata_filter: A payload filter to apply to all queries, in addition to any query-specific filters.
                                     Reference: https://qdrant.tech/documentation/concepts/filtering/
+            namespace: This argument is not used by Qdrant.
         Returns:
             A list of QueryResult objects.
 
@@ -467,7 +471,8 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             >>> kb = QdrantKnowledgeBase(collection_name="my_collection")
             >>> await kb.adelete(document_ids=["doc1", "doc2"])
         """  # noqa: E501
-        await self._async_client.delete(  # type: ignore
+        # @sync_fallback will call the sync method if the async client is None
+        self._async_client and await self._async_client.delete(
             self.collection_name,
             points_selector=models.Filter(
                 must=[
@@ -693,13 +698,18 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         # Use dense vector if available, otherwise use sparse vector
         query_vector = QdrantConverter.kb_query_to_search_vector(query)
 
-        results = await self._async_client.search(  # type: ignore
-            self.collection_name,
-            query_vector=query_vector,
-            limit=top_k,
-            query_filter=metadata_filter,
-            with_payload=True,
-            **query_params,
+        # @sync_fallback will call the sync method if the async client is None
+        results = (
+            await self._async_client.search(
+                self.collection_name,
+                query_vector=query_vector,
+                limit=top_k,
+                query_filter=metadata_filter,
+                with_payload=True,
+                **query_params,
+            )
+            if self._async_client
+            else []
         )
         documents: List[KBDocChunkWithScore] = []
         for result in results:
@@ -743,7 +753,8 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                     document_batch,
                 )
 
-                await self._async_client.upsert(  # type: ignore
+                # @sync_fallback will call the sync method if the async client is None
+                self._async_client and await self._async_client.upsert(
                     collection_name=self.collection_name,
                     points=batch,
                 )
