@@ -95,7 +95,7 @@ You can create your own customized tokenizer by implementing a new class that de
 from canopy.tokenizer import Tokenizer, BaseTokenizer
 
 class CustomTokenizer(BaseTokenizer):
-    # Implement BaseToknizer's abstract methods, like `def tokenize()` etc.
+    # Implement BaseTokenizer's abstract methods, like `def tokenize()` etc.
     # ....
     
 Tokenizer.initialize(tokenizer_class=CustomTokenizer)
@@ -121,7 +121,10 @@ To create a knowledge base, you can use the following command:
 ```python
 from canopy.knowledge_base import KnowledgeBase
 
-kb = KnowledgeBase(index_name="my-index")
+# Make sure the KnowledgeBase encoder uses the same embedding model as the one that is used to embed your content, change the example value according to your specific configuration
+encoder = OpenAIRecordEncoder(model_name="text-embedding-3-small")
+
+kb = KnowledgeBase(index_name="my-index", record_encoder=encoder)
 ```
 
 To create a new Pinecone index and connect it to the knowledge base, you can use the `create_canopy_index` method:
