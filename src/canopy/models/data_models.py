@@ -2,10 +2,15 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Optional, List, Union, Dict, Literal
 
-from pydantic import BaseModel, Field, validator, Extra
+from pydantic import field_validator, ConfigDict, BaseModel, Field, RootModel
+from typing_extensions import TypedDict
 
 Metadata = Dict[str, Union[str, int, float, List[str]]]
 
+
+class SparseVector(TypedDict):
+    indices: List[int]
+    values: List[float]
 
 # ----------------- Context Engine models -----------------
 
@@ -37,11 +42,10 @@ class Document(BaseModel):
         default_factory=dict,
         description="The document metadata. To learn more about metadata, see https://docs.pinecone.io/docs/manage-data",  # noqa: E501
     )
+    model_config = ConfigDict(extra="forbid", coerce_numbers_to_str=True)
 
-    class Config:
-        extra = Extra.forbid
-
-    @validator("metadata")
+    @field_validator("metadata")
+    @classmethod
     def metadata_reseved_fields(cls, v):
         if "text" in v:
             raise ValueError('Metadata cannot contain reserved field "text"')
@@ -52,7 +56,7 @@ class Document(BaseModel):
         return v
 
 
-class ContextContent(BaseModel, ABC):
+class ContextContent(RootModel, ABC):
     # Any context should be able to be represented as well formatted text.
     # In the most minimal case, that could simply be a call to `.json()`.
     @abstractmethod
@@ -64,10 +68,10 @@ class ContextContent(BaseModel, ABC):
 
 
 class StringContextContent(ContextContent):
-    __root__: str
+    root: str
 
     def to_text(self, **kwargs) -> str:
-        return self.__root__
+        return self.root
 
 
 class Context(BaseModel):
@@ -93,8 +97,8 @@ class MessageBase(BaseModel):
                                    "Can be one of ['User', 'Assistant', 'System']")
     content: str = Field(description="The contents of the message.")
 
-    def dict(self, *args, **kwargs):
-        d = super().dict(*args, **kwargs)
+    def model_dump(self, *args, **kwargs):
+        d = super().model_dump(*args, **kwargs)
         d["role"] = d["role"].value
         return d
 

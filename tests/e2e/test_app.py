@@ -104,7 +104,7 @@ def test_health(client):
     assert health_response.is_success
     assert (
             health_response.json()
-            == HealthStatus(pinecone_status="OK", llm_status="OK").dict()
+            == HealthStatus(pinecone_status="OK", llm_status="OK").model_dump()
     )
 
 
@@ -112,7 +112,7 @@ def test_upsert(client, namespace_prefix):
     # Upsert a document to the index
     upsert_response = client.post(
         f"{namespace_prefix}context/upsert",
-        json=upsert_payload.dict())
+        json=upsert_payload.model_dump())
     assert upsert_response.is_success
 
 
@@ -133,7 +133,7 @@ def test_query(client, namespace_prefix):
 
     query_response = client.post(
         f"{namespace_prefix}context/query",
-        json=query_payload.dict())
+        json=query_payload.model_dump())
     assert query_response.is_success
 
     query_response = query_response.json()
@@ -143,12 +143,12 @@ def test_query(client, namespace_prefix):
     stuffing_content = json.loads(query_response["content"])
     assert (
             stuffing_content[0]["query"]
-            == query_payload.dict()["queries"][0]["text"]
+            == query_payload.model_dump()["queries"][0]["text"]
             and stuffing_content[0]["snippets"][0]["text"]
-            == upsert_payload.dict()["documents"][0]["text"]
+            == upsert_payload.model_dump()["documents"][0]["text"]
     )
     assert (stuffing_content[0]["snippets"][0]["source"] ==
-            upsert_payload.dict()["documents"][0]["source"])
+            upsert_payload.model_dump()["documents"][0]["source"])
 
 
 def test_chat_required_params(client, namespace_prefix):

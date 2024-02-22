@@ -22,7 +22,7 @@ class StubRecordEncoder(RecordEncoder):
             values = self._dense_encoder.encode_documents(doc.text)
             result.append(
                 KBEncodedDocChunk(
-                    **doc.dict(),
+                    **doc.model_dump(),
                     values=values))
         return result
 
@@ -33,7 +33,7 @@ class StubRecordEncoder(RecordEncoder):
         for query in queries:
             values = self._dense_encoder.encode_queries(query.text)
             result.append(
-                KBQuery(**query.dict(),
+                KBQuery(**query.model_dump(),
                         values=values))
         return result
 

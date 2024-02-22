@@ -1,6 +1,6 @@
 from typing import Dict, List, Optional, Union
 
-from pydantic import BaseModel, Field
+from pydantic import ConfigDict, BaseModel, Field
 
 from canopy.models.data_models import Messages, Query, Document
 
@@ -70,9 +70,7 @@ class ChatRequest(BaseModel):
         default=None,
         description="A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse. Unused, reserved for future extensions",  # noqa: E501
     )
-
-    class Config:
-        extra = "ignore"
+    model_config = ConfigDict(extra="ignore")
 
 
 class ContextQueryRequest(BaseModel):
@@ -112,13 +110,6 @@ class ChatDebugInfo(BaseModel):
         self,
     ):
         return self.json()
-
-
-class ShutdownResponse(BaseModel):
-    message: str = Field(
-        default="Shutting down",
-        description="Message indicating the server is shutting down.",
-    )
 
 
 class SuccessUpsertResponse(BaseModel):

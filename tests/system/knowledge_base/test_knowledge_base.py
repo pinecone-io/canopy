@@ -3,7 +3,12 @@ from typing import Dict, Any
 
 import pytest
 import numpy as np
-from pinecone import Index, Pinecone
+try:
+    from pinecone.grpc import PineconeGRPC as Pinecone
+    from pinecone.grpc import GRPCIndex as Index
+except ImportError:
+    from pinecone import Pinecone, Index
+
 from tenacity import (
     retry,
     stop_after_delay,

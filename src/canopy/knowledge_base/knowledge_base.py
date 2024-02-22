@@ -5,17 +5,21 @@ from functools import lru_cache
 
 from typing import List, Optional, Dict, Any, Union
 from pinecone import (ServerlessSpec, PodSpec,
-                      Pinecone, PineconeApiException)
+                      PineconeApiException)
+
+from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 try:
-    from pinecone import GRPCIndex as Index
+    from pinecone.grpc import PineconeGRPC as Pinecone
+    from pinecone.grpc import GRPCIndex as Index
 except ImportError:
-    from pinecone import Index
+    from pinecone import Pinecone, Index
 
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
-                                                  OpenAIRecordEncoder)
+                                                  OpenAIRecordEncoder,
+                                                  HybridRecordEncoder)
 from canopy.knowledge_base.models import (KBQueryResult, KBQuery, QueryResult,
                                           KBDocChunkWithScore, DocumentWithScore)
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
@@ -257,7 +261,6 @@ class KnowledgeBase(BaseKnowledgeBase):
 
     def create_canopy_index(self,
                             spec: Union[Dict, ServerlessSpec, PodSpec] = None,
-                            dimension: Optional[int] = None,
                             metric: Optional[str] = "cosine"
                             ):
         """
@@ -280,9 +283,6 @@ class KnowledgeBase(BaseKnowledgeBase):
            spec: A dictionary containing configurations describing how the index should be deployed. For serverless indexes,
                  specify region and cloud. For pod indexes, specify replicas, shards, pods, pod_type, metadata_config,
                  and source_collection.
-           dimension: The dimension of the vectors to index.
-                       If `dimension` isn't explicitly provided,
-                       Canopy would try to infer the embedding's dimension based on the configured `Encoder`
            metric: The distance metric to be used for similarity search: 'euclidean', 'cosine', or 'dotproduct'. The
                    default is 'cosine'.
 
@@ -294,22 +294,21 @@ class KnowledgeBase(BaseKnowledgeBase):
                 region="us-west-2"
             )
 
-        if dimension is None:
-            try:
-                encoder_dimension = self._encoder.dimension
-                if encoder_dimension is None:
-                    raise RuntimeError(
-                        f"The selected encoder {self._encoder.__class__.__name__} does "
-                        f"not support inferring the vectors' dimensionality."
-                    )
-                dimension = encoder_dimension
-            except Exception as e:
+        try:
+            encoder_dimension = self._encoder.dimension
+            if encoder_dimension is None:
                 raise RuntimeError(
-                    f"Canopy has failed to infer vectors' dimensionality using the "
-                    f"selected encoder: {self._encoder.__class__.__name__}. You can "
-                    f"provide the dimension manually, try using a different encoder, or"
-                    f" fix the underlying error:\n{e}"
-                ) from e
+                    f"The selected encoder {self._encoder.__class__.__name__} does "
+                    f"not support inferring the vectors' dimensionality."
+                )
+            dimension = encoder_dimension
+        except Exception as e:
+            raise RuntimeError(
+                f"Canopy has failed to infer vectors' dimensionality using the "
+                f"selected encoder: {self._encoder.__class__.__name__}. You can "
+                f"provide the dimension manually, try using a different encoder, or"
+                f" fix the underlying error:\n{e}"
+            ) from e
 
         if self.index_name in list_canopy_indexes(self._pinecone_client):
             raise RuntimeError(
@@ -317,6 +316,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                 f"existing index, use `knowledge_base.connect()`. "
                 "If you wish to delete it call `knowledge_base.delete_index()`. "
             )
+
+        self._validate_metric(metric)
 
         try:
             self._pinecone_client.create_index(
@@ -351,6 +352,14 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"Please try creating KnowledgeBase again in a few minutes."
                 )
             time.sleep(INDEX_PROVISION_TIME_INTERVAL)
+
+    def _validate_metric(self, metric: Optional[str]):
+        if isinstance(self._encoder, HybridRecordEncoder):
+            if metric != "dotproduct":
+                raise RuntimeError(
+                    "HybridRecordEncoder only supports dotproduct metric. "
+                    "Please set metric='dotproduct' on index creation."
+                )
 
     @staticmethod
     def _get_full_index_name(index_name: str) -> str:
@@ -426,20 +435,34 @@ class KnowledgeBase(BaseKnowledgeBase):
         results = [self._query_index(q,
                                      global_metadata_filter,
                                      namespace) for q in queries]
-        results = self._reranker.rerank(results)
+        ranked_results = self._reranker.rerank(results)
 
+        assert len(results) == len(ranked_results), ("Reranker returned a different"
+                                                     " number of results "
+                                                     "than the number of queries")
         return [
             QueryResult(
-                query=r.query,
+                query=rr.query,
                 documents=[
                     DocumentWithScore(
-                        **d.dict(exclude={
-                            'values', 'sparse_values', 'document_id'
+                        **d.model_dump(exclude={
+                            'document_id'
                         })
                     )
-                    for d in r.documents
-                ]
-            ) for r in results
+                    for d in rr.documents
+                ],
+                debug_info={"db_result": QueryResult(
+                    query=r.query,
+                    documents=[
+                        DocumentWithScore(
+                            **d.model_dump(exclude={
+                                'document_id'
+                            })
+                        )
+                        for d in r.documents
+                    ]
+                ).model_dump()} if CANOPY_DEBUG_INFO else {}
+            ) for rr, r in zip(ranked_results, results)
         ]
 
     def _query_index(self,

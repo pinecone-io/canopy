@@ -2,7 +2,13 @@ from typing import List
 from .base import BaseTokenizer
 from ..models.data_models import Messages
 import os
-from transformers import LlamaTokenizerFast as HfTokenizer
+
+try:
+    from transformers import LlamaTokenizerFast as HfTokenizer
+except (OSError, ImportError, ModuleNotFoundError):
+    _tranformers_installed = False
+else:
+    _tranformers_installed = True
 
 
 class LlamaTokenizer(BaseTokenizer):
@@ -37,6 +43,13 @@ class LlamaTokenizer(BaseTokenizer):
             model_name: The name of the model to use. Defaults to "openlm-research/open_llama_7b_v2".
             hf_token: Huggingface token
         """  # noqa: E501
+        if not _tranformers_installed:
+            raise ImportError(
+                "The transformers library is required to use the LlamaTokenizer. "
+                "Please install canopy with the [transformers] extra: "
+                "pip install canopy-sdk[transformers]"
+            )
+
         hf_token = hf_token or os.environ.get("HUGGINGFACE_TOKEN", "")
         # Add legacy=True to avoid extra printings
         self._encoder = HfTokenizer.from_pretrained(
@@ -98,7 +111,7 @@ class LlamaTokenizer(BaseTokenizer):
         num_tokens = 0
         for message in messages:
             num_tokens += self.MESSAGE_TOKENS_OVERHEAD
-            for key, value in message.dict().items():
+            for key, value in message.model_dump().items():
                 num_tokens += self.token_count(value)
         num_tokens += self.FIXED_PREFIX_TOKENS
         return num_tokens

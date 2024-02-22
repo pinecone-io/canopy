@@ -7,8 +7,8 @@ from canopy.tokenizer import Tokenizer
 
 
 SAMPLE_CONTEXT = Context(content=StringContextContent(
-    __root__="Some context information"), num_tokens=3
-)
+    "Some context information"
+), num_tokens=3)
 SYSTEM_PROMPT = "This is a system prompt."
 
 

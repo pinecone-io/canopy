@@ -1,11 +1,10 @@
 import os
 import logging
-import signal
 import sys
 import uuid
+from contextlib import asynccontextmanager
 
 import openai
-from multiprocessing import current_process, parent_process
 
 import yaml
 from dotenv import load_dotenv
@@ -38,7 +37,6 @@ from .models.v1.api_models import (
     ContextUpsertRequest,
     HealthStatus,
     ContextDeleteRequest,
-    ShutdownResponse,
     SuccessUpsertResponse,
     SuccessDeleteResponse,
     ContextResponse,
@@ -47,7 +45,6 @@ from .models.v1.api_models import (
 from canopy.llm.openai import OpenAILLM
 from canopy_cli.errors import ConfigError
 from canopy import __version__
-
 
 APIChatResponse = Union[ChatResponse, EventSourceResponse]
 
@@ -69,6 +66,16 @@ To find your Pinecone API key and environment log into Pinecone console (https:/
 You can find your free trial OpenAI API key https://platform.openai.com/account/api-keys. You might need to log in or register for OpenAI services.
 """  # noqa: E501
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    _init_logging()
+    _init_engines()
+    _init_routes(app)
+    await health_check()
+    yield
+
+
 API_VERSION = "v1"
 
 # Global variables - Application
@@ -80,6 +87,7 @@ app: FastAPI = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
+    lifespan=lifespan
 )
 openai_api_router = APIRouter()
 context_api_router = APIRouter(prefix="/context")
@@ -101,8 +109,8 @@ logger: logging.Logger
     responses={500: {"description": "Failed to chat with Canopy"}},  # noqa: E501
 )
 async def chat(
-    request: ChatRequest = Body(...),
-    namespace: Optional[str] = None,
+        request: ChatRequest = Body(...),
+        namespace: Optional[str] = None,
 ) -> APIChatResponse:
     """
     Chat with Canopy, using the LLM and context engine, and return a response.
@@ -124,7 +132,7 @@ async def chat(
         session_id = request.user or "None"  # noqa: F841
         question_id = str(uuid.uuid4())
         logger.debug(f"Received chat request: {request.messages[-1].content}")
-        model_params = request.dict(exclude={"messages", "stream"})
+        model_params = request.model_dump(exclude={"messages", "stream"})
         answer = await run_in_threadpool(
             chat_engine.chat,
             messages=request.messages,
@@ -162,8 +170,8 @@ async def chat(
     },
 )
 async def query(
-    request: ContextQueryRequest = Body(...),
-    namespace: Optional[str] = None,
+        request: ContextQueryRequest = Body(...),
+        namespace: Optional[str] = None,
 ) -> ContextResponse:
     """
     Query the knowledge base for relevant context.
@@ -200,8 +208,8 @@ async def query(
     responses={500: {"description": "Failed to upsert documents"}},
 )
 async def upsert(
-    request: ContextUpsertRequest = Body(...),
-    namespace: str = ""
+        request: ContextUpsertRequest = Body(...),
+        namespace: str = ""
 ) -> SuccessUpsertResponse:
     """
     Upsert documents into the knowledge base. Upserting is a way to add new documents or update existing ones.
@@ -231,8 +239,8 @@ async def upsert(
     responses={500: {"description": "Failed to delete documents"}},
 )
 async def delete(
-    request: ContextDeleteRequest = Body(...),
-    namespace: Optional[str] = None,
+        request: ContextDeleteRequest = Body(...),
+        namespace: Optional[str] = None,
 ) -> SuccessDeleteResponse:
     """
     Delete documents from the knowledgebase. Deleting documents is done by their unique ID.
@@ -284,41 +292,6 @@ async def health_check() -> HealthStatus:
     return HealthStatus(pinecone_status="OK", llm_status="OK")
 
 
-@application_router.get("/shutdown")
-async def shutdown() -> ShutdownResponse:
-    """
-    __WARNING__: Experimental method.
-
-
-    This method will shutdown the server. It is used for testing purposes, and not recommended to be used
-    in production.
-    This method will locate the parent process and send a SIGINT signal to it.
-    """  # noqa: E501
-    logger.info("Shutting down")
-    proc = current_process()
-    p_process = parent_process()
-    pid = p_process.pid if p_process is not None else proc.pid
-    if not pid:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to locate parent process. Cannot shutdown server.",
-        )
-    if sys.platform == 'win32':
-        kill_signal = signal.CTRL_C_EVENT
-    else:
-        kill_signal = signal.SIGINT
-    os.kill(pid, kill_signal)
-    return ShutdownResponse()
-
-
-@app.on_event("startup")
-async def startup():
-    _init_logging()
-    _init_engines()
-    _init_routes(app)
-    await health_check()
-
-
 def _init_routes(app):
     # Include the API version in the path, API_VERSION should be the latest version.
     app.include_router(application_router, prefix=f"/{API_VERSION}")
@@ -341,7 +314,7 @@ def _init_logging():
     handlers = [file_handler, stdout_handler]
     logging.basicConfig(
         format="%(asctime)s - %(processName)s - %(name)-10s [%(levelname)-8s]:  "
-        "%(message)s",
+               "%(message)s",
         level=os.getenv("CE_LOG_LEVEL", "INFO").upper(),
         handlers=handlers,
         force=True,

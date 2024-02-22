@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from openai import OpenAIError, RateLimitError, APIConnectionError, AuthenticationError
 from pinecone_text.dense.openai_encoder import OpenAIEncoder
@@ -18,8 +18,9 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
     def __init__(
         self,
         *,
-        model_name: str = "text-embedding-ada-002",
+        model_name: str = "text-embedding-3-small",
         batch_size: int = 400,
+        dimension: Optional[int] = None,
         **kwargs
     ):
         """
@@ -29,10 +30,11 @@ class OpenAIRecordEncoder(DenseRecordEncoder):
             model_name: The name of the OpenAI embeddings model to use for encoding. See https://platform.openai.com/docs/models/embeddings
             batch_size: The number of documents or queries to encode at once.
                         Defaults to 400.
+            dimension: The dimension of the embeddings vector to generate.
             **kwargs: Additional arguments to pass to the underlying `pinecone-text. OpenAIEncoder`.
         """  # noqa: E501
         try:
-            encoder = OpenAIEncoder(model_name, **kwargs)
+            encoder = OpenAIEncoder(model_name, dimension=dimension, **kwargs)
         except OpenAIError as e:
             raise RuntimeError(
                 "Failed to connect to OpenAI, please make sure that the OPENAI_API_KEY "

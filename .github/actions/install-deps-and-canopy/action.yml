@@ -9,7 +9,6 @@ inputs:
     description: "Whether to install canopy library, or dependencies only"
     required: true
     default: "true"
-
 runs:
   using: "composite"
   steps:
@@ -37,8 +36,8 @@ runs:
   - name: Install dependencies
     shell: bash
     if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-    run: poetry install --no-interaction --no-root --all-extras --with dev
+    run: make install-extras POETRY_INSTALL_ARGS="--no-interaction --no-root --with dev"
   - name: Install project
     if: ${{ inputs.install-canopy == 'true' }}
     shell: bash
-    run: poetry install --no-interaction --all-extras --with dev
+    run: make install-extras POETRY_INSTALL_ARGS="--with dev --no-interaction"

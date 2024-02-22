@@ -1,4 +1,3 @@
-import os
 from abc import ABC, abstractmethod
 from typing import Iterable, Union, Optional, cast
 
@@ -13,9 +12,7 @@ from canopy.models.api_models import (StreamingChatChunk, ChatResponse,
                                       StreamingChatResponse, )
 from canopy.models.data_models import Context, Messages, SystemMessage
 from canopy.utils.config import ConfigurableMixin
-
-CE_DEBUG_INFO = os.getenv("CE_DEBUG_INFO", "FALSE").lower() == "true"
-
+from canopy.utils.debugging import CANOPY_DEBUG_INFO
 
 DEFAULT_SYSTEM_PROMPT = """Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
 If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context.
@@ -223,8 +220,8 @@ class ChatEngine(BaseChatEngine):
                                                 stream=stream,
                                                 model_params=model_params_dict)
         debug_info = {}
-        if CE_DEBUG_INFO:
-            debug_info['context'] = context.dict()
+        if CANOPY_DEBUG_INFO:
+            debug_info['context'] = context.model_dump()
             debug_info['context'].update(context.debug_info)
 
         if stream:

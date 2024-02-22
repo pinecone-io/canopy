@@ -47,14 +47,14 @@ class BaseTestRecordEncoder(ABC):
     @pytest.fixture
     def expected_encoded_documents(documents, inner_encoder):
         values = inner_encoder.encode_documents([d.text for d in documents])
-        return [KBEncodedDocChunk(**d.dict(), values=v) for d, v in
+        return [KBEncodedDocChunk(**d.model_dump(), values=v) for d, v in
                 zip(documents, values)]
 
     @staticmethod
     @pytest.fixture
     def expected_encoded_queries(queries, inner_encoder):
         values = inner_encoder.encode_queries([q.text for q in queries])
-        return [KBQuery(**q.dict(), values=v) for q, v in zip(queries, values)]
+        return [KBQuery(**q.model_dump(), values=v) for q, v in zip(queries, values)]
 
     @staticmethod
     def test_dimension(record_encoder, expected_dimension):

@@ -1,12 +1,11 @@
 import os
-import signal
-import subprocess
+import shutil
 from typing import Dict, Any, Optional, List, Iterable
 
 import click
 from prompt_toolkit import prompt
 import time
-
+from pathlib import Path
 import requests
 import yaml
 from dotenv import load_dotenv
@@ -23,6 +22,7 @@ from canopy.knowledge_base.chunker import Chunker
 from canopy.chat_engine import ChatEngine
 from canopy.models.data_models import Document, UserMessage
 from canopy.tokenizer import Tokenizer
+from canopy.utils.directory import Directory
 from canopy_cli.data_loader import (
     load_from_path,
     IDsNotUniqueError,
@@ -145,11 +145,12 @@ def _load_kb_config(config_file: Optional[str]) -> Dict[str, Any]:
 
 def _validate_chat_engine(config_file: Optional[str]):
     config = _read_config_file(config_file)
-    Tokenizer.initialize()
+    tokenizer_config = config.get("tokenizer", {})
     try:
         # If the server itself will fail, we can't except the error, since it's running
         # in a different process. Try to load and run the ChatEngine so we can catch
         # any errors and print a nice message.
+        Tokenizer.initialize_from_config(tokenizer_config)
         chat_engine = ChatEngine.from_config(config.get("chat_engine", {}))
         chat_engine.max_generated_tokens = 5
         chat_engine.context_engine.knowledge_base.connect()
@@ -179,7 +180,7 @@ class CanopyCommandGroup(click.Group):
             "health": 4,
             "stop": 5,
             "api-docs": 6,
-
+            "create-config": 7,
         }
 
     def list_commands(self, ctx):
@@ -209,6 +210,29 @@ def health(url):
     check_server_health(url)
     click.echo(click.style("Canopy server is healthy!", fg="green"))
     return
+
+
+@cli.command(help="Writes the config templates to a directory.")
+@click.argument("out_path", type=click.Path(), required=True)
+def create_config(out_path):
+
+    out_path = Path(out_path)
+
+    if out_path.is_file():
+        raise CLIError(f"Path expected to be a directory,"
+                       f"but found a file at {out_path}")
+
+    if out_path.exists() and any(out_path.iterdir()):
+        click.confirm(click.style(f"Path {out_path} is not empty. Overwrite?",
+                                  fg="red"),
+                      abort=True)
+
+    try:
+        shutil.copytree(Directory.CONFIG_TEMPLATES, out_path, dirs_exist_ok=True)
+    except Exception as e:
+        raise CLIError(f"Failed to write config template to {out_path}. Reason:\n{e}")
+
+    click.echo(click.style(f"Config templates written to {out_path}", fg="green"))
 
 
 @cli.command(
@@ -374,7 +398,7 @@ def upsert(index_name: str,
             )
             raise CLIError(msg)
         pd.options.display.max_colwidth = 20
-    click.echo(pd.DataFrame([doc.dict(exclude_none=True) for doc in data[:5]]))
+    click.echo(pd.DataFrame([doc.model_dump(exclude_none=True) for doc in data[:5]]))
     click.echo(click.style(f"\nTotal records: {len(data)}"))
     click.confirm(click.style("\nDoes this data look right?", fg="red"),
                   abort=True)
@@ -664,55 +688,6 @@ def start(host: str, port: str, reload: bool, stream: bool,
 
     click.echo(f"Starting Canopy server on {host}:{port}")
     start_server(host, port=port, reload=reload, config_file=config)
-
-
-@cli.command(
-    help=(
-        """
-        \b
-        Stop the Canopy server.
-
-        This command sends a shutdown request to the Canopy server.
-        """
-    )
-)
-@click.option("url", "--url", default=DEFAULT_SERVER_URL,
-              help=("URL of the Canopy server to use. "
-                    f"Defaults to {DEFAULT_SERVER_URL}"))
-def stop(url):
-    if os.name != "nt":
-        # Check if the server was started using Gunicorn
-        res = subprocess.run(["pgrep", "-f", "gunicorn canopy_server.app:app"],
-                             capture_output=True)
-        output = res.stdout.decode("utf-8").split()
-
-        # If Gunicorn was used, kill all Gunicorn processes
-        if output:
-            msg = ("It seems that Canopy server was launched using Gunicorn.\n"
-                   "Do you want to kill all Gunicorn processes?")
-            click.confirm(click.style(msg, fg="red"), abort=True)
-            try:
-                subprocess.run(["pkill", "-f", "gunicorn canopy_server.app:app"],
-                               check=True)
-            except subprocess.CalledProcessError:
-                try:
-                    [os.kill(int(pid), signal.SIGINT) for pid in output]
-                except OSError:
-                    msg = (
-                        "Could not kill Gunicorn processes. Please kill them manually."
-                        f"Found process ids: {output}"
-                    )
-                    raise CLIError(msg)
-
-    try:
-        res = requests.get(urljoin(url, "shutdown"))
-        res.raise_for_status()
-        return res.ok
-    except requests.exceptions.ConnectionError:
-        msg = f"""
-        Could not find Canopy server on {url}.
-        """
-        raise CLIError(msg)
 
 
 @cli.command(
