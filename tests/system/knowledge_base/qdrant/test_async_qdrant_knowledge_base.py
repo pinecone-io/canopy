@@ -19,7 +19,9 @@ from canopy.models.data_models import Query
 from tests.unit import random_words
 from tests.unit.stubs.stub_chunker import StubChunker
 
-qdrant_client = pytest.importorskip("qdrant_client")
+qdrant_client = pytest.importorskip(
+    "qdrant_client", reason="'qdrant_client' is not installed"
+)
 
 
 async def execute_and_assert_queries(
@@ -98,7 +100,8 @@ async def test_query(knowledge_base, encoded_chunks):
 @pytest.mark.asyncio
 async def test_query_with_metadata_filter(knowledge_base):
     if knowledge_base._async_client is None or not isinstance(
-        knowledge_base._async_client._client, qdrant_client.async_qdrant_remote.AsyncQdrantRemote   # noqa: E501
+        knowledge_base._async_client._client,
+        qdrant_client.async_qdrant_remote.AsyncQdrantRemote,  # noqa: E501
     ):
         pytest.skip(
             "Dict filter is not supported for QdrantLocal"

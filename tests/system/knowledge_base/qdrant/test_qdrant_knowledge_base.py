@@ -29,7 +29,9 @@ from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
 
-qdrant_client = pytest.importorskip("qdrant_client")
+qdrant_client = pytest.importorskip(
+    "qdrant_client", reason="'qdrant_client' is not installed"
+)
 
 
 def execute_and_assert_queries(knowledge_base: QdrantKnowledgeBase, chunks_to_query):
@@ -129,7 +131,9 @@ def test_query(knowledge_base, encoded_chunks):
 
 
 def test_query_with_metadata_filter(knowledge_base):
-    if not isinstance(knowledge_base._client._client, qdrant_client.qdrant_remote.QdrantRemote):    # noqa: E501
+    if not isinstance(
+        knowledge_base._client._client, qdrant_client.qdrant_remote.QdrantRemote
+    ):  # noqa: E501
         pytest.skip(
             "Dict filter is not supported for QdrantLocal"
             "Use qdrant_client.models.Filter instead"

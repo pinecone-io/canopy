@@ -505,7 +505,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         self,
         dimension: Optional[int] = None,
         indexed_keyword_fields: List[str] = ["document_id"],
-        distance: str = "COSINE",
+        distance: Any = "Cosine",
         vectors_on_disk: Optional[bool] = None,
         **kwargs,
     ):
@@ -527,6 +527,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                                     Defaults to ["document_id"].
             distance: Distance function to use for the vectors.
                       Defaults to "Cosine".
+                      Reference: https://qdrant.tech/documentation/concepts/search/#metrics
             vectors_on_disk: Whethers to store vectors on disk. Defaults to None.
             **kwargs: Additional arguments to pass to the `QdrantClient#create_collection()` method.
                     Reference: https://qdrant.tech/documentation/concepts/collections/#create-a-collection
@@ -562,7 +563,7 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                 collection_name=self.collection_name,
                 vectors_config={
                     DENSE_VECTOR_NAME: models.VectorParams(
-                        size=dimension, distance=getattr(models.Distance, distance), on_disk=vectors_on_disk    # noqa: E501
+                        size=dimension, distance=distance, on_disk=vectors_on_disk
                     )
                 },
                 sparse_vectors_config={
