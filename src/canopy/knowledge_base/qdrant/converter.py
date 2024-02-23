@@ -1,7 +1,6 @@
 from copy import deepcopy
 from typing import Dict, List, Any, Union
 import uuid
-from qdrant_client import models
 from canopy.knowledge_base.models import (
     KBDocChunkWithScore,
     KBEncodedDocChunk,
@@ -9,6 +8,11 @@ from canopy.knowledge_base.models import (
     VectorValues,
 )
 from pinecone_text.sparse import SparseVector
+
+try:
+    from qdrant_client import models
+except ImportError:
+    pass
 
 from canopy.knowledge_base.qdrant.constants import (
     DENSE_VECTOR_NAME,
@@ -62,7 +66,7 @@ class QdrantConverter:
 
     @staticmethod
     def scored_point_to_scored_doc(
-        scored_point: models.ScoredPoint,
+        scored_point,
     ) -> "KBDocChunkWithScore":
         metadata: Dict[str, Any] = deepcopy(scored_point.payload or {})
         _id = metadata.pop("chunk_id")

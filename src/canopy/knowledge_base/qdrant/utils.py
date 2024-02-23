@@ -1,12 +1,15 @@
 import asyncio
 import functools
 from itertools import islice
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, Optional
 
-from qdrant_client import AsyncQdrantClient, QdrantClient
-from qdrant_client.local.async_qdrant_local import AsyncQdrantLocal
 import logging
 
+try:
+    from qdrant_client import AsyncQdrantClient, QdrantClient
+    from qdrant_client.local.async_qdrant_local import AsyncQdrantLocal
+except ImportError:
+    pass
 logger = logging.getLogger(__name__)
 
 
@@ -46,7 +49,7 @@ def generate_clients(
     path: Optional[str] = None,
     force_disable_check_same_thread: bool = False,
     **kwargs: Any,
-) -> Tuple[QdrantClient, Union[AsyncQdrantClient, None]]:
+):
     sync_client = QdrantClient(
         location=location,
         url=url,

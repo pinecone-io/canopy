@@ -10,7 +10,11 @@ from canopy.knowledge_base.qdrant.constants import (
     SPARSE_VECTOR_NAME,
 )
 from canopy.knowledge_base.qdrant.converter import QdrantConverter
-from canopy.knowledge_base.qdrant.utils import batched, generate_clients, sync_fallback
+from canopy.knowledge_base.qdrant.utils import (
+    batched,
+    generate_clients,
+    sync_fallback,
+)
 from canopy.knowledge_base.record_encoder import RecordEncoder, OpenAIRecordEncoder
 from canopy.knowledge_base.models import (
     KBEncodedDocChunk,
@@ -23,10 +27,16 @@ from canopy.knowledge_base.models import (
 from canopy.knowledge_base.reranker import Reranker, TransparentReranker
 from canopy.models.data_models import Query, Document
 
-from qdrant_client import models as models
-from qdrant_client.http.exceptions import UnexpectedResponse
-from grpc import RpcError   # type: ignore[import-untyped]
 from tqdm import tqdm
+
+try:
+    from qdrant_client import models
+    from qdrant_client.http.exceptions import UnexpectedResponse
+    from grpc import RpcError
+
+    _qdrant_installed = True
+except ImportError:
+    _qdrant_installed = False
 
 
 class QdrantKnowledgeBase(BaseKnowledgeBase):
@@ -141,6 +151,14 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             TypeError: If chunker is not an instance of Chunker.
             TypeError: If reranker is not an instance of Reranker.
         """  # noqa: E501
+
+        if not _qdrant_installed:
+            raise ImportError(
+                "Failed to import 'qdrant-client'. "
+                "Try installing the 'qdrant' extra by running: "
+                "pip install canopy-sdk[qdrant]"
+            )
+
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
 
@@ -487,18 +505,9 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
         self,
         dimension: Optional[int] = None,
         indexed_keyword_fields: List[str] = ["document_id"],
-        distance: models.Distance = models.Distance.COSINE,
-        shard_number: Optional[int] = None,
-        sharding_method: Optional[models.ShardingMethod] = None,
-        replication_factor: Optional[int] = None,
-        write_consistency_factor: Optional[int] = None,
-        on_disk_payload: Optional[bool] = None,
-        hnsw_config: Optional[models.HnswConfigDiff] = None,
-        optimizers_config: Optional[models.OptimizersConfigDiff] = None,
-        wal_config: Optional[models.WalConfigDiff] = None,
-        quantization_config: Optional[models.QuantizationConfig] = None,
-        timeout: Optional[int] = None,
-        on_disk: Optional[bool] = None,
+        distance: str = "COSINE",
+        vectors_on_disk: Optional[bool] = None,
+        **kwargs,
     ):
         """
         Creates a collection with the appropriate config that will be used by the QdrantKnowledgeBase.
@@ -517,39 +526,10 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
             indexed_keyword_fields: List of metadata fields to create Qdrant keyword payload index for.
                                     Defaults to ["document_id"].
             distance: Distance function to use for the vectors.
-                      Defaults to COSINE.
-            shard_number: Number of shards in collection. Default is 1, minimum is 1.
-            sharding_method:
-                Defines strategy for shard creation.
-                Option `auto` (default) creates defined number of shards automatically.
-                Data will be distributed between shards automatically.
-                After creation, shards could be additionally replicated, but new shards could not be created.
-                Option `custom` allows to create shards manually, each shard should be created with assigned
-                unique `shard_key`. Data will be distributed between based on `shard_key` value.
-            replication_factor:
-                Replication factor for collection. Default is 1, minimum is 1.
-                Defines how many copies of each shard will be created.
-                Have effect only in distributed mode.
-            write_consistency_factor:
-                Write consistency factor for collection. Default is 1, minimum is 1.
-                Defines how many replicas should apply the operation for us to consider it successful.
-                Increasing this number will make the collection more resilient to inconsistencies, but will
-                also make it fail if not enough replicas are available.
-                Does not have any performance impact.
-                Has effect only in distributed mode.
-            on_disk_payload:
-                If true - point`s payload will not be stored in memory.
-                It will be read from the disk every time it is requested.
-                This setting saves RAM by (slightly) increasing the response time.
-                Note: those payload values that are involved in filtering and are indexed - remain in RAM.
-            hnsw_config: Params for HNSW index
-            optimizers_config: Params for optimizer
-            wal_config: Params for Write-Ahead-Log
-            quantization_config: Params for quantization, if None - quantization will be disabled
-            timeout:
-                Wait for operation commit timeout in seconds.
-                If timeout is reached - request will return with service error.
-            on_disk: Whethers to store vectors on disk. Defaults to None.
+                      Defaults to "Cosine".
+            vectors_on_disk: Whethers to store vectors on disk. Defaults to None.
+            **kwargs: Additional arguments to pass to the `QdrantClient#create_collection()` method.
+                    Reference: https://qdrant.tech/documentation/concepts/collections/#create-a-collection
 
         """  # noqa: E501
         if dimension is None:
@@ -582,26 +562,17 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
                 collection_name=self.collection_name,
                 vectors_config={
                     DENSE_VECTOR_NAME: models.VectorParams(
-                        size=dimension, distance=distance, on_disk=on_disk
+                        size=dimension, distance=getattr(models.Distance, distance), on_disk=vectors_on_disk    # noqa: E501
                     )
                 },
                 sparse_vectors_config={
                     SPARSE_VECTOR_NAME: models.SparseVectorParams(
                         index=models.SparseIndexParams(
-                            on_disk=on_disk,
+                            on_disk=vectors_on_disk,
                         )
                     )
                 },
-                shard_number=shard_number,
-                sharding_method=sharding_method,
-                replication_factor=replication_factor,
-                write_consistency_factor=write_consistency_factor,
-                on_disk_payload=on_disk_payload,
-                hnsw_config=hnsw_config,
-                optimizers_config=optimizers_config,
-                wal_config=wal_config,
-                quantization_config=quantization_config,
-                timeout=timeout,
+                **kwargs,
             )
 
             for field in indexed_keyword_fields:

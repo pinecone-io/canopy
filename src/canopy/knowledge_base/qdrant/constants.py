@@ -1,4 +1,6 @@
-COLLECTION_NAME_PREFIX = "canopy--"
+from canopy.knowledge_base.knowledge_base import INDEX_NAME_PREFIX
+
+COLLECTION_NAME_PREFIX = INDEX_NAME_PREFIX
 DENSE_VECTOR_NAME = "dense"
 RESERVED_METADATA_KEYS = {"document_id", "text", "source", "chunk_id"}
 SPARSE_VECTOR_NAME = "sparse"

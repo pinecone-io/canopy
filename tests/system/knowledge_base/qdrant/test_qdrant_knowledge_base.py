@@ -3,7 +3,6 @@ from copy import copy
 from pathlib import Path
 
 import pytest
-from qdrant_client import QdrantClient
 from canopy.knowledge_base.chunker.base import Chunker
 
 from canopy.knowledge_base.knowledge_base import KnowledgeBase
@@ -18,7 +17,6 @@ from canopy.knowledge_base.record_encoder.base import RecordEncoder
 from canopy.knowledge_base.reranker.reranker import Reranker
 from canopy.models.data_models import Query
 
-from qdrant_client.qdrant_remote import QdrantRemote
 from canopy_cli.cli import _load_kb_config
 from tests.system.knowledge_base.qdrant.common import (
     assert_chunks_in_collection,
@@ -30,6 +28,8 @@ from tests.system.knowledge_base.qdrant.common import (
 from tests.unit.stubs.stub_chunker import StubChunker
 from tests.unit.stubs.stub_dense_encoder import StubDenseEncoder
 from tests.unit.stubs.stub_record_encoder import StubRecordEncoder
+
+qdrant_client = pytest.importorskip("qdrant_client")
 
 
 def execute_and_assert_queries(knowledge_base: QdrantKnowledgeBase, chunks_to_query):
@@ -129,7 +129,7 @@ def test_query(knowledge_base, encoded_chunks):
 
 
 def test_query_with_metadata_filter(knowledge_base):
-    if not isinstance(knowledge_base._client._client, QdrantRemote):
+    if not isinstance(knowledge_base._client._client, qdrant_client.qdrant_remote.QdrantRemote):    # noqa: E501
         pytest.skip(
             "Dict filter is not supported for QdrantLocal"
             "Use qdrant_client.models.Filter instead"
@@ -255,7 +255,7 @@ def test_kb_non_existing_collection(knowledge_base):
 
 def test_init_defaults(collection_name, collection_full_name):
     new_kb = QdrantKnowledgeBase(collection_name)
-    assert isinstance(new_kb._client, QdrantClient)
+    assert isinstance(new_kb._client, qdrant_client.QdrantClient)
     assert new_kb.collection_name == collection_full_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(
@@ -272,7 +272,7 @@ def test_init_defaults(collection_name, collection_full_name):
 def test_init_defaults_with_override(knowledge_base, chunker):
     collection_name = knowledge_base.collection_name
     new_kb = QdrantKnowledgeBase(collection_name=collection_name, chunker=chunker)
-    assert isinstance(new_kb._client, QdrantClient)
+    assert isinstance(new_kb._client, qdrant_client.QdrantClient)
     assert new_kb.collection_name == collection_name
     assert isinstance(new_kb._chunker, Chunker)
     assert isinstance(new_kb._chunker, StubChunker)
