@@ -121,7 +121,14 @@ To create a knowledge base, you can use the following command:
 ```python
 from canopy.knowledge_base import KnowledgeBase
 
-# Make sure the KnowledgeBase encoder uses the same embedding model as the one that is used to embed your content, change the example value according to your specific configuration
+kb = KnowledgeBase(index_name="my-index")
+```
+
+Alternatively, you can create a knowledge base with a specified record encoder:
+
+```python
+from canopy.knowledge_base.record_encoder import OpenAIRecordEncoder
+
 encoder = OpenAIRecordEncoder(model_name="text-embedding-3-small")
 
 kb = KnowledgeBase(index_name="my-index", record_encoder=encoder)
