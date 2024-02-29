@@ -80,7 +80,6 @@ pip install canopy-sdk
 ```bash
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
-export JINA_API_KEY="<JINA_API_KEY>"
 export INDEX_NAME="<INDEX_NAME>"
 ```
 
