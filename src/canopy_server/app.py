@@ -83,7 +83,7 @@ def validate_token(credentials: HTTPAuthorizationCredentials = Depends(HTTPBeare
         return credentials
     if credentials.schema != "Bearer" and credentials.credentials != API_KEY_TOKEN:
         raise HTTPException(
-            status_code=HTTP_403_FORBIDDEN, detail="Invalid authentication credentials"
+            status_code=401, detail="Invalid or missing authentication credentials."
         )
     return credentials
 
