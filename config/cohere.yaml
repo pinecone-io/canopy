@@ -1,0 +1,83 @@
+# ==================================================================
+#            Configuration file for Canopy Server with Cohere.
+# ==================================================================
+
+# ---------------------------------------------------------------------------------
+system_prompt: &system_prompt |
+  Use the documents to answer the user question at the next messages. The documents are retrieved from a knowledge
+  database and you should use only the facts from the documents to answer. Always remember to include the source to
+  the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
+  If you don't know the answer, just say that you don't know, don't try to make up an answer, use the documents.
+  Don't address the documents directly, but use them to answer the user question like it's your own knowledge.
+
+
+# -------------------------------------------------------------------------------------------
+# Tokenizer configuration
+# -------------------------------------------------------------------------------------------
+tokenizer:
+  type: CohereHFTokenizer
+  params:
+    model_name: Cohere/Command-nightly
+
+
+# -------------------------------------------------------------------------------------------------------------
+# Chat engine configuration
+# -------------------------------------------------------------------------------------------------------------
+chat_engine:
+  params:
+    system_prompt: *system_prompt
+
+  # -------------------------------------------------------------------------------------------------------------
+  # LLM configuration
+  # -------------------------------------------------------------------------------------------------------------
+  llm: &llm
+    type: CohereLLM
+    params:
+      model_name: command
+      # You can add any additional parameters which are supported by the Cohere Co.Chat API. The values set
+      # here will be used in every Co.Chat API call. For example:
+      # prompt_truncation: "AUTO"
+      # citation_quality: "accurate"
+      # temperature: 0.85
+      # Specifying connectors is contrary to Canopy's purpose of searching the Pinecone knowledge base only,
+      # but technically can still be passed like this:
+      # connectors:
+      #  - "web-search"
+      # Uncomment to suppress errors when unrecognized or unsupported model params are sent to CohereLLM.
+      # ignore_unrecognized_params: true
+
+  # --------------------------------------------------------------------
+  # Configuration for the QueryBuilder subcomponent of the chat engine.
+  # --------------------------------------------------------------------
+  query_builder:
+    type: CohereQueryGenerator
+    params: {}
+    llm:
+      <<: *llm
+
+
+  # -------------------------------------------------------------------------------------------------------------
+  # ContextEngine configuration
+  # -------------------------------------------------------------------------------------------------------------
+  context_engine:
+    # -----------------------------------------------------------------------------------------------------------
+    # KnowledgeBase configuration
+    # -----------------------------------------------------------------------------------------------------------
+    knowledge_base:
+      params:
+        default_top_k: 100
+
+      # --------------------------------------------------------------------------
+      # Configuration for the RecordEncoder subcomponent of the knowledge base.
+      # --------------------------------------------------------------------------
+      record_encoder:
+        type: CohereRecordEncoder
+        params:
+          model_name:                   # The name of the model to use for encoding
+            "embed-english-v3.0"
+          batch_size: 100               # The number of document chunks to encode in each call to the encoding model
+
+      reranker:
+        type: CohereReranker
+        params:
+          top_n: 5
