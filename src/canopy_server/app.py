@@ -21,8 +21,10 @@ from fastapi import (
     FastAPI,
     HTTPException,
     Body,
-    APIRouter
+    APIRouter,
+    Depends,
 )
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import uvicorn
 from typing import cast, Union, Optional
 
@@ -50,6 +52,7 @@ APIChatResponse = Union[ChatResponse, EventSourceResponse]
 
 load_dotenv()  # load env vars before import of openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
+API_KEY_TOKEN: str|None = os.getenv("API_KEY_TOKEN", None)
 
 APP_DESCRIPTION = """
 Canopy is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.
@@ -75,6 +78,15 @@ async def lifespan(app: FastAPI):
     await health_check()
     yield
 
+def validate_token(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> HTTPAuthorizationCredentials:
+    if API_KEY_TOKEN is None:
+        return credentials
+    if credentials.schema != "Bearer" and credentials.credentials != API_KEY_TOKEN:
+        raise HTTPException(
+            status_code=HTTP_403_FORBIDDEN, detail="Invalid authentication credentials"
+        )
+    return credentials
+
 
 API_VERSION = "v1"
 
@@ -87,7 +99,8 @@ app: FastAPI = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    lifespan=lifespan
+    lifespan=lifespan,
+    dependencies=[Depends(validate_token)]
 )
 openai_api_router = APIRouter()
 context_api_router = APIRouter(prefix="/context")

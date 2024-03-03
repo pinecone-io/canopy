@@ -81,6 +81,7 @@ pip install canopy-sdk
 export PINECONE_API_KEY="<PINECONE_API_KEY>"
 export OPENAI_API_KEY="<OPENAI_API_KEY>"
 export INDEX_NAME="<INDEX_NAME>"
+export API_KEY_TOKEN="<API_KEY_TOKEN>"
 ```
 
 <details>
