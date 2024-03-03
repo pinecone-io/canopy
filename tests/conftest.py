@@ -4,6 +4,7 @@ TEST_NAMESPACE = "ns"
 TEST_CREATE_INDEX_PARAMS = [
     {"spec": {"serverless": {"cloud": "aws", "region": "us-west-2"}}},
     {"spec": {"pod": {"environment": "eu-west1-gcp", "pod_type": "p1.x1"}}},
+    {"spec": {"pod": {"environment": "gcp-starter", "pod_type": "p1.x1"}}},
 ]
 
 

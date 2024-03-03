@@ -666,7 +666,8 @@ class KnowledgeBase(BaseKnowledgeBase):
     @lru_cache(maxsize=1)
     def _is_serverless_env(self):
         description = self._pinecone_client.describe_index(self.index_name)
-        return "serverless" in description["spec"]
+        return ("serverless" in description["spec"] or
+                description["spec"].get("pod", {}).get("environment") == "gcp-starter")
 
     async def aquery(self,
                      queries: List[Query],
