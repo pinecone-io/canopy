@@ -5,8 +5,7 @@
 # ---------------------------------------------------------------------------------
 system_prompt: &system_prompt |
   Use the documents to answer the user question at the next messages. The documents are retrieved from a knowledge
-  database and you should use only the facts from the documents to answer. Always remember to include the source to
-  the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
+  database and you should use only the facts from the documents to answer.
   If you don't know the answer, just say that you don't know, don't try to make up an answer, use the documents.
   Don't address the documents directly, but use them to answer the user question like it's your own knowledge.
 

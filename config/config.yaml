@@ -99,10 +99,10 @@ chat_engine:
         # Configuration for the Chunker subcomponent of the knowledge base.
         # The chunker is responsible for splitting documents' text into smaller chunks.
         # --------------------------------------------------------------------------
-        type: RecursiveCharacterChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
+        type: MarkdownChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
         params:
           chunk_size: 256               # The maximum number of tokens in each chunk
-          chunk_overlap: 20              # The number of tokens to overlap between chunks
+          chunk_overlap: 0              # The number of tokens to overlap between chunks
           keep_separator: true          # Whether to keep the separator in the chunks
 
       record_encoder:
