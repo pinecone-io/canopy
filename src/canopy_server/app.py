@@ -321,7 +321,7 @@ def _init_logging():
     global logger
 
     file_handler = logging.FileHandler(
-        filename=os.getenv("CE_LOG_FILENAME", "canopy.log")
+        filename=os.getenv("CE_LOG_FILENAME", "/dev/null")
     )
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     handlers = [file_handler, stdout_handler]
