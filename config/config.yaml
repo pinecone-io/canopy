@@ -8,9 +8,10 @@
 # Note: line breaks in the prompts are important, and may affect the LLM's behavior
 # ---------------------------------------------------------------------------------
 system_prompt: &system_prompt |
-  Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer. Always remember to include the source to the documents you used from their 'source' field in the format 'Source: $SOURCE_HERE'.
+  Use the following pieces of context to answer the user question at the next messages. This context retrieved from a knowledge database and you should use only the facts from the context to answer.
   If you don't know the answer, just say that you don't know, don't try to make up an answer, use the context.
   Don't address the context directly, but use it to answer the user question like it's your own knowledge.
+  Answer in Portuguese (Brazil).
 query_builder_prompt: &query_builder_prompt |
   Your task is to formulate search queries for a search engine, to assist in responding to the user's question.
   You should break down complex questions into sub-queries if needed.
@@ -33,8 +34,8 @@ chat_engine:
   # The configuration is recursive, so that each component contains a subsection for each of its sub components.
   # -------------------------------------------------------------------------------------------------------------
   params:
-    max_prompt_tokens: 4096             # The maximum number of tokens to use for input prompt to the LLM
-    max_generated_tokens: null          # Leaving `null` will use the default of the underlying LLM
+    max_prompt_tokens: 1024             # The maximum number of tokens to use for input prompt to the LLM
+    max_generated_tokens: 512          # Leaving `null` will use the default of the underlying LLM
     max_context_tokens: null            # Leaving `null` will use 70% of `max_prompt_tokens`
     system_prompt: *system_prompt       # The chat engine's system prompt for calling the LLM
     allow_model_params_override: false  # Whether to allow overriding the LLM's parameters in an API call
@@ -42,7 +43,7 @@ chat_engine:
   history_pruner:             # How to prune messages if chat history is too long. Options: [RecentHistoryPruner, RaisingHistoryPruner]
     type: RecentHistoryPruner
     params:
-      min_history_messages: 1             # Minimal number of messages to keep in history
+      min_history_messages: 4             # Minimal number of messages to keep in history
 
   llm: &llm
     # -------------------------------------------------------------------------------------------------------------
@@ -98,10 +99,10 @@ chat_engine:
         # Configuration for the Chunker subcomponent of the knowledge base.
         # The chunker is responsible for splitting documents' text into smaller chunks.
         # --------------------------------------------------------------------------
-        type: MarkdownChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
+        type: RecursiveCharacterChunker           # Options: [MarkdownChunker, RecursiveCharacterChunker]
         params:
           chunk_size: 256               # The maximum number of tokens in each chunk
-          chunk_overlap: 0              # The number of tokens to overlap between chunks
+          chunk_overlap: 20              # The number of tokens to overlap between chunks
           keep_separator: true          # Whether to keep the separator in the chunks
 
       record_encoder:

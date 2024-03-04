@@ -41,12 +41,14 @@ load_dotenv()
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 DEFAULT_SERVER_URL = f"http://localhost:8000/{API_VERSION}/"
+API_KEY_TOKEN: str|None = os.getenv("API_KEY_TOKEN", None)
 spinner = Spinner()
 
 
 def check_server_health(url: str, timeout_seconds: int = 30):
     try:
-        res = requests.get(urljoin(url, "health"), timeout=timeout_seconds)
+        res = requests.get(urljoin(url, "health"), timeout=timeout_seconds,
+                           headers={"Authorization": f"Bearer {API_KEY_TOKEN}"})
         res.raise_for_status()
         return res.ok
     except requests.exceptions.ConnectionError:
