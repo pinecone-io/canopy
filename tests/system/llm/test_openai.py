@@ -169,7 +169,7 @@ def test_enforced_function_call_high_temperature(openai_llm,
                                                  model_params_high_temperature):
     if isinstance(openai_llm, AnyscaleLLM):
         pytest.skip("Anyscale don't support n>1 for the moment.")
-    
+
     if isinstance(openai_llm, OctoAILLM):
         pytest.skip("OctoAI doesn't support function calling at the moment")
 
@@ -189,7 +189,7 @@ def test_enforced_function_call_low_temperature(openai_llm,
     model_params = model_params_low_temperature.copy()
     if isinstance(openai_llm, AnyscaleLLM):
         model_params["top_p"] = 1.0
-    
+
     if isinstance(openai_llm, OctoAILLM):
         pytest.skip("OctoAI doesn't support function calling at the moment")
 
@@ -268,7 +268,7 @@ def test_enforce_function_api_failure_populates(openai_llm,
                                                 function_query_knowledgebase):
     if isinstance(openai_llm, OctoAILLM):
         pytest.skip("OctoAI doesn't support function calling at the moment")
-    
+
     openai_llm._client = MagicMock()
     openai_llm._client.chat.completions.create.side_effect = Exception(
         "API call failed")

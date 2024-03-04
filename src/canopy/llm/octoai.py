@@ -27,11 +27,17 @@ class OctoAILLM(OpenAILLM):
         if not octoai_api_key:
             raise ValueError(
                 "OctoAI API key is required to use OctoAI. "
-                "If you haven't done it, please sign up at https://octo.ai"
-                "The key can be provided as an argument or via the OCTOAI_API_KEY environment variable."
+                "If you haven't done it, please sign up at https://octo.ai \n"
+                "The key can be provided as an argument or "
+                "via the OCTOAI_API_KEY environment variable."
             )
         octoai_base_url = base_url
-        super().__init__(model_name, api_key=octoai_api_key, base_url=octoai_base_url, **kwargs)
+        super().__init__(
+            model_name,
+            api_key=octoai_api_key,
+            base_url=octoai_base_url,
+            **kwargs
+        )
 
     def enforced_function_call(
         self,
