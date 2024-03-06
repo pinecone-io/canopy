@@ -1,11 +1,10 @@
 ## [0.8.1] - 2024-03-06
-### Breaking changes
-* Remove JINA API key from mandatory env vars [#303](https://github.com/pinecone-io/canopy/pull/303) (Thanks @aulorbe!)
 
 ### Bug fixes
 * Fix cohere tokenizer test [#307](https://github.com/pinecone-io/canopy/pull/307)
 * Fix upsert on gcp starter indexes [#308](https://github.com/pinecone-io/canopy/pull/308)
-
+* Remove JINA API key from mandatory env vars [#303](https://github.com/pinecone-io/canopy/pull/303) (Thanks @aulorbe!)
+  
 ### Documentation
 * Example for specifying and encoder to KB in README [#302](https://github.com/pinecone-io/canopy/pull/302) (Thanks @coreation!)
 
