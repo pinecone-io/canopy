@@ -149,7 +149,6 @@ class CohereLLM(BaseLLM):
                 message=messages.pop()['message'],
                 chat_history=messages,
                 documents=self.generate_documents_from_context(context),
-                preamble_override=None,
                 stream=stream,
                 connectors=[
                     {"id": connector} for connector in connectors
