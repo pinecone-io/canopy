@@ -322,7 +322,7 @@ def test_update_documents(encoder,
     expected_chunks = [chunk.id for chunk in updated_chunks]
     assert_chunks_in_index(kb, updated_chunks)
 
-    if not knowledge_base._is_serverless_env():
+    if not knowledge_base._is_serverless_or_starter_env():
         unexpected_chunks = [c_id for c_id in chunk_ids
                              if c_id not in expected_chunks]
         assert len(unexpected_chunks) > 0, "bug in the test itself"

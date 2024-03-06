@@ -567,7 +567,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # we need to delete all existing chunks
         # belonging to the same documents before upserting the new ones.
         # we currently don't delete documents before upsert in starter env
-        if not self._is_serverless_env():
+        if not self._is_serverless_or_starter_env():
             self.delete(document_ids=[doc.id for doc in documents],
                         namespace=namespace)
 
@@ -604,7 +604,7 @@ class KnowledgeBase(BaseKnowledgeBase):
 
         # Currently starter env does not support delete by metadata filter
         # So temporarily we delete the first DELETE_STARTER_CHUNKS_PER_DOC chunks
-        if self._is_serverless_env():
+        if self._is_serverless_or_starter_env():
             for i in range(0, len(document_ids), DELETE_STARTER_BATCH_SIZE):
                 doc_ids_chunk = document_ids[i:i + DELETE_STARTER_BATCH_SIZE]
                 chunked_ids = [f"{doc_id}_{i}"
@@ -663,9 +663,11 @@ class KnowledgeBase(BaseKnowledgeBase):
         return kb
 
     @lru_cache(maxsize=1)
-    def _is_serverless_env(self):
+    def _is_serverless_or_starter_env(self):
         description = self._pinecone_client.describe_index(self.index_name)
-        return "serverless" in description["spec"]
+        is_serverless = "serverless" in description["spec"]
+        is_starter = description["spec"].get("pod", {}).get('environment') == "gcp-starter"
+        return is_serverless or is_starter
 
     async def aquery(self,
                      queries: List[Query],
