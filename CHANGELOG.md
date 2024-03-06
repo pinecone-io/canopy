@@ -3,6 +3,7 @@
 ### Bug fixes
 * Fix cohere tokenizer test [#307](https://github.com/pinecone-io/canopy/pull/307)
 * Fix upsert on gcp starter indexes [#308](https://github.com/pinecone-io/canopy/pull/308)
+* Stop calling with unused `preamble_override` param to cohere chat [#315]https://github.com/pinecone-io/canopy/pull/315)
   
 ### Documentation
 * Example for specifying and encoder to KB in README [#302](https://github.com/pinecone-io/canopy/pull/302) (Thanks @coreation!)
