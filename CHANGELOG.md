@@ -1,3 +1,16 @@
+## [0.8.1] - 2024-03-06
+### Breaking changes
+* Remove JINA API key from mandatory env vars [#303](https://github.com/pinecone-io/canopy/pull/303) (Thanks @aulorbe!)
+
+### Bug fixes
+* Fix cohere tokenizer test [#307](https://github.com/pinecone-io/canopy/pull/307)
+* Fix upsert on gcp starter indexes [#308](https://github.com/pinecone-io/canopy/pull/308)
+
+### Documentation
+* Example for specifying and encoder to KB in README [#302](https://github.com/pinecone-io/canopy/pull/302) (Thanks @coreation!)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/v0.8.0...v0.8.1
+
 ## [0.8.0] - 2024-02-15
 ### Breaking changes
 * Added support for Pydantic v2 [#288](https://github.com/pinecone-io/canopy/pull/288)
