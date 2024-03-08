@@ -75,7 +75,7 @@ def openai_llm(request):
         model_name = "mistralai/Mistral-7B-Instruct-v0.1"
     elif llm_class == OctoAILLM:
         if os.getenv("OCTOAI_API_KEY") is None:
-            pytest.skip[("Couldn't find OctoAI API key. Skipping OctoAI tests.")]
+            pytest.skip("Couldn't find OctoAI API key. Skipping OctoAI tests.")
         model_name = "mistral-7b-instruct"
     else:
         model_name = "gpt-3.5-turbo-0613"
