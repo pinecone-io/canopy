@@ -23,6 +23,10 @@ from fastapi import (
     Body,
     APIRouter
 )
+
+from fastapi.middleware.cors import (
+    CORSMiddleware
+)
 import uvicorn
 from typing import cast, Union, Optional
 
@@ -89,6 +93,15 @@ app: FastAPI = FastAPI(
     },
     lifespan=lifespan
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 openai_api_router = APIRouter()
 context_api_router = APIRouter(prefix="/context")
 application_router = APIRouter(tags=["Application"])
