@@ -43,7 +43,6 @@ def expected_chat_kwargs(system_prompt):
         ],
         "connectors": None,
         "documents": [],
-        "preamble_override": None,
         "stream": False,
         "max_tokens": None,
     }
