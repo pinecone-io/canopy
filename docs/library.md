@@ -154,7 +154,39 @@ You can always verify the connection to the Pinecone index with the `verify_inde
 kb.verify_index_connection()
 ```
 
-To learn more about customizing the KnowledgeBase and its inner components, see [understanding knowledgebase workings section](#understanding-knowledgebase-workings).
+#### Using Qdrant as a knowledge base
+
+Canopy supports [Qdrant](https://qdrant.tech) as an alternative knowledge base. To use Qdrant with Canopy, install the `qdrant` extra.
+
+```bash
+pip install canopy-sdk[qdrant]
+```
+
+The Qdrant knowledge base is accessible via the `QdrantKnowledgeBase` class.
+
+```python
+from canopy.knowledge_base import QdrantKnowledgeBase
+
+kb = QdrantKnowledgeBase(collection_name="<YOUR_COLLECTION_NAME>")
+```
+
+The constructor accepts additional [options](https://github.com/qdrant/qdrant-client/blob/eda201a1dbf1bbc67415f8437a5619f6f83e8ac6/qdrant_client/qdrant_client.py#L36-L61) to customize your connection to Qdrant.
+
+To create a new Qdrant collection and connect it to the knowledge base, use the `create_canopy_collection` method:
+
+```python
+kb.create_canopy_collection()
+```
+
+The method accepts additional [options](https://github.com/qdrant/qdrant-client/blob/c63c62e6df9763591622d1921b3dfcc486666481/qdrant_client/qdrant_remote.py#L2137-L2150) to configure the collection to be created.
+
+You can always verify the connection to the collection with the `verify_index_connection` method:
+
+```python
+kb.verify_index_connection()
+```
+
+To learn more about customizing the KnowledgeBase and its inner components, see [understanding knowledge ebase workings section](#understanding-knowledgebase-workings).
 
 ### Step 3: Upsert and query data
 
