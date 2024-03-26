@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "canopy-sdk"
-version = "0.8.0"
+version = "0.8.1"
 description = "Retrieval Augmented Generation (RAG) framework and context engine powered by Pinecone"
 authors = ["Relevance Team <relevance@pinecone.io>"]
 readme = "README.md"
@@ -32,7 +32,7 @@ transformers = {version = "^4.35.2", optional = true}
 sentencepiece = "^0.1.99"
 pandas = "2.0.0"
 pyarrow = "^14.0.1"
-cohere = { version = ">=4.37", optional = true }
+cohere = { version = "^4.37", optional = true }
 
 
 pinecone-text =  "^0.8.0"
