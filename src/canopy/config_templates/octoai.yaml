@@ -1,0 +1,50 @@
+# ===========================================================
+#            Configuration file for Canopy Server
+# ===========================================================
+tokenizer:
+  # -------------------------------------------------------------------------------------------
+  # Tokenizer configuration
+  # Use LLamaTokenizer from HuggingFace with the relevant OSS model (e.g. LLama2)
+  # -------------------------------------------------------------------------------------------
+  type: LlamaTokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
+  params:
+    model_name: hf-internal-testing/llama-tokenizer
+
+chat_engine:
+  # -------------------------------------------------------------------------------------------
+  # Chat engine configuration
+  # Use OctoAI as the open source LLM provider
+  # You can find the list of supported LLMs at https://octo.ai/docs/text-gen-solution/rest-api
+  # -------------------------------------------------------------------------------------------
+  params:
+    max_prompt_tokens: 2048             # The maximum number of tokens to use for input prompt to the LLM.
+  llm: &llm
+    type: OctoAILLM
+    params:
+      model_name: mistral-7b-instruct-fp16         # The name of the model to use.
+
+  # query_builder:
+  #   type: FunctionCallingQueryGenerator     # Options: [FunctionCallingQueryGenerator, LastMessageQueryGenerator, InstructionQueryGenerator]
+  #   llm: 
+  #     type: OctoAILLM
+  #     params:
+  #       model_name: mistral-7b-instruct-fp16
+
+  context_engine:
+    # -------------------------------------------------------------------------------------------------------------
+    # ContextEngine configuration
+    # -------------------------------------------------------------------------------------------------------------
+    knowledge_base:
+      # -----------------------------------------------------------------------------------------------------------
+      # KnowledgeBase configuration
+      # -----------------------------------------------------------------------------------------------------------
+      record_encoder:
+        # --------------------------------------------------------------------------
+        # Configuration for the RecordEncoder subcomponent of the knowledge base.
+        # Use OctoAI's Embedding endpoint for dense encoding
+        # --------------------------------------------------------------------------
+        type: OctoAIRecordEncoder
+        params:
+          model_name:                   # The name of the model to use for encoding
+            thenlper/gte-large
+          batch_size: 2048              # The number of document chunks to encode in each call to the encoding model

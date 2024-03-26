@@ -7,3 +7,4 @@ from .azure_openai import AzureOpenAIRecordEncoder
 from .jina import JinaRecordEncoder
 from .sentence_transformers import SentenceTransformerRecordEncoder
 from .hybrid import HybridRecordEncoder
+from .octoai import OctoAIRecordEncoder
