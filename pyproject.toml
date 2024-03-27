@@ -32,6 +32,7 @@ transformers = {version = "^4.35.2", optional = true}
 sentencepiece = "^0.1.99"
 pandas = "2.0.0"
 pyarrow = "^14.0.1"
+qdrant-client = {version = "^1.8.0", optional = true}
 cohere = { version = "^4.37", optional = true }
 
 
@@ -60,6 +61,7 @@ cohere = ["cohere"]
 torch = ["torch", "sentence-transformers"]
 transformers = ["transformers"]
 grpc = ["grpcio", "grpc-gateway-protoc-gen-openapiv2", "googleapis-common-protos", "lz4", "protobuf"]
+qdrant = ["qdrant-client"]
 
 
 [tool.poetry.group.dev.dependencies]
@@ -96,7 +98,9 @@ module = [
     'tokenizers.*',
     'cohere.*',
     'pinecone.grpc',
-    'huggingface_hub.utils'
+    'huggingface_hub.utils',
+    'qdrant_client.*',
+    'grpc.*'
 ]
 ignore_missing_imports = true
 

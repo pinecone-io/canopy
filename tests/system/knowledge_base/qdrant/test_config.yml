@@ -1,0 +1,9 @@
+# ===========================================================
+#            QdrantKnowledgeBase test configuration file
+# ===========================================================
+
+knowledge_base:
+      params:
+        default_top_k: 5
+        collection_name: test-config-collection
+        default_top_k: 10
