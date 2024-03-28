@@ -1,3 +1,14 @@
+## [0.9.0] - 2024-03-28
+
+### Bug fixes
+* Pin cohere version [#327](https://github.com/pinecone-io/canopy/pull/327)
+  
+### Documentation
+* Add support for OctoAI LLM and embeddings [#301](https://github.com/pinecone-io/canopy/pull/301) (Thanks @ptorru!)
+* Add Qdrant as a supported knowledge base [#244](https://github.com/pinecone-io/canopy/pull/244) (Thanks @Anush008!)
+
+**Full Changelog**: https://github.com/pinecone-io/canopy/compare/v0.8.1...v0.9.0
+
 ## [0.8.1] - 2024-03-06
 
 ### Bug fixes
