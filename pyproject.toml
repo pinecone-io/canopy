@@ -13,7 +13,7 @@ packages = [{include = "canopy", from = "src"},
 python = ">=3.9,<3.13"
 python-dotenv = "^1.0.0"
 openai = "^1.2.3"
-tiktoken = "^0.3.3"
+tiktoken = "^0.6.0"
 pydantic = "^2.0.0"
 pandas-stubs = "^2.0.3.230814"
 fastapi = ">=0.93.0, <1.0.0"
