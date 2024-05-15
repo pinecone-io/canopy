@@ -278,6 +278,21 @@ Set your desired `PORT` and `WORKER_COUNT` envrionment variables, and start the 
 gunicorn canopy_server.app:app --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --workers $WORKER_COUNT
 ```
 
+### Change default LLM model
+
+By default, Pinecone Canopy uses OpenAI GPT-3.5 Turbo, a faster and cheaper  model. However, you can change the config file so Pinecone Canopy uses other models such as [GPT-4o](https://platform.openai.com/docs/models), GPT-4 Turbo, etc
+
+You can change the config by opening `canopy/config/default.yaml` (generated using `canopy create-config`) and changing `model_name` to `gpt-4-turbo` (or any other model). You will need to make sure you have both access to GPT-4 in OpenAI’s API (you may need to request access) and have sufficient OpenAI credits. 
+
+This will use a slightly slower, but much smarter GPT-4 Turbo model that is better at essentially every LLM task such as summarization, reasoning, and more.
+
+To tell Canopy to use the updated config file, run the following commands in your CLI:
+```
+$ canopy create-config # create the config file
+$ vi config/default.yaml # open and edit the config file to use another model
+$ canopy start --config config/default.yaml # start server with update config file
+```
+
 > [!IMPORTANT]
 >  The server interacts with services like Pinecone and OpenAI using your own authentication credentials. 
    When deploying the server on a public web hosting provider, it is recommended to enable an authentication mechanism, 
