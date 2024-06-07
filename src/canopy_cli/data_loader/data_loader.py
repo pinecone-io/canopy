@@ -46,10 +46,7 @@ def _process_metadata(value):
             if isinstance(v, Iterable) or pd.notna(v)}
 
 
-def _df_to_documents(
-        df: pd.DataFrame,
-        origin_file_path=None
-) -> List[Document]:
+def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if "id" not in df.columns:
@@ -140,10 +137,7 @@ def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
             row_id="*",
             err=str(e)
         ) from e
-    return _df_to_documents(
-        df,
-        origin_file_path=file_path
-    )
+    return _df_to_documents(df, origin_file_path=file_path)
 
 
 def _load_multiple_non_schematic_files(
