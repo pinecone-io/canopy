@@ -17,6 +17,7 @@ except ImportError:
 
 from canopy.knowledge_base.base import BaseKnowledgeBase
 from canopy.knowledge_base.chunker import Chunker, MarkdownChunker
+from canopy.knowledge_base.security_scanner.firewall import AIFirewall
 from canopy.knowledge_base.record_encoder import (RecordEncoder,
                                                   OpenAIRecordEncoder,
                                                   HybridRecordEncoder)
@@ -108,7 +109,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                  record_encoder: Optional[RecordEncoder] = None,
                  chunker: Optional[Chunker] = None,
                  reranker: Optional[Reranker] = None,
-                 default_top_k: int = 5
+                 default_top_k: int = 5,
+                 enable_security_scanning: bool = False
                  ):
         """
         Initilize the knowledge base object.
@@ -141,6 +143,7 @@ class KnowledgeBase(BaseKnowledgeBase):
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
+            enable_security_scanning: Whether to enable security scanning for the documents. Defaults to False.
         Raises:
             ValueError: If default_top_k is not a positive integer.
             TypeError: If record_encoder is not an instance of RecordEncoder.
@@ -151,6 +154,12 @@ class KnowledgeBase(BaseKnowledgeBase):
         """  # noqa: E501
         if default_top_k < 1:
             raise ValueError("default_top_k must be greater than 0")
+        # Initialize a connection to the AI Firewall if security
+        # scanning is enabled.
+        if enable_security_scanning:
+            self._firewall = AIFirewall()
+        else:
+            self._firewall = None
 
         self._index_name = self._get_full_index_name(index_name)
         self._default_top_k = default_top_k
@@ -557,6 +566,8 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"Document with id {doc.id} contains reserved metadata keys: "
                     f"{forbidden_keys}. Please remove them and try again."
                 )
+            if self._firewall:
+                self._firewall.scan_text(doc.text)
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)
