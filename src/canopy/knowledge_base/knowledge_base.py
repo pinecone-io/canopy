@@ -157,7 +157,7 @@ class KnowledgeBase(BaseKnowledgeBase):
         # Initialize a connection to the AI Firewall if security
         # scanning is enabled.
         if enable_security_scanning:
-            self._firewall = AIFirewall()
+            self._firewall: Optional[AIFirewall] = AIFirewall()
         else:
             self._firewall = None
 
