@@ -103,15 +103,17 @@ export INDEX_NAME="<INDEX_NAME>"
 ### Optional Environment Variables
 These optional environment variables are used to authenticate to other supported services for embeddings and LLMs. If you configure Canopy to use any of these providers - you would need to set the relevant environment variables.
 
-| Name                  | Description                                                                                                                 | How to get it?                                                                                                                                                               |
-|-----------------------|-----------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `ANYSCALE_API_KEY`    | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                                    | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
-| `CO_API_KEY`   | API key for Cohere. Used to authenticate to Cohere services for embedding                                           | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
-| `JINA_API_KEY`        | API key for Jina AI. Used to authenticate to JinaAI's services for embedding and chat API                                    | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
-| `AZURE_OPENAI_ENDOINT`| The URL of the Azure OpenAI endpoint you deployed. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
-| `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models. | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
-| `OCTOAI_API_KEY`       | API key for OctoAI. Used to authenticate for open source LLMs served in OctoAI                               | You can sign up for OctoAI and find your API key [here](https://octo.ai/)
-
+| Name                   | Description                                                                                                 | How to get it?                                                                                                                                                               |
+|------------------------|-------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `ANYSCALE_API_KEY`     | API key for Anyscale. Used to authenticate to Anyscale Endpoints for open source LLMs                       | You can register Anyscale Endpoints and find your API key [here](https://app.endpoints.anyscale.com/)
+| `CO_API_KEY`           | API key for Cohere. Used to authenticate to Cohere services for embedding                                   | You can find more information on registering to Cohere [here](https://cohere.com/pricing)
+| `JINA_API_KEY`         | API key for Jina AI. Used to authenticate to JinaAI's services for embedding and chat API                   | You can find your OpenAI API key [here](https://platform.openai.com/account/api-keys). You might need to login or register to OpenAI services                                |
+| `AZURE_OPENAI_ENDOINT` | The URL of the Azure OpenAI endpoint you deployed.                                                          | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+| `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models.                                                            | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
+| `OCTOAI_API_KEY`       | API key for OctoAI. Used to authenticate for open source LLMs served in OctoAI                              | You can sign up for OctoAI and find your API key [here](https://octo.ai/)
+| `FIREWALL_API_KEY`     | API key for Robust Intelligence AI Firewall. Used to authenticate to scanning service for prompt injections | You can find your API key under Firewall settings in the AI Firewall dashboard.
+| `FIREWALL_URL`         | URL for Robust Intelligence AI Firewall.                                                                    | You can find your Firewall URL under Firewall settings in the AI Firewall dashboard.
+| `FIREWALL_INSTANCE_ID` | The Firewall instance ID to use for scanning: note that prompt injection must be configured                 | You can find your Firewall instance ID in the AI Firewall dashboard.
 </details>
 
 

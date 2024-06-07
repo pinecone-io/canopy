@@ -3,7 +3,9 @@ import os
 import click
 import requests
 
-from canopy_cli.data_loader.errors import AIFirewallError
+
+class AIFirewallError(ValueError):
+    pass
 
 
 class AIFirewall:
