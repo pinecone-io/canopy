@@ -11,6 +11,7 @@ class AIFirewallError(ValueError):
 class AIFirewall:
 
     def __init__(self) -> None:
+        """Initialize the AI Firewall using required RI environment variables."""
         self.firewall_api_key = self._get_env_var("FIREWALL_API_KEY")
         self.firewall_url = self._get_env_var("FIREWALL_URL")
         self.firewall_instance_id = self._get_env_var("FIREWALL_INSTANCE_ID")
@@ -32,6 +33,11 @@ class AIFirewall:
         return env_var
 
     def scan_text(self, text: str) -> None:
+        """Scan the input text for potential prompt injection attacks.
+
+        This method sends the input text to the AI Firewall via REST
+        API for security scanning.
+        """
         stripped_text = text.replace("\n", " ")
         firewall_response = requests.put(
             self.firewall_instance_url,

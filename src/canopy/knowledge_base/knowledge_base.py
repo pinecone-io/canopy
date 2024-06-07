@@ -143,7 +143,8 @@ class KnowledgeBase(BaseKnowledgeBase):
             chunker: An instance of Chunker to use for chunking documents. Defaults to MarkdownChunker.
             reranker: An instance of Reranker to use for reranking query results. Defaults to TransparentReranker.
             default_top_k: The default number of document chunks to return per query. Defaults to 5.
-            enable_security_scanning: Whether to enable security scanning for the documents. Defaults to False.
+            enable_security_scanning: Whether to enable security scanning for the documents
+            using Robust Intelligence AI Firewall. Defaults to False.
         Raises:
             ValueError: If default_top_k is not a positive integer.
             TypeError: If record_encoder is not an instance of RecordEncoder.
