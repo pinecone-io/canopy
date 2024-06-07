@@ -27,6 +27,7 @@ from canopy_cli.data_loader import (
     load_from_path,
     IDsNotUniqueError,
     DocumentsValidationError)
+from canopy_cli.data_loader.errors import AIFirewallError
 from canopy_cli.errors import CLIError
 
 from canopy import __version__
@@ -338,11 +339,19 @@ def _batch_documents_by_chunks(chunker: Chunker,
               help="The namespace of the index. Can also be set by the "
                    "`INDEX_NAMESPACE` environment variable. If not set, the default "
                    "namespace will be used.")
+@click.option("--enable-security-scanning", default=False, is_flag=True,
+              help="When set to True, Robust Intelligence's AI Firewall will scan any "
+                   "upserted documents for AI security threats such as prompt "
+                   "injections. Documents containing prompt injections will not be "
+                   "uploaded to your Pinecone index. Requires the FIREWALL_API_KEY, "
+                   "FIREWALL_URL, FIREWALL_INSTANCE_ID environment variables to be "
+                   "set.")
 def upsert(index_name: str,
            data_path: str,
            allow_failures: bool,
            config: Optional[str],
-           namespace: str):
+           namespace: str,
+           enable_security_scanning: bool):
     if index_name is None:
         msg = (
             "No index name provided. Please set --index-name or INDEX_NAME environment "
@@ -373,10 +382,17 @@ def upsert(index_name: str,
     click.echo(click.style(f'{kb.index_name}', fg='green'), nl=False)
     click.echo(" using namespace: ", nl=False)
     click.echo(click.style(f'{namespace or "default"} \n', fg='cyan'))
+    if enable_security_scanning:
+        click.echo(
+            click.style(
+                "Security scanning with Robust Intelligence AI Firewall is enabled",
+                fg="green"
+            )
+        )
 
     with spinner:
         try:
-            data = load_from_path(data_path)
+            data = load_from_path(data_path, enable_security_scanning)
         except IDsNotUniqueError:
             msg = (
                 "The data contains duplicate IDs. Please make sure that each document"
@@ -390,6 +406,8 @@ def upsert(index_name: str,
                 f"data file should be in the schema: {Document.__annotations__}."
             )
             raise CLIError(msg)
+        except AIFirewallError as e:
+            raise CLIError(str(e))
         except Exception:
             msg = (
                 f"A unexpected error while loading the data from files in {data_path}. "

@@ -11,6 +11,10 @@ class DocumentsValidationError(ValueError):
     pass
 
 
+class AIFirewallError(ValueError):
+    pass
+
+
 class DataLoaderException(Exception):
     """An exception that Click can handle and show to the user."""
 

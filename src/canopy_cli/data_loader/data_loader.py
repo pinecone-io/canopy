@@ -15,7 +15,9 @@ from canopy.models.data_models import Document
 from canopy_cli.data_loader.errors import (
     DataLoaderException,
     DocumentsValidationError,
-    IDsNotUniqueError)
+    IDsNotUniqueError,
+    AIFirewallError)
+from canopy_cli.data_loader.firewall import AIFirewall
 
 
 class NonSchematicFilesTypes(Enum):
@@ -46,19 +48,30 @@ def _process_metadata(value):
             if isinstance(v, Iterable) or pd.notna(v)}
 
 
-def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
+def _df_to_documents(
+        df: pd.DataFrame,
+        origin_file_path=None,
+        enable_security_scanning=False
+) -> List[Document]:
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Dataframe must be a pandas DataFrame")
     if "id" not in df.columns:
         raise DocumentsValidationError("Missing 'id' column")
     if df.id.nunique() != df.shape[0]:
         raise IDsNotUniqueError("IDs must be unique")
+    # Initialize a Firewall client if security scanning is enabled
+    if enable_security_scanning:
+        firewall = AIFirewall()
 
     try:
         if "metadata" in df.columns:
             df.loc[:, "metadata"] = df["metadata"].apply(_process_metadata)
         documents = []
         for row in df.itertuples(index=False):
+            if enable_security_scanning:
+                text = row._asdict()["text"]  # type: ignore[operator]
+                # Extract text and send to AI Firewall for security scanning.
+                firewall.scan_text(text)
             try:
                 documents.append(
                     Document(
@@ -75,6 +88,8 @@ def _df_to_documents(df: pd.DataFrame, origin_file_path=None) -> List[Document]:
                 ) from e
     except ValidationError as e:
         raise DocumentsValidationError("Documents failed validation") from e
+    except AIFirewallError as e:
+        raise AIFirewallError(f"Security scanning failed: {e}") from e
     except ValueError as e:
         raise DocumentsValidationError(f"Unexpected error in validation: {e}") from e
     return documents
@@ -117,7 +132,10 @@ def _load_multiple_txt_files(file_paths: List[str]) -> pd.DataFrame:
     return df
 
 
-def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
+def _load_single_schematic_file_by_suffix(
+        file_path: str,
+        enable_security_scanning: bool
+) -> List[Document]:
     try:
         if file_path.endswith(".parquet"):
             df = pd.read_parquet(file_path)
@@ -137,12 +155,17 @@ def _load_single_schematic_file_by_suffix(file_path: str) -> List[Document]:
             row_id="*",
             err=str(e)
         ) from e
-    return _df_to_documents(df, origin_file_path=file_path)
+    return _df_to_documents(
+        df,
+        origin_file_path=file_path,
+        enable_security_scanning=enable_security_scanning
+    )
 
 
 def _load_multiple_non_schematic_files(
         file_paths: List[str],
-        type: NonSchematicFilesTypes
+        type: NonSchematicFilesTypes,
+        enable_security_scanning: bool
 ) -> List[Document]:
     if not isinstance(file_paths, list):
         raise ValueError("file_paths must be a list of strings")
@@ -154,15 +177,16 @@ def _load_multiple_non_schematic_files(
     else:
         raise ValueError(f"Unsupported file type: {type}")
 
-    return _df_to_documents(df)
+    return _df_to_documents(df, enable_security_scanning=enable_security_scanning)
 
 
-def load_from_path(path: str) -> List[Document]:
+def load_from_path(path: str, enable_security_scanning: bool) -> List[Document]:
     """
     Load documents from a file or directory
 
     Args:
         path: Path to file or directory
+        enable_security_scanning: Whether to enable security scanning with AI Firewall.
 
     Returns:
         List[Document]: List of documents
@@ -186,23 +210,30 @@ def load_from_path(path: str) -> List[Document]:
         documents: List[Document] = []
         # Load all schematic files
         for f in all_files_schematic:
-            documents.extend(_load_single_schematic_file_by_suffix(f))
+            documents.extend(
+                _load_single_schematic_file_by_suffix(f, enable_security_scanning)
+            )
 
         # Load all non-schematic files
         if len(all_files_non_schematic_txt) > 0:
             documents.extend(
                 _load_multiple_non_schematic_files(
                     all_files_non_schematic_txt,
-                    NonSchematicFilesTypes.TEXT))
+                    NonSchematicFilesTypes.TEXT,
+                    enable_security_scanning))
 
     # Load single file
     elif os.path.isfile(path):
         if path.endswith(".txt"):
             documents = _load_multiple_non_schematic_files(
                 [path],
-                NonSchematicFilesTypes.TEXT)
+                NonSchematicFilesTypes.TEXT,
+                enable_security_scanning)
         else:
-            documents = _load_single_schematic_file_by_suffix(path)
+            documents = _load_single_schematic_file_by_suffix(
+                path,
+                enable_security_scanning
+            )
     else:
         raise ValueError(f"Could not find file or directory at {path}")
     return documents
