@@ -111,7 +111,7 @@ These optional environment variables are used to authenticate to other supported
 | `AZURE_OPENAI_ENDOINT` | The URL of the Azure OpenAI endpoint you deployed.                                                          | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
 | `AZURE_OPENAI_API_KEY` | The API key to use for your Azure OpenAI models.                                                            | You can find this in the Azure OpenAI portal under _Keys and Endpoints`|
 | `OCTOAI_API_KEY`       | API key for OctoAI. Used to authenticate for open source LLMs served in OctoAI                              | You can sign up for OctoAI and find your API key [here](https://octo.ai/)
-| `FIREWALL_API_KEY`     | API key for Robust Intelligence AI Firewall. Used to authenticate to scanning service for prompt injections | You can find your API key under Firewall settings in the AI Firewall dashboard.
+| `FIREWALL_API_KEY`     | API key for Robust Intelligence AI Firewall. Used to authenticate to scanning service for prompt injections | You can find your API key under Firewall settings in the AI Firewall dashboard and further documentation [here](https://docs.robustintelligence.com/en/latest/reference/python-sdk.html#rime_sdk.FirewallClient)
 | `FIREWALL_URL`         | URL for Robust Intelligence AI Firewall.                                                                    | You can find your Firewall URL under Firewall settings in the AI Firewall dashboard.
 | `FIREWALL_INSTANCE_ID` | The Firewall instance ID to use for scanning: note that prompt injection must be configured                 | You can find your Firewall instance ID in the AI Firewall dashboard.
 </details>

@@ -36,7 +36,9 @@ class AIFirewall:
         """Scan the input text for potential prompt injection attacks.
 
         This method sends the input text to the AI Firewall via REST
-        API for security scanning.
+        API for security scanning. Documentation for the Validate
+        endpoint on the Firewall can be found [here]
+        (https://docs.robustintelligence.com/en/latest/reference/python-sdk.html#rime_sdk.FirewallClient)
         """
         stripped_text = text.replace("\n", " ")
         firewall_response = requests.put(
