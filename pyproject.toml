@@ -34,6 +34,7 @@ pandas = "2.0.0"
 pyarrow = "^14.0.1"
 qdrant-client = {version = "^1.8.0", optional = true}
 cohere = { version = "^4.37", optional = true }
+requests = "^2.26.0"
 
 
 pinecone-text =  "^0.8.0"
