@@ -37,7 +37,7 @@ DELETE_STARTER_CHUNKS_PER_DOC = 32
 
 @lru_cache(maxsize=1)
 def _get_global_client() -> Pinecone:
-    return Pinecone()
+    return Pinecone(source_tag="canopy")
 
 
 def list_canopy_indexes(pinecone_client: Pinecone = None) -> List[str]:
