@@ -567,7 +567,16 @@ class KnowledgeBase(BaseKnowledgeBase):
                     f"{forbidden_keys}. Please remove them and try again."
                 )
             if self._firewall:
-                self._firewall.scan_text(doc.text)
+                text_flagged = self._firewall.scan_text(doc.text)
+                if text_flagged:
+                    raise ValueError(
+                        f"Robust Intelligence AI Firewall detected potential "
+                        f"prompt injection attack in document with id {doc.id} "
+                        f"in the text {doc.text}. Please ensure that the data "
+                        f"comes from a trusted source and is free from malicious "
+                        f"instructions before attempting to upsert into your "
+                        f"index."
+                    )
 
         chunks = self._chunker.chunk_documents(documents)
         encoded_chunks = self._encoder.encode_documents(chunks)

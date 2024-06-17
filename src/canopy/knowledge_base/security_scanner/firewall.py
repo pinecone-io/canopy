@@ -1,7 +1,9 @@
+import logging
 import os
 
-import click
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 class AIFirewallError(ValueError):
@@ -26,14 +28,16 @@ class AIFirewall:
     def _get_env_var(var_name: str) -> str:
         env_var = os.environ.get(var_name)
         if not env_var:
-            raise AIFirewallError(
+            raise RuntimeError(
                 f"{var_name} environment variable "
                 f"is required to use security scanning."
             )
         return env_var
 
-    def scan_text(self, text: str) -> None:
+    def scan_text(self, text: str) -> bool:
         """Scan the input text for potential prompt injection attacks.
+
+        Returns True if prompt injection attack is detected, False otherwise.
 
         This method sends the input text to the AI Firewall via REST
         API for security scanning. Documentation for the Validate
@@ -46,7 +50,7 @@ class AIFirewall:
             headers=self.firewall_headers,
             json={"user_input_text": stripped_text},
         )
-        if firewall_response.status_code != 200:
+        if not firewall_response.ok:
             raise AIFirewallError(
                 f"AI Firewall returned status code "
                 f"{firewall_response.status_code} "
@@ -57,12 +61,7 @@ class AIFirewall:
                 fw_result["FIREWALL_RULE_TYPE_PROMPT_INJECTION"]["action"]
                 == "FIREWALL_ACTION_FLAG"
         ):
-            raise AIFirewallError(
-                f"Robust Intelligence AI Firewall detected potential "
-                f"prompt injection attack in the text: {stripped_text}. "
-                f"Please ensure that the data comes from a trusted source "
-                f"and is free from malicious instructions before "
-                f"attempting to upsert into your index."
-            )
+            return True
         else:
-            click.echo("Security scanning passed.")
+            logger.info("Document text passed security scanning.")
+            return False

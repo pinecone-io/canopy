@@ -1,0 +1,29 @@
+# ===========================================================
+#            Configuration file for Canopy Server
+# ===========================================================
+tokenizer:
+  # -------------------------------------------------------------------------------------------
+  # Tokenizer configuration
+  # A Tokenizer singleton instance must be initialized before initializing any other components
+  # -------------------------------------------------------------------------------------------
+  type: OpenAITokenizer                 # Options: [OpenAITokenizer, LlamaTokenizer]
+  params:
+    model_name: gpt-3.5-turbo
+
+chat_engine:
+  # -------------------------------------------------------------------------------------------------------------
+  # Chat engine configuration
+  # -------------------------------------------------------------------------------------------------------------
+  context_engine:
+    # -------------------------------------------------------------------------------------------------------------
+    # ContextEngine configuration
+    # -------------------------------------------------------------------------------------------------------------
+    knowledge_base:
+      # -----------------------------------------------------------------------------------------------------------
+      # KnowledgeBase configuration
+      # Enable security scanning using Robust Intelligence's AI Firewall to scan all uploaded documents
+      # for prompt injections before they can be added to the knowledge base. Any document that is flagged
+      # is rejected.
+      # -----------------------------------------------------------------------------------------------------------
+      params:
+        enable_security_scanning: true  # Whether to enable security scanning for uploaded documents.
