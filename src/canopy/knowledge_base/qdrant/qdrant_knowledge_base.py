@@ -638,16 +638,17 @@ class QdrantKnowledgeBase(BaseKnowledgeBase):
 
         query_params = deepcopy(query.query_params)
 
-        query_vector = QdrantConverter.kb_query_to_search_vector(query)
+        vector, vector_name = QdrantConverter.kb_query_to_search_vector(query)
 
-        results = self._client.search(
+        results = self._client.query_points(
             self.collection_name,
-            query_vector=query_vector,
+            query=vector,
+            using=vector_name,
             limit=top_k,
             query_filter=metadata_filter,
             with_payload=True,
             **query_params,
-        )
+        ).points
 
         documents: List[KBDocChunkWithScore] = []
 

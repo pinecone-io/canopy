@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Dict, List, Any, Union
+from typing import Dict, List, Any, Tuple, Union
 import uuid
 from canopy.knowledge_base.models import (
     KBDocChunkWithScore,
@@ -84,19 +84,14 @@ class QdrantConverter:
     @staticmethod
     def kb_query_to_search_vector(
         query: KBQuery,
-    ) -> "Union[models.NamedVector, models.NamedSparseVector]":
+    ) -> "Tuple[Union[List[float], models.SparseVector], str]":
         # Use dense vector if available, otherwise use sparse vector
-        query_vector: Union[models.NamedVector, models.NamedSparseVector]
         if query.values:
-            query_vector = models.NamedVector(name=DENSE_VECTOR_NAME, vector=query.values)  # noqa: E501
+            return query.values, DENSE_VECTOR_NAME
         elif query.sparse_values:
-            query_vector = models.NamedSparseVector(
-                name=SPARSE_VECTOR_NAME,
-                vector=models.SparseVector(
-                    indices=query.sparse_values["indices"],
-                    values=query.sparse_values["values"],
-                ),
-            )
+            return models.SparseVector(
+                indices=query.sparse_values["indices"],
+                values=query.sparse_values["values"],
+            ), SPARSE_VECTOR_NAME
         else:
             raise ValueError("Query should have either dense or sparse vector.")
-        return query_vector
