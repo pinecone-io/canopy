@@ -36,7 +36,7 @@ class OpenAILLM(BaseLLM):
     """
 
     def __init__(self,
-                 model_name: str = "gpt-3.5-turbo",
+                 model_name: str = "gpt-4o",
                  *,
                  api_key: Optional[str] = None,
                  organization: Optional[str] = None,
