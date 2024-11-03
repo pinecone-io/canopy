@@ -79,6 +79,7 @@ types-requests = "^2.31.0.2"
 httpx = "^0.25.0"
 pydoclint = "^0.3.8"
 pytest-dotenv = "^0.5.2"
+nltk = "3.8.1"
 
 [build-system]
 requires = ["poetry-core"]
