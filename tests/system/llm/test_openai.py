@@ -71,7 +71,8 @@ def openai_llm(request):
             )
     elif llm_class == AnyscaleLLM:
         pytest.skip(
-                "Anyscale is not supported Anymore as Anyscale removed LLM as-a-service support"
+                "Anyscale is not supported Anymore as "+
+                "Anyscale removed LLM as-a-service support"
             )
     elif llm_class == OctoAILLM:
         if os.getenv("OCTOAI_API_KEY") is None:
