@@ -70,15 +70,15 @@ def openai_llm(request):
                 "Couldn't find Azure deployment name. Skipping Azure OpenAI tests."
             )
     elif llm_class == AnyscaleLLM:
-        if os.getenv("ANYSCALE_API_KEY") is None:
-            pytest.skip("Couldn't find Anyscale API key. Skipping Anyscale tests.")
-        model_name = "mistralai/Mistral-7B-Instruct-v0.1"
+        pytest.skip(
+                "Anyscale is not supported Anymore as Anyscale removed LLM as-a-service support"
+            )
     elif llm_class == OctoAILLM:
         if os.getenv("OCTOAI_API_KEY") is None:
             pytest.skip("Couldn't find OctoAI API key. Skipping OctoAI tests.")
         model_name = "mistral-7b-instruct"
     else:
-        model_name = "gpt-3.5-turbo-0613"
+        model_name = "gpt-4o-mini"
 
     return llm_class(model_name=model_name)
 
@@ -310,9 +310,9 @@ def test_enforce_function_unsupported_model(openai_llm,
     if isinstance(openai_llm, AzureOpenAILLM):
         pytest.skip("Currently not tested in Azure")
     elif isinstance(openai_llm, AnyscaleLLM):
-        new_model_name = "meta-llama/Llama-2-7b-chat-hf"
+        pytest.skip("Currently not supported - Anyscale removed support")
     else:
-        new_model_name = "gpt-3.5-turbo-0301"
+        new_model_name = "gpt-4o-mini"
 
     with pytest.raises(NotImplementedError):
         openai_llm.enforced_function_call(
