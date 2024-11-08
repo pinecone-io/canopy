@@ -9,6 +9,8 @@
 </a>
 </p>
 
+> [!NOTE]  
+> The Canopy team is no longer maintaining this repository. Thank you for your support and enthusiasm for the project! If you're looking for a high quality managed RAG solution with continued updates and improvements, please check out the [Pinecone Assistant](https://docs.pinecone.io/guides/assistant/understanding-assistant).
 
 **Canopy** is an open-source Retrieval Augmented Generation (RAG) framework and context engine built on top of the Pinecone vector database. Canopy enables you to quickly and easily experiment with and build applications using RAG. Start chatting with your documents or text data with a few simple commands.   
 
